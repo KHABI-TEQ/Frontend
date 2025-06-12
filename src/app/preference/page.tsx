@@ -650,7 +650,9 @@ function formatNumberWithCommas(value: string) {
 const handlePaymentReceipt = (value: React.SetStateAction<string | null>) => {
   const url = typeof value === 'function' ? value(paymentReceiptUrl) : value;
   setPaymentReceiptUrl(url);
-  formik.setFieldValue('paymentReceiptUrl', url);
+  if (url) {
+    formik.setFieldValue('paymentReceiptUrl', url);
+  }
 };
 
   const formik = useFormik({
@@ -694,6 +696,7 @@ const handlePaymentReceipt = (value: React.SetStateAction<string | null>) => {
         .email('Invalid email')
         .required('Owner email is required'),
       fullName: Yup.string().required('Your account name is required'),
+      paymentReceiptUrl: Yup.string().required('Transaction receipt is required'),
     }),
     validateOnBlur: true,
     validateOnChange: true,
@@ -1125,11 +1128,11 @@ const handlePaymentReceipt = (value: React.SetStateAction<string | null>) => {
                       </p>
                       <p
                         className={`text-[#5A5D63] ${archivo.className} text-lg font-medium`}>
-                        Account Number{' '}
-                        <span
-                          className={`${archivo.className} text-lg font-medium text-black`}>
-                          0234567894
-                        </span>
+                                          Account Number{' '}
+                  <span
+                    className={`${archivo.className} text-lg font-medium text-black`}>
+                    2004766765
+                  </span>
                       </p>
                       <p
                         className={`text-[#5A5D63] ${archivo.className} text-lg font-medium`}>
@@ -1225,7 +1228,7 @@ const handlePaymentReceipt = (value: React.SetStateAction<string | null>) => {
                       ${
                         areInputsDisabled ||
                         (currentStep === steps.length - 1 &&
-                          (!formik.values.fullName || !paymentReceiptUrl))
+                          (!formik.values.fullName || !formik.values.paymentReceiptUrl))
                           ? 'bg-gray-300 text-gray-400 cursor-not-allowed'
                           : 'bg-[#8DDB90] text-white'
                       }`}

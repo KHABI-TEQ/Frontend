@@ -55,7 +55,7 @@ const cardData: CardProps[] = [
     ],
     color: '#8DDB90',
     secondaryColor: '#F2FFF8',
-    buttonText: 'Go to Marketplace',
+    buttonText: 'Buy',
     link: '/market-place',
   },
   {
@@ -66,7 +66,7 @@ const cardData: CardProps[] = [
     ],
     color: '#9E9E0B',
     secondaryColor: '#FFFFF2',
-    buttonText: 'Go to Marketplace',
+    buttonText: 'Rent',
     link: '/market-place',
   },
   {

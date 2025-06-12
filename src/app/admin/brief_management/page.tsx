@@ -1322,7 +1322,7 @@ export default function BriefManagement() {
                                     defaultCountry='NG'
                                     disabled={!isLegalOwner}
                                     value={formik.values?.ownerPhoneNumber}
-                                    style={{ outline: 'none' }}
+                                    style={{ outline: 'none', width: '100%' }}
                                     onChange={(value) =>
                                       formik.setFieldValue(
                                         'ownerPhoneNumber',
@@ -1348,6 +1348,9 @@ export default function BriefManagement() {
                                 onChange={formik.handleChange}
                                 type='email'
                               />
+                              <p className='text-[#1976D2] font-["Roboto"] font-medium text-[18px] leading-[160%] mt-4'>
+                                I hereby agree to indemnify and hold harmless Khabi-Teq Realty, its affiliates, directors, and agents from and against any and all claims, losses, liabilities, or damages arising from or related to any transaction conducted by me on its platform
+                              </p>
                             </div>
                           </div>
                         )}

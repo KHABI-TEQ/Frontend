@@ -181,8 +181,8 @@ const BuyAPropertySearchModal = ({
     <Fragment>
       <form
         onSubmit={formik.handleSubmit}
-        className='container min-h-[181px] hidden md:flex flex-col gap-[25px] py-[25px] px-[30px] bg-[#FFFFFF] sticky top-0 z-20'>
-        <div className='w-full pb-[10px] flex  flex-wrap justify-between items-center gap-[20px] border-b-[1px] border-[#C7CAD0]'>
+        className='container min-h-[181px] hidden md:flex flex-col gap-[15px] py-[35px] px-[30px] bg-[#FFFFFF] sticky top-0 z-20'>
+        <div className='w-full pb-[10px] flex flex-wrap justify-between items-center gap-[20px] border-b-[1px] border-[#C7CAD0]'>
           <div className='flex flex-wrap gap-[15px]'>
             <h3 className='font-semibold text-[#1E1E1E]'>Usage Options</h3>
             {['All', 'Land', 'Residential', 'Commercial'].map(
@@ -244,17 +244,21 @@ const BuyAPropertySearchModal = ({
             )}
           </div>
         </div>
-        <div className='flex gap-[20px] items-end'>
-          {/**Preferred Location */}
-          <SelectStateLGA
-            placeholder='Enter state, lga, city....'
-            formik={formik}
-            heading='Preferred Location'
-          />
-          {/**Price Range */}
-          <div className='flex flex-col gap-[10px]'>
+        {/* Fixed form inputs layout */}
+        <div className='w-full flex items-center gap-[15px]'>
+          {/* Location Input - Fixed width */}
+          <div className='w-[280px]'>
+            <SelectStateLGA
+              placeholder='Enter state, lga, city....'
+              formik={formik}
+            />
+          </div>
+          
+          {/* Price Range Input - Equal flex */}
+          <div className='flex-1 min-w-0'>
             <Input
-              className='w-[189px]'
+              className='w-full h-[50px]'
+              style={{ marginTop: '-30px' }}
               placeholder='Price Range'
               type='text'
               label=''
@@ -284,10 +288,12 @@ const BuyAPropertySearchModal = ({
               />
             )}
           </div>
-          {/**Document Type */}
-          <div className='flex flex-col gap-[10px]'>
+          
+          {/* Document Type Input - Equal flex */}
+          <div className='flex-1 min-w-0'>
             <Input
-              className='w-[189px] text-sm'
+              className='w-full h-[50px] text-sm'
+              style={{ marginTop: '-30px' }}
               placeholder='Document Type'
               type='text'
               label=''
@@ -305,10 +311,12 @@ const BuyAPropertySearchModal = ({
               />
             )}
           </div>
-          {/**Bedroom Component */}
-          <div className='flex flex-col gap-[10px]'>
+          
+          {/* Bedroom Input - Equal flex */}
+          <div className='flex-1 min-w-0'>
             <Input
-              className='w-[189px] text-sm'
+              className='w-full h-[50px] text-sm'
+              style={{ marginTop: '-30px' }}
               placeholder='bedroom'
               type='text'
               label=''
@@ -326,13 +334,14 @@ const BuyAPropertySearchModal = ({
               />
             )}
           </div>
-          {/**Buttons ~ More Filter and Search */}
-          <div className='flex gap-[20px]'>
-            <div className='flex flex-col gap-[10px]'>
+          
+          {/* Buttons Container - Fixed width */}
+          <div className='flex gap-[15px] shrink-0'>
+            <div className='relative'>
               <button
                 type='button'
                 onClick={() => setIsMoreFilterModalOpened(true)}
-                className='w-[133px] h-[50px] border-[1px] border-[#09391C] text-base text-[#09391C]'>
+                className='w-[120px] h-[50px] border-[1px] border-[#09391C] text-base text-[#09391C] font-medium'>
                 More filter
               </button>
               {isMoreFilterModalOpened && (
@@ -345,7 +354,7 @@ const BuyAPropertySearchModal = ({
             </div>
             <button
               type='button'
-              className='w-[153px] h-[50px] bg-[#8DDB90] text-base text-white font-bold'
+              className='w-[140px] h-[50px] bg-[#8DDB90] text-base text-white font-bold'
               onClick={() => {
                 onSearch(cleanedPayload);
                 setIsSearchButtonClicked(true);

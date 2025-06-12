@@ -170,7 +170,6 @@ const Mobile = ({
       <div className='w-full flex flex-col gap-[20px]'>
         <div className='py-[10px] bg-white w-full sticky top-0 z-20'>
           <article className='h-full w-full flex flex-col gap-[15px] px-[10px]'>
-            {/**Preferred Location */}
             <SelectStateLGA
               placeholder='Enter state, lga, city....'
               formik={formik}

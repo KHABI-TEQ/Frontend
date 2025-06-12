@@ -87,12 +87,51 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       });
   };
 
-  const logout = (callback?: () => void) => {
-    console.log('Logging out...');
-    Cookies.remove('token');
-    setUser(null);
-    router.push('/auth/login');
-    if (callback) callback();
+  const logout = async (callback?: () => void) => {
+    try {
+      console.log('Starting logout process...');
+      
+      if (!router) {
+        console.error('Router is not initialized');
+        throw new Error('Router is not initialized');
+      }
+
+      // Clear cookies
+      console.log('Clearing cookies...');
+      Cookies.remove('token');
+      
+      // Clear session storage
+      console.log('Clearing session storage...');
+      sessionStorage.removeItem('user');
+      
+      // Clear local storage
+      console.log('Clearing local storage...');
+      localStorage.removeItem('email');
+      localStorage.removeItem('fullname');
+      localStorage.removeItem('phoneNumber');
+      localStorage.removeItem('token');
+      
+      // Clear user context
+      console.log('Clearing user context...');
+      setUser(null);
+      
+      console.log('Showing success toast...');
+      toast.success('Logged out successfully');
+      
+      console.log('Redirecting to login page...');
+      await router.push('/auth/login');
+      
+      if (callback) {
+        console.log('Executing callback...');
+        await callback();
+      }
+      
+      console.log('Logout process completed');
+    } catch (error) {
+      console.error('Error during logout:', error);
+      toast.error('Error during logout');
+      throw error;
+    }
   };
 
   useEffect(() => {

@@ -20,6 +20,7 @@ const SECTIONS: { title: string; fields: string[] }[] = [
       "noOfBathroom",
       "noOfToilet",
       "noOfCarPark",
+      "isTenanted",
     ],
   },
   {
@@ -55,6 +56,7 @@ const FIELD_LABELS: Record<string, string> = {
   features: "Features",
   jvConditions: "JV Conditions",
   tenantCriteria: "Tenant Criteria",
+  isTenanted: "Property Tenanted Status",
 };
 
 interface PropertySummaryProps {

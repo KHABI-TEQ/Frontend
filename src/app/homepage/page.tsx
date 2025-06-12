@@ -20,6 +20,8 @@ import { GET_REQUEST } from '@/utils/requests';
 import Cookies from 'js-cookie';
 import { useUserContext } from '@/context/user-context';
 import HowItWorksSection from '@/components/homepage/how-it-works-section';
+import ConnectBuyersSection from '@/components/homepage/connect-buyers-section';
+import ClientTestimonials from '@/components/homepage/client-testimonials';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import Countdown from '../coming-soon-modal/page';
@@ -125,8 +127,7 @@ const Homepage = ({ isComingSoon }: { isComingSoon?: boolean }) => {
                   transition={{ delay: 0.3 }}
                   viewport={{ once: true }}
                   className='text-lg md:text-xl font-bold text-[#FFFFFF]'>
-                  Tell us what you need — we&apos;ll bring you the listings that
-                  match.
+                  Tell us what you need — we&apos;ll show you matching properties.
                 </motion.h3>
               </div>
               <Link href={'/preference'}>
@@ -145,7 +146,7 @@ const Homepage = ({ isComingSoon }: { isComingSoon?: boolean }) => {
           {/* <NewSection /> */}
           <HowItWorksSection />
           <SeeWhatOthers />
-          {/* <AgentMarket/> */}
+          <ConnectBuyersSection />
           <Section3
             isHomepage={true}
             isAgentPage={false}
@@ -153,6 +154,7 @@ const Homepage = ({ isComingSoon }: { isComingSoon?: boolean }) => {
             headingColor='#09391C'
           />
           <FAQs isHomePage={true} />
+          <ClientTestimonials />
           {/* <Feedback /> */}
           <HelpButton />
         </main>

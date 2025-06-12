@@ -50,8 +50,7 @@ const HeroSection = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
             className='font-normal lg:w-[890px] text-center lg:text-[24px] text-base md:text-[20px] lg:leading-[38.4px] leading-[25px] text-[#FFFFFF] md:my-0 my-4'>
-            Discover exclusive listings, advanced search tools, and expert
-            support to make your real estate journey seamless.
+            Buy, sell, rent or joint venture faster with expert support, smart search tools, and exclusive property listings
           </motion.p>
           {/* <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -69,7 +68,7 @@ const HeroSection = () => {
             <Button
               green={true}
               className='h-[50px] md:h-[66px] w-full md:w-1/2 lg:w-[283px] py-[12px] px-[24px] text-white md:text-[20px] text-base md:leading-[32px] font-bold'
-              value={'Search listing now'}
+              value={'Browse Properties'}
               onClick={() => {
                 window.location.href = '/market-place';
               }}
@@ -77,7 +76,7 @@ const HeroSection = () => {
             <Button
               green={true}
               className='h-[50px] md:h-[66px] w-full md:w-1/2 lg:w-[294px] py-[12px] px-[24px] text-white md:text-[20px] text-base md:leading-[32px] font-bold'
-              value={'List a property'}
+              value={'Post a Property'}
               onClick={() => {
                 window.location.href = '/my_listing';
               }}

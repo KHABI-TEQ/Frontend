@@ -21,7 +21,7 @@ const SHOW_COMING_SOON = false;
 export const metadata: Metadata = {
   title: 'Khabiteq',
   description:
-    'Simplifying real estate transactions in Lagos. Buy, sell, rent, and manage properties with ease through Khabi-Teq’s trusted platform',
+    "Simplifying real estate transactions in Lagos. Buy, sell, rent, and manage properties with ease through Khabi-Teq's trusted platform",
   icons: {
     icon: '/khabi-teq.svg',
   },
@@ -59,30 +59,30 @@ export default function RootLayout({
     );
   }
   return (
-    <UserProvider>
-      <PageContextProvider>
-        <CreateBriefProvider>
-          <SelectedBriefsProvider>
-            <html lang="en">
-              <body
-                className={`${roboto.variable} ${archivo.variable} ${epilogue.variable} ${ubuntu.variable} antialiased`}
-              >
-                {' '}
-                {/*This was refactored to accomodate Admin routes without the Header and Footer  ||Gb */}
-                <HeaderFooterWrapper>
-                  <Body>
-                    <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''}>
+    <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''}>
+      <UserProvider>
+        <PageContextProvider>
+          <CreateBriefProvider>
+            <SelectedBriefsProvider>
+              <html lang="en">
+                <body
+                  className={`${roboto.variable} ${archivo.variable} ${epilogue.variable} ${ubuntu.variable} antialiased`}
+                >
+                  {' '}
+                  {/*This was refactored to accomodate Admin routes without the Header and Footer  ||Gb */}
+                  <HeaderFooterWrapper>
+                    <Body>
                       {children}
-                    </GoogleOAuthProvider>
-                  </Body>
-                </HeaderFooterWrapper>
-                <Toaster />
-              </body>
-              <GoogleAnalytics gaId="G-9Y0M3GTLDT" />
-            </html>
-          </SelectedBriefsProvider>
-        </CreateBriefProvider>
-      </PageContextProvider>
-    </UserProvider>
+                    </Body>
+                  </HeaderFooterWrapper>
+                  <Toaster />
+                </body>
+                <GoogleAnalytics gaId="G-9Y0M3GTLDT" />
+              </html>
+            </SelectedBriefsProvider>
+          </CreateBriefProvider>
+        </PageContextProvider>
+      </UserProvider>
+    </GoogleOAuthProvider>
   );
 }

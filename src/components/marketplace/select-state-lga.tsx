@@ -72,8 +72,8 @@ const SelectStateLGA: FC<SelectStateLGAProps> = ({
   }, []);
 
   return (
-    <label htmlFor='' className='flex flex-col w-full md:w-[354px] gap-[4px]'>
-      <h2 className='text-base text-[#1E1E1E] font-medium'>{heading}</h2>
+    <label htmlFor='' className='flex flex-col w-full'>
+      {heading && <h2 className='text-base text-[#1E1E1E] font-medium'>{heading}</h2>}
       <div className='flex items-center w-full h-[50px] border-[1px] cursor-pointer border-[#D6DDEB] disabled:bg-gray-300 disabled:cursor-not-allowed'>
         <input
           className='w-[85%] outline-none h-full px-[12px] text-base placeholder:text-[#A8ADB7] text-black cursor-pointer'

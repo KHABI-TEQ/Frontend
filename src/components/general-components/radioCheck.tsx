@@ -77,9 +77,7 @@ const RadioCheck: FC<RadioCheckProps> = ({
           height: '24px',
           backgroundColor: 'transparent',
         }}
-        defaultChecked={isChecked}
         checked={isChecked}
-        //checked={selectedValue === value}
         title={title ?? value}
         type={type}
         name={name}
@@ -87,7 +85,6 @@ const RadioCheck: FC<RadioCheckProps> = ({
         disabled={isDisabled}
         className='w-[24px] h-[24px] flex items-center justify-center rounded-full border-[#5A5D63] peer-checked:bg-[#8DDB90] border-[2px]'
         onChange={handleChange}
-        //checked={selectedValue === value}
       />
       <span
         style={modifyStyle}
