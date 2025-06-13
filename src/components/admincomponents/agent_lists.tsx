@@ -125,30 +125,33 @@ export default function AgentLists({ setDetails }: AgentManagementTabsProps) {
           message: 'Failed to get data',
         });
       }
+
       const data = response.agents.data;
       console.log('Agents Data:', data);
       const filteredAgents = data.filter((agent: any) => agent.userType === 'Agent');
       setAgents(filteredAgents);
 
-      // Get total count from the API response
+      // Get counts from the API response
       const totalCount = response.agents.totalCount || 0;
-      const activeAgents = filteredAgents.filter((a: any) => !a.isInActive && !a.isDeleted).length;
-      const inActiveAgents = filteredAgents.filter((a: any) => a.isInActive && !a.isDeleted).length;
-      const bannedAgents = filteredAgents.filter((a: any) => a.isDeleted).length;
-      const flaggedAgents = filteredAgents.filter((a: any) => a.isFlagged).length;
+      const activeCount = response.agents.activeCount || 0;
+      const flaggedCount = response.agents.flaggedCount || 0;
+      const bannedCount = response.agents.bannedCount || 0;
 
       setIsLoadingDetails({
         isLoading: false,
         message: 'Data Loaded',
       });
+
+      // Update the details with the counts from the API
       setDetails?.({
         totalAgents: totalCount,
-        activeAgents,
-        inActiveAgents,
-        bannedAgents,
-        flaggedAgents,
+        activeAgents: activeCount,
+        inActiveAgents: response.agents.inactiveCount || 0,
+        bannedAgents: bannedCount,
+        flaggedAgents: flaggedCount,
       });
     } catch (error: any) {
+      console.error('Error fetching agents:', error);
       setIsLoadingDetails({
         isLoading: false,
         message: 'Failed to get data',

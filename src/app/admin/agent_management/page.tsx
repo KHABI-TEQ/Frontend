@@ -297,6 +297,10 @@ const BoxNotification: React.FC<BoxNotificationProps> = ({
         return 'text-[#2E2C34]';
     }
   };
+
+  // Format the number with commas
+  const formattedTotal = typeof total === 'number' ? total.toLocaleString() : '0';
+
   return (
     <div
       style={style}
@@ -309,7 +313,7 @@ const BoxNotification: React.FC<BoxNotificationProps> = ({
       </h3>
       <h2
         className={`text-[#181336] font-semibold text-3xl ${archivo.className}`}>
-        {Number(total).toLocaleString()}
+        {formattedTotal}
       </h2>
     </div>
   );
