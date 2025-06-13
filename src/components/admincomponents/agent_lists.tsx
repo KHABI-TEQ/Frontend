@@ -104,6 +104,44 @@ export default function AgentLists({ setDetails }: AgentManagementTabsProps) {
   const [agentToDelete, setAgentToDelete] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(3);
+  const [sortConfig, setSortConfig] = useState<{
+    key: string;
+    direction: 'asc' | 'desc';
+  } | null>(null);
+
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+
+    const sortedAgents = [...agents].sort((a, b) => {
+      if (key === 'name') {
+        const nameA = `${a.firstName} ${a.lastName}`.toLowerCase();
+        const nameB = `${b.firstName} ${b.lastName}`.toLowerCase();
+        return direction === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+      }
+      if (key === 'email') {
+        return direction === 'asc' 
+          ? a.email.localeCompare(b.email)
+          : b.email.localeCompare(a.email);
+      }
+      if (key === 'type') {
+        return direction === 'asc'
+          ? (a.agentData?.agentType || '').localeCompare(b.agentData?.agentType || '')
+          : (b.agentData?.agentType || '').localeCompare(a.agentData?.agentType || '');
+      }
+      return 0;
+    });
+
+    setAgents(sortedAgents);
+  };
+
+  const getSortIcon = (key: string) => {
+    if (!sortConfig || sortConfig.key !== key) return '↕';
+    return sortConfig.direction === 'asc' ? '↑' : '↓';
+  };
 
   const getAgentsData = async (page = 1, limit = 20, type = 'all') => {
     setCurrentPage(page);
@@ -321,27 +359,47 @@ export default function AgentLists({ setDetails }: AgentManagementTabsProps) {
           <div className='w-full overflow-x-auto md:overflow-clip mt-6'>
             <table className='min-w-[900px] md:w-full border-collapse'>
               <thead className='bg-[#fafafa] text-left text-sm font-medium text-gray-600'>
-              <tr className='border-b'>
-                <th className='p-3'>
-                  <input title='checkbox' type='checkbox' />
-                </th>
-                <th className='p-3'>ID</th>
-                <th className='p-3'>Legal Name</th>
-                {active === 'Onboarding Agents' ? (
-                  <>
-                    <th className='p-3'>Email</th>
-                    <th className='p-3'>Type of Agent</th>
-                    <th className='p-3'>Address</th>
-                  </>
-                ) : (
-                  <>
-                    <th className='p-3'>Total Briefs</th>
-                    <th className='p-3'>Type of Agent</th>
-                    <th className='p-3'>Area of operation</th>
-                  </>
-                )}
-                <th className='p-3'>Action</th>
-              </tr>
+                <tr className='border-b'>
+                  <th className='p-3'>
+                    <input title='checkbox' type='checkbox' />
+                  </th>
+                  <th className='p-3'>ID</th>
+                  <th 
+                    className='p-3 cursor-pointer hover:bg-gray-100'
+                    onClick={() => handleSort('name')}
+                  >
+                    Legal Name {getSortIcon('name')}
+                  </th>
+                  {active === 'Onboarding Agents' ? (
+                    <>
+                      <th 
+                        className='p-3 cursor-pointer hover:bg-gray-100'
+                        onClick={() => handleSort('email')}
+                      >
+                        Email {getSortIcon('email')}
+                      </th>
+                      <th 
+                        className='p-3 cursor-pointer hover:bg-gray-100'
+                        onClick={() => handleSort('type')}
+                      >
+                        Type of Agent {getSortIcon('type')}
+                      </th>
+                      <th className='p-3'>Address</th>
+                    </>
+                  ) : (
+                    <>
+                      <th className='p-3'>Total Briefs</th>
+                      <th 
+                        className='p-3 cursor-pointer hover:bg-gray-100'
+                        onClick={() => handleSort('type')}
+                      >
+                        Type of Agent {getSortIcon('type')}
+                      </th>
+                      <th className='p-3'>Area of operation</th>
+                    </>
+                  )}
+                  <th className='p-3'>Action</th>
+                </tr>
               </thead>
               <tbody>
             {filteredAgents.map((item, index) => (
