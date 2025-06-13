@@ -11,7 +11,7 @@ import axios from 'axios';
 import { URLS } from '@/utils/URLS';
 import { GET_REQUEST } from '@/utils/requests';
 //import { useUserContext } from '@/context/user-context';
-//import Cookies from 'js-cookie';
+import Cookies from 'js-cookie';
 // import { BriefType } from '@/types';
 // import toast from 'react-hot-toast';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -106,9 +106,13 @@ const Brief: FC<TotalBriefProps> = ({
    */
   const handleDeleteBrief = async (id: string | undefined) => {
     const url = URLS.BASE + URLS.deleteSellBrief + id;
-    console.log(url);
+    const token = Cookies.get('token');
     try {
-      const response = await axios.delete(url);
+      const response = await axios.delete(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       console.log(response);
       toast.success('Brief deleted');
       if (response.status === 200) {
@@ -116,6 +120,7 @@ const Brief: FC<TotalBriefProps> = ({
       }
     } catch (error) {
       console.log(error);
+      toast.error('Failed to delete brief');
     }
   };
   return (

@@ -90,7 +90,10 @@ const BRIEF_TYPES = ['Joint Venture', 'Outright Sales', 'Rent'];
 
 const fetchAllBriefTypes = async (ownerType: string) => {
   try {
-    // Fetch all brief types in parallel
+    // Get the token from cookies
+    const token = Cookies.get('token');
+    
+    // Fetch all brief types in parallel with authorization
     const allResponses = await Promise.all(
       BRIEF_TYPES.map((briefType) =>
         POST_REQUEST(URLS.BASE + URLS.adminGetAllBriefs, {
@@ -98,7 +101,7 @@ const fetchAllBriefTypes = async (ownerType: string) => {
           ownerType,
           page: currentPage,
           limit: 10,
-        })
+        }, token) // Add token as third parameter
       )
     );
 

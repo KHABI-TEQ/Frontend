@@ -20,6 +20,7 @@ import { URLS } from '@/utils/URLS';
 import { GET_REQUEST, POST_REQUEST } from '@/utils/requests';
 import toast from 'react-hot-toast';
 import Pagination from '../pagination';
+import Cookies from 'js-cookie';
 
 export default function IncomingInspections({
   onPendingCount,
@@ -76,9 +77,14 @@ export default function IncomingInspections({
 
   const handleDeleteBrief = async (briefId: string) => {
     try {
-      const response = await POST_REQUEST(`${URLS.BASE + URLS.deleteBrief}`, {
-        id: briefId,
-      });
+      const token = Cookies.get('token');
+      const response = await POST_REQUEST(
+        `${URLS.BASE + URLS.deleteBrief}`,
+        {
+          id: briefId,
+        },
+        token
+      );
       if (response?.success) {
         toast.success('Brief deleted successfully');
         setTotalBriefData((prev) => prev.filter((item) => item.id !== briefId));
@@ -92,9 +98,14 @@ export default function IncomingInspections({
 
   const handleRejectBrief = async (briefId: string) => {
     try {
-      const response = await POST_REQUEST(`${URLS.BASE + URLS.rejectBrief}`, {
-        id: briefId,
-      });
+      const token = Cookies.get('token');
+      const response = await POST_REQUEST(
+        `${URLS.BASE + URLS.rejectBrief}`,
+        {
+          id: briefId,
+        },
+        token
+      );
       if (response?.success) {
         toast.success('Brief rejected successfully');
         setTotalBriefData((prev) => prev.filter((item) => item.id !== briefId));

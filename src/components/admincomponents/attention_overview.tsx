@@ -146,6 +146,7 @@ export default function AttentionOverview() {
       setIsLoading(true);
 
       try {
+        const token = Cookies.get('token');
         const response = await POST_REQUEST(
           URLS.BASE + URLS.adminGetAllBriefs,
           {
@@ -153,7 +154,8 @@ export default function AttentionOverview() {
             ownerType: 'PropertyOwner',
             page: currentPage,
             limit: 10,
-          }
+          },
+          token
         );
 
         if (response?.success === false) {
