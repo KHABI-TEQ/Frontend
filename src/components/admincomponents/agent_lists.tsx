@@ -152,7 +152,7 @@ export default function AgentLists({ setDetails }: AgentManagementTabsProps) {
     try {
       const response = await GET_REQUEST(
         URLS.BASE + URLS.getAllUsers,
-        Cookies.get('token')
+        Cookies.get('adminToken')
       );
 
       if (response?.success === false) {
@@ -221,7 +221,7 @@ export default function AgentLists({ setDetails }: AgentManagementTabsProps) {
   const handleDeleteAgent = async (agentId: string, reason: string) => {
     try {
       const response = await DELETE_REQUEST(
-        `${URLS.BASE}/admin/delete-agent/${agentId}`,
+        `${URLS.BASE + URLS.deleteAgent}/${agentId}`,
         reason
       );
       if (response?.success) {
@@ -628,6 +628,7 @@ const tabs = [
 ];
 
 const statsOptions = [
-  { value: '1', label: 'Individual' },
-  { value: '2', label: 'Incoporated' },
+  { value: '1', label: 'Individual Agent' },
+  { value: '2', label: 'Company Agent' },
+  { value: '3', label: 'All Types' },
 ];
