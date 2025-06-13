@@ -16,6 +16,7 @@ import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { downloadImage } from '@/utils/downloadImage';
 import Image from 'next/image';
 import viewIcon from '@/svgs/view-image.svg';
+import Cookies from 'js-cookie';
 
 export default function OnboardAgentBar({
   user,
@@ -67,8 +68,10 @@ export default function OnboardAgentBar({
             approved: true,
           };
 
+      const adminToken = Cookies.get('adminToken');
+
       await toast.promise(
-        POST_REQUEST(url, payload).then((response) => {
+        POST_REQUEST(url, payload, adminToken).then((response) => {
           if ((response as any).success) {
             toast.success(
               isBrief
@@ -98,7 +101,6 @@ export default function OnboardAgentBar({
         }
       );
     } catch (error) {
-      //   console.error(error);
       toast.error('An error occurred, please try again');
     }
   };

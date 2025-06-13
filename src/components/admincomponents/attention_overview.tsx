@@ -146,7 +146,7 @@ export default function AttentionOverview() {
       setIsLoading(true);
 
       try {
-        const token = Cookies.get('token');
+        const adminToken = Cookies.get('adminToken');
         const response = await POST_REQUEST(
           URLS.BASE + URLS.adminGetAllBriefs,
           {
@@ -155,7 +155,7 @@ export default function AttentionOverview() {
             page: currentPage,
             limit: 10,
           },
-          token
+          adminToken
         );
 
         if (response?.success === false) {

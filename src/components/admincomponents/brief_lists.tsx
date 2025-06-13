@@ -90,8 +90,8 @@ const BRIEF_TYPES = ['Joint Venture', 'Outright Sales', 'Rent'];
 
 const fetchAllBriefTypes = async (ownerType: string) => {
   try {
-    // Get the token from cookies
-    const token = Cookies.get('token');
+    // Get the admin token from cookies
+    const adminToken = Cookies.get('adminToken');
     
     // Fetch all brief types in parallel with authorization
     const allResponses = await Promise.all(
@@ -101,7 +101,7 @@ const fetchAllBriefTypes = async (ownerType: string) => {
           ownerType,
           page: currentPage,
           limit: 10,
-        }, token) // Add token as third parameter
+        }, adminToken) // Use adminToken instead of token
       )
     );
 

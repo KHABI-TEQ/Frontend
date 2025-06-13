@@ -334,7 +334,7 @@ export default function BriefManagement() {
     setAreInputsDisabled(true);
     try {
       const url = URLS.BASE + '/admin/property/new';
-      const token = Cookies.get('token');
+      const adminToken = Cookies.get('adminToken');
 
       let briefType = '';
       if (selectedCard === 'sell') briefType = 'Outright Sales';
@@ -350,7 +350,7 @@ export default function BriefManagement() {
           const formData = new FormData();
           formData.append('file', image as File);
           const uploadUrl = URLS.BASE + URLS.uploadImg;
-          const response = await POST_REQUEST_FILE_UPLOAD(uploadUrl, formData);
+          const response = await POST_REQUEST_FILE_UPLOAD(uploadUrl, formData, adminToken);
           if (response?.url) {
             uploadedImageUrls.push(response.url);
           }
@@ -404,7 +404,7 @@ export default function BriefManagement() {
       console.log(payload);
 
       await toast.promise(
-        POST_REQUEST(url, payload, token).then((response) => {
+        POST_REQUEST(url, payload, adminToken).then((response) => {
           if ((response as any).owner) {
             toast.success('Property submitted successfully');
             setIsSubmittedSuccessfully(true);

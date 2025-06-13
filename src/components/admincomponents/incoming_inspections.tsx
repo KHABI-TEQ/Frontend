@@ -59,9 +59,14 @@ export default function IncomingInspections({
 
   const confirmApproveBrief = async (briefId: string) => {
     try {
-      const response = await POST_REQUEST(`${URLS.BASE + URLS.approveBrief}`, {
-        id: briefId,
-      });
+      const adminToken = Cookies.get('adminToken');
+      const response = await POST_REQUEST(
+        `${URLS.BASE + URLS.approveBrief}`,
+        {
+          id: briefId,
+        },
+        adminToken
+      );
       if (response?.success) {
         toast.success('Brief approved successfully');
         setTotalBriefData((prev) => prev.filter((item) => item.id !== briefId));
@@ -77,13 +82,13 @@ export default function IncomingInspections({
 
   const handleDeleteBrief = async (briefId: string) => {
     try {
-      const token = Cookies.get('token');
+      const adminToken = Cookies.get('adminToken');
       const response = await POST_REQUEST(
         `${URLS.BASE + URLS.deleteBrief}`,
         {
           id: briefId,
         },
-        token
+        adminToken
       );
       if (response?.success) {
         toast.success('Brief deleted successfully');
@@ -98,13 +103,13 @@ export default function IncomingInspections({
 
   const handleRejectBrief = async (briefId: string) => {
     try {
-      const token = Cookies.get('token');
+      const adminToken = Cookies.get('adminToken');
       const response = await POST_REQUEST(
         `${URLS.BASE + URLS.rejectBrief}`,
         {
           id: briefId,
         },
-        token
+        adminToken
       );
       if (response?.success) {
         toast.success('Brief rejected successfully');
@@ -122,10 +127,12 @@ export default function IncomingInspections({
       setIsLoading(true);
 
       try {
+        const adminToken = Cookies.get('adminToken');
         const response = await GET_REQUEST(
           `${
             URLS.BASE + URLS.adminGetAllInspections
-          }?page=${currentPage}&limit=10&propertyType=PropertySell`
+          }?page=${currentPage}&limit=10&propertyType=PropertySell`,
+          adminToken
         );
 
         if (response?.success === false) {
