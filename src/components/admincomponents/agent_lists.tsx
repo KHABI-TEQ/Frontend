@@ -130,7 +130,8 @@ export default function AgentLists({ setDetails }: AgentManagementTabsProps) {
       const filteredAgents = data.filter((agent: any) => agent.userType === 'Agent');
       setAgents(filteredAgents);
 
-      const totalAgents = filteredAgents.length;
+      // Get total count from the API response
+      const totalCount = response.agents.totalCount || 0;
       const activeAgents = filteredAgents.filter((a: any) => !a.isInActive && !a.isDeleted).length;
       const inActiveAgents = filteredAgents.filter((a: any) => a.isInActive && !a.isDeleted).length;
       const bannedAgents = filteredAgents.filter((a: any) => a.isDeleted).length;
@@ -141,7 +142,7 @@ export default function AgentLists({ setDetails }: AgentManagementTabsProps) {
         message: 'Data Loaded',
       });
       setDetails?.({
-        totalAgents,
+        totalAgents: totalCount,
         activeAgents,
         inActiveAgents,
         bannedAgents,
