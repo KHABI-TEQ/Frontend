@@ -44,16 +44,14 @@ export default function AgentManagement() {
     },
   });
 
-  const fixedBoxData: BoxNotificationProps[] = [
-    { name: 'Total Agents', total: 1200, type: 'initial' },
-    { name: 'Active Agents', total: 900, type: 'active' },
-    { name: 'Flagged Agents', total: 50, type: 'flagged' },
-    { name: 'Banned Agents', total: 10, type: 'banned' },
-  ];
-
   const agentBoxData: BoxNotificationProps[] = [
     {
-      name: 'Total Active Agents',
+      name: 'Total Agents',
+      total: details.totalAgents || 0,
+      type: 'initial',
+    },
+    {
+      name: 'Active Agents',
       total: details.activeAgents || 0,
       type: 'active',
     },
@@ -62,7 +60,11 @@ export default function AgentManagement() {
       total: details.flaggedAgents || 0,
       type: 'flagged',
     },
-    { name: 'Banned Agents', total: details.bannedAgents || 0, type: 'banned' },
+    {
+      name: 'Banned Agents',
+      total: details.bannedAgents || 0,
+      type: 'banned',
+    },
   ];
 
   const landlordBoxData: BoxNotificationProps[] = [
@@ -196,9 +198,21 @@ export default function AgentManagement() {
         </div>
       </div>
       <div className='flex overflow-x-auto hide-scrollbar gap-[30px] w-full mt-6'>
-        {fixedBoxData.map((item, index) => (
-          <BoxNotification key={index} {...item} />
-        ))}
+        {data &&
+          data.map((item: BoxNotificationProps, index: number) => (
+            <BoxNotification
+              style={{
+                flexGrow: 1,
+                height: '97px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
+                padding: '15px 15px',
+              }}
+              key={index}
+              {...item}
+            />
+          ))}
       </div>
       {/* Tab Buttons */}
       <div className='flex items-center my-6 gap-4'>
