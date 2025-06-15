@@ -114,7 +114,7 @@ export default function AgentLists({ setDetails }: AgentManagementTabsProps) {
     try {
       const response = await GET_REQUEST(
         URLS.BASE + URLS.getAllUsers,
-        Cookies.get('token')
+        Cookies.get('adminToken')
       );
 
       if (response?.success === false) {
