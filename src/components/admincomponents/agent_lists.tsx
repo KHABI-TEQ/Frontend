@@ -162,7 +162,7 @@ export default function AgentLists({ setDetails }: AgentManagementTabsProps) {
       const response = await POST_REQUEST(`${URLS.BASE + URLS.agentApproval}`, {
         agentId,
         approved: true,
-      }, Cookies.get('admintoken'));
+      }, Cookies.get('adminToken'));
       if (response?.success) {
         toast.success('Agent approved successfully');
         setAgents((prev) =>
