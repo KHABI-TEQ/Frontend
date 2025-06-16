@@ -93,12 +93,16 @@ const fetchAllBriefTypes = async (ownerType: string) => {
     // Fetch all brief types in parallel
     const allResponses = await Promise.all(
       BRIEF_TYPES.map((briefType) =>
-        POST_REQUEST(URLS.BASE + URLS.adminGetAllBriefs, {
-          briefType,
-          ownerType,
-          page: currentPage,
-          limit: 10,
-        })
+        POST_REQUEST(
+          URLS.BASE + URLS.adminGetAllBriefs,
+          {
+            briefType,
+            ownerType,
+            page: currentPage,
+            limit: 10,
+          },
+          Cookies.get('adminToken')
+        )
       )
     );
 
