@@ -49,7 +49,7 @@ export default function AttentionOverview() {
   useEffect(() => {
     const getTotalBriefs = async () => {
       setIsLoading(true);
-
+      const adminToken = Cookies.get('adminToken');
       try {
         const response = await POST_REQUEST(
           URLS.BASE + URLS.adminGetAllBriefs,
@@ -58,7 +58,8 @@ export default function AttentionOverview() {
             ownerType: 'BuyerOrRenter',
             page: currentPage,
             limit: 10,
-          }
+          },
+          adminToken
         );
 
         if (response?.success === false) {
@@ -144,7 +145,7 @@ export default function AttentionOverview() {
   useEffect(() => {
     const getIncomingBriefs = async () => {
       setIsLoading(true);
-
+      const adminToken = Cookies.get('adminToken');
       try {
         const response = await POST_REQUEST(
           URLS.BASE + URLS.adminGetAllBriefs,
@@ -153,7 +154,8 @@ export default function AttentionOverview() {
             ownerType: 'PropertyOwner',
             page: currentPage,
             limit: 10,
-          }
+          },
+          adminToken
         );
 
         if (response?.success === false) {
