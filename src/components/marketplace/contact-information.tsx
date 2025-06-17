@@ -25,14 +25,25 @@ const ContactInformation: FC<ConractInformationProps> = ({
   payload,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [showSuccessModal, setShowSuccessModal] = useState<boolean>(false);
   const validationSchema = Yup.object({
     fullName: Yup.string().required('Name is required'),
     email: Yup.string().email('Invalid email address').notRequired(),
     phoneNumber: Yup.string()
       .required('Phone number is required')
-      .matches(/^\d+$/, 'Phone must be digits only')
+      .matches(/\d+/, 'Phone must be digits only')
       .min(10, 'Phone number must be at least 10 digits'),
   });
+
+  const handleSuccess = () => {
+    setIsSubmitting(false);
+    setShowSuccessModal(true);
+    setTimeout(() => {
+      setShowSuccessModal(false);
+      setIsContactInformationModalOpened?.(false);
+    }, 2000); // Show success modal for 2 seconds
+  };
+
   const formik = useFormik({
     initialValues: {
       fullName: '',
@@ -41,87 +52,74 @@ const ContactInformation: FC<ConractInformationProps> = ({
     },
     validationSchema,
     onSubmit: async (values) => {
-      console.log('Form submitted with values:', values);
-      console.log('Payload:', payload.values);
-
-      setIsSubmitting(true);
+      setIsSubmitting(true); // Set loading state
+      
       if (type === 'buyer') {
         try {
-          const url = URLS.BASE + URLS.userSubmitPreference;
+          const url = URLS.BASE + '/properties/buy/request/new';
           const payloadToPass = {
-            propertyType: payload.values.usageOptions
-              ? payload.values.usageOptions.join(',')
-              : '',
-            features: payload.values.desirerFeatures,
+            propertyType: payload?.values?.briefType || 'Outright Sales',
+            features: payload?.values?.desirerFeatures || [],
             docOnProperty: payload?.values?.docsOnProperty
               ? payload.values.docsOnProperty.map((opt: string) => ({
                   docName: opt,
                   isProvided: true,
                 }))
               : [],
-            propertyCondition: payload.values.desirerFeatures.toString(),
-            location: {
-              state: payload.values.location.split(',')[1].trim(),
-              localGovernment: payload.values.location.split(',')[0].trim(),
-              //area: payload.values.area,
+            propertyCondition: payload?.values?.desirerFeatures 
+              ? payload.values.desirerFeatures.toString()
+              : '',
+            location: payload?.values?.location
+              ? {
+                  state: payload.values.location.split(',')[1]?.trim() || 'Lagos',
+                  localGovernment: payload.values.location.split(',')[0]?.trim() || '',
+                  area: 'N/A'
+                }
+              : {
+                  state: 'Lagos',
+                  localGovernment: '',
+                  area: 'N/A'
+                },
+            price: Number(payload?.values?.prices?.maxPrice || 0),
+            propertyFeatures: {
+              noOfBedrooms: Number(payload?.values?.bedroom || 0),
+              additionalFeatures: payload?.values?.desirerFeatures || []
             },
-            budgetMin: Number(payload.values.prices.minPrice || 0),
-            budgetMax: Number(payload.values.prices.maxPrice || 0),
             owner: {
               fullName: values.fullName,
               phoneNumber: values.phoneNumber,
               email: values.email,
             },
             areYouTheOwner: true,
-            landSize: {
-              measurementType: payload.values.landSize.type,
-              size: Number(payload.values.landSize.size),
-            },
-            briefType: payload.values.briefType,
-            additionalFeatures: {
-              noOfBedrooms: Number(payload.values.bedroom || 0),
-              noOfBathrooms: Number(payload.values.bathroom || 0),
-            },
-            tenantCriteria: [],
-            // preferenceFeeTransaction: {
-            //   accountName: values.fullName,
-            //   transactionReciept: payload.values.paymentReceiptUrl,
-            // },
+            landSize: payload?.values?.landSize
+              ? {
+                  measurementType: payload.values.landSize.type || '',
+                  size: Number(payload.values.landSize.size || 0),
+                }
+              : {
+                  measurementType: '',
+                  size: 0,
+                },
+            briefType: 'Outright Sales',
+            usageOptions: payload?.values?.usageOptions || [],
+            pictures: []
           };
-          console.log('Payload:', payloadToPass);
-
-          await toast.promise(
-            axios.post(url, payloadToPass).then((response) => {
-              console.log('response from brief', response);
-              if ((response as any).data.owner) {
-                setIsSubmitting(false);
-                toast.success('Preference submitted successfully');
-                //setShowFinalSubmit(true);
-                // setIsSubmittedSuccessfully(true);
-                //setAreInputsDisabled(false);
-                return 'Preference submitted successfully';
-              } else {
-                const errorMessage =
-                  (response as any).error || 'Submission failed';
-                toast.error(errorMessage);
-                //setAreInputsDisabled(false);
-                setIsSubmitting(false);
-                throw new Error(errorMessage);
-              }
-            }),
-            {
-              loading: 'Submitting...',
-              // success: 'Property submitted successfully',
-              // error: 'An error occurred, please try again',
-            }
-          );
-        } catch (error) {
+          
+          const response = await axios.post(url, payloadToPass);
+          
+          if (response.data.owner) {
+            toast.success('Preference submitted successfully');
+            handleSuccess(); // Only call success after API succeeds
+          } else {
+            const errorMessage = response.data.error || 'Submission failed';
+            toast.error(errorMessage);
+            setIsSubmitting(false);
+          }
+        } catch (error: any) {
           console.error(error);
-          toast.error('Failed to submit property');
-          //setAreInputsDisabled(false);
+          const errorMessage = error?.response?.data?.message || error?.message || 'Failed to submit property';
+          toast.error(errorMessage);
           setIsSubmitting(false);
-        } finally {
-          //setAreInputsDisabled(false);
         }
       } else if (type === 'rent') {
         try {
@@ -140,7 +138,6 @@ const ContactInformation: FC<ConractInformationProps> = ({
             location: {
               state: payload.values.location.state,
               localGovernment: payload.values.location.lga,
-              //area: payload.values.area,
             },
             budgetMin: Number(payload?.values?.price?.minPrice || 0),
             budgetMax: Number(payload?.values?.price?.maxPrice || 0),
@@ -150,169 +147,139 @@ const ContactInformation: FC<ConractInformationProps> = ({
               email: values.email,
             },
             areYouTheOwner: true,
-            // landSize: {
-            //   measurementType: payload.values.landSize.type,
-            //   size: Number(payload.values.landSize.size),
-            // },
             briefType: payload.values.briefType,
             additionalFeatures: {
               noOfBedrooms: Number(payload.values.bedroom || 0),
               noOfBathrooms: Number(payload.values.bathroom || 0),
             },
             tenantCriteria: [],
-            // preferenceFeeTransaction: {
-            //   accountName: values.fullName,
-            //   transactionReciept: payload.values.paymentReceiptUrl,
-            // },
           };
-          console.log('Payload:', payloadToPass);
-
-          await toast.promise(
-            axios.post(url, payloadToPass).then((response) => {
-              console.log('response from brief', response);
-              if ((response as any).data.owner) {
-                setIsSubmitting(false);
-                toast.success('Preference submitted successfully');
-                //setShowFinalSubmit(true);
-                // setIsSubmittedSuccessfully(true);
-                //setAreInputsDisabled(false);
-                return 'Preference submitted successfully';
-              } else {
-                const errorMessage =
-                  (response as any).error || 'Submission failed';
-                toast.error(errorMessage);
-                //setAreInputsDisabled(false);
-                setIsSubmitting(false);
-                throw new Error(errorMessage);
-              }
-            }),
-            {
-              loading: 'Submitting...',
-              // success: 'Property submitted successfully',
-              // error: 'An error occurred, please try again',
-            }
-          );
-        } catch (error) {
+          
+          const response = await axios.post(url, payloadToPass);
+          
+          if (response.data.owner) {
+            toast.success('Preference submitted successfully');
+            handleSuccess(); // Only call success after API succeeds
+          } else {
+            const errorMessage = response.data.error || 'Submission failed';
+            toast.error(errorMessage);
+            setIsSubmitting(false);
+          }
+        } catch (error: any) {
           console.error(error);
-          toast.error('Failed to submit property');
+          const errorMessage = error?.response?.data?.message || error?.message || 'Failed to submit property';
+          toast.error(errorMessage);
           setIsSubmitting(false);
-          //setAreInputsDisabled(false);
-        } finally {
-          //setAreInputsDisabled(false);
         }
       }
-      //asynchronous http request
-      // try {
-      //   const response = await axios.post(URLS.BASE);
-      //   if (response.status === 200) {
-      //     //do something
-      //   } else {
-      //   }
-      // } catch (err) {
-      //   console.error(err);
-      // }
-      //close the modal
-      setIsContactInformationModalOpened?.(false);
     },
   });
+
   return (
     <PopUpModal>
-      <motion.div
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: 20, opacity: 0 }}
-        transition={{ duration: 0.2 }}
-        viewport={{ once: true }}
-        id='contact-information-modal'
-        whileInView={{ opacity: 1, y: 0 }}
-        className='lg:w-[649px] flex flex-col gap-[26px]'>
-        <div className='w-full flex items-start justify-end'>
-          <button
-            onClick={() => setIsContactInformationModalOpened?.(false)}
-            type='button'
-            className='w-[51px] h-[51px] flex items-center justify-center rounded-full bg-[#FFFFFF]'>
-            <FontAwesomeIcon
-              icon={faClose}
-              width={24}
-              height={24}
-              color='#181336'
-              className='w-[24px] h-[24px]'
-            />
-            {''}
-          </button>
-        </div>
-        <form
-          onSubmit={formik.handleSubmit}
-          className='md:py-[40px] py-[30px] px-[30px] md:px-[60px] rounded-[4px] bg-white shadow-md flex items-center justify-center'>
-          <div className='w-full flex flex-col gap-[21px] md:gap-[42px]'>
-            <div className='flex flex-col gap-[4px] items-center justify-center'>
-              <h2 className='text-2xl font-bold text-gray-900 text-center'>
-                Contact Information
-              </h2>
-              <p className='text-lg text-[#515B6F] text-center'>
-                Please provide your contact details so we can get back to you.
-              </p>
-            </div>
-            <div className='flex flex-col gap-[20px]'>
-              <Input
-                name='fullName'
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                type='text'
-                value={formik.values.fullName}
-                id='fullName'
-                label='Full Name'
-                placeholder={`Full name of the ${type}`}
+      {showSuccessModal ? (
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 20, opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className='flex flex-col items-center justify-center p-8'>
+          <h2 className='text-2xl font-bold text-green-600 mb-4'>Success!</h2>
+          <p className='text-lg text-gray-700 text-center'>
+            Preference submitted successfully.
+          </p>
+        </motion.div>
+      ) : (
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 20, opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          viewport={{ once: true }}
+          id='contact-information-modal'
+          whileInView={{ opacity: 1, y: 0 }}
+          className='lg:w-[649px] flex flex-col gap-[26px]'>
+          <div className='w-full flex items-start justify-end'>
+            <button
+              onClick={() => setIsContactInformationModalOpened?.(false)}
+              type='button'
+              className='w-[51px] h-[51px] flex items-center justify-center rounded-full bg-[#FFFFFF]'>
+              <FontAwesomeIcon
+                icon={faClose}
+                width={24}
+                height={24}
+                color='#181336'
+                className='w-[24px] h-[24px]'
               />
-              <Input
-                name='phoneNumber'
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                type='number'
-                value={formik.values.phoneNumber}
-                id='phoneNumber'
-                label='Phone Number'
-                placeholder={`Active phone number for follow-up`}
-              />
-              <Input
-                name='email'
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                type='email'
-                value={formik.values.email}
-                id='email'
-                label='Email'
-                placeholder={`Optional, for communication`}
-              />
-            </div>
-            <span
-              className={`text-[#FF2539] font-semibold text-base md:text-xl`}>
-              Stay updated! Receive email updates on listing that fits your
-              preference for{' '}
-              <span className='text-black text-base md:text-xl font-semibold'>
-                N5,000
-              </span>
-            </span>
-            <div className='w-full flex flex-col gap-[15px]'>
-              <button
-                type='submit'
-                disabled={isSubmitting}
-                className={`bg-[#8DDB90] h-[57px] rounded-[5px] text-lg ${archivo.className} font-bold text-white disabled:animate-pulse`}>
-                {isSubmitting ? 'Submitting' : 'Submit'}
-              </button>
-              <button
-                onClick={() => {
-                  formik.resetForm();
-                  setIsContactInformationModalOpened?.(false);
-                }}
-                type='reset'
-                className={`bg-transparent border-[1px] border-[#E9EBEB] h-[57px] rounded-[5px] text-lg ${archivo.className} font-bold text-gray-700`}>
-                Cancel
-              </button>
-            </div>
+              {''}
+            </button>
           </div>
-        </form>
-      </motion.div>
+          <form
+            onSubmit={formik.handleSubmit}
+            className='md:py-[40px] py-[30px] px-[30px] md:px-[60px] rounded-[4px] bg-white shadow-md flex items-center justify-center'>
+            <div className='w-full flex flex-col gap-[21px] md:gap-[42px]'>
+              <div className='flex flex-col gap-[4px] items-center justify-center'>
+                <h2 className='text-2xl font-bold text-gray-900 text-center'>
+                  Contact Information
+                </h2>
+                <p className='text-lg text-[#515B6F] text-center'>
+                  Please provide your contact details so we can get back to you.
+                </p>
+              </div>
+              <div className='flex flex-col gap-[20px]'>
+                <Input
+                  name='fullName'
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  type='text'
+                  value={formik.values.fullName}
+                  id='fullName'
+                  label='Full Name'
+                  placeholder={`Full name of the ${type}`}
+                />
+                <Input
+                  name='phoneNumber'
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  type='number'
+                  value={formik.values.phoneNumber}
+                  id='phoneNumber'
+                  label='Phone Number'
+                  placeholder={`Active phone number for follow-up`}
+                />
+                <Input
+                  name='email'
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  type='email'
+                  value={formik.values.email}
+                  id='email'
+                  label='Email'
+                  placeholder={`Optional, for communication`}
+                />
+              </div>
+              <div className='w-full flex flex-col gap-[15px]'>
+                <button
+                  type='submit'
+                  disabled={isSubmitting}
+                  className={`bg-[#8DDB90] h-[57px] rounded-[5px] text-lg ${archivo.className} font-bold text-white disabled:animate-pulse disabled:opacity-70`}>
+                  {isSubmitting ? 'Submitting...' : 'Submit'}
+                </button>
+                <button
+                  onClick={() => {
+                    formik.resetForm();
+                    setIsContactInformationModalOpened?.(false);
+                  }}
+                  type='reset'
+                  disabled={isSubmitting}
+                  className={`bg-transparent border-[1px] border-[#E9EBEB] h-[57px] rounded-[5px] text-lg ${archivo.className} font-bold text-gray-700 disabled:opacity-50`}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </form>
+        </motion.div>
+      )}
     </PopUpModal>
   );
 };

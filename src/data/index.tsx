@@ -44,14 +44,9 @@ export const navData: {
       },
     ],
   },
-  // {
-  //   name: 'Landlord',
-  //   url: '/landlord_page',
-  //   isClicked: false,
-  // },
   {
     name: 'Landlord',
-    url: '/my_listing',
+    url: '/landlord',
     isClicked: false,
   },
   {

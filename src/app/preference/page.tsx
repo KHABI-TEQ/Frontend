@@ -85,15 +85,6 @@ const Landlord = () => {
             ? 'active'
             : 'pending',
       },
-      {
-        label: 'Payment Details',
-        status:
-          currentStep > 2
-            ? 'completed'
-            : currentStep === 2
-            ? 'active'
-            : 'pending',
-      },
     ];
 
 function formatNumberWithCommas(value: string) {
@@ -673,13 +664,11 @@ const handlePaymentReceipt = (value: React.SetStateAction<string | null>) => {
       ownerFullName: '',
       ownerPhoneNumber: '',
       ownerEmail: '',
-      fullName: '',
       areYouTheOwner: true,
       rentalPrice: undefined as number | undefined,
       bedroom: undefined as string | undefined,
       images: [],
       documentType: [] as string[],
-      paymentReceiptUrl: ''
     },
     validationSchema: Yup.object({
       propertyType: Yup.string().required('Property type is required'),
@@ -695,8 +684,6 @@ const handlePaymentReceipt = (value: React.SetStateAction<string | null>) => {
       ownerEmail: Yup.string()
         .email('Invalid email')
         .required('Owner email is required'),
-      fullName: Yup.string().required('Your account name is required'),
-      paymentReceiptUrl: Yup.string().required('Transaction receipt is required'),
     }),
     validateOnBlur: true,
     validateOnChange: true,
@@ -740,10 +727,6 @@ const handlePaymentReceipt = (value: React.SetStateAction<string | null>) => {
               noOfBathrooms: Number(bathroom || 0),
             },
             tenantCriteria: values.tenantCriteria,
-            preferenceFeeTransaction: {
-              accountName: values.fullName,
-              transactionReciept: values.paymentReceiptUrl,
-            },
           };
         // console.log('Payload:', payload);
 
@@ -753,7 +736,6 @@ const handlePaymentReceipt = (value: React.SetStateAction<string | null>) => {
             if ((response as any).data.owner) {
               toast.success('Preference submitted successfully');
               setShowFinalSubmit(true); 
-              // setIsSubmittedSuccessfully(true);
               setAreInputsDisabled(false);
               return 'Preference submitted successfully';
             } else {
@@ -766,8 +748,6 @@ const handlePaymentReceipt = (value: React.SetStateAction<string | null>) => {
           }),
           {
             loading: 'Submitting...',
-            // success: 'Property submitted successfully',
-            // error: 'An error occurred, please try again',
           }
         );
       } catch (error) {
@@ -1089,111 +1069,6 @@ const handlePaymentReceipt = (value: React.SetStateAction<string | null>) => {
                   </div>
                 </div>
               )}
-
-            {currentStep === 2 && (
-             <div className='w-full flex flex-col lg:flex-row gap-6 md:gap-8 lg:gap-[35px] max-w-6xl px-2 sm:px-4 md:px-8'>
-                {/* First div */}
-                <div className='w-full lg:w-[420px] flex flex-col gap-4'>
-                  <motion.div
-                    initial={{ y: 20, opacity: 0 }}
-                    whileInView={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.2 }}
-                    exit={{ y: 20, opacity: 0 }}
-                    viewport={{ once: true }}
-                    className='w-full bg-white py-6 px-4 sm:px-6 flex flex-col gap-3'>
-                    {/* Make payment to */}
-                    <div className='flex flex-col'>
-                      <h3
-                        className={`${archivo.className} text-lg font-bold text-black`}>
-                        Make payment to
-                      </h3>
-                      <h2
-                        className={`${archivo.className} text-3xl font-bold text-black`}>
-                        N{Number(amountToPay).toLocaleString()}
-                      </h2>
-                    </div>
-                    {/* Account details */}
-                    <div className='flex flex-col gap-2'>
-                      <h4
-                        className={`${archivo.className} text-lg font-bold text-black`}>
-                        Account details
-                      </h4>
-                      <p
-                        className={`text-[#5A5D63] ${archivo.className} text-lg font-medium`}>
-                        Bank{' '}
-                        <span
-                          className={`${archivo.className} text-lg font-medium text-black`}>
-                          GTB
-                        </span>
-                      </p>
-                      <p
-                        className={`text-[#5A5D63] ${archivo.className} text-lg font-medium`}>
-                                          Account Number{' '}
-                  <span
-                    className={`${archivo.className} text-lg font-medium text-black`}>
-                    2004766765
-                  </span>
-                      </p>
-                      <p
-                        className={`text-[#5A5D63] ${archivo.className} text-lg font-medium`}>
-                        Account Name{' '}
-                        <span
-                          className={`${archivo.className} text-lg font-medium text-black`}>
-                          Khabi-Teq Reality
-                        </span>
-                      </p>
-                    </div>
-                  </motion.div>
-                  {/* PS */}
-                  <motion.p
-                    initial={{ y: 20, opacity: 0 }}
-                    whileInView={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                    exit={{ y: 20, opacity: 0 }}
-                    viewport={{ once: true }}
-                    className='text-[#1976D2] font-medium text-base sm:text-lg'>
-                    Note that this process is subject to Approval by khabiteq realty
-                  </motion.p>
-                </div>
-                {/* Second div - form section */}
-                <div className='w-full lg:w-[602px] flex flex-col gap-5'>
-                  <h2 className='text-xl text-[#09391C] font-semibold'>
-                    Provide Transaction Details
-                  </h2>
-
-                    {/* Enter Account Name */}
-                    <Input
-                      value={formik.values?.fullName}
-                      id='fullName'
-                      type='text'
-                      name='fullName'
-                      placeholder='Enter Full Name'
-                      label='Enter Full Name'
-                      onChange={formik.handleChange}
-                      className="col-span-1 sm:col-span-2" 
-                    />
-                  {/* Attach Receipt */}
-                  <div className='h-[58px] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2'>
-                    <AttachFile
-                      heading='Upload your transaction receipt.'
-                      style={{
-                        width: '283px',
-                      }}
-                      id='transaction_receipt'
-                      setFileUrl={handlePaymentReceipt}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-            {(currentStep === 0 ) && (
-                <div className="w-full flex justify-center mb-4">
-                  <span className="text-[#FF2539] text-base font-bold text-center">
-                    Stay updated! Receive email updates on listing that fits your preference for{' '}
-                    <span className="text-black font-bold"> N{Number(amountToPay).toLocaleString()}</span>
-                  </span>
-                </div>
-              )}
               <div className='w-full flex items-center mt-8 justify-between'>
                 <Button
                   value={currentStep === 0 ? 'Cancel' : 'Back'}
@@ -1208,7 +1083,7 @@ const handlePaymentReceipt = (value: React.SetStateAction<string | null>) => {
                         currentStep === steps.length - 1
                           ? 'Submit'
                           : currentStep === 0
-                            ? 'Subscribe'
+                            ? 'Next'
                             : 'Next'
                       }
                     type={currentStep === steps.length - 1 ? 'submit' : 'button'}
@@ -1220,15 +1095,11 @@ const handlePaymentReceipt = (value: React.SetStateAction<string | null>) => {
                         }
                   }
                     isDisabled={
-                      areInputsDisabled ||
-                      (currentStep === steps.length - 1 &&
-                        (!formik.values.fullName || !formik.values.paymentReceiptUrl))
+                      areInputsDisabled
                     }
                     className={`lg:w-[25%] text-base leading-[25.6px] font-bold min-h-[50px] py-[12px] px-[24px] 
                       ${
-                        areInputsDisabled ||
-                        (currentStep === steps.length - 1 &&
-                          (!formik.values.fullName || !formik.values.paymentReceiptUrl))
+                        areInputsDisabled
                           ? 'bg-gray-300 text-gray-400 cursor-not-allowed'
                           : 'bg-[#8DDB90] text-white'
                       }`}

@@ -63,7 +63,18 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const getAgent = async () => {
     const url = URLS.BASE + URLS.user + URLS.userProfile;
-    await GET_REQUEST(url, Cookies.get('token'))
+    const token = pathName.includes('/admin') ? Cookies.get('adminToken') : Cookies.get('token');
+    
+    if (!token) {
+      if (pathName.includes('/admin')) {
+        router.push('/admin/auth/login');
+      } else if (!pathName.includes('/auth')) {
+        router.push('/auth/login');
+      }
+      return;
+    }
+
+    await GET_REQUEST(url, token)
       .then((response) => {
         if (response?._id) {
           //console.log('User data:', response);
@@ -76,14 +87,25 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
               response.message.toLowerCase().includes('expired') ||
               response.message.toLowerCase().includes('malformed'))
           ) {
-            Cookies.remove('token');
-            toast.error('Session expired, please login again');
-            router.push('/auth/login');
+            if (pathName.includes('/admin')) {
+              Cookies.remove('adminToken');
+              toast.error('Admin session expired, please login again');
+              router.push('/admin/auth/login');
+            } else {
+              Cookies.remove('token');
+              toast.error('Session expired, please login again');
+              router.push('/auth/login');
+            }
           }
         }
       })
       .catch((error) => {
         console.log('Error', error);
+        if (pathName.includes('/admin')) {
+          router.push('/admin/auth/login');
+        } else {
+          router.push('/auth/login');
+        }
       });
   };
 
@@ -99,6 +121,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       // Clear cookies
       console.log('Clearing cookies...');
       Cookies.remove('token');
+      Cookies.remove('adminToken');
       
       // Clear session storage
       console.log('Clearing session storage...');
@@ -119,7 +142,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       toast.success('Logged out successfully');
       
       console.log('Redirecting to login page...');
-      await router.push('/auth/login');
+      if (pathName.includes('/admin')) {
+        await router.push('/admin/auth/login');
+      } else {
+        await router.push('/auth/login');
+      }
       
       if (callback) {
         console.log('Executing callback...');
@@ -135,11 +162,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    if (Cookies.get('token')) {
+    const token = pathName.includes('/admin') ? Cookies.get('adminToken') : Cookies.get('token');
+    if (token) {
       getAgent();
     } else {
-      if (pathName.includes('/auth')) {
-        if (!pathName.includes('/auth')) router.push('/auth/login');
+      if (pathName.includes('/admin')) {
+        if (!pathName.includes('/auth')) router.push('/admin/auth/login');
+      } else if (!pathName.includes('/auth')) {
+        router.push('/auth/login');
       }
     }
   }, []);

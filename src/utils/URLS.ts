@@ -54,4 +54,6 @@ export const URLS = {
   deleteSellBrief: '/properties/sell/delete/',
   adminGetAUserBriefs: 'admin/agent',
   fetchUsersData: '/admin/properties-users',
+  getAllPreferences: '/properties/preference',
+  getAllPropertySells: '/api/properties/sell/all',
 };

@@ -8,6 +8,7 @@ import {
   faArrowUp,
   faEllipsis,
   faPlus,
+  faSync,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { Fragment, useEffect, useRef, useState } from 'react';
@@ -17,14 +18,159 @@ import customStyles from '@/styles/inputStyle';
 import Image from 'next/image';
 import filterIcon from '@/svgs/filterIcon.svg';
 import useClickOutside from '@/hooks/clickOutside';
+import axios from 'axios';
+import { URLS } from '@/utils/URLS';
+import Cookies from 'js-cookie';
+import { toast } from 'react-hot-toast';
 
 type PreferenceManagementProps = {};
 const PreferenceManagement: React.FC<PreferenceManagementProps> = ({}) => {
   const [selectedTable, setSelectedTable] = useState<string>('Buyer');
-  const [pageStatus, setPageStatus] = useState<'home' | 'is edit' | 'is view'>(
-    'home'
-  );
+  const [pageStatus, setPageStatus] = useState<'home' | 'is edit' | 'is view'>('home');
   const [trackNav, setTrackNav] = useState<string[] | null>(null);
+  const [preferences, setPreferences] = useState<any[]>([]);
+  const [propertySells, setPropertySells] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState<number>(0);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = Cookies.get('adminToken');
+        if (!token) {
+          toast.error('Authentication token not found');
+          setError('Authentication token not found');
+          return;
+        }
+
+        if (!URLS.BASE) {
+          console.error('API base URL is not set');
+          toast.error('API configuration error. Please contact support.');
+          setError('API base URL is not configured');
+          return;
+        }
+
+        // Fetch both preferences and property sells
+        const [preferencesResponse, propertySellsResponse] = await Promise.all([
+          // Fetch preferences
+          axios.get(URLS.BASE + URLS.getAllPreferences, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          }),
+          // Fetch property sells
+          axios.get(URLS.BASE + URLS.getAllPropertySells, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          })
+        ]);
+
+        // Handle preferences data
+        let preferencesData = [];
+        if (preferencesResponse.data && preferencesResponse.data.preferences) {
+          preferencesData = preferencesResponse.data.preferences;
+        } else if (preferencesResponse.data && Array.isArray(preferencesResponse.data)) {
+          preferencesData = preferencesResponse.data;
+        } else if (preferencesResponse.data && preferencesResponse.data.success && preferencesResponse.data.preferences) {
+          preferencesData = preferencesResponse.data.preferences;
+        }
+
+        // Handle property sells data
+        let sellsData = [];
+        if (propertySellsResponse.data && propertySellsResponse.data.data) {
+          sellsData = propertySellsResponse.data.data;
+        } else if (propertySellsResponse.data && Array.isArray(propertySellsResponse.data)) {
+          sellsData = propertySellsResponse.data;
+        }
+
+        setPreferences(preferencesData);
+        setPropertySells(sellsData);
+        setError(null);
+
+        if (preferencesData.length === 0 && sellsData.length === 0) {
+          toast('No data found');
+        }
+
+      } catch (error: any) {
+        console.error('Error fetching data:', error);
+        
+        if (error.response) {
+          const { status, data } = error.response;
+          console.error('Response error details:', { status, data });
+          
+          switch (status) {
+            case 400:
+              toast.error('Bad request: ' + (data?.message || data?.error || 'Invalid request format'));
+              break;
+            case 401:
+              toast.error('Authentication failed. Please log in again.');
+              Cookies.remove('adminToken');
+              window.location.href = '/admin/auth/login';
+              break;
+            case 403:
+              toast.error('Access denied. You do not have permission to view data.');
+              break;
+            case 404:
+              toast.error('Endpoint not found. Please contact support.');
+              break;
+            case 500:
+              const errorMsg = data?.error || data?.message || 'Internal server error';
+              toast.error('Server error: ' + errorMsg);
+              break;
+            default:
+              toast.error(`Request failed with status ${status}: ${data?.message || 'Unknown error'}`);
+          }
+        } else if (error.request) {
+          console.error('Request error - no response received:', error.request);
+          toast.error('Network error: Unable to reach server. Please check your connection.');
+        } else {
+          console.error('Unexpected error:', error.message);
+          toast.error('An unexpected error occurred: ' + error.message);
+        }
+
+        setError(error.message || 'Failed to fetch data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [retryCount]);
+
+  // Map backend data to the table format
+  const mapDataToTable = (data: any[], type: 'preference' | 'sell'): DataTable => {
+    return data.map((item) => ({
+      id: item._id,
+      name: type === 'preference' ? (item.owner?.fullName || 'N/A') : (item.owner?.fullName || 'N/A'),
+      listingType: type === 'preference' ? (item.briefType || 'N/A') : 'Sale',
+      propertyType: item.propertyType || 'N/A',
+      location: {
+        state: item.location?.state || '',
+        lga: item.location?.localGovernment || '',
+        area: item.location?.area || '',
+      },
+      priceRange: type === 'preference' 
+        ? (item.budgetMin && item.budgetMax ? `₦${item.budgetMin.toLocaleString()} - ₦${item.budgetMax.toLocaleString()}` : 'N/A')
+        : (item.price ? `₦${item.price.toLocaleString()}` : 'N/A'),
+    }));
+  };
+
+  // Combine both preferences and property sells data
+  const combinedData = [
+    ...mapDataToTable(preferences, 'preference'),
+    ...mapDataToTable(propertySells, 'sell')
+  ];
+
+  // Retry function for manual retry
+  const retryFetchPreferences = () => {
+    setLoading(true);
+    setError(null);
+    setRetryCount(prev => prev + 1); // Increment retry count to trigger useEffect
+  };
 
   const Home = ({
     pageStatus,
@@ -50,46 +196,56 @@ const PreferenceManagement: React.FC<PreferenceManagementProps> = ({}) => {
               Showing your Account metrics for July 19, 2021 - July 25, 2021
             </span>
           </div>
-          <button
-            type='button'
-            className='h-[50px] w-[163px] bg-[#8DDB90] rounded-[5px] flex justify-center items-center gap-2'>
-            <FontAwesomeIcon
-              icon={faPlus}
-              width={24}
-              height={24}
-              className='w-[24px] h-[24px]'
-              color='white'
-            />
-            <span
-              className={`text-base ${archivo.className} font-bold text-white`}>
-              Send invite
-            </span>
-          </button>
+          <div className='flex gap-4'>
+            <button
+              onClick={retryFetchPreferences}
+              type='button'
+              className='h-[50px] w-[163px] bg-[#0B423D] rounded-[5px] flex justify-center items-center gap-2'>
+              <FontAwesomeIcon
+                icon={faSync}
+                width={24}
+                height={24}
+                className='w-[24px] h-[24px]'
+                color='white'
+              />
+              <span className={`text-base ${archivo.className} font-bold text-white`}>
+                Retry
+              </span>
+            </button>
+            <button
+              type='button'
+              className='h-[50px] w-[163px] bg-[#8DDB90] rounded-[5px] flex justify-center items-center gap-2'>
+              <FontAwesomeIcon
+                icon={faPlus}
+                width={24}
+                height={24}
+                className='w-[24px] h-[24px]'
+                color='white'
+              />
+              <span
+                className={`text-base ${archivo.className} font-bold text-white`}>
+                Send invite
+              </span>
+            </button>
+          </div>
         </div>
 
         <div className='flex gap-[30px] overflow-x-auto hide-scrollbar whitespace-nowrap'>
           <Rectangle
             heading='Buyer Preference'
             headerStyling={{ color: '#0B423D' }}
-            value={3000}
+            value={preferences.length}
             status={{
-              position: 'fallen',
+              position: 'risen',
               percentage: 5.7,
             }}
           />
           <Rectangle
-            heading='Tenant Preference'
-            value={30000}
+            heading='Property Sells'
+            headerStyling={{ color: '#0B423D' }}
+            value={propertySells.length}
             status={{
-              position: 'fallen',
-              percentage: 5.7,
-            }}
-          />
-          <Rectangle
-            heading='Developer Contact'
-            value={4}
-            status={{
-              position: 'fallen',
+              position: 'risen',
               percentage: 5.7,
             }}
           />
@@ -127,14 +283,20 @@ const PreferenceManagement: React.FC<PreferenceManagementProps> = ({}) => {
         </div>
 
         <div className='w-full'>
-          <Table
-            tracker={tracker}
-            setTracker={setTrackNav}
-            pageStatus={pageStatus}
-            setPageStatus={setPageStatus}
-            data={dummyData}
-            heading={selectedTable}
-          />
+          {loading ? (
+            <div className='text-center py-10'>Loading preferences...</div>
+          ) : error ? (
+            <div className='text-center text-red-500 py-10'>{error}</div>
+          ) : (
+            <Table
+              tracker={tracker}
+              setTracker={setTrackNav}
+              pageStatus={pageStatus}
+              setPageStatus={setPageStatus}
+              data={combinedData}
+              heading='All Preferences'
+            />
+          )}
         </div>
       </aside>
     );
@@ -145,20 +307,43 @@ const PreferenceManagement: React.FC<PreferenceManagementProps> = ({}) => {
       case 'home':
         return (
           <Home
-            setTracker={setTrackNav}
             pageStatus={pageStatus}
             setPageStatus={setPageStatus}
+            setTracker={setTrackNav}
+            tracker={trackNav}
           />
         );
       case 'is edit':
-        return <Details setPageStatus={setPageStatus} navHeading={trackNav} />;
+        return (
+          <Details
+            navHeading={trackNav}
+            setPageStatus={setPageStatus}
+          />
+        );
       case 'is view':
-        return <Details setPageStatus={setPageStatus} navHeading={trackNav} />;
+        return (
+          <Details
+            navHeading={trackNav}
+            setPageStatus={setPageStatus}
+          />
+        );
       default:
-        return <></>;
+        return (
+          <Home
+            pageStatus={pageStatus}
+            setPageStatus={setPageStatus}
+            setTracker={setTrackNav}
+            tracker={trackNav}
+          />
+        );
     }
   };
-  return <Fragment>{pageStatus && renderContentDynamically()}</Fragment>;
+
+  return (
+    <div className='w-full flex flex-col gap-[35px]'>
+      {renderContentDynamically()}
+    </div>
+  );
 };
 
 type RectangleProps = {
