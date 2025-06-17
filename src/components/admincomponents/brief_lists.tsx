@@ -88,289 +88,166 @@ export default function BriefLists({
 
 const BRIEF_TYPES = ['Joint Venture', 'Outright Sales', 'Rent'];
 
-const fetchIncomingBriefs = async () => {
+const fetchAllBriefTypes = async (ownerType: string) => {
   try {
-    const response = await POST_REQUEST(
-      URLS.BASE + URLS.adminGetAllBriefs,
-      {
-        briefType: 'Joint Venture',
-        ownerType: 'all',
-        page: currentPage,
-        limit: 10,
-      },
-      Cookies.get('adminToken')
+    // Fetch all brief types in parallel
+    const allResponses = await Promise.all(
+      BRIEF_TYPES.map((briefType) =>
+        POST_REQUEST(URLS.BASE + URLS.adminGetAllBriefs, {
+          briefType,
+          ownerType,
+          page: currentPage,
+          limit: 10,
+        })
+      )
     );
-    if (response?.success === false) return [];
-    const data = Array.isArray(response?.properties?.data)
-      ? response.properties.data
-      : [];
-    return data.map((item: any) => ({
-      id: item._id?.slice(0, 8) || '--',
-      legalName: item.owner
-        ? item.owner.fullName ||
-          `${item.owner.firstName || ''} ${item.owner.lastName || ''}`.trim() ||
-          '--'
-        : '--',
-      email: item.owner?.email || '--',
-      phoneNumber: item.owner?.phoneNumber || '--',
-      agentType: item.owner
-        ? item.owner.agentType === 'Company'
-          ? 'Incorporated Agent'
-          : item.owner.agentType || '--'
-        : '--',
-      location: item.location
-        ? `${item.location.state || '--'}, ${item.location.localGovernment || '--'}, ${item.location.area || '--'}`
-        : '--',
-      landSize:
-        item.landSize && item.landSize.size !== 'N/A'
-          ? `${item.landSize.size || '--'} ${item.landSize.measurementType || '--'}`
-          : '--',
-      amount: item.price ? `₦${item.price.toLocaleString()}` : '--',
-      document: item.docOnProperty?.length
-        ? item.docOnProperty
-            .filter((doc: any) => doc?.isProvided)
-            .map((doc: any) => doc?.docName)
-            .join(', ') || '--'
-        : '--',
-      createdAt: item.createdAt || '--',
-      propertyId: item._id || '--',
-      briefType: item.briefType || 'Joint Venture',
-      isApproved: item.isApproved || false,
-      isRejected: item.isRejected || false,
-      noOfBedrooms: item.additionalFeatures?.noOfBedrooms || '--',
-      usageOptions:
-        Array.isArray(item.usageOptions) && item.usageOptions.length > 0
-          ? item.usageOptions.join(', ')
-          : '--',
-      features:
-        Array.isArray(item.additionalFeatures?.additionalFeatures) &&
-        item.additionalFeatures.additionalFeatures.length > 0
-          ? item.additionalFeatures.additionalFeatures.join(', ')
-          : '--',
-      pictures:
-        Array.isArray(item.pictures) && item.pictures.length > 0
-          ? item.pictures
-          : [],
-      propertyType: item.propertyType || '--',
-      propertyCondition: item.propertyCondition || '--',
-      tenantCriteria:
-        Array.isArray(item.tenantCriteria) && item.tenantCriteria.length > 0
-          ? item.tenantCriteria.join(', ')
-          : '--',
-    }));
+
+    console.log('All Responses:', allResponses);
+
+    // Merge all data arrays
+    let allBriefs: any[] = [];
+    allResponses.forEach((response, idx) => {
+      if (response?.success !== false) {
+        const data = Array.isArray(response?.properties?.data)
+          ? response.properties.data
+          : [];
+        allBriefs = allBriefs.concat(
+          data.map((item: any) => ({
+            id: item._id?.slice(0, 8) || '--',
+            legalName: item.owner
+              ? item.owner.fullName ||
+                `${item.owner.firstName || ''} ${item.owner.lastName || ''}`.trim() ||
+                '--'
+              : '--',
+            email: item.owner?.email || '--',
+            phoneNumber: item.owner?.phoneNumber || '--',
+            agentType: item.owner
+              ? item.owner.agentType === 'Company'
+                ? 'Incorporated Agent'
+                : item.owner.agentType || '--'
+              : '--',
+            location: item.location
+              ? `${item.location.state || '--'}, ${item.location.localGovernment || '--'}, ${item.location.area || '--'}`
+              : '--',
+            landSize:
+              item.landSize && item.landSize.size !== 'N/A'
+                ? `${item.landSize.size || '--'} ${item.landSize.measurementType || '--'}`
+                : '--',
+            amount: item.price ? `₦${item.price.toLocaleString()}` : '--',
+            document: item.docOnProperty?.length
+              ? item.docOnProperty
+                  .filter((doc: any) => doc?.isProvided)
+                  .map((doc: any) => doc?.docName)
+                  .join(', ') || '--'
+              : '--',
+            createdAt: item.createdAt || '--',
+            propertyId: item._id || '--',
+            briefType: item.briefType || BRIEF_TYPES[idx],
+            isApproved: item.isApproved || false,
+            isRejected: item.isRejected || false,
+            noOfBedrooms: item.additionalFeatures?.noOfBedrooms || '--',
+            usageOptions:
+              Array.isArray(item.usageOptions) && item.usageOptions.length > 0
+                ? item.usageOptions.join(', ')
+                : '--',
+            features:
+              Array.isArray(item.additionalFeatures?.additionalFeatures) &&
+              item.additionalFeatures.additionalFeatures.length > 0
+                ? item.additionalFeatures.additionalFeatures.join(', ')
+                : '--',
+            pictures:
+              Array.isArray(item.pictures) && item.pictures.length > 0
+                ? item.pictures
+                : [],
+            propertyType: item.propertyType || '--',
+            propertyCondition: item.propertyCondition || '--',
+            tenantCriteria:
+              Array.isArray(item.tenantCriteria) && item.tenantCriteria.length > 0
+                ? item.tenantCriteria.join(', ')
+                : '--',
+          }))
+        );
+      }
+    });
+
+    // Sort by createdAt descending
+    return allBriefs.sort(
+      (a: any, b: any) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
   } catch (error) {
-    console.error('Error fetching incoming briefs:', error);
+    console.error('Error fetching briefs:', error);
     return [];
   }
-};
-
-const fetchAgentsBriefs = async () => {
-  try {
-    const response = await POST_REQUEST(
-      URLS.BASE + URLS.adminGetAllBriefs,
-      {
-        briefType: 'Outright Sales',
-        ownerType: 'Agent',
-        page: currentPage,
-        limit: 10,
-      },
-      Cookies.get('adminToken')
-    );
-    if (response?.success === false) return [];
-    const data = Array.isArray(response?.properties?.data)
-      ? response.properties.data
-      : [];
-    return data.map((item: any) => ({
-      id: item._id?.slice(0, 8) || '--',
-      legalName: item.owner
-        ? item.owner.fullName ||
-          `${item.owner.firstName || ''} ${item.owner.lastName || ''}`.trim() ||
-          '--'
-        : '--',
-      email: item.owner?.email || '--',
-      phoneNumber: item.owner?.phoneNumber || '--',
-      agentType: item.owner
-        ? item.owner.agentType === 'Company'
-          ? 'Incorporated Agent'
-          : item.owner.agentType || '--'
-        : '--',
-      location: item.location
-        ? `${item.location.state || '--'}, ${item.location.localGovernment || '--'}, ${item.location.area || '--'}`
-        : '--',
-      landSize:
-        item.landSize && item.landSize.size !== 'N/A'
-          ? `${item.landSize.size || '--'} ${item.landSize.measurementType || '--'}`
-          : '--',
-      amount: item.price ? `₦${item.price.toLocaleString()}` : '--',
-      document: item.docOnProperty?.length
-        ? item.docOnProperty
-            .filter((doc: any) => doc?.isProvided)
-            .map((doc: any) => doc?.docName)
-            .join(', ') || '--'
-        : '--',
-      createdAt: item.createdAt || '--',
-      propertyId: item._id || '--',
-      briefType: item.briefType || 'Outright Sales',
-      isApproved: item.isApproved || false,
-      isRejected: item.isRejected || false,
-      noOfBedrooms: item.additionalFeatures?.noOfBedrooms || '--',
-      usageOptions:
-        Array.isArray(item.usageOptions) && item.usageOptions.length > 0
-          ? item.usageOptions.join(', ')
-          : '--',
-      features:
-        Array.isArray(item.additionalFeatures?.additionalFeatures) &&
-        item.additionalFeatures.additionalFeatures.length > 0
-          ? item.additionalFeatures.additionalFeatures.join(', ')
-          : '--',
-      pictures:
-        Array.isArray(item.pictures) && item.pictures.length > 0
-          ? item.pictures
-          : [],
-      propertyType: item.propertyType || '--',
-      propertyCondition: item.propertyCondition || '--',
-      tenantCriteria:
-        Array.isArray(item.tenantCriteria) && item.tenantCriteria.length > 0
-          ? item.tenantCriteria.join(', ')
-          : '--',
-    }));
-  } catch (error) {
-    console.error('Error fetching agents briefs:', error);
-    return [];
-  }
-};
-
-const fetchSellerBriefs = async () => {
-  try {
-    const response = await POST_REQUEST(
-      URLS.BASE + URLS.adminGetAllBriefs,
-      {
-        briefType: 'sell',
-        ownerType: 'Landowners',
-        page: currentPage,
-        limit: 10,
-      },
-      Cookies.get('adminToken')
-    );
-    if (response?.success === false) return [];
-    const data = Array.isArray(response?.properties?.data)
-      ? response.properties.data
-      : [];
-    return data.map((item: any) => ({
-      id: item._id?.slice(0, 8) || '--',
-      legalName: item.owner
-        ? item.owner.fullName ||
-          `${item.owner.firstName || ''} ${item.owner.lastName || ''}`.trim() ||
-          '--'
-        : '--',
-      email: item.owner?.email || '--',
-      phoneNumber: item.owner?.phoneNumber || '--',
-      agentType: item.owner
-        ? item.owner.agentType === 'Company'
-          ? 'Incorporated Agent'
-          : item.owner.agentType || '--'
-        : '--',
-      location: item.location
-        ? `${item.location.state || '--'}, ${item.location.localGovernment || '--'}, ${item.location.area || '--'}`
-        : '--',
-      landSize:
-        item.landSize && item.landSize.size !== 'N/A'
-          ? `${item.landSize.size || '--'} ${item.landSize.measurementType || '--'}`
-          : '--',
-      amount: item.price ? `₦${item.price.toLocaleString()}` : '--',
-      document: item.docOnProperty?.length
-        ? item.docOnProperty
-            .filter((doc: any) => doc?.isProvided)
-            .map((doc: any) => doc?.docName)
-            .join(', ') || '--'
-        : '--',
-      createdAt: item.createdAt || '--',
-      propertyId: item._id || '--',
-      briefType: item.briefType || 'sell',
-      isApproved: item.isApproved || false,
-      isRejected: item.isRejected || false,
-      noOfBedrooms: item.additionalFeatures?.noOfBedrooms || '--',
-      usageOptions:
-        Array.isArray(item.usageOptions) && item.usageOptions.length > 0
-          ? item.usageOptions.join(', ')
-          : '--',
-      features:
-        Array.isArray(item.additionalFeatures?.additionalFeatures) &&
-        item.additionalFeatures.additionalFeatures.length > 0
-          ? item.additionalFeatures.additionalFeatures.join(', ')
-          : '--',
-      pictures:
-        Array.isArray(item.pictures) && item.pictures.length > 0
-          ? item.pictures
-          : [],
-      propertyType: item.propertyType || '--',
-      propertyCondition: item.propertyCondition || '--',
-      tenantCriteria:
-        Array.isArray(item.tenantCriteria) && item.tenantCriteria.length > 0
-          ? item.tenantCriteria.join(', ')
-          : '--',
-    }));
-  } catch (error) {
-    console.error('Error fetching seller briefs:', error);
-    return [];
-  }
-};
-
-const fetchTransactedBriefs = async () => {
-  // Placeholder: implement as needed
-  return [];
 };
 
 useEffect(() => {
-  const fetchAllBriefs = async () => {
+  const fetchData = async () => {
     setIsLoading(true);
-    try {
-      const [incomingBriefs, agentsBriefs, sellerBriefs, transactedBriefs] =
-        await Promise.all([
-          fetchIncomingBriefs(),
-          fetchAgentsBriefs(),
-          fetchSellerBriefs(),
-          fetchTransactedBriefs(),
-        ]);
-
-      setIncomingBriefsData((prev) =>
-        JSON.stringify(prev) !== JSON.stringify(incomingBriefs)
-          ? incomingBriefs
-          : prev
-      );
-      setAgentsBriefsData((prev) =>
-        JSON.stringify(prev) !== JSON.stringify(agentsBriefs)
-          ? agentsBriefs
-          : prev
-      );
-      setSellerBriefsData((prev) =>
-        JSON.stringify(prev) !== JSON.stringify(sellerBriefs)
-          ? sellerBriefs
-          : prev
-      );
-      setTransactedBriefsData((prev) =>
-        JSON.stringify(prev) !== JSON.stringify(transactedBriefs)
-          ? transactedBriefs
-          : prev
-      );
-
-      const totals = {
-        'Incoming Briefs': incomingBriefs.length,
-        'Agents Briefs': agentsBriefs.length,
-        'Sellers Briefs': sellerBriefs.length,
-        'Transacted Briefs': transactedBriefs.length,
-      };
-      setBriefTotals(totals);
-    } catch (error) {
-      console.error('Error fetching briefs:', error);
-      toast.error('Failed to fetch briefs');
-    } finally {
-      setIsLoading(false);
-    }
+    // Get ownerType from tabConfigs
+    const config = tabConfigs[active];
+    if (!config) return;
+    const briefs = await fetchAllBriefTypes(config.ownerType);
+    setBriefsData(briefs);
+    setIsLoading(false);
   };
+  fetchData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [active, currentPage]);
 
-  fetchAllBriefs();
-}, [currentPage]);
+  // useEffect(() => {
+  //   const fetchAllBriefs = async () => {
+  //     setIsLoading(true);
+  //     try {
+  //       const [incomingBriefs, agentsBriefs, sellerBriefs, transactedBriefs] =
+  //         await Promise.all([
+  //           fetchIncomingBriefs(),
+  //           fetchAgentsBriefs(),
+  //           fetchSellerBriefs(),
+  //           fetchTransactedBriefs(),
+  //         ]);
+
+  //       // Avoid redundant state updates by checking if data has changed
+  //       setIncomingBriefsData((prev) =>
+  //         JSON.stringify(prev) !== JSON.stringify(incomingBriefs)
+  //           ? incomingBriefs
+  //           : prev
+  //       );
+  //       setAgentsBriefsData((prev) =>
+  //         JSON.stringify(prev) !== JSON.stringify(agentsBriefs)
+  //           ? agentsBriefs
+  //           : prev
+  //       );
+  //       setSellerBriefsData((prev) =>
+  //         JSON.stringify(prev) !== JSON.stringify(sellerBriefs)
+  //           ? sellerBriefs
+  //           : prev
+  //       );
+  //       setTransactedBriefsData((prev) =>
+  //         JSON.stringify(prev) !== JSON.stringify(transactedBriefs)
+  //           ? transactedBriefs
+  //           : prev
+  //       );
+
+  //       // Calculate totals and pass them to the parent component
+  //       const totals = {
+  //         'Incoming Briefs': incomingBriefs.length,
+  //         'Agents Briefs': agentsBriefs.length,
+  //         'Sellers Briefs': sellerBriefs.length,
+  //         'Transacted Briefs': transactedBriefs.length,
+  //       };
+
+  //       setBriefTotals(totals);
+  //     } catch (error) {
+  //       console.error('Error fetching briefs:', error);
+  //       toast.error('Failed to fetch briefs');
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   };
+
+  //   fetchAllBriefs();
+  // }, [currentPage]); 
 
   const handleTabClick = (tab: TabKey) => {
     setActive(tab);
