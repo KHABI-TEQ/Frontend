@@ -38,8 +38,9 @@ const PreferenceManagement: React.FC<PreferenceManagementProps> = ({}) => {
 
   const BRIEF_TYPES = ['Joint Venture', 'Outright Sales', 'Rent'];
 
-  const fetchAllBriefTypes = async (ownerType: string) => {
+  const fetchAllBriefTypes = async (ownerType: string, currentPage: number) => {
     try {
+      const adminToken = Cookies.get('adminToken');
       const allResponses = await Promise.all(
         BRIEF_TYPES.map((briefType) =>
           POST_REQUEST(
@@ -50,7 +51,7 @@ const PreferenceManagement: React.FC<PreferenceManagementProps> = ({}) => {
               page: currentPage,
               limit: 10,
             },
-            Cookies.get('adminToken')
+            adminToken
           )
         )
       );
@@ -61,67 +62,70 @@ const PreferenceManagement: React.FC<PreferenceManagementProps> = ({}) => {
           const data = Array.isArray(response?.properties?.data)
             ? response.properties.data
             : [];
-          allBriefs = data.map((item: any) => ({
-            id: item._id?.slice(0, 8) || '--',
-            legalName: item.owner
-              ? item.owner.fullName ||
-                `${item.owner.firstName || ''} ${item.owner.lastName || ''}`.trim() ||
-                '--'
-              : '--',
-            email: item.owner?.email || '--',
-            phoneNumber: item.owner?.phoneNumber || '--',
-            agentType: item.owner
-              ? item.owner.agentType === 'Company'
-                ? 'Incorporated Agent'
-                : item.owner.agentType || '--'
-              : '--',
-            location: item.location
-              ? `${item.location.state || '--'}, ${item.location.localGovernment || '--'}, ${item.location.area || '--'}`
-              : '--',
-            landSize:
-              item.landSize && item.landSize.size !== 'N/A'
-                ? `${item.landSize.size || '--'} ${item.landSize.measurementType || '--'}`
+          allBriefs = allBriefs.concat(
+            data.map((item: any) => ({
+              id: item._id?.slice(0, 8) || '--',
+              legalName: item.owner
+                ? item.owner.fullName ||
+                  `${item.owner.firstName || ''} ${item.owner.lastName || ''}`.trim() ||
+                  '--'
                 : '--',
-            amount: item.price ? `₦${item.price.toLocaleString()}` : '--',
-            document: item.docOnProperty?.length
-              ? item.docOnProperty
-                  .filter((doc: any) => doc?.isProvided)
-                  .map((doc: any) => doc?.docName)
-                  .join(', ') || '--'
-              : '--',
-            createdAt: item.createdAt || '--',
-            propertyId: item._id || '--',
-            briefType: item.briefType || BRIEF_TYPES[idx],
-            isApproved: item.isApproved || false,
-            isRejected: item.isRejected || false,
-            noOfBedrooms: item.additionalFeatures?.noOfBedrooms || '--',
-            usageOptions:
-              Array.isArray(item.usageOptions) && item.usageOptions.length > 0
-                ? item.usageOptions.join(', ')
+              email: item.owner?.email || '--',
+              phoneNumber: item.owner?.phoneNumber || '--',
+              agentType: item.owner
+                ? item.owner.agentType === 'Company'
+                  ? 'Incorporated Agent'
+                  : item.owner.agentType || '--'
                 : '--',
-            features:
-              Array.isArray(item.additionalFeatures?.additionalFeatures) &&
-              item.additionalFeatures.additionalFeatures.length > 0
-                ? item.additionalFeatures.additionalFeatures.join(', ')
+              location: item.location
+                ? `${item.location.state || '--'}, ${item.location.localGovernment || '--'}, ${item.location.area || '--'}`
                 : '--',
-            pictures:
-              Array.isArray(item.pictures) && item.pictures.length > 0
-                ? item.pictures
-                : [],
-            propertyType: item.propertyType || '--',
-            propertyCondition: item.propertyCondition || '--',
-            tenantCriteria:
-              Array.isArray(item.tenantCriteria) && item.tenantCriteria.length > 0
-                ? item.tenantCriteria.join(', ')
+              landSize:
+                item.landSize && item.landSize.size !== 'N/A'
+                  ? `${item.landSize.size || '--'} ${item.landSize.measurementType || '--'}`
+                  : '--',
+              amount: item.price ? `₦${item.price.toLocaleString()}` : '--',
+              document: item.docOnProperty?.length
+                ? item.docOnProperty
+                    .filter((doc: any) => doc?.isProvided)
+                    .map((doc: any) => doc?.docName)
+                    .join(', ') || '--'
                 : '--',
-            isPreference: item.isPreference === true, // <-- add this line
-          }));
+              createdAt: item.createdAt || '--',
+              propertyId: item._id || '--',
+              briefType: item.briefType || BRIEF_TYPES[idx],
+              isApproved: item.isApproved || false,
+              isRejected: item.isRejected || false,
+              noOfBedrooms: item.additionalFeatures?.noOfBedrooms || '--',
+              usageOptions:
+                Array.isArray(item.usageOptions) && item.usageOptions.length > 0
+                  ? item.usageOptions.join(', ')
+                  : '--',
+              features:
+                Array.isArray(item.additionalFeatures?.additionalFeatures) &&
+                item.additionalFeatures.additionalFeatures.length > 0
+                  ? item.additionalFeatures.additionalFeatures.join(', ')
+                  : '--',
+              pictures:
+                Array.isArray(item.pictures) && item.pictures.length > 0
+                  ? item.pictures
+                  : [],
+              propertyType: item.propertyType || '--',
+              propertyCondition: item.propertyCondition || '--',
+              tenantCriteria:
+                Array.isArray(item.tenantCriteria) && item.tenantCriteria.length > 0
+                  ? item.tenantCriteria.join(', ')
+                  : '--',
+              isPreference: item.isPreference === true,
+            }))
+          );
         }
       });
 
       // Only include briefs where isPreference is true
       allBriefs = allBriefs.filter((brief: any) => brief.isPreference);
 
+      // Sort by createdAt descending
       return allBriefs.sort(
         (a: any, b: any) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -135,12 +139,13 @@ const PreferenceManagement: React.FC<PreferenceManagementProps> = ({}) => {
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
-      const briefs = await fetchAllBriefTypes(selectedTable);
+      // Use 'all' as ownerType to match BriefLists default
+      const briefs = await fetchAllBriefTypes('all', currentPage);
       setBriefsData(briefs);
       setIsLoading(false);
     };
     fetchData();
-  }, [selectedTable, currentPage]);
+  }, [currentPage]);
 
   const handleActionClick = (brief: any) => {
     setSelectedBrief(brief);

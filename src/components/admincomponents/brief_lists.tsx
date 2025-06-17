@@ -170,14 +170,10 @@ const fetchAllBriefTypes = async (ownerType: string) => {
               Array.isArray(item.tenantCriteria) && item.tenantCriteria.length > 0
                 ? item.tenantCriteria.join(', ')
                 : '--',
-            isPreference: item.isPreference === true, // <-- add this line
           }))
         );
       }
     });
-
-    // Only include briefs where isPreference is true
-    allBriefs = allBriefs.filter((brief: any) => brief.isPreference);
 
     // Sort by createdAt descending
     return allBriefs.sort(
