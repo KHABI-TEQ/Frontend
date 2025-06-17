@@ -114,9 +114,13 @@ const PreferenceManagement: React.FC<PreferenceManagementProps> = ({}) => {
               Array.isArray(item.tenantCriteria) && item.tenantCriteria.length > 0
                 ? item.tenantCriteria.join(', ')
                 : '--',
+            isPreference: item.isPreference === true, // <-- add this line
           }));
         }
       });
+
+      // Only include briefs where isPreference is true
+      allBriefs = allBriefs.filter((brief: any) => brief.isPreference);
 
       return allBriefs.sort(
         (a: any, b: any) =>
