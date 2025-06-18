@@ -334,7 +334,10 @@ export default function BriefManagement() {
     setAreInputsDisabled(true);
     try {
       const url = URLS.BASE + '/admin/property/new';
-      const token = Cookies.get('token');
+      const adminToken = Cookies.get("adminToken");
+          if (!adminToken) {
+            router.push("/admin/auth/login");
+          }
 
       let briefType = '';
       if (selectedCard === 'sell') briefType = 'Outright Sales';
@@ -404,7 +407,7 @@ export default function BriefManagement() {
       console.log(payload);
 
       await toast.promise(
-        POST_REQUEST(url, payload, token).then((response) => {
+        POST_REQUEST(url, payload, adminToken).then((response) => {
           if ((response as any).owner) {
             toast.success('Property submitted successfully');
             setIsSubmittedSuccessfully(true);
@@ -1322,7 +1325,7 @@ export default function BriefManagement() {
                                     defaultCountry='NG'
                                     disabled={!isLegalOwner}
                                     value={formik.values?.ownerPhoneNumber}
-                                    style={{ outline: 'none' }}
+                                    style={{ outline: 'none', width: '100%' }}
                                     onChange={(value) =>
                                       formik.setFieldValue(
                                         'ownerPhoneNumber',
@@ -1348,6 +1351,9 @@ export default function BriefManagement() {
                                 onChange={formik.handleChange}
                                 type='email'
                               />
+                              <p className='text-[#1976D2] font-["Roboto"] font-medium text-[18px] leading-[160%] mt-4'>
+                                I hereby agree to indemnify and hold harmless Khabi-Teq Realty, its affiliates, directors, and agents from and against any and all claims, losses, liabilities, or damages arising from or related to any transaction conducted by me on its platform
+                              </p>
                             </div>
                           </div>
                         )}

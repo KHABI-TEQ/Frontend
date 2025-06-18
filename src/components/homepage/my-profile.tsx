@@ -9,12 +9,13 @@ import userIcon from '@/svgs/user2.svg';
 import faLock from '@/svgs/lock.svg';
 import { User, useUserContext } from '@/context/user-context';
 import { archivo } from '@/styles/font';
-import { LayoutDashboardIcon } from 'lucide-react';
+import { LayoutDashboardIcon, BellIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import microphonesvg from '@/svgs/microphone.svg';
 import Link from 'next/link';
 import { usePageContext } from '@/context/page-context';
 import { AgentNavData } from '@/enums';
+import notificationBellIcon from '@/svgs/bell.svg';
 
 type userDetailsProps = {
   firstName: string;
@@ -112,21 +113,6 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
         ) : null}
       </div>
 
-      {/**Referral */}
-      <button
-        type='button'
-        className='w-full h-[26px] flex items-end gap-[10px]'>
-        <Image
-          alt='lock'
-          src={userIcon}
-          width={24}
-          height={24}
-          className='w-[24px] h-[24px]'
-        />
-        <Link href={'/referral'} className='text-base font-medium underline'>
-          Referral
-        </Link>
-      </button>
       {/**Dashboard */}
       {userType === 'Agent' ? (
         <button
@@ -146,6 +132,7 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
           </Link>
         </button>
       ) : null}
+
       {/**Agent marketplace */}
       {userType === 'Agent' ? (
         <button
@@ -162,6 +149,44 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
           <span className='text-base font-medium underline'>marketplace</span>
         </button>
       ) : null}
+
+      {/**Referral */}
+      <button
+        type='button'
+        className='w-full h-[26px] flex items-end gap-[10px]'>
+        <Image
+          alt='lock'
+          src={userIcon}
+          width={24}
+          height={24}
+          className='w-[24px] h-[24px]'
+        />
+        <Link href={'/referral'} className='text-base font-medium underline'>
+          Referral
+        </Link>
+      </button>
+
+      {/**Notifications */}
+      <button
+        type='button'
+        className='w-full h-[26px] flex items-end gap-[10px]'>
+        <Image
+          alt='notifications'
+          src={notificationBellIcon}
+          width={24}
+          height={24}
+          className='w-[24px] h-[24px]'
+        />
+        <span
+          onClick={() => {
+            // TODO: Add notification handling
+            console.log('Notifications clicked');
+          }}
+          className='text-base font-medium underline'> 
+          Notifications
+        </span>
+      </button>
+
       {/**Change Password */}
       <button
         type='button'
@@ -187,6 +212,7 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
       <button
         type='button'
         onClick={() => {
+          console.log('Sign out button clicked');
           logout(() => closeUserProfileModal(false));
         }}
         className='w-full h-[50px] border-[1px] text-base font-medium border-[#FF3D00] text-[#FF2539]'>

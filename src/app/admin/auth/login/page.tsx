@@ -68,6 +68,8 @@ const Login = () => {
                   toast.success('Sign in successful');
                   Cookies.set('adminToken', (response as any).admin.token);
                   sessionStorage.setItem('adminToken', response.admin.token);
+                  console.log('Admin Token:', response.admin.token);
+                  console.log('Full Response:', response);
                   router.push('/admin');
                 } else {
                   toast.error('Admin is not verified');

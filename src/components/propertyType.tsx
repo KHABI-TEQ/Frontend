@@ -373,6 +373,76 @@ const PropertyType = () => {
               </span>
             )} */}
           </div>
+          {/**Select your rental type */}
+          <div className='lg:w-[535px] min-h-[73px] flex flex-col gap-[15px]'>
+            <h2 className='text-[20px] leading-[32px] font-medium text-[#1E1E1E]'>
+              Select your rental type
+            </h2>
+            {/**options */}
+            <div className='min-h-[26px] w-full flex flex-wrap gap-[20px] lg:gap-[50px]'>
+              <RadioCheck
+                isChecked={createBrief.rentalType === 'Rent'}
+                selectedValue={createBrief?.rentalType}
+                handleChange={() => {
+                  setCreateBrief({
+                    ...createBrief,
+                    rentalType: 'Rent',
+                  });
+                }}
+                type='radio'
+                name='rentalType'
+                value='Rent'
+              />
+              <RadioCheck
+                selectedValue={createBrief?.rentalType}
+                handleChange={() => {
+                  setCreateBrief({
+                    ...createBrief,
+                    rentalType: 'Lease',
+                  });
+                }}
+                type='radio'
+                name='rentalType'
+                value='Lease'
+                isChecked={createBrief.rentalType === 'Lease'}
+              />
+            </div>
+          </div>
+          {/**Property condition */}
+          <div className='lg:w-[535px] min-h-[73px] flex flex-col gap-[15px]'>
+            <h2 className='text-[20px] leading-[32px] font-medium text-[#1E1E1E]'>
+              Property condition
+            </h2>
+            {/**options */}
+            <div className='min-h-[26px] w-full flex flex-wrap gap-[20px] lg:gap-[50px]'>
+              <RadioCheck
+                isChecked={createBrief.propertyCondition === 'Brand New'}
+                selectedValue={createBrief?.propertyCondition}
+                handleChange={() => {
+                  setCreateBrief({
+                    ...createBrief,
+                    propertyCondition: 'Brand New',
+                  });
+                }}
+                type='radio'
+                name='propertyCondition'
+                value='Brand New'
+              />
+              <RadioCheck
+                selectedValue={createBrief?.propertyCondition}
+                handleChange={() => {
+                  setCreateBrief({
+                    ...createBrief,
+                    propertyCondition: 'Good Condition',
+                  });
+                }}
+                type='radio'
+                name='propertyCondition'
+                value='Good Condition'
+                isChecked={createBrief.propertyCondition === 'Good Condition'}
+              />
+            </div>
+          </div>
           {/**Usage Options */}
           <div className='min-h-[73px] flex flex-col gap-[15px]'>
             <h2 className='text-[20px] leading-[32px] font-medium text-[#1E1E1E]'>

@@ -6,8 +6,8 @@ import instagramIcon from '@/svgs/instagram.svg';
 import twitterIcon from '@/svgs/twitter.svg';
 import linkedInIcon from '@/svgs/linkedIn.svg';
 import envelopeIcon from '@/svgs/envelope.svg';
-import phoneIcon from '@/svgs/phone.svg';
 import whatsappIcon from '@/svgs/whatsapp.svg';
+import headphoneIcon from '@/svgs/headphone.svg';
 
 //Navbar data
 export const navData: {
@@ -39,19 +39,14 @@ export const navData: {
         url: '/market-place',
       },
       {
-        name: 'Property on joint venture',
+        name: 'Joint Venture',
         url: '/market-place',
       },
     ],
   },
-  // {
-  //   name: 'Landlord',
-  //   url: '/landlord_page',
-  //   isClicked: false,
-  // },
   {
-    name: 'My Listing',
-    url: '/my_listing',
+    name: 'Landlord',
+    url: '/landlord',
     isClicked: false,
   },
   {
@@ -105,7 +100,7 @@ export const agentnavData: {
         url: '/market-place',
       },
       {
-        name: 'Property on joint venture',
+        name: 'Joint Venture',
         url: '/market-place',
       },
     ],
@@ -116,7 +111,7 @@ export const agentnavData: {
   //   isClicked: false,
   // },
   {
-    name: 'My Listing',
+    name: 'Landlord',
     url: '/my_listing',
     isClicked: false,
   },
@@ -370,19 +365,19 @@ export const TenantsFAQsData: { heading: string; text: string }[] = [
 export const agentFAQsData: { heading: string; text: string }[] = [
   {
     heading: `How can I partner with Khabi-Teq as an agent?`,
-    text: `Agents can join by submitting their details through our registration form. We’ll review your application and onboard you as part of our network.`,
+    text: `Agents can join by submitting their details through our registration form. We'll review your application and onboard you as part of our network.`,
   },
   {
     heading: `What are the benefits of partnering with Khabi-Teq?`,
-    text: `Agents can join by submitting their details through our registration form. We’ll review your application and onboard you as part of our network.`,
+    text: `Agents can join by submitting their details through our registration form. We'll review your application and onboard you as part of our network.`,
   },
   {
     heading: `HIs there a fee to join as an agent?`,
-    text: `Agents can join by submitting their details through our registration form. We’ll review your application and onboard you as part of our network.`,
+    text: `Agents can join by submitting their details through our registration form. We'll review your application and onboard you as part of our network.`,
   },
   {
     heading: `Is my data secure with Khabi-Teq?`,
-    text: `Agents can join by submitting their details through our registration form. We’ll review your application and onboard you as part of our network.`,
+    text: `Agents can join by submitting their details through our registration form. We'll review your application and onboard you as part of our network.`,
   },
 ];
 
@@ -419,7 +414,7 @@ export const contactUsData: {
   },
   {
     value: '02013306352',
-    icon: phoneIcon,
+    icon: headphoneIcon,
     type: 'call',
   },
   {
@@ -505,7 +500,7 @@ export const cardDataArray: {
     },
     {
       header: 'Document',
-      value: 'Governor’s Consent, Deed of Assignment',
+      value: "Governor's Consent, Deed of Assignment",
     },
     {
       header: 'Land size',
@@ -583,7 +578,7 @@ export const cardDataArray: {
     },
     {
       header: 'Document',
-      value: 'Governor’s Consent, C of O',
+      value: "Governor's Consent, C of O",
     },
     {
       header: 'Land size',
@@ -635,7 +630,7 @@ export const cardDataArray: {
     },
     {
       header: 'Document',
-      value: 'Governor’s Consent',
+      value: "Governor's Consent",
     },
     {
       header: 'Land size',

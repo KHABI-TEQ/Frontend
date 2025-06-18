@@ -252,32 +252,27 @@ const Sell = () => {
       landSize: '',
       measurementType: '',
       addtionalInfo: '',
+      isTenanted: '',
+      rentalType: '',
     },
     validationSchema: Yup.object({
       propertyType: Yup.string().required('Property type is required'),
-      // propertyCondition: Yup.string().required('Property Condition is requireFd'),
-      // typeOfBuilding: Yup.string().required('Property Condition is required'),
-      // usageOptions: Yup.array().min(1, 'At least one usage option is required'),
+      propertyCondition: Yup.string().when('propertyType', {
+        is: (val: string) => val !== 'Land',
+        then: () => Yup.string().required('Property condition is required'),
+      }),
+      rentalType: Yup.string().when('selectedCard', {
+        is: 'rent',
+        then: () => Yup.string().required('Rental type is required'),
+      }),
       price: Yup.string().required('Price is required'),
-      // documents: Yup.array().min(1, 'At least one document is required'),
       landSize: Yup.string(),
       measurementType: Yup.string(),
-      // noOfBedroom: Yup.string().required('Number of bedrooms is required'),
-      // additionalFeatures: Yup.array()
-      //   .of(Yup.string())
-      //   .min(1, 'At least one additional feature is required'),
-      // selectedState: Yup.string().required('State is required'),
-      // selectedAddress: Yup.string().required('Address is required'),
-      // selectedCity: Yup.string().required('City is required'),
-      // selectedLGA: Yup.string().required('LGA is required'),
-      // ownerFullName: Yup.string().required('Owner full name is required'),
       ownerPhoneNumber: Yup.string()
-        // .required('Owner phone number is required')
         .test('is-valid-phone', 'Invalid phone number', (value) =>
           value ? isValidPhoneNumber(value) : false
         ),
       ownerEmail: Yup.string().email('Invalid email'),
-      // .required('Owner email is required'),
     }),
     onSubmit: async (values) => {
       //Debugging:
@@ -356,11 +351,11 @@ const Sell = () => {
           noOfCarPark: values.noOfCarPark,
         },
         typeOfBuilding: values.typeOfBuilding,
-        // usageOptions: values.usageOptions,
         tenantCriteria: values.tenantCriteria,
         leaseHold: values.leaseHold,
         addtionalInfo: values.addtionalInfo,
         pictures: uploadedImageUrls,
+        isTenanted: values.isTenanted,
       };
 
       await toast.promise(
@@ -474,7 +469,7 @@ const Sell = () => {
                     />
                     <ClickableCard
                       imageSrc={Blue}
-                      text='Do you have a property you for rent?'
+                      text='Is your property up for rent?'
                       href='#'
                       onClick={() => {
                         setSelectedCard('rent');
@@ -492,9 +487,9 @@ const Sell = () => {
                     />
 
                     <div className='lg:w-[953px] w-full text-xl text-[#FF3D00] font-normal text-center mt-5'>
-                      Note: Only property owners are allowed to submit listings.
+                      Note: Only property owners and mandated agents are allowed to submit listings.
                       Submissions from non-owners will be automatically
-                      rejected."
+                      rejected.
                     </div>
                   </div>
                 </div>
@@ -550,63 +545,76 @@ const Sell = () => {
                           formik.values.propertyType !== 'Land' && (
                             <div className='min-h-[73px] gap-[15px] flex flex-col w-full'>
                               <h2 className='text-[20px] leading-[32px] font-medium text-[#1E1E1E]'>
-                                Property Condition
+                                Select your rental type
                               </h2>
                               <div className='w-full gap-[20px] lg:gap-[50px] flex flex-row flex-wrap'>
                                 <RadioCheck
-                                  // isDisabled={formik.values?.propertyType ? true : false}
-                                  selectedValue={
-                                    formik.values?.propertyCondition
-                                  }
+                                  selectedValue={formik.values?.rentalType}
                                   handleChange={() => {
-                                    formik.setFieldValue(
-                                      'propertyCondition',
-                                      'Brand New'
-                                    );
+                                    formik.setFieldValue('rentalType', 'Rent');
                                   }}
                                   type='radio'
-                                  value='Brand New'
-                                  name='propertyCondition'
+                                  value='Rent'
+                                  name='rentalType'
                                 />
                                 <RadioCheck
-                                  // isDisabled={formik.values?.propertyType ? true : false}
-                                  selectedValue={
-                                    formik.values?.propertyCondition
-                                  }
+                                  selectedValue={formik.values?.rentalType}
                                   handleChange={() => {
-                                    formik.setFieldValue(
-                                      'propertyCondition',
-                                      'Good Condition'
-                                    );
+                                    formik.setFieldValue('rentalType', 'Lease');
                                   }}
                                   type='radio'
-                                  name='propertyCondition'
-                                  value='Good Condition'
-                                />
-                                <RadioCheck
-                                  // isDisabled={formik.values?.propertyType ? true : false}
-                                  selectedValue={
-                                    formik.values?.propertyCondition
-                                  }
-                                  handleChange={() => {
-                                    formik.setFieldValue(
-                                      'propertyCondition',
-                                      'Needs Renovation'
-                                    );
-                                  }}
-                                  type='radio'
-                                  name='propertyCondition'
-                                  value='Needs Renovation'
+                                  name='rentalType'
+                                  value='Lease'
                                 />
                               </div>
-                              {formik.touched.propertyCondition &&
-                                formik.errors.propertyCondition && (
-                                  <span className='text-red-600 text-sm'>
-                                    {formik.errors.propertyCondition}
-                                  </span>
-                                )}
+                              {formik.touched.rentalType && formik.errors.rentalType && (
+                                <span className='text-red-600 text-sm'>
+                                  {formik.errors.rentalType}
+                                </span>
+                              )}
                             </div>
                           )}
+                        {selectedCard === 'rent' && (
+                          <div className='min-h-[73px] gap-[15px] flex flex-col w-full'>
+                            <h2 className='text-[20px] leading-[32px] font-medium text-[#1E1E1E]'>
+                              Property Condition
+                            </h2>
+                            <div className='w-full gap-[20px] lg:gap-[50px] flex flex-row flex-wrap'>
+                              <RadioCheck
+                                selectedValue={formik.values?.propertyCondition}
+                                handleChange={() => {
+                                  formik.setFieldValue('propertyCondition', 'Brand New');
+                                }}
+                                type='radio'
+                                value='Brand New'
+                                name='propertyCondition'
+                              />
+                              <RadioCheck
+                                selectedValue={formik.values?.propertyCondition}
+                                handleChange={() => {
+                                  formik.setFieldValue('propertyCondition', 'Good Condition');
+                                }}
+                                type='radio'
+                                name='propertyCondition'
+                                value='Good Condition'
+                              />
+                              <RadioCheck
+                                selectedValue={formik.values?.propertyCondition}
+                                handleChange={() => {
+                                  formik.setFieldValue('propertyCondition', 'Needs Renovation');
+                                }}
+                                type='radio'
+                                name='propertyCondition'
+                                value='Needs Renovation'
+                              />
+                            </div>
+                            {formik.touched.propertyCondition && formik.errors.propertyCondition && (
+                              <span className='text-red-600 text-sm'>
+                                {formik.errors.propertyCondition}
+                              </span>
+                            )}
+                          </div>
+                        )}
                         <div className='min-h-[127px] w-full flex flex-col gap-[15px]'>
                           <h2 className='text-[20px] leading-[32px] font-medium text-[#1E1E1E]'>
                             Location
@@ -864,7 +872,7 @@ const Sell = () => {
                       </h2>
                       {selectedCard !== 'rent' && (
                         <div className='min-h-[73px] flex flex-col gap-[15px] mt-5'>
-                          <h2 className='text-[20px] leading-[32px] font-medium text-[#1E1E1E]'>
+                          <h2 className='text-[20px] leading-[32px] font-[500] text-[#1E1E1E]'>
                             Document on the property
                           </h2>
                           <div className='grid lg:grid-cols-3 grid-cols-2 gap-[15px] w-full'>
@@ -902,11 +910,11 @@ const Sell = () => {
                       )}
                       {selectedCard === 'jv' && (
                         <div className='min-h-[73px] flex flex-col gap-[15px] mt-5'>
-                          <h2 className='text-[20px] leading-[32px] font-medium text-[#1E1E1E]'>
+                          <h2 className='text-[20px] leading-[32px] font-[500] text-[#1E1E1E]'>
                             Condition
                           </h2>
                           <div className='grid lg:grid-cols-3 grid-cols-1 gap-[15px] w-full'>
-                            {JvConditionData.map(
+                            {[...JvConditionData, 'None'].map(
                               (item: string, idx: number) => (
                                 <RadioCheck
                                   key={idx}
@@ -914,12 +922,16 @@ const Sell = () => {
                                   value={item}
                                   name='jvConditions'
                                   handleChange={() => {
-                                    const jvConditions =
-                                      formik.values.jvConditions.includes(item)
-                                        ? formik.values.jvConditions.filter(
-                                            (doc) => doc !== item
-                                          )
-                                        : [...formik.values.jvConditions, item];
+                                    let jvConditions;
+                                    if (item === 'None') {
+                                      // If None is selected, clear all other selections
+                                      jvConditions = formik.values.jvConditions.includes('None') ? [] : ['None'];
+                                    } else {
+                                      // If another item is selected, remove None if it exists
+                                      jvConditions = formik.values.jvConditions.includes(item)
+                                        ? formik.values.jvConditions.filter(doc => doc !== item)
+                                        : [...formik.values.jvConditions.filter(doc => doc !== 'None'), item];
+                                    }
                                     formik.setFieldValue(
                                       'jvConditions',
                                       jvConditions
@@ -932,6 +944,43 @@ const Sell = () => {
                           </div>
                         </div>
                       )}
+                      <div className='min-h-[73px] flex flex-col gap-[15px] mt-5'>
+                        <h2 className='text-[20px] leading-[32px] font-[500] text-[#1E1E1E]'>
+                          Is your property currently tenanted?
+                        </h2>
+                        <div className='w-full gap-[20px] lg:gap-[50px] flex flex-row flex-wrap'>
+                          <RadioCheck
+                            type='radio'
+                            value='Yes'
+                            name='isTenanted'
+                            handleChange={() => {
+                              formik.setFieldValue('isTenanted', 'Yes');
+                            }}
+                            selectedValue={formik.values?.isTenanted}
+                            isDisabled={areInputsDisabled}
+                          />
+                          <RadioCheck
+                            type='radio'
+                            value='No'
+                            name='isTenanted'
+                            handleChange={() => {
+                              formik.setFieldValue('isTenanted', 'No');
+                            }}
+                            selectedValue={formik.values?.isTenanted}
+                            isDisabled={areInputsDisabled}
+                          />
+                          <RadioCheck
+                            type='radio'
+                            value='I live in it'
+                            name='isTenanted'
+                            handleChange={() => {
+                              formik.setFieldValue('isTenanted', 'I live in it');
+                            }}
+                            selectedValue={formik.values?.isTenanted}
+                            isDisabled={areInputsDisabled}
+                          />
+                        </div>
+                      </div>
                       {selectedCard !== 'jv' && (
                         <div className='min-h-[73px] flex flex-col gap-[15px] mt-5'>
                           <h2 className='text-[20px] leading-[32px] font-medium text-[#1E1E1E]'>
@@ -1202,7 +1251,7 @@ const Sell = () => {
                             className='lg:w-1/2 w-full'
                             type='text'
                           />
-                          <div className='flex flex-col gap-2'>
+                          <div className='flex flex-col gap-2 lg:w-1/2'>
                             <label className='block text-sm font-medium'>
                               Phone Number
                             </label>
@@ -1239,6 +1288,9 @@ const Sell = () => {
                           onChange={formik.handleChange}
                           type='email'
                         />
+                        <p className='font-["Roboto"] font-medium text-[18px] leading-[160%] text-[#1976D2]'>
+                          I hereby agree to indemnify and hold harmless Khabi-Teq Realty, its affiliates, directors, and agents from and against any and all claims, losses, liabilities, or damages arising from or related to any transaction conducted by me on its platform
+                        </p>
                       </div>
                     </div>
                   )}

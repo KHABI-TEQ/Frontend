@@ -27,17 +27,17 @@ const Agent = () => {
   const { isContactUsClicked, isModalOpened } = usePageContext();
   const { user } = useUserContext();
 
-useEffect(() => {
-  if (!user) {
-    return;
-  } else if (user.userType !== 'Agent') {
-    router.push('/agent');
-  } else if (!user.accountApproved) {
-    router.push('/agent/under-review');
-  } else {
-    router.push('/agent/briefs');
-  }
-}, [user, router]);
+  useEffect(() => {
+    if (!user) {
+      return;
+    } else if (user.userType !== 'Agent') {
+      router.push('/agent');
+    } else if (!user.accountApproved) {
+      router.push('/agent/under-review');
+    } else {
+      router.push('/agent/briefs');
+    }
+  }, [user, router]);
 
   if (isLoading) return <Loading />;
 
@@ -57,6 +57,7 @@ useEffect(() => {
             buttonText2='Login'
             bgColor='#0A3E72'
             borderColor='#63A3BE'
+            onButton1Click={() => router.push('/auth?from=agent')}
           />
           <Section1
             headingColor='#000000'
@@ -97,8 +98,9 @@ useEffect(() => {
                   viewport={{ once: true }}
                   transition={{ delay: 0.4 }}
                   className='w-[207px] bg-[#8DDB90] h-[50px] text-base font-bold text-white'
-                  type='button'>
-                  <Link href={'/auth'}>Partner with us</Link>
+                  type='button'
+                  onClick={() => router.push('/auth?from=agent')}>
+                  Partner with us
                 </motion.button>
               </div>
             </div>

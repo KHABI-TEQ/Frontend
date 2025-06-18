@@ -274,11 +274,10 @@ const RentSearchModal = ({
 
         {/**Third section */}
         <div className='flex gap-[20px] items-end'>
-          {/**Preferred Location */}
           <SelectStateLGA
             placeholder='Enter state, lga, city....'
             formik={formik}
-            heading='Preferred Location'
+            heading='Location'
           />
           {/**Price Range */}
           <div className='flex flex-col gap-[10px]'>

@@ -15,6 +15,7 @@ interface HeroSectionProps {
   buttonText2: string;
   bgColor: string;
   borderColor: string;
+  onButton1Click?: () => void;
 }
 
 const HeroSection: FC<HeroSectionProps> = ({
@@ -25,6 +26,7 @@ const HeroSection: FC<HeroSectionProps> = ({
   buttonText2,
   bgColor,
   borderColor,
+  onButton1Click,
 }) => {
   return (
     /**#0A3E72 */
@@ -47,18 +49,18 @@ const HeroSection: FC<HeroSectionProps> = ({
           <p className='font-normal text-[20px] lg:leading-[32px] leading-[25px] text-[#FFFFFF]'>
             {description}
           </p>
-          <div className='flex md:flex-row flex-col gap-5'>
+          <div className='flex flex-row gap-[10px]'>
             <Button
               green={true}
-              className='h-[66px] w-full lg:w-[393px] py-[12px] px-[24px] text-white text-[14px] md:text-[16px] leading-[32px] font-bold'
+              className='h-[66px] w-full lg:w-[193px] py-[12px] px-[24px] text-white text-[14px] md:text-[16px] leading-[32px] font-bold'
               value={buttonText1}
-              onClick={() => {
+              onClick={onButton1Click || (() => {
                 window.location.href = '/auth';
-              }}
+              })}
             />
             <Button
               green={false}
-              className='h-[66px] w-full lg:w-[393px] py-[12px] px-[24px] text-[#8DDB90] text-[14px] md:text-[16px] leading-[32px] font-bold border-[2px] border-[#8DDB90]'
+              className='h-[66px] w-full lg:w-[193px] py-[12px] px-[24px] text-[#8DDB90] text-[14px] md:text-[16px] leading-[32px] font-bold border-[2px] border-[#8DDB90]'
               value={buttonText2}
               onClick={() => {
                 window.location.href = '/auth/login';

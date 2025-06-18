@@ -77,6 +77,41 @@ interface RequestData {
   pictures?: string[];
 }
 
+interface DataProps {
+  _id: string;
+  propertyType: string;
+  location: {
+    state: string;
+    localGovernment: string;
+    area: string;
+  };
+  price: number;
+  docOnProperty: {
+    _id: string;
+    docName: string;
+    isProvided: boolean;
+  }[];
+  propertyFeatures: {
+    additionalFeatures: string[];
+    noOfBedrooms: number | null;
+  };
+  owner: string;
+  ownerModel: string;
+  areYouTheOwner: boolean;
+  usageOptions: string[];
+  isAvailable: boolean;
+  pictures: string[];
+  isApproved: boolean;
+  isRejected: boolean;
+  landSize: {
+    measurementType: string;
+    size: number | null;
+  };
+  createdAt: string;
+  updatedAt: string;
+  isPreference?: boolean;
+}
+
 const Overview = () => {
   const [briefs, setBriefs] = useState({
     totalBrief: 0,
@@ -163,7 +198,10 @@ const Overview = () => {
           Cookies.get('token')
         );
 
+        console.log('Agent properties response:', response);
+
         if (response?.success === false) {
+          console.error('Failed to get agent data:', response);
           toast.error('Failed to get data');
           return setIsLoadingDetails({
             isLoading: false,
@@ -172,10 +210,29 @@ const Overview = () => {
         }
         const data = response;
 
+        if (!data?.properties) {
+          console.error('Invalid response structure:', data);
+          toast.error('Invalid data structure received');
+          return setIsLoadingDetails({
+            isLoading: false,
+            message: 'Invalid data structure',
+          });
+        }
+
         const combinedProperties = [
           ...(data?.properties.active || []),
           ...(data?.properties.pending || []),
         ];
+
+        console.log('Combined properties before filtering:', combinedProperties);
+
+        // Filter properties to only include those with isPreference === true
+        const preferenceProperties = combinedProperties.filter(property => {
+          console.log('Property isPreference value:', property.isPreference);
+          return property.isPreference === true;
+        });
+
+        console.log('Filtered preference properties:', preferenceProperties);
 
         setIsLoadingDetails({
           isLoading: false,
@@ -186,11 +243,11 @@ const Overview = () => {
         setDealClosed(data.properties.dealsClosed);
         setBriefs({
           ...briefs,
-          totalBrief: combinedProperties.length,
+          totalBrief: preferenceProperties.length,
         });
-        setTotalBriefs(combinedProperties);
+        setTotalBriefs(preferenceProperties);
       } catch (error) {
-        console.log(error);
+        console.error('Error fetching agent data:', error);
         setIsLoadingDetails({
           isLoading: false,
           message: 'Failed to get data',
@@ -208,8 +265,8 @@ const Overview = () => {
   const dynamicContent = () => {
     switch (selectedOption) {
       case SELECTED_OPTIONS.REQUIRE_ATTENTION:
-        if (buyerPreferences?.['length'] === 0) {
-          return (
+        if (!buyerPreferences || buyerPreferences.length === 0) {
+          return totalBriefs.length === 0 ? (
             <div className='w-full h-[200px] flex justify-center items-center'>
               <motion.h2
                 initial={{ y: 20, opacity: 0 }}
@@ -220,6 +277,32 @@ const Overview = () => {
                 No buyer preferences found
               </motion.h2>
             </div>
+          ) : (
+            <Table
+              headingColor='#FF3D00'
+              headerData={headerData}
+              setDetailsToCheck={setDetailsToCheck}
+              setShowFullDetails={setIsFullDetailsClicked}
+              heading='Urgent Property Request'
+              description={`A new buyer preference has been submitted! Review the details and
+            match it with available property briefs. Upload suitable options to
+            the preference form as soon as possible to ensure a fast and
+            seamless transaction`}
+              data={totalBriefs.map((item) => ({
+                ...item,
+                date: item.createdAt ? formatDate(item.createdAt) : '',
+                propertyType: item.propertyType,
+                location: {
+                  localGovernment: item.location.localGovernment,
+                  state: item.location.state,
+                  area: item.location.area,
+                },
+                propertyPrice: item.price ? `N ${Number(item.price).toLocaleString()}` : 'N/A',
+                document: item.docOnProperty
+                  ? item.docOnProperty.map((doc) => doc.docName).join(', ')
+                  : 'No document',
+              }))}
+            />
           );
         } else {
           return (
@@ -235,11 +318,6 @@ const Overview = () => {
             seamless transaction`}
               data={buyerPreferences?.map((item) => ({
                 ...item,
-                // docOnProperty: item.docOnProperty.map(({ docName }) => ({
-                //   docName,
-                //   isProvided: true,
-                //   _id: '',
-                // })),
                 date: formatDate(item.createdAt),
                 propertyType: item.propertyType,
                 location: {
@@ -253,7 +331,7 @@ const Overview = () => {
                   : item.price,
                 document: item.docOnProperty
                   ? item.docOnProperty.map((doc) => doc.docName).join(', ')
-                  : '', // Join docName values or leave empty if not provided
+                  : '',
               }))}
             />
           );
@@ -336,8 +414,8 @@ const Overview = () => {
   const mobileDynamicContent = () => {
     switch (selectedOption) {
       case SELECTED_OPTIONS.REQUIRE_ATTENTION:
-        if (briefData?.length === 0) {
-          return (
+        if (!briefData || briefData.length === 0) {
+          return totalBriefs.length === 0 ? (
             <div className='w-full h-[200px] flex justify-center items-center'>
               <motion.h2
                 initial={{ y: 20, opacity: 0 }}
@@ -348,6 +426,14 @@ const Overview = () => {
                 No buyer preferences found
               </motion.h2>
             </div>
+          ) : (
+            <Briefs
+              header='Urgent Property request'
+              isLoading={isLoadingDetails.isLoading}
+              setDetailsToCheck={setDetailsToCheck}
+              setShowFullDetails={setIsFullDetailsClicked}
+              briefData={totalBriefs}
+            />
           );
         } else {
           return (
@@ -356,7 +442,6 @@ const Overview = () => {
               isLoading={isLoadingDetails.isLoading}
               setDetailsToCheck={setDetailsToCheck}
               setShowFullDetails={setIsFullDetailsClicked}
-              // briefData={briefData}
               briefData={buyerPreferences}
             />
           );
@@ -377,31 +462,6 @@ const Overview = () => {
         } else {
           return <RequestsTable data={allRequests} />;
         }
-      // case SELECTED_OPTIONS.THREE_MONTHS_AGO_BRIEF:
-      //   if (briefData.length === 0) {
-      //     <div className='w-full h-[200px] flex justify-center items-center'>
-      //       <motion.h2
-      //         initial={{ y: 20, opacity: 0 }}
-      //         viewport={{ once: true }}
-      //         whileInView={{ y: 0, opacity: 1 }}
-      //         transition={{ duration: 0.2 }}
-      //         className='text-3xl font-bold text-gray-600 text-[24px] leading-[32px] tracking-[0.25px] font-archivo'>
-      //         No 3 month ago briefs found
-      //       </motion.h2>
-      //     </div>;
-      //   } else {
-      //     return (
-      //       <Table
-      //         headingColor='black'
-      //         headerData={headerData}
-      //         setDetailsToCheck={setDetailsToCheck}
-      //         setShowFullDetails={setIsFullDetailsClicked}
-      //         heading='3 month ago Brief'
-      //         description={`You have property briefs that have been listed for over 3 months without a transaction. Please confirm if these properties are still available or have been sold to keep our listings updated and accurate.`}
-      //         data={briefData}
-      //       />
-      //     );
-      //   }
       case SELECTED_OPTIONS.RECENTLY_PUBLISH:
         if (totalBriefs?.length === 0) {
           <div className='w-full h-[200px] flex justify-center items-center'>

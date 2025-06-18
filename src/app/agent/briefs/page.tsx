@@ -25,6 +25,15 @@ import { briefData } from '@/data/sampleDataForAgent';
 import Settings from '@/components/settings-components/settings';
 import { motion } from 'framer-motion';
 
+// Function to shuffle array
+const shuffleArray = (array: any[]) => {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+};
+
 type BriefDataProps = {
   docOnProperty: { _id: string; isProvided: boolean; docName: string }[];
   pictures: any[];
@@ -132,61 +141,34 @@ const Form2 = () => {
   useEffect(() => {
     const getTotalBriefs = async () => {
       setIsLoading(true);
-
       try {
         const response = await GET_REQUEST(
-          URLS.BASE + URLS.agentfetchTotalBriefs,
+          URLS.BASE + URLS.fetchBriefs + '?page=1&limit=1000&briefType=Outright Sales',
           Cookies.get('token')
         );
 
         if (response?.success === false) {
+          console.error('Failed to get agent data:', response);
           toast.error('Failed to get data');
-          return setIsLoading(false);
+          return;
         }
+
         const data = response;
-        console.log(
-          'data',
-          data,
-          data.properties.active,
-          data.properties.pending
-        );
-        const combinedProperties = [
-          ...(data?.properties.active || []),
-          ...(data?.properties.pending || []),
-        ]
-          .map((item: DataProps) => ({
-            ...item,
-            price: item.rentalPrice || item.price,
-            propertyFeatures: {
-              ...item.propertyFeatures,
-              additionalFeatures:
-                item?.features?.map(({ featureName }) => featureName) ||
-                item.propertyFeatures?.additionalFeatures,
-            },
-            fileUrl:
-              item?.pictures?.length !== 0
-                ? item.pictures?.map((image) => ({
-                    id: image,
-                    image: image,
-                  }))
-                : [],
-            features:
-              item?.features?.map(({ featureName }) => featureName) ||
-              item.propertyFeatures?.additionalFeatures,
-            noOfBedrooms:
-              item.noOfBedrooms || item.propertyFeatures?.noOfBedrooms,
-          }))
-          .sort(
-            (a, b) =>
-              new Date(b.createdAt || 0).getTime() -
-              new Date(a.createdAt || 0).getTime()
-          ); // Sort by date in descending order
-        // console.log(combinedProperties);
-        setTotalBriefData(combinedProperties);
-        setIsLoading(false);
+        if (!data?.data) {
+          console.error('Invalid response structure:', data);
+          toast.error('Invalid data structure received');
+          return;
+        }
+
+        // Filter approved properties and shuffle them
+        const approvedData = Array.isArray(data.data)
+          ? data.data.filter((item: any) => item.isApproved === true)
+          : [];
+        const shuffledData = shuffleArray(approvedData);
+        setTotalBriefData(shuffledData);
       } catch (error) {
         console.log(error);
-        setIsLoading(false);
+        toast.error('Failed to fetch data');
       } finally {
         setIsLoading(false);
       }
@@ -212,7 +194,7 @@ const headerData: string[] = [
   'Date',
   'Property Type',
   'Location',
-  'Property price',
+  'Price Range',
   'Document',
   'Full details',
 ];

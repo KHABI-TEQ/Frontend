@@ -26,6 +26,5 @@ export const DocOnPropertyData: string[] = [
 export const JvConditionData: string[] = [
   'Proof of Funds',
   'Premium',
-  'Installment Payment',
-  'Tenanted',
+  'Installment Payment'
 ];

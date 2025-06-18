@@ -11,16 +11,31 @@ export type createBriefProps = {
   lgaOptions: Option[];
   fileUrl: { id: string; image: string }[];
   isSubmittedSuccessfully: boolean;
-  propertyType: string;
+  agentType: string;
   usageOptions: string[];
   price: string | number;
+  amount: string;
   landSize: string;
   documents: string[];
   noOfBedroom: number | undefined;
-  additionalFeatures: string[] | undefined;
+  features: string[];
   selectedCity: string;
   areYouTheOwner: boolean;
   typeOfMeasurement: string;
+  createdAt?: string;
+  email?: string;
+  id?: string;
+  isApproved?: boolean;
+  isRejected?: boolean;
+  legalName?: string;
+  location?: string;
+  phoneNumber?: string;
+  pictures?: string[];
+  propertyCondition?: string;
+  propertyType?: string;
+  propertyId?: string;
+  tenantCriteria?: string[];
+  rentalType?: string;
 };
 interface CreateBriefContextProps {
   createBrief: createBriefProps;
@@ -50,14 +65,14 @@ export const CreateBriefProvider = ({
     lgaOptions: [],
     fileUrl: [],
     isSubmittedSuccessfully: false,
-    propertyType: '',
+    agentType: '',
     usageOptions: [],
     price: '',
+    amount: '',
     landSize: '',
     documents: [],
     noOfBedroom: undefined,
-    additionalFeatures: [],
-    // selectedState: string,
+    features: [],
     selectedCity: '',
     areYouTheOwner: false,
     typeOfMeasurement: '',

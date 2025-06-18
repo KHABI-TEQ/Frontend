@@ -33,7 +33,7 @@ const HowItWorksSection = () => {
 
 const HowItWorksDetails: { heading: string; detailsArr: string[] }[] = [
   {
-    heading: 'Property Listing',
+    heading: 'Buying a property',
     detailsArr: [
       'Quick Registration',
       'Provide personal details',
@@ -42,7 +42,7 @@ const HowItWorksDetails: { heading: string; detailsArr: string[] }[] = [
     ],
   },
   {
-    heading: 'Acquiring a property',
+    heading: 'Selling a property',
     detailsArr: [
       'Search for property',
       'Requests for Inspection',

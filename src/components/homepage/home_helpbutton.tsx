@@ -16,7 +16,7 @@ const HelpButton = () => {
             onClick={() => {
               window.location.href = '/market-place';
             }}
-            value={`Search listings now`}
+            value={`Browse properties`}
             className='h-[50px] font-bold text-[#FFFFFF] text-base w-[249px] md:min-w-[249px] py-[12px] md:px-[24px] bg-[#8DDB90] leading-[25.6px]'
           />
           <Button
@@ -24,7 +24,7 @@ const HelpButton = () => {
             onClick={() => {
               window.location.href = '/my_listing';
             }}
-            value={`List a property`}
+            value={`Post a property`}
             className='h-[50px] font-bold text-[#FFFFFF] text-base w-[249px] md:min-w-[249px] py-[12px] md:px-[24px] bg-[#8DDB90] leading-[25.6px]'
           />
           <Button

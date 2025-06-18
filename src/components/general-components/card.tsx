@@ -350,12 +350,8 @@ const NavigationButton: React.FC<NavigationButtonProps> = ({
   };
 
 const ImageSwiper = ({ images }: { images: StaticImageData[] }) => {
-  //const images = [sampleImage.src, sampleImage.src];
-
   const swiperRef = React.useRef<any>(null);
   const { setViewImage, setImageData } = usePageContext();
-
-  useEffect(() => console.log(images), [images]);
 
   const handleNext = () => {
     if (swiperRef.current) {
@@ -381,27 +377,7 @@ const ImageSwiper = ({ images }: { images: StaticImageData[] }) => {
         loop={true}
         className='w-full h-[148px] cursor-pointer'>
         {images.map((src, i) => {
-          const checkSrcType: string = (src?.src ? src.src : src) as string;
-          const isSrcValid = checkSrcType?.includes('https://');
-
-          if (!isSrcValid) {
-            return (
-              <SwiperSlide
-                onClick={() => {
-                  setImageData(images);
-                  setViewImage(true);
-                }}
-                key={i}>
-                <Image
-                  width={1000}
-                  height={1000}
-                  src={`https://${src}`}
-                  alt={`Slide ${i + 1}`}
-                  className='w-full h-full object-cover cursor-pointer'
-                />
-              </SwiperSlide>
-            );
-          }
+          const validImageUrl = getValidImageUrl(src);
           return (
             <SwiperSlide
               onClick={() => {
@@ -412,23 +388,13 @@ const ImageSwiper = ({ images }: { images: StaticImageData[] }) => {
               <Image
                 width={1000}
                 height={1000}
-                src={src}
+                src={validImageUrl}
                 alt={`Slide ${i + 1}`}
                 className='w-full h-full object-cover cursor-pointer'
               />
             </SwiperSlide>
           );
         })}
-        {/* <NavigationButton
-          handleNav={handlePrev}
-          type='arrow left'
-          className='absolute left-5 top-1/2 transform -translate-y-1/2 z-10'
-        />
-        <NavigationButton
-          handleNav={handleNext}
-          type='arrow right'
-          className='absolute right-5 top-1/2 transform -translate-y-1/2 z-10'
-        /> */}
       </Swiper>
     </div>
   );

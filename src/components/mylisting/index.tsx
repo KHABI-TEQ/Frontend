@@ -67,6 +67,7 @@ const MyListing = ({ briefs = [], loading = false }: { briefs: any[]; loading?: 
 
   const renderCard = (brief: any, idx: number) => {
     const cardData = mapBriefToCardData(brief);
+    const images = brief.pictures && brief.pictures.length > 0 ? brief.pictures : [sampleImage];
 
     if (brief.briefType === 'Joint Venture') {
       return (
@@ -76,7 +77,7 @@ const MyListing = ({ briefs = [], loading = false }: { briefs: any[]; loading?: 
           isAddInspectionalModalOpened={isAddForInspectionModalOpened}
           isDisabled={false}
           cardData={cardData}
-          images={[sampleImage]}
+          images={images}
           property={brief}
           properties={briefs}
           setPropertySelected={() => {}}
@@ -94,7 +95,7 @@ const MyListing = ({ briefs = [], loading = false }: { briefs: any[]; loading?: 
     return (
       <Card
         isAddForInspectionModalOpened={isAddForInspectionModalOpened}
-        images={[sampleImage]}
+        images={images}
         onClick={() => {}}
         onCardPageClick={() => {
           router.push(`/property/${brief?.briefType || 'type'}/${brief?._id}`);
@@ -165,7 +166,7 @@ const MyListing = ({ briefs = [], loading = false }: { briefs: any[]; loading?: 
               onClick={() => {
                 router.push('/post_property');
               }}>
-              List property
+              Post a property
             </button>
           </div>
         </div>

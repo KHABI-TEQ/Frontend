@@ -119,69 +119,54 @@ const Brief: FC<TotalBriefProps> = ({
     }
   };
   return (
-    <div className=' w-full mt-[30px] md:mt-[60px] flex items-center justify-center'>
-      {showFullDetails ? (
-        <div>
-          <DetailsToCheck
-            heading={heading}
-            setIsFullDetailsClicked={setShowFullDetails}
-            detailsToCheck={detailsToCheck}
-          />
-          <div className='flex flex-col gap-[10px] bg-[#FFFFFF] md:hidden'>
-            <button
-              type='button'
-              // onClick={handleEditBrief}
-              className='w-[90%] ml-[5%] min-h-[50px] flex justify-center items-center border-[1px] border-blue-500 text-blue-500 rounded-[8px] font-ubuntu'>
-              Edit
-            </button>
-            <button
-              onClick={() => {
-                handleDeleteBrief(detailsToCheck._id);
-              }}
-              type='button'
-              className='w-[90%] ml-[5%] min-h-[50px] flex justify-center items-center border-[1px] border-red-500 text-red-500 rounded-[8px] font-ubuntu'>
-              Delete
-            </button>
+    <div className='container'>
+      {isLoading ? (
+        <div className='w-full h-full flex justify-center items-center'>
+          <div className='flex items-center gap-1'>
+            <span className='text-base'>Loading</span>
+            <FontAwesomeIcon
+              icon={faRefresh}
+              spin
+              width={25}
+              height={25}
+              className='w-[20px] h-[20px]'
+            />
           </div>
         </div>
       ) : (
-        <div className='container'>
-          {isLoading ? (
-            <div className='w-full h-full flex justify-center items-center'>
-              <div className='flex items-center gap-1'>
-                <span className='text-base'>Loading</span>
-                <FontAwesomeIcon
-                  icon={faRefresh}
-                  spin
-                  width={25}
-                  height={25}
-                  className='w-[20px] h-[20px]'
-                />
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className='hidden md:flex'>
-                <ShowTable
-                  headerData={headerData}
-                  setDetailsToCheck={setDetailsToCheck}
-                  setShowFullDetails={setShowFullDetails}
-                  heading={heading}
-                  data={data}
-                />
-              </div>
-              {/**Mobile View */}
-              <div className='w-full'>
-                <Briefs
-                  setDetailsToCheck={setDetailsToCheck}
-                  setShowFullDetails={setShowFullDetails}
-                  header={heading}
-                  briefData={data}
-                />
-              </div>
-            </>
-          )}
-        </div>
+        <>
+          <div className='hidden md:flex'>
+            <ShowTable
+              headerData={headerData}
+              setDetailsToCheck={setDetailsToCheck}
+              setShowFullDetails={setShowFullDetails}
+              heading={heading}
+              data={data.map((item) => ({
+                ...item,
+                date: item.createdAt?.split('T')[0],
+                propertyType: item.propertyType,
+                location: {
+                  state: item.location.state,
+                  localGovernment: item.location.localGovernment,
+                  area: item.location.area,
+                },
+                propertyPrice: item.price ? `N ${Number(item.price).toLocaleString()}` : 'N/A',
+                document: item.docOnProperty
+                  ? item.docOnProperty.map((doc) => doc.docName).join(', ')
+                  : 'No document',
+              }))}
+            />
+          </div>
+          {/**Mobile View */}
+          <div className='w-full'>
+            <Briefs
+              setDetailsToCheck={setDetailsToCheck}
+              setShowFullDetails={setShowFullDetails}
+              header={heading}
+              briefData={data}
+            />
+          </div>
+        </>
       )}
     </div>
   );

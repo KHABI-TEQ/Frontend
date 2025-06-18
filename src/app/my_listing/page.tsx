@@ -16,12 +16,20 @@ const page = () => {
 
   // Only run redirect logic after user context is loaded (not undefined/null)
   useEffect(() => {
+    console.log('Current user:', user);
+    console.log('Auth token:', Cookies.get('token'));
+    
     if (!user) {
+      console.log('No user found, redirecting to landlord registration');
+      // Set localStorage flag to indicate coming from landlord link
+      localStorage.setItem('signupFromHeader', 'true');
       router.push('/auth');
     } else if (user.userType !== 'Landowners') {
+      console.log('User is not a landlord, redirecting to /agent');
       router.push('/agent');
     } else {
-      document.title = 'My Listing';
+      console.log('User is a landlord, fetching briefs');
+      document.title = 'Landlord';
 
       const fetchBriefs = async () => {
         setLoading(true);
@@ -30,8 +38,10 @@ const page = () => {
             URLS.BASE + URLS.getMyProperties,
             Cookies.get('token')
           );
+          console.log('Fetched briefs:', response);
           setBriefs(response || []);
         } catch (err) {
+          console.error('Error fetching briefs:', err);
           setBriefs([]);
         } finally {
           setLoading(false);

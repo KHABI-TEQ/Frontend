@@ -282,23 +282,22 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
 
 const marketPlaceData: { name: string; url: string; isClicked: boolean }[] = [
   {
-    name: 'Buy a Property',
+    name: 'Buy',
     url: '/market-place',
     isClicked: false,
   },
-
   {
-    name: 'List a Property',
+    name: 'Sell',
     url: '/my_listing',
     isClicked: false,
   },
   {
-    name: 'Rent a Property',
+    name: 'Rent',
     url: '/market-place',
     isClicked: false,
   },
   {
-    name: 'Property for Joint Venture',
+    name: 'Joint Venture',
     url: '/market-place',
     isClicked: false,
   },

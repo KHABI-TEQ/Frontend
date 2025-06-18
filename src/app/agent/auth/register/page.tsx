@@ -86,8 +86,8 @@ const Register = () => {
           POST_REQUEST(url, {
             ...payload,
             phoneNumber: String(values.phone),
+            userType: 'Agent'
           }).then((response) => {
-            // console.log('response from signup', response);
             if ((response as any).id) {
               toast.success('Registration successful');
               setUser((response as any).user);
@@ -95,7 +95,7 @@ const Register = () => {
                 'fullname',
                 `${formik.values.firstName} ${formik.values.lastName}`
               );
-              localStorage.setItem('email', `${formik.values.email}`); // Save email to local storage
+              localStorage.setItem('email', `${formik.values.email}`);
               localStorage.setItem(
                 'phoneNumber',
                 `${String(formik.values.phone)}`
@@ -112,23 +112,31 @@ const Register = () => {
               router.push('/verify-email');
               return 'Registration successful';
             } else {
-              const errorMessage =
-                (response as any).error || 'Registration failed';
-              toast.error(errorMessage);
+              const errorMessage = (response as any).error || 'Registration failed';
+              if (errorMessage.toLowerCase().includes('already exists')) {
+                toast.error('This email is already registered. Please try logging in instead.');
+                router.push('/auth/login');
+              } else {
+                toast.error(errorMessage);
+              }
               setIsDisabled(false);
               throw new Error(errorMessage);
             }
           }),
           {
             loading: 'Signing up...',
-            // success: 'Registration successful',
-            // error: 'Registration failed',
+            error: (err) => err.message || 'Registration failed. Please try again.',
           }
         );
-      } catch (error) {
-        console.log(error);
+      } catch (error: any) {
+        console.error('Registration error:', error);
         setIsDisabled(false);
-        // toast.error('Registration failed, please try again!');
+        if (error.message?.toLowerCase().includes('already exists')) {
+          toast.error('This email is already registered. Please try logging in instead.');
+          router.push('/auth/login');
+        } else {
+          toast.error('Registration failed. Please try again.');
+        }
       }
     },
   });
@@ -264,15 +272,7 @@ const Register = () => {
               Sign In
             </Link>
           </span>
-          {/**Google | Facebook */}
-          <div className='flex justify-between lg:flex-row flex-col gap-[15px] w-full'>
-            <RegisterWith
-              icon={googleIcon}
-              text='Continue with Google'
-              onClick={googleLogin}
-            />
-            <RegisterWith icon={facebookIcon} text='Continue with Facebook' />
-          </div>
+        
         </form>
       </div>
     </section>

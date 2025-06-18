@@ -121,7 +121,7 @@ const ProvideTransactionDetails: React.FC<ProvideTransactionDetailsProps> = ({
                   Account Number{' '}
                   <span
                     className={`${archivo.className} text-lg font-medium text-black`}>
-                    0234567894
+                    2004766765
                   </span>
                 </p>
                 <p
