@@ -1,9 +1,3 @@
-/**
- * eslint-disable react-hooks/exhaustive-deps
- *
- * @format
- */
-
 /** @format */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -28,7 +22,6 @@ import { useUserContext } from "@/context/user-context";
 import { POST_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import toast from "react-hot-toast";
-// import { resolve } from 'path';
 import { useRouter, useSearchParams } from "next/navigation";
 import Cookies from "js-cookie";
 import { useGoogleLogin } from "@react-oauth/google";
@@ -42,27 +35,21 @@ const ResetPassword = () => {
 	const params = useSearchParams();
 
 	useEffect(() => {
-		const token = params?.get("token") ?? "";
+		if (!params) return;
+		const token = params.get("token") ?? "";
 		if (!token || token.length < 100) {
 			toast.error("Invalid token");
 			router.push("/auth/login");
 		}
-	}, []);
+	}, [params]);
 
 	const validationSchema = Yup.object({
 		email: Yup.string().email("Invalid email address").required("Enter email"),
-
 		password: Yup.string()
 			.min(8, "Password must be at least 8 characters")
-			// .matches(
-			//   /^(.*[A-Z]){2,}/,
-			//   'Password must contain at least two uppercase letters'
-			// ) // At least two uppercase letters
-			.matches(/[a-z]/, "Password must contain at least one lowercase letter") // At least one lowercase letter
-			// .matches(/\d/, 'Password must contain at least one number') // At least one number
-			.matches(/[\W_]{2,}/, "Password must contain at least two special character") // At least two special character
+			.matches(/[a-z]/, "Password must contain at least one lowercase letter")
+			.matches(/[\W_]{2,}/, "Password must contain at least two special characters")
 			.required("Password is required"),
-
 		confirmPassword: Yup.string()
 			.required("Confirm password is required")
 			.oneOf([Yup.ref("password"), ""], "Passwords must match"),
@@ -73,7 +60,6 @@ const ResetPassword = () => {
 			password: "",
 			confirmPassword: "",
 		},
-		// validationSchema,
 		onSubmit: async (values) => {
 			try {
 				if (!values.password || !values.confirmPassword) {
@@ -85,22 +71,20 @@ const ResetPassword = () => {
 					toast.error("Passwords do not match");
 					return;
 				}
-				const token = params.get("token");
 
+				const token = params?.get("token");
 				if (!token) {
 					toast.error("Invalid token");
 					return;
 				}
+
 				const url = URLS.BASE + URLS.user + URLS.resetPassword;
 				const payload = { token, password: values.password };
 
 				await toast.promise(
 					POST_REQUEST(url, payload).then((response) => {
-						console.log("response from signin", response);
-
 						if (response.success) {
 							router.push("/auth/login");
-
 							return "Password reset successful";
 						} else {
 							throw new Error((response as any).error || "Password reset failed");
@@ -109,10 +93,7 @@ const ResetPassword = () => {
 					{
 						loading: "Resetting Password...",
 						success: "Password reset successful",
-						error: (error: { message: any }) => {
-							console.log("error", error);
-							return error.message || "An error occurred";
-						},
+						error: (error: { message: any }) => error.message || "An error occurred",
 					}
 				);
 			} catch (error) {
@@ -163,16 +144,10 @@ const ResetPassword = () => {
 							placeholder="Enter your new password again"
 						/>
 					</div>
-					{/**Button */}
 					<Button
 						value="Reset your password"
 						className="min-h-[65px] w-full py-[12px] px-[24px] bg-[#8DDB90] text-[#FAFAFA] text-base leading-[25.6px] font-bold mt-6"
 						type="submit"
-						// isDisabled={
-						//   formik.isSubmitting || !formik.values.password || !formik.values.confirmPassword
-						//   //   !formik.errors.password ||
-						//   //   !formik.errors.confirmPassword
-						// }
 						onSubmit={formik.handleSubmit}
 						green={true}
 					/>
@@ -210,28 +185,19 @@ const Input: FC<InputProps> = ({
 			</span>
 			<div className="flex">
 				<input
+					id={id}
 					name={id}
 					type={type}
-					value={formik.values[title]}
+					value={formik.values[id]}
 					onBlur={formik.handleBlur}
 					onChange={formik.handleChange}
 					placeholder={placeholder ?? "This is placeholder"}
 					className="w-full outline-none min-h-[50px] border-[1px] py-[12px] px-[16px] bg-[#FAFAFA] border-[#D6DDEB] placeholder:text-[#A8ADB7] text-black text-base leading-[25.6px] hide-scrollbar"
 				/>
-				{/* {icon ? (
-          <Image
-            src={icon}
-            alt=''
-            width={20}
-            height={20}
-            className='w-[20px] h-[20px] absolute ml-[330px] lg:ml-[440px] z-20 mt-[15px]'
-          />
-        ) : null} */}
 			</div>
-			{formik.touched[title] ||
-				(formik.errors[title] && (
-					<span className="text-red-600 text-sm">{formik.errors[title]}</span>
-				))}
+			{formik.touched[id] && formik.errors[id] && (
+				<span className="text-red-600 text-sm">{formik.errors[id]}</span>
+			)}
 		</label>
 	);
 };
@@ -243,3 +209,4 @@ export default function Page() {
 		</Suspense>
 	);
 }
+ 
