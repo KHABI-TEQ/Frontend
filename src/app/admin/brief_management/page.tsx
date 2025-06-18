@@ -334,7 +334,10 @@ export default function BriefManagement() {
     setAreInputsDisabled(true);
     try {
       const url = URLS.BASE + '/admin/property/new';
-      const token = Cookies.get('token');
+      const adminToken = Cookies.get("adminToken");
+          if (!adminToken) {
+            router.push("/admin/auth/login");
+          }
 
       let briefType = '';
       if (selectedCard === 'sell') briefType = 'Outright Sales';
@@ -404,7 +407,7 @@ export default function BriefManagement() {
       console.log(payload);
 
       await toast.promise(
-        POST_REQUEST(url, payload, token).then((response) => {
+        POST_REQUEST(url, payload, adminToken).then((response) => {
           if ((response as any).owner) {
             toast.success('Property submitted successfully');
             setIsSubmittedSuccessfully(true);
