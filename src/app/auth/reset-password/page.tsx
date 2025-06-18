@@ -1,12 +1,11 @@
  /**
- * eslint-disable react-hooks/exhaustive-deps
- *
  * @format
  */
 
 /** @format */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 import Loading from '@/components/loading-component/loading';
 import { useLoading } from '@/hooks/useLoading';
@@ -42,12 +41,18 @@ const ResetPassword = () => {
   const params = useSearchParams();
 
   useEffect(() => {
+    if (!params) {
+      toast.error('Invalid request');
+      router.push('/auth/login');
+      return;
+    }
+    
     const token = params.get('token') ?? '';
     if (!token || token.length < 100) {
       toast.error('Invalid token');
       router.push('/auth/login');
     }
-  }, []);
+  }, [params, router]);
 
   const validationSchema = Yup.object({
     email: Yup.string().email('Invalid email address').required('Enter email'),
@@ -88,6 +93,12 @@ const ResetPassword = () => {
           toast.error('Passwords do not match');
           return;
         }
+        
+        if (!params) {
+          toast.error('Invalid request');
+          return;
+        }
+        
         const token = params.get('token');
 
         if (!token) {
@@ -134,7 +145,7 @@ const ResetPassword = () => {
         router.push('/agent/briefs');
       }
     }
-  }, [user]);
+  }, [user, router]);
 
   if (isLoading) return <Loading />;
 
@@ -217,7 +228,7 @@ const Input: FC<InputProps> = ({
         <input
           name={id}
           type={type}
-          value={formik.values[title]}
+          value={formik.values[id || title]}
           onBlur={formik.handleBlur}
           onChange={formik.handleChange}
           placeholder={placeholder ?? 'This is placeholder'}
@@ -233,10 +244,9 @@ const Input: FC<InputProps> = ({
           />
         ) : null} */}
       </div>
-      {formik.touched[title] ||
-        (formik.errors[title] && (
-          <span className='text-red-600 text-sm'>{formik.errors[title]}</span>
-        ))}
+      {formik.touched[id || title] && formik.errors[id || title] && (
+        <span className='text-red-600 text-sm'>{formik.errors[id || title]}</span>
+      )}
     </label>
   );
 };
