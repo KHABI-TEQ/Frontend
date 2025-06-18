@@ -94,26 +94,6 @@ export default function BriefLists({
 
 	const BRIEF_TYPES = ["Joint Venture", "Outright Sales", "Rent"];
 
-<<<<<<< HEAD
-const fetchAllBriefTypes = async (ownerType: string) => {
-  try {
-    // Fetch all brief types in parallel
-    const adminToken = Cookies.get('adminToken');
-    const allResponses = await Promise.all(
-      BRIEF_TYPES.map((briefType) =>
-        POST_REQUEST(
-          URLS.BASE + URLS.adminGetAllBriefs,
-          {
-            briefType,
-            ownerType,
-            page: currentPage,
-            limit: 10,
-          },
-          adminToken
-        )
-      )
-    );
-=======
 	const fetchAllBriefTypes = async (ownerType: string) => {
 		const adminToken = Cookies.get("adminToken");
 		if (!adminToken) {
@@ -135,7 +115,6 @@ const fetchAllBriefTypes = async (ownerType: string) => {
 					)
 				)
 			);
->>>>>>> main
 
 			console.log("All Responses:", allResponses);
 

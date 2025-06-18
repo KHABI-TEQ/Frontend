@@ -107,19 +107,6 @@ export default function AgentLists({ setDetails }: AgentManagementTabsProps) {
 	const [totalPages, setTotalPages] = useState(3);
 	const router = useRouter();
 
-<<<<<<< HEAD
-  const getAgentsData = async (page = 1, limit = 20, type = 'all') => {
-    setCurrentPage(page);
-    setIsLoadingDetails({
-      isLoading: true,
-      message: 'Loading...',
-    });
-    try {
-      const response = await GET_REQUEST(
-        URLS.BASE + URLS.getAllUsers,
-        Cookies.get('adminToken')
-      );
-=======
 	const getAgentsData = async (page = 1, limit = 20, type = "all") => {
 		setCurrentPage(page);
 		setIsLoadingDetails({
@@ -132,7 +119,6 @@ export default function AgentLists({ setDetails }: AgentManagementTabsProps) {
 		}
 		try {
 			const response = await GET_REQUEST(URLS.BASE + URLS.getAllUsers, adminToken);
->>>>>>> main
 
 			if (response?.success === false) {
 				toast.error("Failed to get data");
@@ -173,31 +159,6 @@ export default function AgentLists({ setDetails }: AgentManagementTabsProps) {
 		}
 	};
 
-<<<<<<< HEAD
-  const confirmApproveAgent = async (agentId: string) => {
-    console.log('Approving agent with ID:', agentId);
-    try {
-      const response = await POST_REQUEST(`${URLS.BASE + URLS.agentApproval}`, {
-        agentId,
-        approved: true,
-      }, Cookies.get('adminToken'));
-      if (response?.success) {
-        toast.success('Agent approved successfully');
-        setAgents((prev) =>
-          prev.map((agent) =>
-            agent.id === agentId ? { ...agent, accountApproved: true } : agent
-          )
-        );
-      } else {
-        toast.error('Failed to approve agent');
-      }
-    } catch (error) {
-      toast.error('An error occurred while approving the agent');
-    } finally {
-      setAgentToApprove(null);
-    }
-  };
-=======
 	const confirmApproveAgent = async (agentId: string) => {
 		console.log("Approving agent with ID:", agentId);
 		const adminToken = Cookies.get("adminToken");
@@ -225,7 +186,6 @@ export default function AgentLists({ setDetails }: AgentManagementTabsProps) {
 			setAgentToApprove(null);
 		}
 	};
->>>>>>> main
 
 	const handleDeleteAgent = async (agentId: string, reason: string) => {
 		try {

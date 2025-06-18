@@ -48,23 +48,6 @@ export default function AttentionOverview() {
 	const router = useRouter();
 	const [currentPage, setCurrentPage] = useState(1);
 
-<<<<<<< HEAD
-  useEffect(() => {
-    const getTotalBriefs = async () => {
-      setIsLoading(true);
-      const adminToken = Cookies.get('adminToken');
-      try {
-        const response = await POST_REQUEST(
-          URLS.BASE + URLS.adminGetAllBriefs,
-          {
-            propertyType: 'all',
-            ownerType: 'BuyerOrRenter',
-            page: currentPage,
-            limit: 10,
-          },
-          adminToken
-        );
-=======
 	useEffect(() => {
 		const getTotalBriefs = async () => {
 			const adminToken = Cookies.get("adminToken");
@@ -84,7 +67,6 @@ export default function AttentionOverview() {
 					},
 					adminToken
 				);
->>>>>>> main
 
 				if (response?.success === false) {
 					toast.error("Failed to get data");
@@ -185,23 +167,6 @@ export default function AttentionOverview() {
 		getTotalBriefs();
 	}, [currentPage]);
 
-<<<<<<< HEAD
-  useEffect(() => {
-    const getIncomingBriefs = async () => {
-      setIsLoading(true);
-      const adminToken = Cookies.get('adminToken');
-      try {
-        const response = await POST_REQUEST(
-          URLS.BASE + URLS.adminGetAllBriefs,
-          {
-            propertyType: 'all',
-            ownerType: 'PropertyOwner',
-            page: currentPage,
-            limit: 10,
-          },
-          adminToken
-        );
-=======
 	useEffect(() => {
 		const getIncomingBriefs = async () => {
 			const adminToken = Cookies.get("adminToken");
@@ -222,7 +187,6 @@ export default function AttentionOverview() {
 					},
 					adminToken
 				);
->>>>>>> main
 
 				if (response?.success === false) {
 					toast.error("Failed to get data");
