@@ -21,7 +21,7 @@ const ComingSoon = () => {
           </div>
           <div className='flex flex-col justify-center items-center gap-[10px]'>
             <p className='text-2xl md:text-lg text-center text-[#5A5D63] leading-[160%] tracking-[5%]'>
-              We are working hard to bring you an amazing experience. Stay tuned for updates!
+              We are working hard to bring you an amazing experience... Stay tuned for updates!
             </p>
           </div>
         </div>
