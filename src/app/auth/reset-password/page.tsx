@@ -85,7 +85,7 @@ const ResetPassword = () => {
 					toast.error("Passwords do not match");
 					return;
 				}
-				const token = params.get("token");
+				const token = params?.get("token");
 
 				if (!token) {
 					toast.error("Invalid token");
