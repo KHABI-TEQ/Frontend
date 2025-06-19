@@ -176,7 +176,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 				if (pathName && !pathName.includes("/auth"))
 					router.push("/admin/auth/login");
 			} else if (pathName && !pathName.includes("/auth")) {
-				router.push("/auth/login");
+				// router.push("/auth/login");
 			}
 		}
 	}, []);
