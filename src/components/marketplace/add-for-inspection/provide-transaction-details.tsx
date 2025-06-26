@@ -48,6 +48,7 @@ const ProvideTransactionDetails: React.FC<ProvideTransactionDetailsProps> = ({
   const validationSchema = Yup.object({
     fullName: Yup.string().required('Full Name is a required field'),
   });
+
   const formik = useFormik({
     initialValues: {
       fullName: '',
@@ -65,12 +66,12 @@ const ProvideTransactionDetails: React.FC<ProvideTransactionDetailsProps> = ({
           transactionReceipt: fileURL as string,
         },
         status: 'pending',
-        isNegotiating: false,
       });
       try {
+
         const response = await toast.promise(
           POST_REQUEST(URLS.BASE + URLS.requestInspection, {
-            propertyId: submitInspectionPayload.propertyId,
+            properties: submitInspectionPayload.properties,
             inspectionDate: submitInspectionPayload.inspectionDate,
             inspectionTime: submitInspectionPayload.inspectionTime,
             status: 'pending',
@@ -80,11 +81,11 @@ const ProvideTransactionDetails: React.FC<ProvideTransactionDetailsProps> = ({
               transactionReceipt: fileURL as string,
             },
             letterOfIntention: submitInspectionPayload.letterOfIntention || '',
+            isNegotiating: submitInspectionPayload.isNegotiating,
           }),
           {
             loading: 'Submitting...',
             success: (data) => {
-              // If API returns error in body, show error instead
               if (data?.error) {
                 throw new Error(data.error);
               }
@@ -92,7 +93,9 @@ const ProvideTransactionDetails: React.FC<ProvideTransactionDetailsProps> = ({
             },
             error: (err) => err?.message || 'Failed to submit request.',
           }
-        ); // Only set success if no error in response
+        );
+        
+
         if (!response?.error) {
           setIsSuccessfullySubmitted(true);
           setFormStatus('success');
@@ -101,6 +104,8 @@ const ProvideTransactionDetails: React.FC<ProvideTransactionDetailsProps> = ({
           setFormStatus('failed');
           setIsSubmitting(false);
         }
+
+
       } catch (err) {
         console.log(err);
         setIsSuccessfullySubmitted(false);

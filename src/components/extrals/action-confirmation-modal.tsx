@@ -7,29 +7,32 @@ import { motion } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClose } from '@fortawesome/free-solid-svg-icons';
 import { archivo } from '@/styles/font';
-import { useNegotiationModals } from '@/context/negotiation-context';
 
-type AcceptRejectOfferModalProps = {
+type ActionConfirmationModalProps = {
   heading?: string;
-  passContent?: string | React.ReactNode;
-  handleSubmitFunction?: () => void;
+  description?: string | React.ReactNode;
+  onSubmit?: () => void;
+  onCancel?: () => void;
+  isSubmitting?: boolean;
+  confirmText?: string;
+  cancelText?: string;
+  confirmColorClass?: string;
+  cancelColorClass?: string;
   headerTextStyling?: React.CSSProperties;
 };
 
-const AcceptRejectOfferModal = ({
-  heading = 'Accept offer',
-  passContent,
-  handleSubmitFunction,
+const ActionConfirmationModal = ({
+  heading = 'Confirm Action',
+  description,
+  onSubmit,
+  onCancel,
+  isSubmitting = false,
+  confirmText = 'Submit',
+  cancelText = 'Cancel',
+  confirmColorClass = 'bg-[#8DDB90] text-white',
+  cancelColorClass = 'border-[1px] border-[#FF2539] text-[#FF2539]',
   headerTextStyling,
-}: AcceptRejectOfferModalProps) => {
-  const { 
-    isAcceptingOffer, 
-    isRejectingOffer, 
-    closeAcceptRejectModal 
-  } = useNegotiationModals();
-
-  const isSubmitting = isAcceptingOffer || isRejectingOffer;
-
+}: ActionConfirmationModalProps) => {
   return (
     <PopUpModal>
       <motion.div
@@ -43,52 +46,51 @@ const AcceptRejectOfferModal = ({
           <motion.button
             whileHover={{ scale: 1.1 }}
             type='button'
-            className='w-[51px] h-[51px] rounded-full bg-white flex items-center justify-center'>
+            className='w-[51px] h-[51px] rounded-full bg-white flex items-center justify-center'
+            onClick={onCancel}>
             <FontAwesomeIcon
               icon={faClose}
               width={24}
               height={24}
-              onClick={closeAcceptRejectModal}
               className='w-[24px] h-[24px]'
               color='#181336'
             />
           </motion.button>
         </div>
+
         <div className='w-full bg-white py-[40px] px-[20px] md:px-[60px] rounded-[4px] shadow-md flex justify-center items-center'>
           <div className='w-full flex flex-col gap-[42px] items-center justify-center'>
             <div className='flex flex-col gap-[4px] items-center justify-center'>
               <h2
                 style={headerTextStyling}
-                className={`${
-                  heading === 'Accept offer'
-                    ? 'text-[#000000]'
-                    : 'text-[#FF2539]'
-                } ${archivo.className} text-2xl font-bold text-center`}>
+                className={`text-center text-2xl font-bold ${
+                  archivo.className
+                } ${confirmColorClass.includes('text-[#FF2539]') ? 'text-[#FF2539]' : 'text-[#000]'}`}>
                 {heading}
               </h2>
-              {typeof passContent !== 'string' ? (
-                <div className="text-center w-full">{passContent}</div>
+              {typeof description !== 'string' ? (
+                <div className='text-center w-full'>{description}</div>
               ) : (
                 <p
-                  className={`text-[#515B6F] ${archivo.className} text-lg text-center`}>
-                  {passContent}
+                  className={`text-[#515B6F] text-lg text-center ${archivo.className}`}>
+                  {description}
                 </p>
               )}
             </div>
+
             <div className='w-full flex flex-col gap-[15px]'>
               <button
-                onClick={handleSubmitFunction}
-                className={`w-full bg-[#8DDB90] text-white h-[57px] text-lg ${archivo.className} font-bold`}
+                onClick={onSubmit}
+                className={`w-full h-[57px] text-lg font-bold ${archivo.className} ${confirmColorClass}`}
                 type='button'
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? 'Submitting...' : 'Submit'}
+                disabled={isSubmitting}>
+                {isSubmitting ? 'Submitting...' : confirmText}
               </button>
               <button
-                onClick={closeAcceptRejectModal}
-                className={`w-full border-[1px] border-[#FF2539] text-[#FF2539] h-[57px] text-lg ${archivo.className} font-bold`}
+                onClick={onCancel}
+                className={`w-full h-[57px] text-lg font-bold ${archivo.className} ${cancelColorClass}`}
                 type='button'>
-                Back
+                {cancelText}
               </button>
             </div>
           </div>
@@ -98,4 +100,4 @@ const AcceptRejectOfferModal = ({
   );
 };
 
-export default AcceptRejectOfferModal;
+export default ActionConfirmationModal;

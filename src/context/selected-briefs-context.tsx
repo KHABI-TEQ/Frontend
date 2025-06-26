@@ -13,7 +13,7 @@ export const SelectedBriefsProvider = ({ children }: { children: ReactNode }) =>
   const [selectedBriefs, setSelectedBriefs] = useState<any[]>([]);
 
    React.useEffect(() => {
-    console.log('SelectedBriefsContext:', selectedBriefs);
+    // console.log('SelectedBriefsContext:', selectedBriefs);
   }, [selectedBriefs]);
 
   return (

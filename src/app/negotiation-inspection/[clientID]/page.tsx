@@ -1,5 +1,5 @@
 'use client';
-import Index from '@/components/seller-negotiation-inspection/index';
+import Index from '@/components/negotiation-inspection/index';
 import { useParams } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 
@@ -9,9 +9,9 @@ const Page = () => {
 
   useEffect(() => {
     const clientID = params?.clientID as string;
-    console.log('Client ID from params:', clientID);
-    if (typeof clientID === 'string') setID(clientID);
-    else console.log('Invalid client ID', clientID);
+    if (typeof clientID === 'string') {
+        setID(clientID);
+    }
   }, [params]);
   
   return <Index potentialClientID={ID} />;

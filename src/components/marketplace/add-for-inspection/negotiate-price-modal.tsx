@@ -38,7 +38,7 @@ const NegiotiatePrice = ({
   allNegotiation: NegotiationModalProps[];
   setAllNegotiation: (type: NegotiationModalProps[]) => void;
   currentIndex: number;
-  setCurrentIndex: (type: number) => void;
+  setCurrentIndex: React.Dispatch<React.SetStateAction<number>>;
   setSelectPreferableInspectionDateModalOpened: (type: boolean) => void;
   submitInspectionPayload: SubmitInspectionPayloadProp;
   setSubmitInspectionPayload: React.Dispatch<
@@ -56,37 +56,42 @@ const NegiotiatePrice = ({
   const [yourPrice, setYourPrice] = useState<string>('');
 
   const handleSubmit = () => {
-    //to avoid duplicates
-    //check if ID is not null
-    if (getID === null) return;
-
+    if (!getID) return;
+  
     const findSelectedCard = allNegotiation.find((item) => item.id === getID);
-    //console.log(findSelectedCard);
-    //if it doesn't exist
     if (!findSelectedCard) {
-      //save formal values and add new one
-      console.log("Doesn't exist");
       throw new Error('Property does not exist');
     }
-
+  
     findSelectedCard.yourPrice = selectedProperty.yourPrice;
-
-    //Debugging:
-    // console.log(submitInspectionPayload);
-
-    // Set propertyId and negotiationPrice in the payload
-    setSubmitInspectionPayload((prev) => ({
-      ...prev,
-      propertyId: getID,
-      negotiationPrice: Number(selectedProperty.yourPrice),
-    }));
-
-    // Open the inspection date modal after negotiation
-    // setSelectPreferableInspectionDateModalOpened(true);
-    //set the current index to the next one
-     setCurrentIndex(allNegotiation.length + 1);
-    // setCurrentIndex(currentIndex + 1);
-  };
+  
+    // Update the payload
+    setSubmitInspectionPayload((prev) => {
+      const updatedProperties = prev.properties?.map((prop) =>
+        prop.propertyId === getID
+          ? {
+              ...prop,
+              negotiationPrice: Number(selectedProperty.yourPrice),
+            }
+          : prop
+      ) || [];
+  
+      // Check if any property has a negotiation price set
+      const isAnyNegotiated = updatedProperties.some(
+        (p) => typeof p.negotiationPrice === 'number' && !isNaN(p.negotiationPrice)
+      );
+  
+      return {
+        ...prev,
+        properties: updatedProperties,
+        isNegotiating: isAnyNegotiated,
+      };
+    });
+  
+    // Move to the next index
+    setCurrentIndex((prev) => prev + 1);
+  };  
+  
 
   const formatNumber = (val: string) => {
     const containsLetters = /[A-Za-z]/.test(val);
@@ -104,7 +109,6 @@ const NegiotiatePrice = ({
 
     if (!findSelectedCard) return;
 
-    console.log(findSelectedCard);
     setSelectedProperty({
       id: findSelectedCard.id,
       askingPrice: findSelectedCard.askingPrice,
@@ -174,35 +178,52 @@ const NegiotiatePrice = ({
             />
             {/**Enter your price */}
             <Input
-              label='Enter your price'
-              name='enter_your_price'
-              type='text'
-              placeholder='Enter amount'
+              label="Enter your price"
+              name="enter_your_price"
+              type="text"
+              placeholder="Enter amount"
               value={yourPrice}
               onChange={(event) => {
                 const rawValue = (
                   event.target as HTMLInputElement | HTMLTextAreaElement
                 ).value;
+
+                const numericValue = Number(rawValue.replace(/,/g, ''));
+
+                // Format UI value with commas
                 setYourPrice(formatNumber?.(rawValue) ?? '');
-                setSelectedProperty({
-                  ...selectedProperty,
-                  yourPrice: rawValue.replace(/,/g, ''),
+
+                // Update the selected property's local state
+                setSelectedProperty((prev) => ({
+                  ...prev,
+                  yourPrice: numericValue.toString(),
+                }));
+
+                // Update the main payload
+                setSubmitInspectionPayload((prev) => {
+                  const updatedProperties = prev.properties.map((item) => {
+                    if (item.propertyId === selectedProperty.id) {
+                      return {
+                        ...item,
+                        negotiationPrice: numericValue,
+                      };
+                    }
+                    return item;
+                  });
+
+                  const anyNegotiation = updatedProperties.some(
+                    (item) => Number(item.negotiationPrice) > 0
+                  );
+
+                  return {
+                    ...prev,
+                    properties: updatedProperties,
+                    isNegotiating: anyNegotiation,
+                  };
                 });
-                setSubmitInspectionPayload({
-                  ...submitInspectionPayload,
-                  negotiationPrice: Number(rawValue.replace(/,/g, '')),
-                });
-                // const value = 'value' in event.target ? event.target.value : '';
-                // setSelectedProperty({
-                //   ...selectedProperty,
-                //   yourPrice: value,
-                // });
-                // setSubmitInspectionPayload({
-                //   ...submitInspectionPayload,
-                //   negotiationPrice: Number(value),
-                // });
               }}
             />
+
             {/** Submit and Cancel buttons */}
             <div className='w-full flex gap-[15px]'>
               <button
@@ -329,18 +350,18 @@ const getAvailableDates = () => {
         ...actionTracker,
         { lastPage: 'SelectPreferableInspectionDate' },
       ]);
-      setSubmitInspectionPayload({
-        ...submitInspectionPayload,
-        propertyId: selectedProperty.id ?? '',
+      setSubmitInspectionPayload(prev => ({
+        ...prev,
         requestedBy: {
           fullName: formik.values.fullName,
           email: formik.values.email,
           phoneNumber: formik.values.phoneNumber,
         },
-        negotiationPrice: Number(selectedProperty.yourPrice),
         inspectionDate: details.selectedDate,
         inspectionTime: details.selectedTime,
-      });
+        isNegotiating: prev.properties.some(p => p.negotiationPrice !== undefined),
+      }));
+      
       setIsProvideTransactionDetails(true);
       closeSelectPreferableModal(false);
       closeModal?.(false);
@@ -352,16 +373,27 @@ const getAvailableDates = () => {
 
   useEffect(() => {
     const findSelectedCard = allNegotiation.find((item) => item.id === getID);
-
-    if (!findSelectedCard) {
-
-       return;
-      // throw new Error('Not found');
-    }
-    setSubmitInspectionPayload((prev) => ({
-      ...prev,
-      propertyId: findSelectedCard._id,
-    }));
+    if (!findSelectedCard) return;
+  
+    // Add or update the property in the payload
+    setSubmitInspectionPayload((prev) => {
+      const existingProps = [...(prev.properties || [])];
+      const exists = existingProps.find(p => p.propertyId === findSelectedCard._id);
+  
+      if (!exists) {
+        existingProps.push({
+          propertyId: findSelectedCard._id,
+          negotiationPrice: undefined,
+        });
+      }
+  
+      return {
+        ...prev,
+        properties: existingProps,
+      };
+    });
+  
+    // Update UI state
     setSelectedProperty({
       id: findSelectedCard._id,
       askingPrice: findSelectedCard?.price ?? findSelectedCard?.rentalPrice,
@@ -369,6 +401,7 @@ const getAvailableDates = () => {
       isOpened: false,
     });
   }, []);
+  
 
   return (
     <div className='w-full h-full border-black border-[1px] fixed top-0 left-0 transition-all duration-500 flex items-center justify-center bg-[#000000]/[30%]'>
@@ -434,16 +467,36 @@ const getAvailableDates = () => {
               placeholder='Enter amount'
               value={selectedProperty.yourPrice}
               onChange={(event: any) => {
+                const price = Number(event.target.value);
+              
+                // Update selected property state
                 setSelectedProperty({
                   ...selectedProperty,
-                  yourPrice: event.target.value,
+                  yourPrice: price,
                 });
+              
+                // Check if property is already in payload
+                const updatedProperties = [...submitInspectionPayload.properties];
+                const existing = updatedProperties.find(p => p.propertyId === selectedProperty.id);
+              
+                if (existing) {
+                  existing.negotiationPrice = price;
+                } else {
+                  updatedProperties.push({
+                    propertyId: selectedProperty.id ?? '',
+                    negotiationPrice: price,
+                  });
+                }
+              
+                // Update the payload
                 setSubmitInspectionPayload({
                   ...submitInspectionPayload,
-                  negotiationPrice: Number(event.target.value),
+                  properties: updatedProperties,
+                  isNegotiating: updatedProperties.some(p => p.negotiationPrice !== undefined),
                 });
+              
                 setIsModalOpened(true);
-              }}
+              }}              
             />
             <p className='text-[#1976D2] font-medium text-lg'>
               A fee of ₦10,000 will be charged for inspection and negotiation
@@ -645,8 +698,6 @@ type InputProps = {
   type: 'email' | 'number' | 'text';
   name: string;
   heading: string;
-  // value?: string | number;
-  // onChange?: (type: React.ChangeEvent<HTMLInputElement>) => void;
   isDisabled?: boolean;
   formikType: FormikProps<ContactProps>;
   className?: string;

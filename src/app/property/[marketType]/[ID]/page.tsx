@@ -163,15 +163,18 @@ const ProductDetailsPage = () => {
 	});
 	const [featureData, setFeatureData] = useState<
 		{ _id: string; featureName: string }[]
-	>([]);
+	>([]); 
 	const path = usePathname();
 	const params = useParams();
-	const id =
-		typeof params?.id === "string"
-			? params.id
-			: Array.isArray(params?.id)
-			? params.id[0]
-			: "";
+	const marketType = params.marketType as string;
+	// const id = Array.isArray(params?.id)
+	// 	? params.id[0]
+	// 	: typeof params?.id === "string"
+	// 	? params.id
+	// 	: "";
+
+	const id = params.ID as string;
+
 	const router = useRouter();
 	const [isDataLoading, setDataLoading] = useState<boolean>(false);
 	const [data, setData] = useState<any[]>([]);
@@ -312,10 +315,11 @@ const ProductDetailsPage = () => {
 	});
 
 	useEffect(() => {
-		// console.log(id);
+
 		const getProductDetails = async () => {
 			try {
 				const res = await axios.get(URLS.BASE + URLS.getOneProperty + id);
+
 				if (res.status === 200) {
 					if (typeof res.data === "object") {
 						setDetails({

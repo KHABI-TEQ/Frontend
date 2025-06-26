@@ -57,7 +57,7 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
   const router = useRouter();
 
   useEffect(() => {
-    console.log(isModalOpened);
+    // console.log(isModalOpened);
   }, [isModalOpened]);
 
   useEffect(() => {
@@ -74,10 +74,12 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
   }, []);
 
   useEffect(() => {
-    console.log(user);
+    // console.log(user);
   }, [user]);
 
-  useEffect(() => console.log(pathName), [pathName]);
+  useEffect(() => {
+    // console.log(pathName)
+  }, [pathName]);
   return (
     <Fragment>
       <header
