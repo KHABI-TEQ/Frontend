@@ -166,15 +166,15 @@ const ProductDetailsPage = () => {
 	>([]); 
 	const path = usePathname();
 	const params = useParams();
-	const marketType = params.marketType as string;
+	const marketType = params?.marketType ?? "";
+	const id = params?.ID ?? "";
+
 	// const id = Array.isArray(params?.id)
 	// 	? params.id[0]
 	// 	: typeof params?.id === "string"
 	// 	? params.id
 	// 	: "";
-
-	const id = params.ID as string;
-
+	
 	const router = useRouter();
 	const [isDataLoading, setDataLoading] = useState<boolean>(false);
 	const [data, setData] = useState<any[]>([]);
