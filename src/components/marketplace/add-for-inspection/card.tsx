@@ -245,7 +245,12 @@ const Card = ({
             type='button'
             // green={!isRed}
             // red={isRed}
-            onClick={onClick}
+            onClick={() => {
+              // Make sure onClick is properly called
+              if (onClick) {
+                onClick();
+              }
+            }}
             isDisabled={isDisabled} // Disable the button if the property is already selected
             className={`min-h-[50px] py-[12px] px-[24px] ${
               isDisabled
@@ -341,7 +346,9 @@ const ImageSwiper = ({ images }: { images: StaticImageData[] }) => {
   const swiperRef = React.useRef<any>(null);
   const { setViewImage, setImageData } = usePageContext();
 
-  useEffect(() => console.log(images), [images]);
+  useEffect(() => {
+    // console.log(images)
+  }, [images]);
 
   const handleNext = () => {
     if (swiperRef.current) {

@@ -21,7 +21,7 @@ interface MainEntryProps {
 const NegotiationContent: FC<{ potentialClientID: string }> = ({ potentialClientID }) => {
 
   // Use the integrated hook that automatically updates context
-  const { formStatus, details, negotiationType, createdAt } = useNegotiationDataWithContext(potentialClientID, "seller")
+  const { formStatus, details, negotiationType, createdAt } = useNegotiationDataWithContext(potentialClientID, "buyer")
 
   const { setCurrentUserType, goToNextPage, contentTracker, setInspectionStatus } = useNegotiationData();
 
@@ -30,26 +30,27 @@ const NegotiationContent: FC<{ potentialClientID: string }> = ({ potentialClient
     if (details && formStatus === "success") {
       const { negotiationStatus, buyOffer, letterOfIntention } = details;
 
-      if (negotiationStatus === "negotiation_accepted" || buyOffer === 0 || negotiationStatus === "pending_inspection" || negotiationStatus === "offer_rejected") {  
+      if (negotiationStatus === "negotiation_accepted" || buyOffer === 0 || negotiationStatus === "pending_inspection" || negotiationStatus === "offer_rejected") {
         setInspectionStatus(
           ['negotiation_accepted', 'pending_inspection'].includes(negotiationStatus)
             ? 'accept'
             : 'reject'
-        );    
+        );
         goToNextPage("Confirm Inspection Date");
       } else if (negotiationStatus === "negotiation_countered") {
         goToNextPage("Negotiation");
       } else if (letterOfIntention && letterOfIntention !== "") {
         goToNextPage("Negotiation");
-      } else if (letterOfIntention === "") {
+      } else if (letterOfIntention === "") { // Covers the case when letterOfIntention exists but is empty
         goToNextPage("Negotiation");
       } else {
+        // Fallback for any other unhandled states, or initial load if none of the above match
         goToNextPage("Negotiation");
       }
     }
 
-    setCurrentUserType("seller")
-  }, [details, formStatus, goToNextPage, setCurrentUserType])
+    setCurrentUserType("buyer")
+  }, [details, formStatus, goToNextPage, setCurrentUserType]) // Added setCurrentUserType to dependency array
 
   
 
@@ -75,7 +76,7 @@ const NegotiationContent: FC<{ potentialClientID: string }> = ({ potentialClient
         return (
           <InspectionDateConfirmation
             potentialClientID={potentialClientID}
-            userType="seller"
+            userType="buyer"
             mode="respond"
           />
         )
@@ -106,16 +107,16 @@ const NegotiationContent: FC<{ potentialClientID: string }> = ({ potentialClient
     if (formStatus === "success" && details) {
 
       if (details.negotiationStatus === "completed") {
-        return <NegotiationSummary details={details} currentUserType={'seller'} />
+        return <NegotiationSummary details={details} currentUserType={'buyer'} />
       }
 
       if (details.negotiationStatus === "cancelled") {
-        return <NegotiationCancelledSummary details={details} currentUserType="seller" />
+        return <NegotiationCancelledSummary details={details} currentUserType="buyer" />
       }
 
       return (
         <NegotiationLayout
-          fullName={`${details.firstName} ${details.lastName}`}
+          fullName={details.clientData.fullName}
           title={contentTracker}
           createdAt={createdAt}
         >

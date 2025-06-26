@@ -220,9 +220,9 @@ const BuyAPropertySearchModal = ({
   // Add debugging useEffect
   useEffect(() => {
     const priceQuery = buildPriceQuery(priceRadioValue, priceFormik);
-    console.log('Price Query:', priceQuery);
-    console.log('Radio Value:', priceRadioValue);
-    console.log('Manual Input:', priceFormik.values);
+    // console.log('Price Query:', priceQuery);
+    // console.log('Radio Value:', priceRadioValue);
+    // console.log('Manual Input:', priceFormik.values);
   }, [priceRadioValue, priceFormik.values]);
 
   const cleanedPayload = Object.fromEntries(
