@@ -145,7 +145,11 @@ const UploadLolDocumentModal: React.FC<UploadLolDocumentProps> = ({
       ]);
       setSubmitInspectionPayload({
         ...submitInspectionPayload,
-        propertyId: finalPropertyId,
+        properties: [
+          {
+            propertyId: finalPropertyId,
+          },
+        ],
         requestedBy: {
           fullName: formik.values.fullName,
           email: formik.values.email,

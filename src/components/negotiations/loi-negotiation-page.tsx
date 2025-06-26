@@ -84,9 +84,9 @@ export const LOINegotiationPage = ({
       </div>
 
       <AnimatePresence>
-        {isViewed && <SubmitOffer nextPage={setContentTracker} closeModal={setIsViewed} />}
+        {isViewed && <SubmitOffer />}
         {isButtonClicked && contentToPass && (
-          <AcceptRejectOfferModal closeModal={setIsButtonClicked} {...contentToPass} />
+          <AcceptRejectOfferModal {...contentToPass} />
         )}
       </AnimatePresence>
     </Fragment>
