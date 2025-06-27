@@ -27,7 +27,7 @@ import notificationBellIcon from '@/svgs/bell.svg';
 import userIcon from '@/svgs/user.svg';
 import UserNotifications from './user-notifications';
 import UserProfile from './my-profile';
-
+ 
 const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
   const {
     isContactUsClicked,
@@ -80,6 +80,15 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
   useEffect(() => {
     // console.log(pathName)
   }, [pathName]);
+
+  // Handle backdrop click to close sidebar
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Only close if clicking the backdrop itself, not its children
+    if (e.target === e.currentTarget) {
+      setIsModalOpened(false);
+    }
+  };
+
   return (
     <Fragment>
       <header
@@ -274,6 +283,15 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
           </div>
         </nav>
       </header>
+      
+      {/* Backdrop overlay for sidebar */}
+      {isModalOpened && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={handleBackdropClick}
+        />
+      )}
+      
       <SideBar
         isModalOpened={isModalOpened}
         setIsModalOpened={setIsModalOpened}

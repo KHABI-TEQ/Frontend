@@ -34,7 +34,7 @@ const MarketPlace = () => {
     twoDifferentInspectionAreas: false,
     initialAmount: 10000,
     toBeIncreaseBy: 0,
-  });
+  }); 
   // const [isComingFromPriceNeg, setIsComingFromPriceNeg] =
   //   React.useState<boolean>(false);
   const [inspectionType, setInspectionType] = useState<
@@ -84,7 +84,7 @@ const MarketPlace = () => {
           {/**
            * Heading and the type of market place user wants to select
            */}
-          <div className='flex flex-col items-center justify-center gap-[20px] px-[15px]'>
+          <div className='flex z-30 flex-col items-center justify-center gap-[20px] px-[15px]'>
             <h2 className='font-display text-[28px] md:text-4xl font-semibold text-[#09391C] text-center'>
               Welcome to{' '}
               <span className='text-[#8DDB90] text-[28px] font-display md:text-4xl font-semibold'>

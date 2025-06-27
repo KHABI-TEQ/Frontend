@@ -14,7 +14,7 @@ import { usePageContext } from "@/context/page-context";
 interface Props {
 	children: ReactNode;
 	isComingSoon?: boolean;
-}
+} 
 
 export default function HeaderFooterWrapper({ children, isComingSoon }: Props) {
 	const pathname = usePathname();
