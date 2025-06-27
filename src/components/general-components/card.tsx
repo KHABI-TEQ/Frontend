@@ -40,7 +40,7 @@ interface CardDataProps {
   isComingFromPriceNeg?: boolean;
   setIsComingFromPriceNeg?: (type: boolean) => void;
 }
-
+ 
 const Card = ({
   isRed,
   cardData,
@@ -80,15 +80,16 @@ const Card = ({
         viewport={{ once: true }}
         ref={cardRef}
         style={style}
-        className={`w-full md:w-[296px] shrink-0 bg-white border-[1px] py-[21px] px-[19px] gap-[10px] transition-all duration-500 ${className}`}>
+        className={`w-full md:w-[296px] rounded-md shrink-0 bg-white border-[1px] py-[16px] px-[15px] gap-[10px] transition-all duration-500 ${className}`}>
         <div className='flex flex-col gap-[11px] w-full'>
-          <div className={`w-full h-[148px] bg-gray-200`}>
+          <div className={`w-full h-[148px] bg-gray-200 relative`}>
             {/**Premium */}
             {isPremium ? (
               <div
-                className='w-[98px] h-[28px] py-[8px] px-[6px] text-white flex justify-between items-center bg-[#FF3D00] absolute'>
-                <span>Premium</span>
-                <FontAwesomeIcon icon={faStar} size='sm' />
+                className="w-[88px] z-10 h-[28px] py-[8px] px-[6px] text-white flex gap-x-1 items-center bg-[#FF3D00] absolute rounded-br-md"
+              >
+                <span className="text-sm">Premium</span>
+                <FontAwesomeIcon icon={faStar} size="xs" />
               </div>
             ) : null}
             <ImageSwiper
@@ -237,7 +238,7 @@ const Card = ({
                 : 'bg-[#8DDB90] hover:bg-[#76c77a]'
             } text-[#FFFFFF] text-base leading-[25.6px] font-bold`}
             type='button'>
-            {isDisabled ? 'Selcted' : 'Select for Inspection'}
+            {isDisabled ? 'Selected' : 'Select for Inspection'}
           </button>
           {/* <Button
             value={`${isDisabled ? 'Selected' : 'Select for Inspection'}`}
@@ -366,7 +367,7 @@ const ImageSwiper = ({ images }: { images: StaticImageData[] }) => {
   };
 
   return (
-    <div className='overflow-hidden'>
+    <div className='w-full h-full absolute'>
       <Swiper
         modules={[Pagination, Navigation, Autoplay]}
         spaceBetween={3}

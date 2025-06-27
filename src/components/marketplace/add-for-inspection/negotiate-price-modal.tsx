@@ -23,7 +23,7 @@ type NegotiationModalProps = {
   askingPrice: number | string | undefined;
   yourPrice: number | string | undefined;
 };
-
+ 
 const NegiotiatePrice = ({
   allNegotiation,
   setAllNegotiation,
@@ -330,6 +330,15 @@ const getAvailableDates = () => {
     });
   }, []);
 
+  const formatNumber = (val: string) => {
+    const containsLetters = /[A-Za-z]/.test(val);
+    if (containsLetters) {
+      return '';
+    }
+    const numericValue = val.replace(/,/g, ''); // Remove commas
+    return numericValue ? Number(numericValue).toLocaleString() : '';
+  };
+
   // const [details, setDetails] = useState<DetailsProps>({
   //   selectedDate: 'Jan 1, 2025',
   //   selectedTime: '9:00 AM',
@@ -368,31 +377,34 @@ const getAvailableDates = () => {
     },
   });
   const [isModalOpened, setIsModalOpened] = useState<boolean>(false);
+  
+  // Add this state for the formatted input value
+  const [formattedYourPrice, setFormattedYourPrice] = useState<string>('');
 
   const allFilled = Object.values(formik.values).every((value) => value !== '');
 
   useEffect(() => {
     const findSelectedCard = allNegotiation.find((item) => item.id === getID);
     if (!findSelectedCard) return;
-  
+
     // Add or update the property in the payload
     setSubmitInspectionPayload((prev) => {
       const existingProps = [...(prev.properties || [])];
       const exists = existingProps.find(p => p.propertyId === findSelectedCard._id);
-  
+
       if (!exists) {
         existingProps.push({
           propertyId: findSelectedCard._id,
           negotiationPrice: undefined,
         });
       }
-  
+
       return {
         ...prev,
         properties: existingProps,
       };
     });
-  
+
     // Update UI state
     setSelectedProperty({
       id: findSelectedCard._id,
@@ -400,11 +412,14 @@ const getAvailableDates = () => {
       yourPrice: '',
       isOpened: false,
     });
+    
+    // Reset formatted value
+    setFormattedYourPrice('');
   }, []);
   
 
   return (
-    <div className='w-full h-full border-black border-[1px] fixed top-0 left-0 transition-all duration-500 flex items-center justify-center bg-[#000000]/[30%]'>
+    <div className='w-full z-50 h-full border-black border-[1px] fixed top-0 left-0 transition-all duration-500 flex items-center justify-center bg-[#000000]/[30%]'>
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         whileInView={{ y: 0, opacity: 1 }}
@@ -463,41 +478,59 @@ const getAvailableDates = () => {
             <Input
               label='Enter your price'
               name='enter_your_price'
-              type='number'
+              type='text' // Changed from 'number' to 'text'
               placeholder='Enter amount'
-              value={selectedProperty.yourPrice}
+              value={formattedYourPrice} // Use formatted value for display
               onChange={(event: any) => {
-                const price = Number(event.target.value);
-              
-                // Update selected property state
+                const rawValue = event.target.value;
+                const numericValue = Number(rawValue.replace(/,/g, ''));
+                const askingPrice = Number(selectedProperty.askingPrice);
+                
+                // Prevent entering price higher than asking price
+                if (numericValue > askingPrice) {
+                  return; // Don't update if price exceeds asking price
+                }
+                
+                // Format the display value
+                const formatted = formatNumber(rawValue);
+                setFormattedYourPrice(formatted);
+                
+                // Update selected property state with numeric value
                 setSelectedProperty({
                   ...selectedProperty,
-                  yourPrice: price,
+                  yourPrice: numericValue,
                 });
-              
+                
                 // Check if property is already in payload
                 const updatedProperties = [...submitInspectionPayload.properties];
                 const existing = updatedProperties.find(p => p.propertyId === selectedProperty.id);
-              
+                
                 if (existing) {
-                  existing.negotiationPrice = price;
+                  existing.negotiationPrice = numericValue;
                 } else {
                   updatedProperties.push({
                     propertyId: selectedProperty.id ?? '',
-                    negotiationPrice: price,
+                    negotiationPrice: numericValue,
                   });
                 }
-              
+                
                 // Update the payload
                 setSubmitInspectionPayload({
                   ...submitInspectionPayload,
                   properties: updatedProperties,
-                  isNegotiating: updatedProperties.some(p => p.negotiationPrice !== undefined),
+                  isNegotiating: updatedProperties.some(p => p.negotiationPrice !== undefined && p.negotiationPrice > 0),
                 });
-              
+                
                 setIsModalOpened(true);
-              }}              
+              }}
             />
+
+            {formattedYourPrice && Number(formattedYourPrice.replace(/,/g, '')) > Number(selectedProperty.askingPrice) && (
+              <p className='text-red-500 text-sm mt-1'>
+                Your price cannot exceed the asking price of ₦{Number(selectedProperty.askingPrice).toLocaleString()}
+              </p>
+            )}
+            
             <p className='text-[#1976D2] font-medium text-lg'>
               A fee of ₦10,000 will be charged for inspection and negotiation
               before your request is sent to the seller.

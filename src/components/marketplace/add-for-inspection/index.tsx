@@ -528,7 +528,7 @@ const InspectionSummaryFooter: React.FC<{
   </div>
 );
 
-
+ 
 
 // Main Component
 const AddForInspection: React.FC<AddForInspectionProps> = ({

@@ -27,7 +27,7 @@ type PayloadProps = {
   initialAmount: number;
   toBeIncreaseBy: number;
 };
-
+ 
 const SearchModal = ({
   isAddForInspectionModalOpened,
   setIsAddInspectionModalOpened,
@@ -262,7 +262,7 @@ const SearchModal = ({
     type: string,
     filterBy: string[],
     condition?: string
-  ) => {
+  ) => { 
     const briefsToDisplay = () => {
       switch (type) {
         /**Buy a property Briefs */
