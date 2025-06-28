@@ -50,7 +50,7 @@ const ConnectBuyersSection = () => {
 
         <div className='text-center mt-8'>
           <button 
-            onClick={() => router.push('/agent')}
+            onClick={() => router.push('/agent_marketplace')}
             className='bg-[#8DDB90] text-white px-8 py-3 font-medium w-full md:w-auto'
           >
             Agent Marketplace
