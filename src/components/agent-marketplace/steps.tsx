@@ -312,7 +312,7 @@ const Sell: React.FC<SellProps> = ({ briefId, onClose, buyerPreference }) => {
     setAreInputsDisabled(true);
     setIsSubmitting(true);
     try {
-      const url = `https://khabiteq-realty.onrender.com/api/agent/create-brief/${briefId}`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/agent/create-brief/${briefId}`;
       const token = Cookies.get('token');
       if (!token) {
         toast.error('You must be logged in to submit a brief.');

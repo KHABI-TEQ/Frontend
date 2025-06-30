@@ -34,9 +34,9 @@ const AgentMarketplace = () => {
       setIsLoading(true);
       setError(null);
       try {
-        const url = `https://khabiteq-realty.onrender.com/api/agent/all-preferences?page=${currentPage}&limit=${limit}`;
-        console.log('Fetching from URL:', url); 
-        
+        const url = `${process.env.NEXT_PUBLIC_API_URL}/agent/all-preferences?page=${currentPage}&limit=${limit}`;
+        console.log('Fetching from URL:', url);
+
         const response = await fetch(url, {
           method: 'GET',
           headers: {

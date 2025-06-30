@@ -953,10 +953,7 @@ const Landlord = () => {
 													isDisabled={areInputsDisabled}
 												/>
 											</div>
-											{(selectedProperty === "Buy a property" ||
-												selectedProperty === "Find property for joint ventures" ||
-												(selectedProperty === "Rent/Lease a property" &&
-													formik.values.propertyType === "Land")) && (
+											{formik.values.propertyType === "Land" && (
 												<div className="min-h-[127px] w-full flex flex-col gap-[15px]">
 													<h2 className="text-[20px] leading-[32px] font-medium text-[#1E1E1E]">
 														Land Size
