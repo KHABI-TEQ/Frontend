@@ -16,33 +16,27 @@ const AgentMarketplace = () => {
   const [documentType, setDocumentType] = useState('');
   const [landSize, setLandSize] = useState('');
   const [properties, setProperties] = useState<any[]>([]);
-  const [allProperties, setAllProperties] = useState<any[]>([]); // Store all fetched data
   const [matchedProperties, setMatchedProperties] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  // Pagination state
+  // Backend pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const cardsPerPage = 8; // You can adjust this number
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
+  const [isPaginationLoading, setIsPaginationLoading] = useState(false);
+  const limit = 8; // Items per page
 
-  // Calculate paginated properties
-  const paginatedProperties = properties.slice(
-    (currentPage - 1) * cardsPerPage,
-    currentPage * cardsPerPage
-  );
-  const totalPages = Math.ceil(properties.length / cardsPerPage);
-
-  // Fetch buyer preferences from API
+  // Fetch buyer preferences from API with pagination
   useEffect(() => {
     const fetchBuyerPreferences = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        const url = `${process.env.NEXT_PUBLIC_API_URL}/agent/all-preferences`;
+        const url = `https://khabiteq-realty.onrender.com/api/agent/all-preferences?page=${currentPage}&limit=${limit}`;
         console.log('Fetching from URL:', url); 
         
-        // Use direct fetch instead of GET_REQUEST to avoid any automatic headers
         const response = await fetch(url, {
           method: 'GET',
           headers: {
@@ -55,13 +49,12 @@ const AgentMarketplace = () => {
         }
 
         const data = await response.json();
-        console.log('API Response:', data); // Debug log
+        console.log('API Response:', data);
         
-        // Check different possible response structures
-        if (data && data.preferences) {
-          // Direct preferences array
-          const preferences = Array.isArray(data.preferences) ? data.preferences : [];
-          console.log('Found preferences (direct):', preferences.length);
+        // Handle the backend response structure
+        if (data && data.data && Array.isArray(data.data)) {
+          const preferences = data.data;
+          console.log('Found preferences:', preferences.length);
           
           const transformedProperties = preferences.map((pref: any) => ({
             id: pref._id || pref.id,
@@ -70,8 +63,8 @@ const AgentMarketplace = () => {
             location: pref.location ? 
               `${pref.location.state || ''}, ${pref.location.localGovernment || ''}`.trim().replace(/^,|,$/, '') : 'N/A',
             priceRange: pref.budgetMin && pref.budgetMax ? 
-              `₦${pref.budgetMin.toLocaleString()} - ₦${pref.budgetMax.toLocaleString()}` : 
-              pref.budgetMin ? `₦${pref.budgetMin.toLocaleString()}` : 'N/A',
+              `₦${pref.budgetMin.toLocaleString('en-US')} - ₦${pref.budgetMax.toLocaleString('en-US')}` : 
+              pref.budgetMin ? `₦${pref.budgetMin.toLocaleString('en-US')}` : 'N/A',
             landSize: pref.landSize ? `${pref.landSize}${pref.measurementType || ''}` : '',
             document: pref.documents?.join(', ') || 'N/A',
             status: pref.status || 'active',
@@ -81,7 +74,7 @@ const AgentMarketplace = () => {
             propertyType: pref.propertyType || 'Residential',
             features: pref.features || [],
             dateCreated: pref.createdAt ? new Date(pref.createdAt).toLocaleDateString('en-GB', {
-              day: 'numeric',
+              day: '2-digit',
               month: 'long',
               year: 'numeric',
             }) : 'N/A',
@@ -89,85 +82,13 @@ const AgentMarketplace = () => {
             buyer: pref.buyer || null,
           }));
 
-          setAllProperties(transformedProperties);
           setProperties(transformedProperties);
           
-          // Filter matched properties
-          const matched = transformedProperties.filter((prop: any) => prop.status === 'matched');
-          setMatchedProperties(matched);
+          // Set pagination info from backend response
+          setTotalPages(data.totalPages || 1);
+          setTotalItems(data.totalItems || transformedProperties.length);
           
-        } else if (data && data.data && data.data.preferences) {
-          // Nested under data.preferences
-          const preferences = Array.isArray(data.data.preferences) ? data.data.preferences : [];
-          console.log('Found preferences (nested):', preferences.length);
-          
-          const transformedProperties = preferences.map((pref: any) => ({
-            id: pref._id || pref.id,
-            type: pref.preferenceType === 'buy' ? 'Outright sales' : 
-                  pref.preferenceType === 'rent' ? 'Rent' : 'Joint venture(VJ)',
-            location: pref.location ? 
-              `${pref.location.state || ''}, ${pref.location.localGovernment || ''}`.trim().replace(/^,|,$/, '') : 'N/A',
-            priceRange: pref.budgetMin && pref.budgetMax ? 
-              `₦${pref.budgetMin.toLocaleString()} - ₦${pref.budgetMax.toLocaleString()}` : 
-              pref.budgetMin ? `₦${pref.budgetMin.toLocaleString()}` : 'N/A',
-            landSize: pref.landSize ? `${pref.landSize}${pref.measurementType || ''}` : '',
-            document: pref.documents?.join(', ') || 'N/A',
-            status: pref.status || 'active',
-            building: pref.propertyCondition || '',
-            bedroom: pref.noOfBedrooms ? pref.noOfBedrooms.toString() : '',
-            bathroom: pref.noOfBathrooms ? pref.noOfBathrooms.toString() : '',
-            propertyType: pref.propertyType || 'Residential',
-            features: pref.features || [],
-            dateCreated: pref.createdAt ? new Date(pref.createdAt).toLocaleDateString('en-GB', {
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric',
-            }) : 'N/A',
-            additionalInfo: pref.additionalInfo || '',
-            buyer: pref.buyer || null,
-          }));
-
-          setAllProperties(transformedProperties);
-          setProperties(transformedProperties);
-          
-          // Filter matched properties
-          const matched = transformedProperties.filter((prop: any) => prop.status === 'matched');
-          setMatchedProperties(matched);
-          
-        } else if (data && Array.isArray(data)) {
-          // Direct array response
-          console.log('Found preferences (array):', data.length);
-          
-          const transformedProperties = data.map((pref: any) => ({
-            id: pref._id || pref.id,
-            type: pref.preferenceType === 'buy' ? 'Outright sales' : 
-                  pref.preferenceType === 'rent' ? 'Rent' : 'Joint venture(VJ)',
-            location: pref.location ? 
-              `${pref.location.state || ''}, ${pref.location.localGovernment || ''}`.trim().replace(/^,|,$/, '') : 'N/A',
-            priceRange: pref.budgetMin && pref.budgetMax ? 
-              `₦${pref.budgetMin.toLocaleString()} - ₦${pref.budgetMax.toLocaleString()}` : 
-              pref.budgetMin ? `₦${pref.budgetMin.toLocaleString()}` : 'N/A',
-            landSize: pref.landSize ? `${pref.landSize}${pref.measurementType || ''}` : '',
-            document: pref.documents?.join(', ') || 'N/A',
-            status: pref.status || 'active',
-            building: pref.propertyCondition || '',
-            bedroom: pref.noOfBedrooms ? pref.noOfBedrooms.toString() : '',
-            bathroom: pref.noOfBathrooms ? pref.noOfBathrooms.toString() : '',
-            propertyType: pref.propertyType || 'Residential',
-            features: pref.features || [],
-            dateCreated: pref.createdAt ? new Date(pref.createdAt).toLocaleDateString('en-GB', {
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric',
-            }) : 'N/A',
-            additionalInfo: pref.additionalInfo || '',
-            buyer: pref.buyer || null,
-          }));
-
-          setAllProperties(transformedProperties);
-          setProperties(transformedProperties);
-          
-          // Filter matched properties
+          // Filter matched properties from current page
           const matched = transformedProperties.filter((prop: any) => prop.status === 'matched');
           setMatchedProperties(matched);
           
@@ -175,112 +96,32 @@ const AgentMarketplace = () => {
           console.log('No data received from API or unexpected format');
           console.log('Response structure:', data);
           setError('No buyer preferences found');
-          
-          // Set fallback mock data for testing
-          const mockData = [
-            {
-              id: 'mock1',
-              type: 'Outright sales',
-              location: 'Lagos, Ikeja',
-              priceRange: '₦150,000,000 - ₦200,000,000',
-              landSize: '500sqm',
-              document: 'C of O, Survey',
-              status: 'active',
-              building: 'New',
-              bedroom: '4',
-              bathroom: '3',
-              propertyType: 'Residential',
-              features: ['Security', 'Parking'],
-              dateCreated: 'June 26, 2025',
-              additionalInfo: '',
-              buyer: null,
-            }
-          ];
-          
-          setAllProperties(mockData);
-          setProperties(mockData);
+          setProperties([]);
           setMatchedProperties([]);
+          setTotalPages(0);
+          setTotalItems(0);
         }
       } catch (error) {
         console.error('Error fetching buyer preferences:', error);
         setError(`Failed to load buyer preferences: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        
-        // Set fallback mock data for testing
-        const mockData = [
-          {
-            id: 'mock1',
-            type: 'Outright sales',
-            location: 'Lagos, Ikeja',
-            priceRange: '₦150,000,000 - ₦200,000,000',
-            landSize: '500sqm',
-            document: 'C of O, Survey',
-            status: 'active',
-            building: 'New',
-            bedroom: '4',
-            bathroom: '3',
-            propertyType: 'Residential',
-            features: ['Security', 'Parking'],
-            dateCreated: 'June 26, 2025',
-            additionalInfo: '',
-            buyer: null,
-          }
-        ];
-        
-        setAllProperties(mockData);
-        setProperties(mockData);
+        setProperties([]);
         setMatchedProperties([]);
+        setTotalPages(0);
+        setTotalItems(0);
       } finally {
         setIsLoading(false);
+        setIsPaginationLoading(false);
       }
     };
 
     fetchBuyerPreferences();
-  }, []);
-
-  // Filter properties based on search and filter criteria
-  useEffect(() => {
-    let filtered = [...allProperties];
-
-    // Apply search filter
-    if (searchTerm) {
-      filtered = filtered.filter((property) =>
-        property.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        property.type?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    // Apply document type filter
-    if (documentType) {
-      filtered = filtered.filter((property) =>
-        property.document?.toLowerCase().includes(documentType.toLowerCase())
-      );
-    }
-
-    // Apply land size filter (you can customize this logic)
-    if (landSize) {
-      filtered = filtered.filter((property) => {
-        if (landSize === 'small') return parseInt(property.landSize || '0') < 500;
-        if (landSize === 'medium') return parseInt(property.landSize || '0') >= 500 && parseInt(property.landSize || '0') < 1000;
-        if (landSize === 'large') return parseInt(property.landSize || '0') >= 1000;
-        return true;
-      });
-    }
-
-    // Apply developer preference filter (customize based on your needs)
-    if (developerPreference) {
-      // Add your developer preference filtering logic here
-      filtered = filtered.filter((property) => 
-        // Example: filter by property type or other criteria
-        property.type?.toLowerCase().includes(developerPreference.toLowerCase())
-      );
-    }
-
-    setProperties(filtered);
-  }, [searchTerm, documentType, landSize, developerPreference, allProperties]);
+  }, [currentPage, limit]); // Re-fetch when page changes
 
   const handleSearch = () => {
-    // The filtering is already handled by useEffect above
-    // You can add additional search logic here if needed
+    // Reset to first page when searching
+    setCurrentPage(1);
+    // Note: In a complete implementation, you would pass search parameters to the API
+    // For now, we'll just reset the page and let the backend handle filtering
     console.log('Search triggered with filters:', {
       searchTerm,
       documentType,
@@ -532,8 +373,8 @@ const AgentMarketplace = () => {
           
           {/* Matched Properties Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {getMatchedProperties().map((property) => (
-              <MatchedCard key={property.id} property={property} />
+            {getMatchedProperties().map((property, idx) => (
+              <MatchedCard key={property.id || property._id || `matched-${idx}`} property={property} />
             ))}
           </div>
         </div>
@@ -555,12 +396,12 @@ const AgentMarketplace = () => {
               </button>
             </div>
           ) : properties.length > 0 ? (
-            paginatedProperties.map((property, idx) => (
-              <PropertyCard key={property.id || idx} property={property} />
+            properties.map((property: any, idx: number) => (
+              <PropertyCard key={property.id || property._id || idx} property={property} />
             ))
           ) : (
             <div className="col-span-full text-center py-8">
-              <Loading />
+              <p className="text-gray-600">No properties found</p>
             </div>
           )}
         </div>
@@ -569,28 +410,47 @@ const AgentMarketplace = () => {
         {totalPages > 1 && (
           <div className="flex justify-center items-center gap-2 mt-8">
             <button
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="px-3 py-1 rounded border bg-white disabled:opacity-50"
+              onClick={() => {
+                setIsPaginationLoading(true);
+                setCurrentPage((p) => Math.max(1, p - 1));
+              }}
+              disabled={currentPage === 1 || isPaginationLoading}
+              className="px-3 py-1 rounded border bg-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Prev
             </button>
             {Array.from({ length: totalPages }, (_, i) => (
               <button
                 key={i + 1}
-                onClick={() => setCurrentPage(i + 1)}
-                className={`px-3 py-1 rounded border ${currentPage === i + 1 ? 'bg-green-400 text-white' : 'bg-white'}`}
+                onClick={() => {
+                  if (currentPage !== i + 1) {
+                    setIsPaginationLoading(true);
+                    setCurrentPage(i + 1);
+                  }
+                }}
+                disabled={isPaginationLoading}
+                className={`px-3 py-1 rounded border ${currentPage === i + 1 ? 'bg-green-400 text-white' : 'bg-white hover:bg-gray-50'} disabled:opacity-50`}
               >
                 {i + 1}
               </button>
             ))}
             <button
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="px-3 py-1 rounded border bg-white disabled:opacity-50"
+              onClick={() => {
+                setIsPaginationLoading(true);
+                setCurrentPage((p) => Math.min(totalPages, p + 1));
+              }}
+              disabled={currentPage === totalPages || isPaginationLoading}
+              className="px-3 py-1 rounded border bg-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next
             </button>
+          </div>
+        )}
+
+        {/* Display pagination info */}
+        {totalItems > 0 && (
+          <div className="text-center mt-4 text-gray-600">
+            Showing {Math.min(limit, properties.length)} of {totalItems} items (Page {currentPage} of {totalPages})
           </div>
         )}
       </div>
