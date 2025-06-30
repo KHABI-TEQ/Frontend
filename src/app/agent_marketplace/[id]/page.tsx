@@ -93,9 +93,9 @@ const BriefDetailPage = () => {
       
       setLoadingBrief(true);
       try {
-        // Use direct fetch instead of GET_REQUEST
-        const url = `https://khabiteq-realty.onrender.com/api/agent/all-preferences`;
-        console.log('Fetching from URL:', url); // Debug log
+        // Fix: Use the correct endpoint with pagination parameters and find specific ID
+        const url = `${process.env.NEXT_PUBLIC_API_URL}/agent/all-preferences?page=1&limit=100`;
+        console.log('Fetching from URL:', url);
         
         const response = await fetch(url, {
           method: 'GET',
@@ -109,10 +109,11 @@ const BriefDetailPage = () => {
         }
 
         const data = await response.json();
-        console.log('API Response:', data); // Debug log
+        console.log('API Response:', data);
         
-        if (data && data.preferences) {
-          const preferences = Array.isArray(data.preferences) ? data.preferences : [];
+        // Fix: Use the correct response structure that matches your API
+        if (data && data.success && data.data && Array.isArray(data.data)) {
+          const preferences = data.data;
           
           // Find the specific preference by ID
           const specificPreference = preferences.find((pref: any) => 
@@ -125,18 +126,12 @@ const BriefDetailPage = () => {
               id: specificPreference._id || specificPreference.id,
               propertyType: specificPreference.propertyType || 'Residential',
               propertyPrice: specificPreference.budgetMin && specificPreference.budgetMax ? 
-                `₦${specificPreference.budgetMin.toLocaleString()} - ₦${specificPreference.budgetMax.toLocaleString()}` : 
-                specificPreference.budgetMin ? `₦${specificPreference.budgetMin.toLocaleString()}` : 'N/A',
+                `₦${specificPreference.budgetMin.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')} - ₦${specificPreference.budgetMax.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}` : 
+                specificPreference.budgetMin ? `₦${specificPreference.budgetMin.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}` : 'N/A',
               propertyFeatures: specificPreference.features || [],
-              dateCreated: specificPreference.createdAt ? new Date(specificPreference.createdAt).toLocaleDateString('en-GB', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-              }) : 'N/A',
+              dateCreated: specificPreference.createdAt ? specificPreference.createdAt.split('T')[0] : 'N/A',
               location: specificPreference.location ? 
-                `${specificPreference.location.state || ''}, ${specificPreference.location.localGovernment || ''}, ${specificPreference.location.area || ''}`.replace(/^,|,$/, '').replace(/,\s*,/g, ',').trim() 
+                `${specificPreference.location.state || ''}, ${specificPreference.location.localGovernment || ''}, ${specificPreference.location.area || ''}`.replace(/^,+|,+$/g, '').replace(/,\s*,/g, ',').trim() 
                 : 'N/A',
               document: specificPreference.documents?.join(', ') || 'N/A',
               matchingMessage: "If you've found a matching brief for this preference, please submit it now",
@@ -149,15 +144,14 @@ const BriefDetailPage = () => {
               bathroom: specificPreference.noOfBathrooms?.toString() || 'N/A',
               landSize: specificPreference.landSize ? `${specificPreference.landSize} ${specificPreference.measurementType || ''}` : 'N/A',
               budgetRange: specificPreference.budgetMin && specificPreference.budgetMax ? 
-                `₦${specificPreference.budgetMin.toLocaleString()} - ₦${specificPreference.budgetMax.toLocaleString()}` : 
-                specificPreference.budgetMin ? `₦${specificPreference.budgetMin.toLocaleString()}` : 'N/A',
+                `₦${specificPreference.budgetMin.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')} - ₦${specificPreference.budgetMax.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}` : 
+                specificPreference.budgetMin ? `₦${specificPreference.budgetMin.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}` : 'N/A',
               preferredArea: specificPreference.location?.area || 'N/A',
               propertyCondition: specificPreference.propertyCondition || 'N/A',
               timeline: specificPreference.timeline || 'Within 3 months',
               buyerType: 'Individual Investor',
               verificationStatus: specificPreference.status === 'approved' ? 'Verified' : 'Pending',
-              previousTransactions: 0 // Not available in current API
-              ,
+              previousTransactions: 0,
               preferredContact: 'Phone, Email',
               additionalInfo: specificPreference.additionalInfo || 'N/A',
               
@@ -181,13 +175,13 @@ const BriefDetailPage = () => {
         console.error('Error fetching buyer preference:', error);
         toast.error('Failed to load buyer preference details');
         
-        // Set fallback data for testing
+        // Set fallback data for testing - you can remove this in production
         setBriefData({
           id: briefId,
           propertyType: 'Residential',
           propertyPrice: '₦200,000,000 - ₦250,000,000',
           propertyFeatures: ['4 Bed Room', 'Parking Space', 'Security Features'],
-          dateCreated: '12 June, 2023',
+          dateCreated: '2025-06-27',
           location: 'Lagos, Ikeja',
           document: 'C of O Receipt',
           matchingMessage: "If you've found a matching brief for this preference, please submit it now",
@@ -480,6 +474,10 @@ const BriefDetailPage = () => {
   const handleBackClick = () => {
     router.back();
   };
+  const redirectToMarketplace = () => {
+    router.push('/agent_marketplace');
+  };
+  
 
   const getFormTitle = () => {
     switch (selectedCard) {
@@ -499,6 +497,7 @@ const BriefDetailPage = () => {
       <AgentMarketplaceSteps
         briefId={Array.isArray(params.id) ? params.id[0] : params.id || ''}
         buyerPreference={briefData}
+       
         // onClose={() => setShowSubmissionFlow(false)}
       />
     );

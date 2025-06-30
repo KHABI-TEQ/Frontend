@@ -312,7 +312,7 @@ const Sell: React.FC<SellProps> = ({ briefId, onClose, buyerPreference }) => {
     setAreInputsDisabled(true);
     setIsSubmitting(true);
     try {
-      const url = `https://khabiteq-realty.onrender.com/api/agent/create-brief/${briefId}`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/agent/create-brief/${briefId}`;
       const token = Cookies.get('token');
       if (!token) {
         toast.error('You must be logged in to submit a brief.');
@@ -501,9 +501,11 @@ const Sell: React.FC<SellProps> = ({ briefId, onClose, buyerPreference }) => {
     setShowSuccessModal(false);
     window.location.reload();
   };
-  const handleSuccessNo = () => {
+const handleSuccessNo = () => {
     setShowSuccessModal(false);
-    router.push('/agent_marketplace');
+    setTimeout(() => {
+      router.push('/agent_marketplace');
+    }, 100);
   };
 
   return (
@@ -785,9 +787,7 @@ const Sell: React.FC<SellProps> = ({ briefId, onClose, buyerPreference }) => {
                             />
                           </div>
                         </div>
-                        {(formik.values.propertyType === 'Land' ||
-                          selectedCard === 'sell' ||
-                          selectedCard === 'jv') && (
+                        {formik.values.propertyType === 'Land' && (
                           <div className='min-h-[127px] w-full flex flex-col gap-[15px]'>
                             <h2 className='text-[20px] leading-[32px] font-medium text-[#1E1E1E]'>
                               Land Size
@@ -1382,20 +1382,27 @@ const Sell: React.FC<SellProps> = ({ briefId, onClose, buyerPreference }) => {
                             <label className='block text-sm font-medium text-gray-700 mb-1'>
                               Phone Number
                             </label>
-                            <PhoneInput
-                              international
-                              defaultCountry="NG"
-                              value={formik.values.ownerPhoneNumber}
-                              onChange={(value) => formik.setFieldValue('ownerPhoneNumber', value)}
-                              onBlur={formik.handleBlur}
-                              disabled={areInputsDisabled}
-                              className='w-full border rounded px-3 py-2'
-                            />
-                            {formik.touched.ownerPhoneNumber && formik.errors.ownerPhoneNumber && (
-                              <span className='text-red-600 text-sm'>
-                                {formik.errors.ownerPhoneNumber}
-                              </span>
-                            )}
+                            <div className="w-full">
+                              <PhoneInput
+                                international
+                                defaultCountry="NG"
+                                value={formik.values.ownerPhoneNumber}
+                                onChange={(value) => formik.setFieldValue('ownerPhoneNumber', value)}
+                                onBlur={formik.handleBlur}
+                                disabled={areInputsDisabled}
+                                inputComponent={(props) => (
+                                  <input
+                                    {...props}
+                                    className="w-full border border-gray-300 rounded px-3 py-[16px] focus:outline-none focus:ring-2 focus:ring-[#8DDB90] text-base"
+                                  />
+                                )}
+                              />
+                              {formik.touched.ownerPhoneNumber && formik.errors.ownerPhoneNumber && (
+                                <span className='text-red-600 text-sm'>
+                                  {formik.errors.ownerPhoneNumber}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                         <Input
@@ -1692,12 +1699,10 @@ const SuccessBriefModal: React.FC<SuccessBriefModalProps> = ({ open, onClose, on
           <div className="text-[22px] font-bold mb-1">Successfully Submitted</div>
           <div className="text-gray-500 mb-4">We will reach out to you soon</div>
           <div className="flex justify-center mb-4">
-            <div className="bg-[#8DDB90] rounded-full p-4 flex items-center justify-center">
-            <svg width="123" height="123" viewBox="0 0 123 123" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M61.5 122.438C95.1549 122.438 122.438 95.1549 122.438 61.5C122.438 27.8451 95.1549 0.5625 61.5 0.5625C27.8451 0.5625 0.5625 27.8451 0.5625 61.5C0.5625 95.1549 27.8451 122.438 61.5 122.438Z" fill="#4BD37B"/>
-</svg>
+            {/* <div className="bg-[#8DDB90] rounded-full p-4 flex items-center justify-center"> */}
+       <img src="/check.svg" alt="" />
 
-            </div>
+            {/* </div> */}
           </div>
           <div className="font-semibold text-lg mb-1">Got similar property brief to share?</div>
           <div className="text-gray-500 mb-6">Add more property brief that matches this request!</div>
