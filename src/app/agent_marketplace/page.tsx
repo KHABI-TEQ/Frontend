@@ -14,7 +14,7 @@ const AgentMarketplace = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [developerPreference, setDeveloperPreference] = useState('');
   const [documentType, setDocumentType] = useState('');
-  const [landSize, setLandSize] = useState('');
+  const [propertyCondition, setPropertyCondition] = useState('');
   const [properties, setProperties] = useState<any[]>([]);
   const [matchedProperties, setMatchedProperties] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -28,13 +28,29 @@ const AgentMarketplace = () => {
   const [isPaginationLoading, setIsPaginationLoading] = useState(false);
   const limit = 8; // Items per page
 
-  // Fetch buyer preferences from API with pagination
+  // Fetch buyer preferences from API with pagination and filters
   useEffect(() => {
     const fetchBuyerPreferences = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        const url = `${process.env.NEXT_PUBLIC_API_URL}/agent/all-preferences?page=${currentPage}&limit=${limit}`;
+        // Build query params from filters
+        const params = new URLSearchParams();
+        params.append('page', String(currentPage));
+        params.append('limit', String(limit));
+        if (searchTerm) params.append('locationSearch', searchTerm);
+        if (propertyCondition) params.append('propertyCondition', propertyCondition);
+        if (documentType) params.append('documents', documentType);
+        // developerPreference: buy/rent/joint-venture
+        if (developerPreference) {
+          if (developerPreference === 'buy') params.append('preferenceType', 'buy');
+          else if (developerPreference === 'rent') params.append('preferenceType', 'rent');
+          // add more if needed
+        }
+        // Add more filters as needed (budgetMin, budgetMax, features, propertyType, propertyCondition, noOfBedrooms, noOfBathrooms)
+        // Example: if you add more filter states, append them here
+
+        const url = `${process.env.NEXT_PUBLIC_API_URL}/agent/all-preferences?${params.toString()}`;
         console.log('Fetching from URL:', url);
 
         const response = await fetch(url, {
@@ -115,17 +131,17 @@ const AgentMarketplace = () => {
     };
 
     fetchBuyerPreferences();
-  }, [currentPage, limit]); // Re-fetch when page changes
+  }, [currentPage, limit, searchTerm ?? '', documentType ?? '', propertyCondition ?? '', developerPreference ?? '']); // Always same length
 
   const handleSearch = () => {
-    // Reset to first page when searching
+    // Reset to first page when searching/filters change
     setCurrentPage(1);
-    // Note: In a complete implementation, you would pass search parameters to the API
-    // For now, we'll just reset the page and let the backend handle filtering
+    // The useEffect will re-run with the latest filter states
+    // Optionally, you can add more logic here if you want to debounce or validate
     console.log('Search triggered with filters:', {
       searchTerm,
       documentType,
-      landSize,
+      propertyCondition,
       developerPreference
     });
   };
@@ -208,9 +224,9 @@ const AgentMarketplace = () => {
 
       {/* Status and Action Button */}
       <div className="bg-white py-6 text-center">
-        <div className="text-blue-500 text-base font-normal mb-4">
+        {/* <div className="text-blue-500 text-base font-normal mb-4">
           {property.status || 'active'}
-        </div>
+        </div> */}
         <div className="px-2">
           <button 
             onClick={() => router.push(`/agent_marketplace/${property.id}`)}
@@ -298,6 +314,22 @@ const AgentMarketplace = () => {
           <p className="text-gray-600">Connect with Serious Buyers—Submit Now.</p>
         </div>
 
+ {/* Matched Properties Section */}
+        <div className="bg-[#e2efe2] rounded-lg p-8 mb-8">
+          <div className="text-center mb-6">
+            <h2 className={`font-display text-xl font-semibold text-[#09391C]`}>
+              Buyers just got matched. Submit now to get featured.
+            </h2>
+          </div>
+          
+          {/* Matched Properties Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {getMatchedProperties().map((property, idx) => (
+              <MatchedCard key={property.id || property._id || `matched-${idx}`} property={property} />
+            ))}
+          </div>
+        </div>
+
         {/* Search and Filters */}
         <div className="flex flex-wrap gap-4 mb-8 justify-center">
           <div className="relative">
@@ -318,8 +350,8 @@ const AgentMarketplace = () => {
               className="appearance-none px-4 py-3 pr-10 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500"
             >
               <option value="">Developer preference</option>
-              <option value="option1">Option 1</option>
-              <option value="option2">Option 2</option>
+              <option value="buy">Buyer Preferences</option>
+              <option value="rent">Tenant Preferences</option>
             </select>
             <FontAwesomeIcon icon={faChevronDown} className="absolute right-3 top-3.5 w-5 h-5 text-gray-400 pointer-events-none" />
           </div>
@@ -331,29 +363,31 @@ const AgentMarketplace = () => {
               className="appearance-none px-4 py-3 pr-10 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500"
             >
               <option value="">Document Type</option>
-              <option value="coo">C of O</option>
-              <option value="survey">Survey</option>
+              <option value="C of O">C of O</option>
+              <option value="Deed of assignments">Deed of assignments</option>
+              <option value="Receipt">Receipt</option>
+              <option value="Government consent">Government consent</option>
+              <option value="Land certificate">Land certificate</option>
+              <option value="Register deed of conveyance">Register deed of conveyance</option>
             </select>
             <FontAwesomeIcon icon={faChevronDown} className="absolute right-3 top-3.5 w-5 h-5 text-gray-400 pointer-events-none" />
           </div>
 
           <div className="relative">
             <select
-              value={landSize}
-              onChange={(e) => setLandSize(e.target.value)}
+              value={propertyCondition}
+              onChange={(e) => setPropertyCondition(e.target.value)}
               className="appearance-none px-4 py-3 pr-10 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500"
             >
-              <option value="">Land Size</option>
-              <option value="small">Small</option>
-              <option value="medium">Medium</option>
-              <option value="large">Large</option>
+              <option value="">Property Condition</option>
+              <option value="Brand New">Brand New</option>
+              <option value="Good Condition">Good Condition</option>
+              <option value="Needs Renovation">Needs Renovation</option>
             </select>
             <FontAwesomeIcon icon={faChevronDown} className="absolute right-3 top-3.5 w-5 h-5 text-gray-400 pointer-events-none" />
           </div>
 
-          <button className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50">
-            More filter
-          </button>
+        
 
           <button 
             onClick={handleSearch}
@@ -363,22 +397,7 @@ const AgentMarketplace = () => {
           </button>
         </div>
 
-        {/* Matched Properties Section */}
-        <div className="bg-[#e2efe2] rounded-lg p-8 mb-8">
-          <div className="text-center mb-6">
-            <h2 className={`font-display text-xl font-semibold text-[#09391C]`}>
-              Buyers just got matched. Submit now to get featured.
-            </h2>
-          </div>
-          
-          {/* Matched Properties Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {getMatchedProperties().map((property, idx) => (
-              <MatchedCard key={property.id || property._id || `matched-${idx}`} property={property} />
-            ))}
-          </div>
-        </div>
-
+       
         {/* Properties Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {isLoading ? (
@@ -419,21 +438,82 @@ const AgentMarketplace = () => {
             >
               Prev
             </button>
-            {Array.from({ length: totalPages }, (_, i) => (
-              <button
-                key={i + 1}
-                onClick={() => {
-                  if (currentPage !== i + 1) {
-                    setIsPaginationLoading(true);
-                    setCurrentPage(i + 1);
-                  }
-                }}
-                disabled={isPaginationLoading}
-                className={`px-3 py-1 rounded border ${currentPage === i + 1 ? 'bg-green-400 text-white' : 'bg-white hover:bg-gray-50'} disabled:opacity-50`}
-              >
-                {i + 1}
-              </button>
-            ))}
+            {/* Smart Pagination: show first, last, current, +/-2, and ellipsis */}
+            {(() => {
+              const pageButtons = [];
+              const windowSize = 2; // how many pages to show around current
+              let start = Math.max(2, currentPage - windowSize);
+              let end = Math.min(totalPages - 1, currentPage + windowSize);
+              if (currentPage <= 3) {
+                start = 2;
+                end = Math.min(5, totalPages - 1);
+              }
+              if (currentPage >= totalPages - 2) {
+                start = Math.max(2, totalPages - 4);
+                end = totalPages - 1;
+              }
+              // Always show first page
+              pageButtons.push(
+                <button
+                  key={1}
+                  onClick={() => {
+                    if (currentPage !== 1) {
+                      setIsPaginationLoading(true);
+                      setCurrentPage(1);
+                    }
+                  }}
+                  disabled={isPaginationLoading}
+                  className={`px-3 py-1 rounded border ${currentPage === 1 ? 'bg-green-400 text-white' : 'bg-white hover:bg-gray-50'} disabled:opacity-50`}
+                >
+                  1
+                </button>
+              );
+              // Ellipsis if needed
+              if (start > 2) {
+                pageButtons.push(<span key="start-ellipsis" className="px-2">...</span>);
+              }
+              // Middle page numbers
+              for (let i = start; i <= end; i++) {
+                pageButtons.push(
+                  <button
+                    key={i}
+                    onClick={() => {
+                      if (currentPage !== i) {
+                        setIsPaginationLoading(true);
+                        setCurrentPage(i);
+                      }
+                    }}
+                    disabled={isPaginationLoading}
+                    className={`px-3 py-1 rounded border ${currentPage === i ? 'bg-green-400 text-white' : 'bg-white hover:bg-gray-50'} disabled:opacity-50`}
+                  >
+                    {i}
+                  </button>
+                );
+              }
+              // Ellipsis if needed
+              if (end < totalPages - 1) {
+                pageButtons.push(<span key="end-ellipsis" className="px-2">...</span>);
+              }
+              // Always show last page if more than 1
+              if (totalPages > 1) {
+                pageButtons.push(
+                  <button
+                    key={totalPages}
+                    onClick={() => {
+                      if (currentPage !== totalPages) {
+                        setIsPaginationLoading(true);
+                        setCurrentPage(totalPages);
+                      }
+                    }}
+                    disabled={isPaginationLoading}
+                    className={`px-3 py-1 rounded border ${currentPage === totalPages ? 'bg-green-400 text-white' : 'bg-white hover:bg-gray-50'} disabled:opacity-50`}
+                  >
+                    {totalPages}
+                  </button>
+                );
+              }
+              return pageButtons;
+            })()}
             <button
               onClick={() => {
                 setIsPaginationLoading(true);

@@ -731,8 +731,8 @@ const Landlord = () => {
 
 				// Optionally, check for empty required fields
 				const requiredFields = [
-					"email", "fullName", "phoneNumber", "propertyType", "propertyCondition",
-					"preferenceType", "location", "measurementType", "landSize", "budgetMin", "budgetMax"
+					"email", "fullName", "phoneNumber", "propertyType",
+					"preferenceType", "location", "budgetMin", "budgetMax"
 				] as const;
 
 				type PayloadKeys = keyof typeof payload;
@@ -953,6 +953,7 @@ const Landlord = () => {
 													isDisabled={areInputsDisabled}
 												/>
 											</div>
+											{/* Land Size field only for Land */}
 											{formik.values.propertyType === "Land" && (
 												<div className="min-h-[127px] w-full flex flex-col gap-[15px]">
 													<h2 className="text-[20px] leading-[32px] font-medium text-[#1E1E1E]">
@@ -1018,12 +1019,12 @@ const Landlord = () => {
 											)}
 											{/* <div className='grid lg:grid-cols-2 gap-[15px]'> */}
 											{selectedProperty && renderDynamicComponent()?.priceComponent}
-											{selectedProperty &&
-												renderDynamicComponent()?.bedroomAndBathroomComponent}
+											{/* Hide bedroom, bathroom, and features if propertyType is Land */}
+											{selectedProperty && formik.values.propertyType !== "Land" && renderDynamicComponent()?.bedroomAndBathroomComponent}
 											{selectedProperty && renderDynamicComponent()?.priceRangeDocType}
 											{/* </div> */}
 										</div>
-										{selectedProperty && renderDynamicComponent()?.features}
+										{selectedProperty && formik.values.propertyType !== "Land" && renderDynamicComponent()?.features}
 										<div className="min-h-[73px] flex flex-col gap-[15px] mt-2">
 											<Input
 												label="Addition information"
@@ -1122,7 +1123,7 @@ const Landlord = () => {
 									}
 									isDisabled={areInputsDisabled}
 									className={`lg:w-[25%] text-base leading-[25.6px] font-bold min-h-[50px] py-[12px] px-[24px] 
-                      ${
+					  ${
 																							areInputsDisabled
 																								? "bg-gray-300 text-gray-400 cursor-not-allowed"
 																								: "bg-[#8DDB90] text-white"
