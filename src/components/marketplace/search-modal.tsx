@@ -99,7 +99,7 @@ const SearchModal = ({
     setUniqueProperties(new Set());
     setPropertiesSelected([]);
   };
-
+ 
   // Sync local selection to context
   useEffect(() => {
     setSelectedBriefs(Array.from(uniqueProperties));
