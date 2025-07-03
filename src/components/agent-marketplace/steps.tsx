@@ -28,7 +28,7 @@ import Stepper from '@/components/post-property-components/Stepper';
 import ClickableCard from '@/components/post-property-components/ClickableCard';
 import 'react-phone-number-input/style.css';
 import BreadcrumbNav from '@/components/general-components/BreadcrumbNav';
-import CommissionModal from '@/components/post-property-components/CommissionModal';
+import CommissionModal from '@/components/post-property-components/CommissionModal2';
 import { useUserContext } from '@/context/user-context';
 import Cookies from 'js-cookie';
 import ClipLoader from 'react-spinners/ClipLoader';
@@ -312,7 +312,7 @@ const Sell: React.FC<SellProps> = ({ briefId, onClose, buyerPreference }) => {
     setAreInputsDisabled(true);
     setIsSubmitting(true);
     try {
-      const url = `${process.env.NEXT_PUBLIC_API_URL}/agent/create-brief/${briefId}`;
+      const url = `https://khabiteq-realty.onrender.com/api/agent/create-brief/${briefId}`;
       const token = Cookies.get('token');
       if (!token) {
         toast.error('You must be logged in to submit a brief.');
@@ -1071,43 +1071,35 @@ const handleSuccessNo = () => {
                           </div>
                         </div>
                       )}
-                      <div className='min-h-[73px] flex flex-col gap-[15px] mt-5'>
-                        <h2 className='text-[20px] leading-[32px] font-[500] text-[#1E1E1E]'>
-                          Is your property currently tenanted?
-                        </h2>
-                        <div className='w-full gap-[20px] lg:gap-[50px] flex flex-row flex-wrap'>
-                          <RadioCheck
-                            type='radio'
-                            value='Yes'
-                            name='isTenanted'
-                            handleChange={() => {
-                              formik.setFieldValue('isTenanted', 'Yes');
-                            }}
-                            selectedValue={formik.values?.isTenanted}
-                            isDisabled={areInputsDisabled}
-                          />
-                          <RadioCheck
-                            type='radio'
-                            value='No'
-                            name='isTenanted'
-                            handleChange={() => {
-                              formik.setFieldValue('isTenanted', 'No');
-                            }}
-                            selectedValue={formik.values?.isTenanted}
-                            isDisabled={areInputsDisabled}
-                          />
-                          <RadioCheck
-                            type='radio'
-                            value='I live in it'
-                            name='isTenanted'
-                            handleChange={() => {
-                              formik.setFieldValue('isTenanted', 'I live in it');
-                            }}
-                            selectedValue={formik.values?.isTenanted}
-                            isDisabled={areInputsDisabled}
-                          />
+                      {selectedCard !== 'rent' && (
+                        <div className='min-h-[73px] flex flex-col gap-[15px] mt-5'>
+                          <h2 className='text-[20px] leading-[32px] font-[500] text-[#1E1E1E]'>
+                            Is your property currently tenanted?
+                          </h2>
+                          <div className='w-full gap-[20px] lg:gap-[50px] flex flex-row flex-wrap'>
+                            <RadioCheck
+                              type='radio'
+                              value='Yes'
+                              name='isTenanted'
+                              handleChange={() => {
+                                formik.setFieldValue('isTenanted', 'Yes');
+                              }}
+                              selectedValue={formik.values?.isTenanted}
+                              isDisabled={areInputsDisabled}
+                            />
+                            <RadioCheck
+                              type='radio'
+                              value='No'
+                              name='isTenanted'
+                              handleChange={() => {
+                                formik.setFieldValue('isTenanted', 'No');
+                              }}
+                              selectedValue={formik.values?.isTenanted}
+                              isDisabled={areInputsDisabled}
+                            />
+                          </div>
                         </div>
-                      </div>
+                      )}
                       {selectedCard !== 'jv' && (
                         <div className='min-h-[73px] flex flex-col gap-[15px] mt-5'>
                           <h2 className='text-[20px] leading-[32px] font-medium text-[#1E1E1E]'>
@@ -1349,8 +1341,7 @@ const handleSuccessNo = () => {
                         Ownership Declaration
                       </h3>
                       <div className='w-full flex flex-col gap-[15px] min-h-[270px] '>
-                        {commission['userType'] === 'agent' ? (
-                          <RadioCheck
+             <RadioCheck
                             name='confirm'
                             type='checkbox'
                             isChecked={isAuthorized}
@@ -1358,16 +1349,14 @@ const handleSuccessNo = () => {
                             isDisabled={areInputsDisabled}
                             value='I confirm that I am a mandate to the property'
                           />
-                        ) : (
                           <RadioCheck
                             name='confirm'
                             type='checkbox'
                             isChecked={isLegalOwner}
                             handleChange={() => setIsLegalOwner(!isLegalOwner)}
                             isDisabled={areInputsDisabled}
-                            value='I confirm that I am the legal owner of this property or authorized to submit this brief'
+                            value='I confirm that I am  authorized to submit this brief'
                           />
-                        )}
                         <div className='flex lg:flex-row flex-col w-full gap-[15px]'>
                           <Input
                             label='Full name'
