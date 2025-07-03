@@ -27,7 +27,7 @@ type PayloadProps = {
   initialAmount: number;
   toBeIncreaseBy: number;
 };
- 
+  
 const SearchModal = ({
   isAddForInspectionModalOpened,
   setIsAddInspectionModalOpened,
