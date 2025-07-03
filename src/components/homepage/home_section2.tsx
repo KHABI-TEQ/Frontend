@@ -35,7 +35,7 @@ const Section2 = () => {
             Our comprehensive real estate solutions offers
           </motion.p>
         </div>
-
+ 
         <div className='w-full md:min-h-[412px] flex flex-wrap justify-center items-center gap-[25px] overflow-hidden'>
           {cardData.map((item: CardProps, idx: number) => (
             <Card key={idx} {...item} />

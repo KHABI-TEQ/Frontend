@@ -15,6 +15,7 @@ const Card = ({ heading, detailsArr }: CardProps) => {
       whileInView={{ y: 0, opacity: 1 }}
       transition={{ delay: 0.3 }}
       viewport={{ once: true }}
+      style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', WebkitBackdropFilter: 'blur(5px)' }}
       className='w-full sm:w-[280px] md:w-[313px] h-[389px] shrink-0 flex flex-col justify-center items-center gap-[10px] py-[24px] px-[18px] border-[1px] border-[#FFFFFFFF] bg-white/5 backdrop-blur-md'>
       <div className='w-full h-full flex flex-col gap-[27px] items-center'>
         <h2 className='font-semibold text-xl text-white'>{heading}</h2>

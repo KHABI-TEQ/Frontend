@@ -9,7 +9,7 @@ import { IsMobile } from '@/hooks/isMobile';
 import { useRouter } from 'next/navigation';
 import Card from './add-for-inspection/card';
 import AddForInspection from './add-for-inspection';
-
+ 
 const MarketPlace = () => {
   const router = useRouter();
   const {
@@ -128,6 +128,7 @@ const MarketPlace = () => {
               </button>
             </div>
           </div>
+
           {/**Search Modal */}
           <div className='w-full mt-2 '>
             <SearchModal
@@ -147,6 +148,8 @@ const MarketPlace = () => {
               setIsLetterOfIntentionModalOpened={setIsLetterOfIntentionModalOpened}
             />
           </div>
+
+          
         </div>
       )}
     </section>

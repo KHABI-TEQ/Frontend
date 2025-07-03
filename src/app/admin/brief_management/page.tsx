@@ -1537,7 +1537,7 @@ type BoxNotificationProps = {
   name: string;
   total: number;
 };
-
+ 
 const BoxNotification: React.FC<BoxNotificationProps> = ({
   name,
   total,

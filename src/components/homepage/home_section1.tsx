@@ -10,7 +10,7 @@ import '@/styles/hero.css';
 /**
  *
  * @returns Join our trusted network of agents and access exclusive property listings, connect with verified buyers and sellers, and grow your real estate business seamlessly
- */
+ */ 
 
 const Section1 = () => {
   return (

@@ -14,6 +14,7 @@ import {
   faBullhorn,
   faUserShield,
   faBorderAll,
+  faMagnifyingGlass,
 } from '@fortawesome/free-solid-svg-icons';
 import khabiteqIcon from '@/svgs/khabi-teq.svg';
 import { archivo } from '@/styles/font';
@@ -55,12 +56,12 @@ const navItems = [
     icon: faUserShield,
     disabled: false,
   },
-  // {
-  //   href: '/admin/analytics',
-  //   label: 'Advance Analytics',
-  //   icon: faChartBar,
-  //   disabled: true,
-  // },
+  {
+    href: '/admin/inspection-manegement',
+    label: 'Inspection Management',
+    icon: faMagnifyingGlass,
+    disabled: false,
+  },
   // {
   //   href: '/admin/notifications',
   //   label: 'Notifications and Alerts',

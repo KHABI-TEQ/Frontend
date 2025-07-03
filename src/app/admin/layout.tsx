@@ -23,7 +23,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       router.push('/admin/auth/login');
     }
   }, [isLoginPage, router]);
-
+ 
   return (
     <CreateBriefProvider>
       <EditBriefProvider>

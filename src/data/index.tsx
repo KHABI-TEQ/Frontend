@@ -25,17 +25,17 @@ export const navData: {
     name: 'Marketplace',
     url: '/market-place',
     isClicked: false,
-    additionalLinks: [
+    additionalLinks: [ 
       {
-        name: 'list a property',
-        url: '/my_listing',
-      },
-      {
-        name: 'Buy a property',
+        name: 'Buy',
         url: '/market-place',
       },
       {
-        name: 'Rent a property',
+        name: 'Sell',
+        url: '/my_listing',
+      },
+      {
+        name: 'Rent',
         url: '/market-place',
       },
       {
@@ -53,6 +53,12 @@ export const navData: {
     name: 'Agent',
     url: '/agent',
     isClicked: false,
+    additionalLinks: [ 
+      {
+        name: 'Market Place',
+        url: '/agent/market-place',
+      },
+    ],
   },
   {
     name: 'Policies',
