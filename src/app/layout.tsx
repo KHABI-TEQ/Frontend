@@ -14,7 +14,7 @@ import { CreateBriefProvider } from '@/context/create-brief-context';
 import { SelectedBriefsProvider } from '@/context/selected-briefs-context';
 import Homepage from '@/app/homepage/page';
 import Countdown from './coming-soon-modal/page';
-import { GoogleAnalytics } from '@next/third-parties/google';
+// import { GoogleAnalytics } from '@next/third-parties/google';
 
 const SHOW_COMING_SOON = false;
 
@@ -50,7 +50,7 @@ export default function RootLayout({
                   </HeaderFooterWrapper>
                   <Toaster />
                 </body>
-                <GoogleAnalytics gaId="G-9Y0M3GTLDT" />
+                {/* <GoogleAnalytics gaId="G-9Y0M3GTLDT" /> */}
               </html>
             </SelectedBriefsProvider>
           </CreateBriefProvider>
@@ -77,7 +77,7 @@ export default function RootLayout({
                   </HeaderFooterWrapper>
                   <Toaster />
                 </body>
-                <GoogleAnalytics gaId="G-9Y0M3GTLDT" />
+                {/* <GoogleAnalytics gaId="G-9Y0M3GTLDT" /> */}
               </html>
             </SelectedBriefsProvider>
           </CreateBriefProvider>

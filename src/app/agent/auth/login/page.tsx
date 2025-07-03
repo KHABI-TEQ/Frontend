@@ -165,7 +165,13 @@ const Login = () => {
             };
 
             setUser(user);
-            sessionStorage.setItem('user', JSON.stringify(user));
+            // sessionStorage.setItem('user', JSON.stringify(user));
+            // const previousRoute = sessionStorage.getItem('previousRoute');
+            // if (previousRoute) {
+            //   router.push(previousRoute);
+            // } else {
+            //   router.push('/agent/briefs');
+            // }
 
             if (response.accountApproved === false) {
               router.push('/agent/under-review');

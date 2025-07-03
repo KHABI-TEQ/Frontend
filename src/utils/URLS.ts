@@ -57,4 +57,6 @@ export const URLS = {
 	fetchUsersData: "/admin/properties-users",
 	getAllPreferences: "/properties/preference",
 	getAllPropertySells: "/properties/sell/all",
+	getAllBuyersPreference:"/agent/all-preferences",
+	submitBuyerPreference: "/buyers/submit-preference",
 };

@@ -670,6 +670,7 @@ const Landlord = () => {
 			bedroom: undefined as string | undefined,
 			images: [],
 			documentType: [] as string[],
+			additionalInfo: "",
 		},
 		validationSchema: Yup.object({
 			propertyType: Yup.string().required("Property type is required"),
@@ -693,58 +694,80 @@ const Landlord = () => {
 		validateOnBlur: true,
 		validateOnChange: true,
 		onSubmit: async (values) => {
-			console.log(values);
 			setAreInputsDisabled(true);
 			try {
-				const url = URLS.BASE + URLS.userSubmitPreference;
+				// const url = 'https://7629-102-88-109-187.ngrok-free.app/api/buyers/submit-preference';
+				const url = `${process.env.NEXT_PUBLIC_API_URL}/buyers/submit-preference`;
 				const payload = {
+					email: values.ownerEmail,
+					fullName: values.ownerFullName,
+					phoneNumber: values.ownerPhoneNumber,
 					propertyType: values.propertyType,
-					features: values.features,
-					docOnProperty: documentTypeOptions.map((opt) => ({
-						docName: opt.label,
-						isProvided: values.documentType.includes(opt.value),
-					})),
 					propertyCondition: values.propertyCondition,
+					preferenceType:
+						selectedProperty === "Buy a property"
+							? "buy"
+							: selectedProperty === "Find property for joint ventures"
+							? "joint-venture"
+							: "rent",
 					location: {
 						state: values.selectedState,
 						localGovernment: values.selectedLGA,
 						area: area,
 					},
-					budgetMin: Number(prices.minPrice || 0),
-					budgetMax: Number(prices.maxPrice || 0),
-					owner: {
-						fullName: values.ownerFullName,
-						phoneNumber: values.ownerPhoneNumber,
-						email: values.ownerEmail,
-					},
-					areYouTheOwner: values.areYouTheOwner,
-					landSize: {
-						measurementType: values.landSize.measurementType,
-						size: Number(values.landSize.size),
-					},
-					briefType:
-						selectedProperty === "Buy a property"
-							? "Outright Sales"
-							: selectedProperty === "Find property for joint ventures"
-							? "Joint Venture"
-							: "Rent",
-					additionalFeatures: {
-						noOfBedrooms: Number(values.noOfBedroom || 0),
-						noOfBathrooms: Number(bathroom || 0),
-					},
-					tenantCriteria: values.tenantCriteria,
+					measurementType: values.landSize.measurementType,
+					landSize: Number(values.landSize.size) || 0,
+					budgetMin: Number(prices.minPrice.replace(/,/g, "")) || 0,
+					budgetMax: Number(prices.maxPrice.replace(/,/g, "")) || 0,
+					documents: Array.isArray(values.documentType) ? values.documentType : [],
+					noOfBedrooms: Math.max(0, Math.min(Number(values.noOfBedroom || 0), 20)),
+					noOfBathrooms: Math.max(0, Math.min(Number(bathroom || 0), 20)),
+					features: Array.isArray(values.features) ? values.features : [],
+					additionalInfo: values.additionalInfo || "",
 				};
-				// console.log('Payload:', payload);
+
+				// Pre-submit check: log payload and check for undefined/empty required fields
+				console.log("Submitting payload:", payload);
+
+				// Optionally, check for empty required fields
+				const requiredFields = [
+					"email", "fullName", "phoneNumber", "propertyType", "propertyCondition",
+					"preferenceType", "location", "measurementType", "landSize", "budgetMin", "budgetMax"
+				] as const;
+
+				type PayloadKeys = keyof typeof payload;
+				for (const field of requiredFields) {
+					const value = (payload as Record<string, any>)[field];
+					if (
+						value === undefined ||
+						value === null ||
+						(typeof value === "string" && value.trim() === "")
+					) {
+						toast.error(`Missing or empty field: ${field}`);
+						setAreInputsDisabled(false);
+						return;
+					}
+				}
+				if (
+					!payload.location.state ||
+					!payload.location.localGovernment ||
+					!payload.location.area
+				) {
+					toast.error("Please fill in all location fields.");
+					setAreInputsDisabled(false);
+					return;
+				}
 
 				await toast.promise(
 					axios.post(url, payload).then((response) => {
-						console.log("response from brief", response);
-						if ((response as any).data.owner) {
+						if ((response as any).status === 201) {
+							console.log("Preference submitted successfully:", response);
 							toast.success("Preference submitted successfully");
 							setShowFinalSubmit(true);
 							setAreInputsDisabled(false);
 							return "Preference submitted successfully";
 						} else {
+							console.error("Submission failed:", response);
 							const errorMessage = (response as any).error || "Submission failed";
 							toast.error(errorMessage);
 							setAreInputsDisabled(false);
@@ -756,7 +779,6 @@ const Landlord = () => {
 					}
 				);
 			} catch (error) {
-				console.error(error);
 				setAreInputsDisabled(false);
 			} finally {
 				setAreInputsDisabled(false);
@@ -931,10 +953,7 @@ const Landlord = () => {
 													isDisabled={areInputsDisabled}
 												/>
 											</div>
-											{(selectedProperty === "Buy a property" ||
-												selectedProperty === "Find property for joint ventures" ||
-												(selectedProperty === "Rent/Lease a property" &&
-													formik.values.propertyType === "Land")) && (
+											{formik.values.propertyType === "Land" && (
 												<div className="min-h-[127px] w-full flex flex-col gap-[15px]">
 													<h2 className="text-[20px] leading-[32px] font-medium text-[#1E1E1E]">
 														Land Size
@@ -1008,13 +1027,13 @@ const Landlord = () => {
 										<div className="min-h-[73px] flex flex-col gap-[15px] mt-2">
 											<Input
 												label="Addition information"
-												name="addtionalInfo"
+												name="additionalInfo"
 												type="textArea"
 												className="w-full"
 												multiline={true}
 												rows={3}
 												placeholder="Enter any additional information"
-												// value={formik.values?.numberOfFloors}
+												value={formik.values.additionalInfo}
 												onChange={formik.handleChange}
 												isDisabled={areInputsDisabled}
 											/>
