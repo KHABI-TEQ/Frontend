@@ -1,4 +1,3 @@
-/** @format */
 'use client';
 import useClickOutside from '@/hooks/clickOutside';
 import React, { useRef } from 'react';
@@ -20,6 +19,17 @@ const DocumentTypeComponent: React.FC<DocumentTypeComponentProps> = ({
 }) => {
   const divRef = useRef<HTMLDivElement | null>(null);
   useClickOutside(divRef, () => closeModal(false));
+
+  const handleCheckboxChange = (doc: string) => {
+    const selected = new Set(docsSelected);
+    if (selected.has(doc)) {
+      selected.delete(doc);
+    } else {
+      selected.add(doc);
+    }
+    setDocsSelected(Array.from(selected));
+  };
+
   return (
     <motion.div
       initial={{ y: 50, opacity: 0 }}
@@ -28,7 +38,8 @@ const DocumentTypeComponent: React.FC<DocumentTypeComponentProps> = ({
       viewport={{ once: true }}
       ref={divRef}
       style={style}
-      className='absolute mt-[100px] bg-white w-[286px] h-[327px] p-[19px] shadow-md flex flex-col gap-[13px] border-[1px] border-black'>
+      className='absolute mt-[20px] bg-white w-[286px] h-[327px] p-[19px] shadow-md flex flex-col gap-[13px] border-[1px] border-black'
+    >
       <h2 className='text-base font-medium text-[#000000]'>Document type</h2>
       <div className='flex flex-col gap-[10px] mt-4'>
         {[
@@ -38,20 +49,12 @@ const DocumentTypeComponent: React.FC<DocumentTypeComponentProps> = ({
           'Receipt',
           'Land certificate',
           'Registered deed of conveyance',
-        ].map((text: string, idx: number) => (
+        ].map((text, idx) => (
           <RadioCheck
             key={idx}
             type='checkbox'
-            isChecked={docsSelected.some((item: string) => item === text)}
-            onClick={() => {
-              const uniqueItemsSelected = new Set([...docsSelected]);
-              if (uniqueItemsSelected.has(text)) {
-                uniqueItemsSelected.delete(text);
-              } else {
-                uniqueItemsSelected.add(text);
-              }
-              setDocsSelected(Array.from(uniqueItemsSelected));
-            }}
+            isChecked={docsSelected.includes(text)}
+            handleChange={() => handleCheckboxChange(text)}
             name='doc'
             value={text}
           />

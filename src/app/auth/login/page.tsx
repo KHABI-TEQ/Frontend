@@ -356,7 +356,7 @@ const Input: FC<InputProps> = ({
       <span className='text-base leading-[25.6px] font-medium text-[#1E1E1E]'>
         {title}
       </span>
-      <div className='flex items-center'>
+      <div className='flex items-center relative'>
         <input
           name={id}
           type={
@@ -366,24 +366,13 @@ const Input: FC<InputProps> = ({
           onBlur={formik.handleBlur}
           onChange={formik.handleChange}
           placeholder={placeholder ?? 'This is placeholder'}
-          className={`w-full outline-none min-h-[50px] border-[1px] py-[12px] px-[16px] bg-[#FAFAFA] border-[#D6DDEB] placeholder:text-[#A8ADB7] text-black text-base leading-[25.6px] hide-scrollbar ${
-            type === 'password' && 'border-r-0'
-          }`}
+          className={`w-full outline-none min-h-[50px] border-[1px] py-[12px] px-[16px] bg-[#FAFAFA] border-[#D6DDEB] placeholder:text-[#A8ADB7] text-black text-base leading-[25.6px] hide-scrollbar`}
         />
-        {/* {icon ? (
-          <Image
-            src={icon}
-            alt=''
-            width={20}
-            height={20}
-            className='w-[20px] h-[20px] absolute ml-[330px] lg:ml-[440px] z-20 mt-[15px]'
-          />
-        ) : null} */}
+       
         {type === 'password' && (
-          <div className='bg-[#FAFAFA] w-[50px] h-[50px] border-l-0 flex items-center justify-center'>
-            <FontAwesomeIcon
+          <FontAwesomeIcon
               title={isSeePassword ? 'Hide password' : 'See password'}
-              className='cursor-pointer transition duration-500'
+              className='cursor-pointer transition absolute top-5 right-3 duration-500'
               icon={isSeePassword ? faEye : faEyeSlash}
               size='sm'
               color='black'
@@ -391,7 +380,9 @@ const Input: FC<InputProps> = ({
                 seePassword?.(!isSeePassword);
               }}
             />
-          </div>
+          // <div className='bg-[#FAFAFA] w-[50px] h-[50px] border-l-0 flex items-center justify-center'>
+            
+          // </div>
         )}
       </div>
       {formik.touched[title] ||

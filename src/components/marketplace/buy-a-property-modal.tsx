@@ -370,10 +370,11 @@ const BuyAPropertySearchModal = ({
             />
             {isPriceRangeModalOpened && (
               <PriceRange
-                setSlectedRadioValue={setPriceRadioValue}
+                heading="Price Range"
                 formik={priceFormik}
                 closeModal={setIsPriceRangeModalOpened}
-                heading='Price Range'
+                setSlectedRadioValue={setPriceRadioValue}
+                selectedRadioValue={priceRadioValue}
               />
             )}
           </div>
@@ -453,6 +454,7 @@ const BuyAPropertySearchModal = ({
           </div>
         </div>
       </form>
+
       <AnimatePresence>
         {isSearchButtonClicked && (
           <motion.div
@@ -479,6 +481,8 @@ const BuyAPropertySearchModal = ({
           </motion.div>
         )}
       </AnimatePresence>
+
+
       <AnimatePresence>
         {isContactInformationModalOpened && (
           <ContactInformation

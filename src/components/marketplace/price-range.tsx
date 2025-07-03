@@ -1,8 +1,7 @@
-/** @format */
 'use client';
 import useClickOutside from '@/hooks/clickOutside';
 import { FormikProps } from 'formik';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import RadioCheck from '../general-components/radioCheck';
 import { motion } from 'framer-motion';
 
@@ -16,6 +15,7 @@ interface PriceComponentMenuListProps {
   heading: string;
   closeModal: (type: boolean) => void;
   setSlectedRadioValue: (type: string) => void;
+  selectedRadioValue: string; // ✅ New prop
 }
 
 const PriceRange: React.FC<PriceComponentMenuListProps> = ({
@@ -23,74 +23,62 @@ const PriceRange: React.FC<PriceComponentMenuListProps> = ({
   formik,
   closeModal,
   setSlectedRadioValue,
+  selectedRadioValue,
 }) => {
   const divRef = useRef<HTMLDivElement | null>(null);
-  const [radioValue, setRadioValue] = useState<string>('');
 
   useClickOutside(divRef, () => closeModal(false));
 
-  // Predefined price range options
   const priceRangeOptions = [
     '500k - 1million',
     '2million - 4million',
     '5million - 6million',
-    '10million - above'
+    '10million - above',
   ];
 
-  // Function to format number input display
-  const formatNumberInput = (value: number): string => {
-    if (value === 0) return '';
-    return value.toLocaleString();
+  const predefinedRanges: Record<string, { min: number; max: number }> = {
+    '500k - 1million': { min: 500_000, max: 1_000_000 },
+    '2million - 4million': { min: 2_000_000, max: 4_000_000 },
+    '5million - 6million': { min: 5_000_000, max: 6_000_000 },
+    '10million - above': { min: 10_000_000, max: 999_999_999 },
   };
 
-  // Function to parse input value (remove commas)
+  const formatNumberInput = (value: number): string => {
+    return value === 0 ? '' : value.toLocaleString();
+  };
+
   const parseInputValue = (value: string): number => {
     const parsed = parseInt(value.replace(/,/g, ''));
     return isNaN(parsed) ? 0 : parsed;
   };
 
-  // Function to handle radio button selection
   const handleRadioSelection = (selectedRange: string) => {
-    setRadioValue(selectedRange);
-    // Clear manual input when radio is selected
-    formik.setFieldValue('minPrice', 0);
-    formik.setFieldValue('maxPrice', 0);
+    setSlectedRadioValue(selectedRange);
+
+    const range = predefinedRanges[selectedRange];
+    if (range) {
+      formik.setFieldValue('minPrice', range.min);
+      formik.setFieldValue('maxPrice', range.max);
+    } else {
+      formik.setFieldValue('minPrice', 0);
+      formik.setFieldValue('maxPrice', 0);
+    }
   };
 
-  // Function to handle manual input changes
   const handleManualInput = (field: 'minPrice' | 'maxPrice', value: string) => {
     const numericValue = parseInputValue(value);
     formik.setFieldValue(field, numericValue);
-    // Clear radio selection when manual input is used
+
+    // Clear radio selection if manual input is used
     if (numericValue > 0) {
-      setRadioValue('');
+      setSlectedRadioValue('');
     }
   };
 
-  // Function to validate price range
   const validatePriceRange = (): boolean => {
-    const minPrice = formik.values.minPrice;
-    const maxPrice = formik.values.maxPrice;
-    
-    if (minPrice > 0 && maxPrice > 0 && minPrice >= maxPrice) {
-      return false; // Invalid range
-    }
-    return true;
+    const { minPrice, maxPrice } = formik.values;
+    return !(minPrice > 0 && maxPrice > 0 && minPrice >= maxPrice);
   };
-
-  useEffect(() => {
-    console.log('Price formik values:', formik.values);
-    console.log('Selected radio value:', radioValue);
-    
-    // Validate price range
-    if (!validatePriceRange()) {
-      console.warn('Invalid price range: Min price should be less than max price');
-    }
-  }, [formik.values, radioValue]);
-
-  useEffect(() => {
-    setSlectedRadioValue(radioValue);
-  }, [radioValue, setSlectedRadioValue]);
 
   return (
     <motion.div
@@ -99,28 +87,25 @@ const PriceRange: React.FC<PriceComponentMenuListProps> = ({
       transition={{ delay: 0.3 }}
       viewport={{ once: true }}
       ref={divRef}
-      className='flex flex-col gap-[10px] justify-start items-start border-[#8D9096] border-b-[1px] absolute mt-[100px] bg-white border-[1px] h-[350px] shadow-md z-50'
-      style={{ padding: '19px', color: '#555', width: '400px' }}>
-      
+      className='flex flex-col gap-[10px] justify-start items-start pb-10 absolute mt-[20px] bg-white border border-[#8D9096] h-[360px] shadow-md z-[999] rounded-md'
+      style={{ padding: '19px', color: '#555', width: '400px' }}
+    >
       <span className='text-[#000000] text-base font-medium'>{heading}</span>
 
-      {/* Manual Price Input Section */}
+      {/* Manual Inputs */}
       <div className='h-[47px] w-full flex gap-[20px] justify-between'>
-        {/* Min price */}
-        <div className='w-[163px] h-full py-[16px] px-[12px] border-[1px] border-[#D6DDEB] flex items-center justify-between gap-[10px]'>
+        {/* Min */}
+        <div className='w-[163px] h-full py-[16px] px-[12px] border border-[#D6DDEB] flex items-center justify-between gap-[10px]'>
           <span className='text-base text-[#000000]'>Min</span>
           <label htmlFor='min' className='flex-1'>
             <input
               type='text'
               className='w-full text-center h-full outline-none text-sm'
               value={formatNumberInput(formik.values.minPrice)}
-              onChange={(event) => {
-                handleManualInput('minPrice', event.target.value);
-              }}
+              onChange={(e) => handleManualInput('minPrice', e.target.value)}
               onBlur={() => {
-                // Validate on blur
                 if (!validatePriceRange()) {
-                  console.warn('Min price should be less than max price');
+                  console.warn('Invalid min price');
                 }
               }}
               placeholder='0'
@@ -132,21 +117,18 @@ const PriceRange: React.FC<PriceComponentMenuListProps> = ({
           <span className='text-base text-[#000000]'>₦</span>
         </div>
 
-        {/* Max price */}
-        <div className='w-[163px] h-full py-[16px] px-[12px] border-[1px] border-[#D6DDEB] flex items-center justify-between gap-[10px]'>
+        {/* Max */}
+        <div className='w-[163px] h-full py-[16px] px-[12px] border border-[#D6DDEB] flex items-center justify-between gap-[10px]'>
           <span className='text-base text-[#000000]'>Max</span>
           <label htmlFor='max' className='flex-1'>
             <input
               type='text'
-              className='w-full outline-none text-center h-full text-sm'
+              className='w-full text-center h-full outline-none text-sm'
               value={formatNumberInput(formik.values.maxPrice)}
-              onChange={(event) => {
-                handleManualInput('maxPrice', event.target.value);
-              }}
+              onChange={(e) => handleManualInput('maxPrice', e.target.value)}
               onBlur={() => {
-                // Validate on blur
                 if (!validatePriceRange()) {
-                  console.warn('Max price should be greater than min price');
+                  console.warn('Invalid max price');
                 }
               }}
               placeholder='0'
@@ -159,55 +141,52 @@ const PriceRange: React.FC<PriceComponentMenuListProps> = ({
         </div>
       </div>
 
-      {/* Price Range Validation Message */}
+      {/* Error Message */}
       {!validatePriceRange() && (
-        <div className='text-red-500 text-xs'>
+        <div className='text-red-500 py-1 text-xs'>
           Min price should be less than max price
         </div>
       )}
 
-      {/* Divider */}
-      <div className='w-full h-[1px] bg-[#E5E7EB] my-2'></div>
-      
+      <div className='w-full h-[1px] bg-[#E5E7EB] my-1'></div>
       <span className='text-[#666666] text-sm'>Or select a range:</span>
 
-      {/* Radio Button Options */}
-      <div className='flex flex-col gap-[10px] mt-2 w-full'>
-        {priceRangeOptions.map((item: string, idx: number) => (
+      {/* Radio Buttons */}
+      <div className='flex flex-col gap-[10px] mt-1 w-full'>
+        {priceRangeOptions.map((item, idx) => (
           <RadioCheck
             key={idx}
             type='radio'
-            isChecked={radioValue === item}
-            onClick={() => handleRadioSelection(item)}
+            isChecked={selectedRadioValue === item}
+            handleChange={() => handleRadioSelection(item)}
             value={item}
             name='priceRanges'
           />
         ))}
       </div>
 
-      {/* Apply/Clear Buttons */}
-      <div className='flex gap-[10px] mt-4 w-full justify-end'>
+      {/* Buttons */}
+      <div className='flex gap-[10px] mt-1 w-full justify-end'>
         <button
           type='button'
           onClick={() => {
-            // Clear all selections
-            setRadioValue('');
             formik.setFieldValue('minPrice', 0);
             formik.setFieldValue('maxPrice', 0);
             setSlectedRadioValue('');
           }}
-          className='px-4 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50'>
+          className='px-4 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50'
+        >
           Clear
         </button>
         <button
           type='button'
           onClick={() => {
-            // Close modal and apply current selection
             if (validatePriceRange()) {
               closeModal(false);
             }
           }}
-          className='px-4 py-2 text-sm bg-[#8DDB90] text-white rounded hover:bg-[#7CC87F]'>
+          className='px-4 py-2 text-sm bg-[#8DDB90] text-white rounded hover:bg-[#7CC87F]'
+        >
           Apply
         </button>
       </div>

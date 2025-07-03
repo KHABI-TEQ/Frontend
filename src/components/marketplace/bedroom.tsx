@@ -26,17 +26,17 @@ const BedroomComponent: React.FC<BedroomComponentProps> = ({
       transition={{ delay: 0.3 }}
       viewport={{ once: true }}
       ref={divRef}
-      className='w-[151px] h-[262px] p-[19px] flex flex-col gap-[25px] bg-white shadow-md absolute mt-[100px]'>
+      className='w-[151px] h-[262px] p-[19px] flex flex-col gap-[25px] bg-white shadow-md absolute mt-[20px]'>
       <h2 className='text-base font-medium text-[#000000]'>Bedroom</h2>
       <div className='flex flex-col gap-[10px]'>
         {Array.from({ length: 5 }).map((__, index: number) => (
           <RadioCheck
-            type='radio'
-            name='bedroom'
-            isChecked={index + 1 === noOfBedrooms}
             key={index}
-            onClick={() => setNumberOfBedrooms(index + 1)}
+            type='radio'
+            isChecked={index + 1 === noOfBedrooms}
+            handleChange={() => setNumberOfBedrooms(index + 1)}
             value={Number(index + 1).toLocaleString()}
+            name='bedroom'
           />
         ))}
       </div>
