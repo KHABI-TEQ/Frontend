@@ -351,7 +351,7 @@ const Index = ({
                 setIsClicked={setIsViewMoreClicked}
                 key={idx}
                 object={{
-                  type: 'joint venture(VJ)',
+                  type: 'Joint Venture(JV)',
                   location: 'Lagos, Ikeja',
                   propertyPrices: 200000000,
                   landSize: '400sqm',

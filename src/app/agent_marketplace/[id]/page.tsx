@@ -139,7 +139,7 @@ const BriefDetailPage = () => {
               // Additional details for the modal
               referenceId: specificPreference._id?.slice(-7) || Math.floor(Math.random() * 9999999),
               briefType: specificPreference.preferenceType === 'buy' ? 'Outright sales' : 
-                        specificPreference.preferenceType === 'rent' ? 'Rent' : 'Joint venture(VJ)',
+                        specificPreference.preferenceType === 'rent' ? 'Rent' : 'Joint Venture(JV)',
               bedroom: specificPreference.noOfBedrooms?.toString() || 'N/A',
               bathroom: specificPreference.noOfBathrooms?.toString() || 'N/A',
               landSize: specificPreference.landSize ? `${specificPreference.landSize} ${specificPreference.measurementType || ''}` : 'N/A',
