@@ -18,6 +18,11 @@ export default {
       width: {
         custom: '1200px',
       },
+      maxWidth: {
+        '8xl': '90rem',     // 1440px
+        '9xl': '96rem',     // 1536px
+        '10xl': '104rem',   // 1664px
+      },
       fontFamily: {
         display: ['Clash Display', 'sans-serif'],
         // archivo: archivo.style.fontFamily,
