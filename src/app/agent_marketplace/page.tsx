@@ -75,7 +75,7 @@ const AgentMarketplace = () => {
           const transformedProperties = preferences.map((pref: any) => ({
             id: pref._id || pref.id,
             type: pref.preferenceType === 'buy' ? 'Outright sales' : 
-                  pref.preferenceType === 'rent' ? 'Rent' : 'Joint venture(VJ)',
+                  pref.preferenceType === 'rent' ? 'Rent' : 'Joint Venture(JV)',
             location: pref.location ? 
               `${pref.location.state || ''}, ${pref.location.localGovernment || ''}`.trim().replace(/^,|,$/, '') : 'N/A',
             priceRange: pref.budgetMin && pref.budgetMax ? 
@@ -267,7 +267,7 @@ const AgentMarketplace = () => {
     return [
       {
         id: 'match1',
-        type: 'Joint venture(VJ)',
+        type: 'Joint Venture(JV)',
         location: 'Lagos, Ikeja',
         status: 'Matched'
       },
@@ -279,7 +279,7 @@ const AgentMarketplace = () => {
       },
       {
         id: 'match3',
-        type: 'Joint venture(VJ)',
+        type: 'Joint Venture(JV)',
         location: 'Lagos, Ikeja',
         status: 'Matched'
       },
