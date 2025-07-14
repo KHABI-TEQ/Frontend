@@ -345,44 +345,41 @@ const FeatureSelection: React.FC<FeatureSelectionProps> = ({
         </motion.div>
       )}
 
-      {/* Budget Upgrade Notice */}
-      {currentBudget > 0 &&
-        availableFeatures.premium.some(
-          (f) => f.minBudgetRequired && currentBudget < f.minBudgetRequired,
-        ) && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="p-4 bg-blue-50 rounded-lg border border-blue-200"
-          >
-            <div className="flex items-start space-x-3">
-              <div className="text-blue-500 mt-0.5">
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <div>
-                <h5 className="text-sm font-semibold text-blue-800">
-                  Unlock More Features
-                </h5>
-                <p className="text-xs text-blue-700 mt-1">
-                  Increase your budget to access premium features like Swimming
-                  Pool, Gym, and more luxury amenities.
-                </p>
-              </div>
+      {/* Info notice about premium features */}
+      {selectedPremiumFeatures.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-4 bg-blue-50 rounded-lg border border-blue-200"
+        >
+          <div className="flex items-start space-x-3">
+            <div className="text-blue-500 mt-0.5">
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
             </div>
-          </motion.div>
-        )}
+            <div>
+              <h5 className="text-sm font-semibold text-blue-800">
+                Premium Features Selected
+              </h5>
+              <p className="text-xs text-blue-700 mt-1">
+                You've selected premium features. Make sure your budget aligns
+                with these preferences for the best matching results.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 };
