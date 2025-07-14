@@ -39,15 +39,27 @@ const FeatureSelection: React.FC<FeatureSelectionProps> = ({
     return getAvailableFeatures(preferenceType, currentBudget);
   }, [preferenceType, currentBudget, getAvailableFeatures]);
 
-  // Initialize from context data
+  // Initialize from context data and clear when form is reset
   useEffect(() => {
+    // If formData is empty (form was reset), clear all local state
+    if (
+      !state.formData ||
+      Object.keys(state.formData).length === 0 ||
+      !state.formData.features
+    ) {
+      setSelectedBasicFeatures([]);
+      setSelectedPremiumFeatures([]);
+      setAutoAdjustToBudget(false);
+      return;
+    }
+
     if (state.formData.features) {
       const features = state.formData.features;
       setSelectedBasicFeatures(features.basicFeatures || []);
       setSelectedPremiumFeatures(features.premiumFeatures || []);
       setAutoAdjustToBudget(features.autoAdjustToBudget || false);
     }
-  }, [state.formData.features]);
+  }, [state.formData]);
 
   // Update context when values change
   useEffect(() => {
