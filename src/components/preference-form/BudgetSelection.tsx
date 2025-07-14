@@ -31,20 +31,39 @@ const BudgetSelection: React.FC<BudgetSelectionProps> = ({
   const minPriceErrors = getValidationErrorsForField("budget.minPrice");
   const maxPriceErrors = getValidationErrorsForField("budget.maxPrice");
 
-  // Initialize from context data
+  // Initialize from context data and clear when form is reset
   useEffect(() => {
+    // If formData is empty (form was reset), clear all local state
+    if (
+      !state.formData ||
+      Object.keys(state.formData).length === 0 ||
+      !state.formData.budget
+    ) {
+      setMinPriceInput("");
+      setMaxPriceInput("");
+      setMinPriceRaw(0);
+      setMaxPriceRaw(0);
+      return;
+    }
+
     if (state.formData.budget) {
       const budget = state.formData.budget;
       if (budget.minPrice) {
         setMinPriceRaw(budget.minPrice);
         setMinPriceInput(formatNumberWithCommas(budget.minPrice.toString()));
+      } else {
+        setMinPriceInput("");
+        setMinPriceRaw(0);
       }
       if (budget.maxPrice) {
         setMaxPriceRaw(budget.maxPrice);
         setMaxPriceInput(formatNumberWithCommas(budget.maxPrice.toString()));
+      } else {
+        setMaxPriceInput("");
+        setMaxPriceRaw(0);
       }
     }
-  }, [state.formData.budget]);
+  }, [state.formData, formatNumberWithCommas]);
 
   // Format number with commas
   const formatNumberWithCommas = useCallback((value: string): string => {
