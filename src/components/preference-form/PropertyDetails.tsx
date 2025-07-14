@@ -119,19 +119,12 @@ const customSelectStyles = {
   control: (provided: any, state: any) => ({
     ...provided,
     minHeight: "48px",
-    border:
-      state.hasValue && !state.selectProps.hasError
-        ? "2px solid #10B981"
-        : state.selectProps.hasError
-          ? "2px solid #EF4444"
-          : state.isFocused
-            ? "2px solid #10B981"
-            : "1px solid #E5E7EB",
+    border: state.isFocused ? "2px solid #10B981" : "1px solid #E5E7EB",
     borderRadius: "8px",
     backgroundColor: "#FFFFFF",
     boxShadow: "none",
     "&:hover": {
-      borderColor: state.selectProps.hasError ? "#EF4444" : "#10B981",
+      borderColor: "#10B981",
     },
     transition: "all 0.2s ease",
   }),
