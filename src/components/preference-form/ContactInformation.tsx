@@ -42,8 +42,23 @@ const ContactInformation: React.FC<ContactInformationProps> = ({
     "contactInfo.contactPerson",
   );
 
-  // Initialize from context data
+  // Initialize from context data and clear when form is reset
   useEffect(() => {
+    // If formData is empty (form was reset), clear all local state
+    if (
+      !state.formData ||
+      Object.keys(state.formData).length === 0 ||
+      !state.formData.contactInfo
+    ) {
+      setEmail("");
+      setPhoneNumber("");
+      setFullName("");
+      setCompanyName("");
+      setContactPerson("");
+      setCacRegistrationNumber("");
+      return;
+    }
+
     if (state.formData.contactInfo) {
       const contact = state.formData.contactInfo as any;
       setEmail(contact.email || "");
@@ -53,11 +68,15 @@ const ContactInformation: React.FC<ContactInformationProps> = ({
         setCompanyName(contact.companyName || "");
         setContactPerson(contact.contactPerson || "");
         setCacRegistrationNumber(contact.cacRegistrationNumber || "");
+        setFullName(""); // Clear other preference type fields
       } else {
         setFullName(contact.fullName || "");
+        setCompanyName(""); // Clear joint venture fields
+        setContactPerson("");
+        setCacRegistrationNumber("");
       }
     }
-  }, [state.formData.contactInfo, preferenceType]);
+  }, [state.formData, preferenceType]);
 
   // Update context when values change
   useEffect(() => {
