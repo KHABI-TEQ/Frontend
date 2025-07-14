@@ -312,13 +312,6 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
 
   // Update context when values change
   useEffect(() => {
-    const baseData = {
-      propertyType: propertyType?.value || "",
-      minBedrooms: minBedrooms?.value || "",
-      propertyCondition: propertyCondition?.value || "",
-      purpose: purpose?.value || "",
-    };
-
     switch (preferenceType) {
       case "buy":
         const buyPropertyDetails = {
@@ -333,7 +326,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
           minBedrooms:
             minBedrooms?.value === "More"
               ? ("More" as const)
-              : parseInt(minBedrooms?.value || "0") || 0,
+              : minBedrooms?.value || "",
           minBathrooms: parseInt(minBathrooms) || 0,
           propertyCondition: (propertyCondition?.value || "") as
             | "New"
@@ -360,7 +353,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
           minBedrooms:
             minBedrooms?.value === "More"
               ? ("More" as const)
-              : parseInt(minBedrooms?.value || "0") || 0,
+              : minBedrooms?.value || "",
           leaseTerm: (leaseTerm?.value || "") as "6 Months" | "1 Year",
           propertyCondition: (propertyCondition?.value || "") as
             | "New"
@@ -408,7 +401,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
           minBedrooms:
             minBedrooms?.value === "More"
               ? ("More" as const)
-              : parseInt(minBedrooms?.value || "0") || 0,
+              : minBedrooms?.value || "",
           numberOfGuests: parseInt(numberOfGuests) || 0,
           checkInDate: "", // These need to be set elsewhere in the form
           checkOutDate: "", // These need to be set elsewhere in the form
