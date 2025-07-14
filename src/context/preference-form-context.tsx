@@ -811,21 +811,9 @@ export const PreferenceFormProvider: React.FC<{ children: ReactNode }> = ({
   );
 
   const resetForm = useCallback(() => {
-    // Show confirmation before clearing form if there's data
-    const hasData = Object.keys(state.formData).length > 0;
-
-    if (hasData) {
-      if (
-        typeof window !== "undefined" &&
-        window.confirm("Are you sure you want to clear all form data?")
-      ) {
-        dispatch({ type: "RESET_FORM" });
-        toast.success("Form data cleared successfully");
-      }
-    } else {
-      dispatch({ type: "RESET_FORM" });
-    }
-  }, [state.formData]);
+    // Reset form data immediately without confirmation
+    dispatch({ type: "RESET_FORM" });
+  }, []);
 
   // Manual validation - removed automatic validation to prevent infinite loops
   // Validation will be triggered on step changes and form submission
