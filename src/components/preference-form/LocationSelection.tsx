@@ -135,6 +135,12 @@ const LocationSelectionComponent: React.FC<LocationSelectionProps> = ({
   const [lgaAreaMap, setLgaAreaMap] = useState<{ [lga: string]: Option[] }>({});
   const [customLGAs, setCustomLGAs] = useState<string>("");
   const [showCustomLGAs, setShowCustomLGAs] = useState<boolean>(false);
+  const [customAreas, setCustomAreas] = useState<{
+    [lgaName: string]: string[];
+  }>({});
+  const [customAreaInput, setCustomAreaInput] = useState<{
+    [lgaName: string]: string;
+  }>({});
 
   // Get validation errors
   const stateErrors = getValidationErrorsForField("location.state");
@@ -261,6 +267,8 @@ const LocationSelectionComponent: React.FC<LocationSelectionProps> = ({
     setCustomLGAs("");
     setShowCustomLGAs(false);
     setLgaAreaMap({});
+    setCustomAreas({});
+    setCustomAreaInput({});
   }, []);
 
   // Handle LGA change
@@ -284,8 +292,12 @@ const LocationSelectionComponent: React.FC<LocationSelectionProps> = ({
     if (!showCustomLGAs) {
       setSelectedLGAs([]);
       setSelectedAreas([]);
+      setCustomAreas({});
+      setCustomAreaInput({});
     } else {
       setCustomLGAs("");
+      setCustomAreas({});
+      setCustomAreaInput({});
     }
   }, [showCustomLGAs]);
 
@@ -334,7 +346,7 @@ const LocationSelectionComponent: React.FC<LocationSelectionProps> = ({
     const remaining = selectedAreas.length - 3;
     return `${first3.join(", ")} +${remaining} more`;
   }, [selectedAreas]);
- 
+
   // Get combined LGAs for dynamic area rendering
   const combinedLGAs = useMemo(() => {
     if (showCustomLGAs && customLGAs.trim()) {
@@ -345,6 +357,12 @@ const LocationSelectionComponent: React.FC<LocationSelectionProps> = ({
     }
     return selectedLGAs.map((lga) => lga.value);
   }, [selectedLGAs, customLGAs, showCustomLGAs]);
+
+  // Check if we should show the LGA section (only when state is selected)
+  const shouldShowLGASection = selectedState !== null;
+
+  // Check if we should show the areas section (only when there are LGAs)
+  const shouldShowAreasSection = combinedLGAs.length > 0;
 
   return (
     <div className={`space-y-4 ${className}`}>
@@ -391,7 +409,7 @@ const LocationSelectionComponent: React.FC<LocationSelectionProps> = ({
       </div>
 
       {/* LGA Selection - Only show if state is selected */}
-      {selectedState && (
+      {shouldShowLGASection && (
         <div className="space-y-2">
           <label className="block text-sm font-semibold text-gray-800">
             Local Government Areas <span className="text-red-500">*</span>
@@ -493,8 +511,8 @@ const LocationSelectionComponent: React.FC<LocationSelectionProps> = ({
         </div>
       )}
 
-      {/* Dynamic Area Selection - Adaptive layout based on number of LGAs */}
-      {combinedLGAs.length > 0 && (
+      {/* Dynamic Area Selection - Only show when there are LGAs */}
+      {shouldShowAreasSection && (
         <div className="space-y-3">
           <label className="block text-sm font-semibold text-gray-800">
             Preferred Areas <span className="text-gray-500">(Max 3 total)</span>
@@ -514,7 +532,7 @@ const LocationSelectionComponent: React.FC<LocationSelectionProps> = ({
                         : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
                 }`}
               >
-                {/* Show area selectors for each LGA */}
+                {/* Show area selectors for each selected LGA */}
                 {selectedLGAs.map((lga) => (
                   <motion.div
                     key={lga.value}
@@ -558,78 +576,277 @@ const LocationSelectionComponent: React.FC<LocationSelectionProps> = ({
                   </motion.div>
                 ))}
 
-                {/* Show input fields for custom LGAs */}
-                {showCustomLGAs && customLGAs.trim() && (
-                  <motion.div
-                    className="space-y-2"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <label className="block text-xs font-medium text-gray-600 bg-blue-50 px-2 py-1 rounded">
-                      ✏️ Custom Areas
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Enter areas for your custom LGAs (comma-separated)"
-                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400"
-                      onBlur={(e) => {
-                        if (e.target.value.trim()) {
-                          const customAreas = e.target.value
-                            .split(",")
-                            .map((area) => area.trim())
-                            .filter(Boolean);
-                          const newAreaOptions = customAreas
-                            .slice(0, 3 - selectedAreas.length)
-                            .map((area) => ({
-                              value: `${area} - Custom`,
-                              label: area,
-                            }));
-                          setSelectedAreas([
-                            ...selectedAreas,
-                            ...newAreaOptions,
-                          ]);
-                          e.target.value = "";
-                        }
-                      }}
-                    />
-                  </motion.div>
-                )}
+                {/* Show custom area input for each custom LGA */}
+                {showCustomLGAs &&
+                  customLGAs.trim() &&
+                  customLGAs
+                    .split(",")
+                    .map((lga) => lga.trim())
+                    .filter(Boolean)
+                    .map((lgaName) => (
+                      <motion.div
+                        key={lgaName}
+                        className="space-y-2"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <label className="block text-xs font-medium text-gray-600 bg-blue-50 px-2 py-1 rounded">
+                          📌 {lgaName} - Custom Areas
+                        </label>
+                        <div className="space-y-2">
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={customAreaInput[lgaName] || ""}
+                              onChange={(e) =>
+                                setCustomAreaInput((prev) => ({
+                                  ...prev,
+                                  [lgaName]: e.target.value,
+                                }))
+                              }
+                              placeholder={`Add area in ${lgaName}...`}
+                              className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400"
+                              onKeyPress={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  const areaName = e.currentTarget.value.trim();
+                                  if (areaName && selectedAreas.length < 3) {
+                                    const newAreaOption = {
+                                      value: `${areaName} - ${lgaName}`,
+                                      label: areaName,
+                                    };
+                                    setSelectedAreas([
+                                      ...selectedAreas,
+                                      newAreaOption,
+                                    ]);
+                                    setCustomAreas((prev) => ({
+                                      ...prev,
+                                      [lgaName]: [
+                                        ...(prev[lgaName] || []),
+                                        areaName,
+                                      ],
+                                    }));
+                                    setCustomAreaInput((prev) => ({
+                                      ...prev,
+                                      [lgaName]: "",
+                                    }));
+                                  }
+                                }
+                              }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const areaName =
+                                  customAreaInput[lgaName]?.trim();
+                                if (areaName && selectedAreas.length < 3) {
+                                  const newAreaOption = {
+                                    value: `${areaName} - ${lgaName}`,
+                                    label: areaName,
+                                  };
+                                  setSelectedAreas([
+                                    ...selectedAreas,
+                                    newAreaOption,
+                                  ]);
+                                  setCustomAreas((prev) => ({
+                                    ...prev,
+                                    [lgaName]: [
+                                      ...(prev[lgaName] || []),
+                                      areaName,
+                                    ],
+                                  }));
+                                  setCustomAreaInput((prev) => ({
+                                    ...prev,
+                                    [lgaName]: "",
+                                  }));
+                                }
+                              }}
+                              disabled={
+                                !customAreaInput[lgaName]?.trim() ||
+                                selectedAreas.length >= 3
+                              }
+                              className="px-3 py-2 bg-emerald-500 text-white text-sm rounded-lg hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              Add
+                            </button>
+                          </div>
+                          {/* Show added custom areas for this LGA */}
+                          {customAreas[lgaName] &&
+                            customAreas[lgaName].length > 0 && (
+                              <div className="flex flex-wrap gap-1">
+                                {customAreas[lgaName].map((area, index) => (
+                                  <div
+                                    key={index}
+                                    className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-100 text-emerald-700 text-xs rounded border"
+                                  >
+                                    <span>{area}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        // Remove from custom areas
+                                        setCustomAreas((prev) => ({
+                                          ...prev,
+                                          [lgaName]: prev[lgaName].filter(
+                                            (_, i) => i !== index,
+                                          ),
+                                        }));
+                                        // Remove from selected areas
+                                        setSelectedAreas((prev) =>
+                                          prev.filter(
+                                            (selectedArea) =>
+                                              selectedArea.value !==
+                                              `${area} - ${lgaName}`,
+                                          ),
+                                        );
+                                      }}
+                                      className="text-emerald-500 hover:text-emerald-700"
+                                    >
+                                      ×
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                        </div>
+                      </motion.div>
+                    ))}
 
-                {/* Add areas for custom LGAs without predefined options */}
-                {!stateHasLGAs && customLGAs.trim() && (
-                  <motion.div
-                    className="space-y-2"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <label className="block text-xs font-medium text-gray-600 bg-blue-50 px-2 py-1 rounded">
-                      🌍 Areas in {selectedState?.label}
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Enter areas (comma-separated, max 3)"
-                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400"
-                      onBlur={(e) => {
-                        if (e.target.value.trim()) {
-                          const customAreas = e.target.value
-                            .split(",")
-                            .map((area) => area.trim())
-                            .filter(Boolean);
-                          const newAreaOptions = customAreas
-                            .slice(0, 3)
-                            .map((area) => ({
-                              value: `${area} - ${selectedState?.label}`,
-                              label: area,
-                            }));
-                          setSelectedAreas(newAreaOptions);
-                          e.target.value = "";
-                        }
-                      }}
-                    />
-                  </motion.div>
-                )}
+                {/* Add areas for states without predefined LGAs - show for each LGA */}
+                {!stateHasLGAs &&
+                  customLGAs.trim() &&
+                  customLGAs
+                    .split(",")
+                    .map((lga) => lga.trim())
+                    .filter(Boolean)
+                    .map((lgaName) => (
+                      <motion.div
+                        key={lgaName}
+                        className="space-y-2"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <label className="block text-xs font-medium text-gray-600 bg-blue-50 px-2 py-1 rounded">
+                          🌍 {lgaName} - Areas
+                        </label>
+                        <div className="space-y-2">
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={customAreaInput[lgaName] || ""}
+                              onChange={(e) =>
+                                setCustomAreaInput((prev) => ({
+                                  ...prev,
+                                  [lgaName]: e.target.value,
+                                }))
+                              }
+                              placeholder={`Add area in ${lgaName}...`}
+                              className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400"
+                              onKeyPress={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  const areaName = e.currentTarget.value.trim();
+                                  if (areaName && selectedAreas.length < 3) {
+                                    const newAreaOption = {
+                                      value: `${areaName} - ${lgaName}`,
+                                      label: areaName,
+                                    };
+                                    setSelectedAreas([
+                                      ...selectedAreas,
+                                      newAreaOption,
+                                    ]);
+                                    setCustomAreas((prev) => ({
+                                      ...prev,
+                                      [lgaName]: [
+                                        ...(prev[lgaName] || []),
+                                        areaName,
+                                      ],
+                                    }));
+                                    setCustomAreaInput((prev) => ({
+                                      ...prev,
+                                      [lgaName]: "",
+                                    }));
+                                  }
+                                }
+                              }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const areaName =
+                                  customAreaInput[lgaName]?.trim();
+                                if (areaName && selectedAreas.length < 3) {
+                                  const newAreaOption = {
+                                    value: `${areaName} - ${lgaName}`,
+                                    label: areaName,
+                                  };
+                                  setSelectedAreas([
+                                    ...selectedAreas,
+                                    newAreaOption,
+                                  ]);
+                                  setCustomAreas((prev) => ({
+                                    ...prev,
+                                    [lgaName]: [
+                                      ...(prev[lgaName] || []),
+                                      areaName,
+                                    ],
+                                  }));
+                                  setCustomAreaInput((prev) => ({
+                                    ...prev,
+                                    [lgaName]: "",
+                                  }));
+                                }
+                              }}
+                              disabled={
+                                !customAreaInput[lgaName]?.trim() ||
+                                selectedAreas.length >= 3
+                              }
+                              className="px-3 py-2 bg-emerald-500 text-white text-sm rounded-lg hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              Add
+                            </button>
+                          </div>
+                          {/* Show added custom areas for this LGA */}
+                          {customAreas[lgaName] &&
+                            customAreas[lgaName].length > 0 && (
+                              <div className="flex flex-wrap gap-1">
+                                {customAreas[lgaName].map((area, index) => (
+                                  <div
+                                    key={index}
+                                    className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-100 text-emerald-700 text-xs rounded border"
+                                  >
+                                    <span>{area}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        // Remove from custom areas
+                                        setCustomAreas((prev) => ({
+                                          ...prev,
+                                          [lgaName]: prev[lgaName].filter(
+                                            (_, i) => i !== index,
+                                          ),
+                                        }));
+                                        // Remove from selected areas
+                                        setSelectedAreas((prev) =>
+                                          prev.filter(
+                                            (selectedArea) =>
+                                              selectedArea.value !==
+                                              `${area} - ${lgaName}`,
+                                          ),
+                                        );
+                                      }}
+                                      className="text-emerald-500 hover:text-emerald-700"
+                                    >
+                                      ×
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                        </div>
+                      </motion.div>
+                    ))}
               </div>
 
               {/* Selected areas display */}
