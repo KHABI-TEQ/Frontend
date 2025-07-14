@@ -31,6 +31,17 @@ const BudgetSelection: React.FC<BudgetSelectionProps> = ({
   const minPriceErrors = getValidationErrorsForField("budget.minPrice");
   const maxPriceErrors = getValidationErrorsForField("budget.maxPrice");
 
+  // Format number with commas
+  const formatNumberWithCommas = useCallback((value: string): string => {
+    const cleaned = value.replace(/\D/g, "");
+    return cleaned.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }, []);
+
+  // Parse formatted number to raw number
+  const parseFormattedNumber = useCallback((value: string): number => {
+    return parseInt(value.replace(/,/g, ""), 10) || 0;
+  }, []);
+
   // Initialize from context data and clear when form is reset
   useEffect(() => {
     // If formData is empty (form was reset), clear all local state
@@ -64,17 +75,6 @@ const BudgetSelection: React.FC<BudgetSelectionProps> = ({
       }
     }
   }, [state.formData, formatNumberWithCommas]);
-
-  // Format number with commas
-  const formatNumberWithCommas = useCallback((value: string): string => {
-    const cleaned = value.replace(/\D/g, "");
-    return cleaned.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  }, []);
-
-  // Parse formatted number to raw number
-  const parseFormattedNumber = useCallback((value: string): number => {
-    return parseInt(value.replace(/,/g, ""), 10) || 0;
-  }, []);
 
   // Get minimum budget requirement
   const minBudgetRequired = useMemo(() => {
@@ -326,7 +326,7 @@ const BudgetSelection: React.FC<BudgetSelectionProps> = ({
         <div className="space-y-1 text-xs text-gray-600">
           <p>
             • Minimum budget for{" "}
-            {state.formData.location?.state || "this location"}: ₦
+            {state.formData.location?.state || "this location"}: ��
             {minBudgetRequired.toLocaleString()}
           </p>
           <p>• Your budget range will help us find the best matches for you</p>
