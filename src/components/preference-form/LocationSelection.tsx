@@ -153,8 +153,21 @@ const LocationSelectionComponent: React.FC<LocationSelectionProps> = ({
   const lgaErrors = getValidationErrorsForField("location.lgas");
   const areaErrors = getValidationErrorsForField("location.areas");
 
-  // Initialize from context data ONLY ONCE
+  // Initialize from context data and clear when form is reset
   useEffect(() => {
+    // If formData is empty (form was reset), clear all local state
+    if (
+      !state.formData ||
+      Object.keys(state.formData).length === 0 ||
+      !state.formData.location
+    ) {
+      setSelectedState(null);
+      setSelectedLGAs([]);
+      setSelectedAreas([]);
+      setLgaAreaMap({});
+      return;
+    }
+
     if (state.formData.location) {
       const location = state.formData.location;
 
@@ -178,7 +191,7 @@ const LocationSelectionComponent: React.FC<LocationSelectionProps> = ({
         setSelectedAreas(areaOptions);
       }
     }
-  }, []);
+  }, [state.formData]);
 
   // Memoized options
   const stateOptions = useMemo(
