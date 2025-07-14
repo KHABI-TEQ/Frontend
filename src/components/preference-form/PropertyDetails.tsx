@@ -525,19 +525,39 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
             </div>
           </div>
 
-          {/* Document Type */}
+          {/* Document Types */}
           {(preferenceType === "buy" || preferenceType === "joint-venture") && (
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-800">
-                Document Type <span className="text-red-500">*</span>
+                Document Types <span className="text-red-500">*</span>
               </label>
-              <Select
-                options={DOCUMENT_TYPES}
-                value={documentType}
-                onChange={setDocumentType}
-                placeholder="Select document type..."
-                styles={customSelectStyles}
-              />
+              <p className="text-xs text-gray-500 mb-3">
+                Select all applicable document types
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {DOCUMENT_TYPES.map((doc) => (
+                  <label
+                    key={doc.value}
+                    className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={documentTypes.includes(doc.value)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setDocumentTypes((prev) => [...prev, doc.value]);
+                        } else {
+                          setDocumentTypes((prev) =>
+                            prev.filter((type) => type !== doc.value),
+                          );
+                        }
+                      }}
+                      className="w-4 h-4 text-emerald-600 bg-white border-gray-300 rounded focus:ring-emerald-500 focus:ring-2"
+                    />
+                    <span className="text-sm text-gray-700">{doc.label}</span>
+                  </label>
+                ))}
+              </div>
             </div>
           )}
 
