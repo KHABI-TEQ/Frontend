@@ -427,7 +427,7 @@ const LocationSelectionComponent: React.FC<LocationSelectionProps> = ({
                 transition={{ duration: 0.3 }}
               >
                 <label className="block text-xs font-medium text-gray-600 bg-gray-50 px-2 py-1 rounded">
-                  ���� {lga.label}
+                  📍 {lga.label}
                 </label>
                 <CreatableSelect
                   options={lgaAreaMap[lga.value] || []}
