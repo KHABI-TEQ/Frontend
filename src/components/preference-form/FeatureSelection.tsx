@@ -107,41 +107,23 @@ const FeatureSelection: React.FC<FeatureSelectionProps> = ({
   }, []);
 
   // Handle premium feature toggle
-  const handlePremiumFeatureToggle = useCallback(
-    (featureName: string) => {
-      const feature = availableFeatures.premium.find(
-        (f) => f.name === featureName,
-      );
-
-      // Check if feature is available based on budget
-      if (
-        feature &&
-        feature.minBudgetRequired &&
-        currentBudget < feature.minBudgetRequired
-      ) {
-        // Don't allow selection if budget is insufficient
-        return;
+  const handlePremiumFeatureToggle = useCallback((featureName: string) => {
+    // Allow selection of any premium feature regardless of budget
+    setSelectedPremiumFeatures((prev) => {
+      if (prev.includes(featureName)) {
+        return prev.filter((name) => name !== featureName);
+      } else {
+        return [...prev, featureName];
       }
+    });
+  }, []);
 
-      setSelectedPremiumFeatures((prev) => {
-        if (prev.includes(featureName)) {
-          return prev.filter((name) => name !== featureName);
-        } else {
-          return [...prev, featureName];
-        }
-      });
-    },
-    [availableFeatures.premium, currentBudget],
-  );
-
-  // Check if premium feature is disabled
+  // Allow all premium features (no longer disabled based on budget)
   const isPremiumFeatureDisabled = useCallback(
     (feature: FeatureDefinition): boolean => {
-      return feature.minBudgetRequired
-        ? currentBudget < feature.minBudgetRequired
-        : false;
+      return false; // Never disable any premium features
     },
-    [currentBudget],
+    [],
   );
 
   // Show tooltip
@@ -260,30 +242,23 @@ const FeatureSelection: React.FC<FeatureSelectionProps> = ({
                   whileHover={!isDisabled ? { scale: 1.02 } : {}}
                   whileTap={!isDisabled ? { scale: 0.98 } : {}}
                   className={`p-3 rounded-lg border-2 transition-all ${
-                    isDisabled
-                      ? "border-gray-200 bg-gray-50 cursor-not-allowed opacity-60"
-                      : isSelected
-                        ? "border-amber-500 bg-amber-50 cursor-pointer"
-                        : "border-gray-200 bg-white hover:border-amber-300 hover:bg-amber-50 cursor-pointer"
+                    isSelected
+                      ? "border-amber-500 bg-amber-50 cursor-pointer"
+                      : "border-gray-200 bg-white hover:border-amber-300 hover:bg-amber-50 cursor-pointer"
                   }`}
-                  onClick={() =>
-                    !isDisabled && handlePremiumFeatureToggle(feature.name)
-                  }
-                  onMouseEnter={() =>
-                    isDisabled && handleTooltipShow(feature.name)
-                  }
+                  onClick={() => handlePremiumFeatureToggle(feature.name)}
                   onMouseLeave={handleTooltipHide}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                       <div
                         className={`w-4 h-4 rounded border-2 transition-all ${
-                          isSelected && !isDisabled
+                          isSelected
                             ? "border-amber-500 bg-amber-500"
                             : "border-gray-300"
                         }`}
                       >
-                        {isSelected && !isDisabled && (
+                        {isSelected && (
                           <svg
                             className="w-2.5 h-2.5 text-white absolute top-0.5 left-0.5"
                             fill="currentColor"
@@ -297,62 +272,22 @@ const FeatureSelection: React.FC<FeatureSelectionProps> = ({
                           </svg>
                         )}
                       </div>
-                      <span
-                        className={`text-sm font-medium ${
-                          isDisabled ? "text-gray-500" : "text-gray-800"
-                        }`}
-                      >
+                      <span className="text-sm font-medium text-gray-800">
                         {feature.name}
                       </span>
                     </div>
-                    {isDisabled && (
-                      <div className="text-gray-400">
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                      </div>
-                    )}
                   </div>
 
                   {feature.minBudgetRequired && (
                     <div className="mt-1">
-                      <span
-                        className={`text-xs ${
-                          isDisabled ? "text-gray-400" : "text-gray-600"
-                        }`}
-                      >
+                      <span className="text-xs text-gray-600">
                         Min: ₦{feature.minBudgetRequired.toLocaleString()}
                       </span>
                     </div>
                   )}
                 </motion.div>
 
-                {/* Tooltip */}
-                <AnimatePresence>
-                  {showTooltip === feature.name &&
-                    isDisabled &&
-                    feature.tooltip && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="absolute z-10 bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg whitespace-nowrap"
-                      >
-                        {feature.tooltip}
-                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
-                      </motion.div>
-                    )}
-                </AnimatePresence>
+                {/* Tooltip - removed since features are no longer disabled */}
               </div>
             );
           })}
