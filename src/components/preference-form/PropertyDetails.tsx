@@ -242,7 +242,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
       setPropertySubtype(null);
       setLandSize("");
       setMeasurementUnit(null);
-      setDocumentType(null);
+      setDocumentTypes([]);
       setPropertyCondition(null);
       setBuildingType(null);
       setBedrooms(null);
@@ -276,7 +276,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
         propertySubtype: propertySubtype?.value || "",
         landSize,
         measurementUnit: measurementUnit?.value || "",
-        documentType: documentType?.value || "",
+        documentTypes: documentTypes || [],
         propertyCondition: propertyCondition?.value || "",
         buildingType: buildingType?.value || "",
         bedrooms: bedrooms?.value || "",
@@ -290,7 +290,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
     propertySubtype,
     landSize,
     measurementUnit,
-    documentType,
+    documentTypes,
     propertyCondition,
     buildingType,
     bedrooms,
@@ -487,7 +487,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
             // Reset dependent fields when property type changes
             setBuildingType(null);
             setPropertyCondition(null);
-            setDocumentType(null);
+            setDocumentTypes([]);
           }}
           placeholder="Select property type..."
           styles={customSelectStyles}
