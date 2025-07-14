@@ -326,7 +326,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
           minBedrooms:
             minBedrooms?.value === "More"
               ? ("More" as const)
-              : minBedrooms?.value || "",
+              : parseInt(minBedrooms?.value || "0") || 0,
           minBathrooms: parseInt(minBathrooms) || 0,
           propertyCondition: (propertyCondition?.value || "") as
             | "New"
@@ -353,7 +353,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
           minBedrooms:
             minBedrooms?.value === "More"
               ? ("More" as const)
-              : minBedrooms?.value || "",
+              : parseInt(minBedrooms?.value || "0") || 0,
           leaseTerm: (leaseTerm?.value || "") as "6 Months" | "1 Year",
           propertyCondition: (propertyCondition?.value || "") as
             | "New"
@@ -401,7 +401,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
           minBedrooms:
             minBedrooms?.value === "More"
               ? ("More" as const)
-              : minBedrooms?.value || "",
+              : parseInt(minBedrooms?.value || "0") || 0,
           numberOfGuests: parseInt(numberOfGuests) || 0,
           checkInDate: "", // These need to be set elsewhere in the form
           checkOutDate: "", // These need to be set elsewhere in the form
