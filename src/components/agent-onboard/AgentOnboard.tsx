@@ -55,6 +55,68 @@ interface FormValues {
   cacNumber: string;
 }
 
+// Success Modal Component
+const SuccessModal: React.FC<{
+  showModal: boolean;
+  onGoToDashboard: () => void;
+}> = ({ showModal, onGoToDashboard }) => (
+  <AnimatePresence>
+    {showModal && (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      >
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.9, opacity: 0, y: 20 }}
+          className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full mx-4 text-center"
+        >
+          {/* Success Icon */}
+          <div className="mb-6">
+            <div className="w-20 h-20 bg-[#8DDB90]/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-10 h-10 text-[#8DDB90]" />
+            </div>
+            <h3 className="text-2xl font-bold text-[#09391C] mb-2">
+              Application Submitted Successfully!
+            </h3>
+            <p className="text-[#5A5D63] mb-6">
+              Thank you for submitting your agent application. Our admin team
+              will review your submission and respond to you soon.
+            </p>
+          </div>
+
+          {/* Success Details */}
+          <div className="bg-[#8DDB90]/10 rounded-lg p-4 mb-6">
+            <h4 className="text-sm font-semibold text-[#09391C] mb-2 flex items-center justify-center gap-2">
+              <AlertCircle size={16} />
+              What happens next?
+            </h4>
+            <div className="text-sm text-[#5A5D63] space-y-1 text-left">
+              <p>• Your application is now under review</p>
+              <p>• We'll verify your documents within 24-48 hours</p>
+              <p>• You'll receive an email notification once approved</p>
+              <p>• Access to agent features will be activated upon approval</p>
+            </div>
+          </div>
+
+          {/* Dashboard Button - Only way to close modal */}
+          <button
+            onClick={onGoToDashboard}
+            className="w-full bg-[#8DDB90] hover:bg-[#7BC87F] text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#8DDB90]/50 focus:ring-offset-2"
+          >
+            <div className="flex items-center justify-center space-x-2">
+              <span>Go to Dashboard</span>
+              <ArrowRight size={18} />
+            </div>
+          </button>
+        </motion.div>
+      </motion.div>
+    )}
+  </AnimatePresence>
+);
 
 const StepIndicator: React.FC<StepIndicatorProps> = ({
   currentStep,
@@ -101,6 +163,7 @@ const AgentOnboard: React.FC = () => {
   const [lgaOptions, setLgaOptions] = useState<Option[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [imageModalUrl, setImageModalUrl] = useState<string | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // File upload states
   const [idFileUrl, setIdFileUrl] = useState<string | null>(null);
@@ -274,7 +337,8 @@ const AgentOnboard: React.FC = () => {
         ).then((response) => {
           if (response.success) {
             Cookies.set("token", (response as any).token);
-            router.push("/agent/under-review");
+            // Show success modal instead of redirecting
+            setShowSuccessModal(true);
             return "Application submitted successfully";
           } else {
             throw new Error((response as any).error || "Submission failed");
@@ -291,6 +355,11 @@ const AgentOnboard: React.FC = () => {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleGoToDashboard = () => {
+    setShowSuccessModal(false);
+    router.push("/agent/dashboard");
   };
 
   const nextStep = () => {
@@ -956,6 +1025,12 @@ const AgentOnboard: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* Success Modal */}
+        <SuccessModal
+          showModal={showSuccessModal}
+          onGoToDashboard={handleGoToDashboard}
+        />
       </div>
     </div>
   );
