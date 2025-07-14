@@ -642,22 +642,37 @@ export const PreferenceFormProvider: React.FC<{ children: ReactNode }> = ({
     (preferenceType: string, budget?: number) => {
       const config = state.featureConfigs[preferenceType];
       if (!config) {
-        return { basic: [], premium: [] };
+        return { basic: [], premium: [], comfort: [] };
+      }
+
+      // For shortlet, return all feature types
+      if (preferenceType === "shortlet") {
+        return {
+          basic: config.basic || [],
+          comfort: config.comfort || [],
+          premium: config.premium || [],
+        };
       }
 
       if (!budget) {
-        return config;
+        return {
+          basic: config.basic || [],
+          premium: config.premium || [],
+          comfort: config.comfort || [],
+        };
       }
 
       // Filter premium features based on budget
-      const availablePremium = config.premium.filter(
-        (feature) =>
-          !feature.minBudgetRequired || budget >= feature.minBudgetRequired,
-      );
+      const availablePremium =
+        config.premium?.filter(
+          (feature) =>
+            !feature.minBudgetRequired || budget >= feature.minBudgetRequired,
+        ) || [];
 
       return {
-        basic: config.basic,
+        basic: config.basic || [],
         premium: availablePremium,
+        comfort: config.comfort || [],
       };
     },
     [state.featureConfigs],
