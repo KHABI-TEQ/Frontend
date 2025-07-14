@@ -241,7 +241,6 @@ const FeatureSelection: React.FC<FeatureSelectionProps> = ({
         <h4 className="text-base font-semibold text-gray-900 flex items-center">
           <span className="w-2 h-2 bg-amber-500 rounded-full mr-2"></span>
           Premium Features
-          <span className="text-xs text-gray-500 ml-2">(Budget dependent)</span>
         </h4>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {availableFeatures.premium.map((feature) => {
