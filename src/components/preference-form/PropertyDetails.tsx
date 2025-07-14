@@ -208,9 +208,32 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
   const [numberOfGuests, setNumberOfGuests] = useState<string>("");
   const [nearbyLandmark, setNearbyLandmark] = useState<string>("");
 
-  // Initialize from context data
+  // Clear all fields when form is reset or preference type changes
   useEffect(() => {
     const formData = state.formData as any;
+
+    // If formData is empty (form was reset), clear all local state
+    if (
+      !formData ||
+      Object.keys(formData).length === 0 ||
+      !formData.propertyDetails
+    ) {
+      setPropertyType(null);
+      setBuildingType(null);
+      setMinBedrooms(null);
+      setMinBathrooms("");
+      setPropertyCondition(null);
+      setPurpose(null);
+      setLeaseTerm(null);
+      setJvType(null);
+      setExpectedStructureType(null);
+      setTimeline(null);
+      setMinLandSize("");
+      setBudgetRange("");
+      setNumberOfGuests("");
+      setNearbyLandmark("");
+      return;
+    }
 
     if (formData.propertyDetails) {
       const details = formData.propertyDetails;
@@ -300,6 +323,8 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
     // Initialize other fields
     if (formData.nearbyLandmark) {
       setNearbyLandmark(formData.nearbyLandmark);
+    } else {
+      setNearbyLandmark("");
     }
   }, [state.formData, preferenceType]);
 
