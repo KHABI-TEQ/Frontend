@@ -508,7 +508,9 @@ const PreferenceFormContent: React.FC = () => {
       if (response.status === 201 || response.status === 200) {
         console.log("Preference submitted successfully:", response);
         toast.success("Preference submitted successfully!");
-        // Show success modal instead of redirecting immediately
+        // Reset form data immediately after successful submission
+        dispatch({ type: "RESET_FORM" });
+        // Show success modal
         setShowSuccessModal(true);
       } else {
         throw new Error("Submission failed");
