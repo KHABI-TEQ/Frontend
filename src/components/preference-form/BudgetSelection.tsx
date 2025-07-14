@@ -213,13 +213,7 @@ const BudgetSelection: React.FC<BudgetSelectionProps> = ({
               value={minPriceInput}
               onChange={handleMinPriceChange}
               placeholder={placeholders.min}
-              className={`w-full pl-8 pr-3 py-2.5 text-sm border rounded-lg focus:ring-2 focus:ring-emerald-500 transition-all duration-200 placeholder-gray-400 ${
-                hasMinPriceError || isMinBelowThreshold
-                  ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                  : minPriceRaw > 0
-                    ? "border-emerald-500 focus:border-emerald-500"
-                    : "border-gray-200 focus:border-emerald-500"
-              }`}
+              className="w-full pl-8 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400"
             />
           </div>
 
@@ -268,13 +262,7 @@ const BudgetSelection: React.FC<BudgetSelectionProps> = ({
               value={maxPriceInput}
               onChange={handleMaxPriceChange}
               placeholder={placeholders.max}
-              className={`w-full pl-8 pr-3 py-2.5 text-sm border rounded-lg focus:ring-2 focus:ring-emerald-500 transition-all duration-200 placeholder-gray-400 ${
-                hasMaxPriceError || isMaxLessThanMin
-                  ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                  : maxPriceRaw > 0
-                    ? "border-emerald-500 focus:border-emerald-500"
-                    : "border-gray-200 focus:border-emerald-500"
-              }`}
+              className="w-full pl-8 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400"
             />
           </div>
 
