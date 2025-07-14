@@ -34,10 +34,28 @@ const FeatureSelection: React.FC<FeatureSelectionProps> = ({
     return state.formData.budget?.minPrice || 0;
   }, [state.formData.budget?.minPrice]);
 
-  // Get available features based on budget
+  // Get available features based on property type and sub-type
   const availableFeatures = useMemo(() => {
-    return getAvailableFeatures(preferenceType, currentBudget);
-  }, [preferenceType, currentBudget, getAvailableFeatures]);
+    const propertyDetails = state.formData.propertyDetails as any;
+    const propertySubtype = propertyDetails?.propertySubtype || "residential";
+
+    let featureKey = preferenceType;
+
+    // For shortlet, use shortlet features
+    if (preferenceType === "shortlet") {
+      featureKey = "shortlet";
+    } else {
+      // For other types, combine with subtype
+      featureKey = `${preferenceType}-${propertySubtype}`;
+    }
+
+    return getAvailableFeatures(featureKey, currentBudget);
+  }, [
+    preferenceType,
+    state.formData.propertyDetails,
+    currentBudget,
+    getAvailableFeatures,
+  ]);
 
   // Initialize from context data and clear when form is reset
   useEffect(() => {
