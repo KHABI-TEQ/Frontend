@@ -410,10 +410,30 @@ const DEFAULT_BUDGET_THRESHOLDS: BudgetThreshold[] = [
 const createInitialState = (): PreferenceFormState => ({
   currentStep: 0,
   steps: [
-    { id: "location", title: "Location", isValid: false, isRequired: true },
-    { id: "budget", title: "Budget", isValid: false, isRequired: true },
-    { id: "features", title: "Features", isValid: false, isRequired: false },
-    { id: "contact", title: "Contact", isValid: false, isRequired: true },
+    {
+      id: "location",
+      title: "Location & Area",
+      isValid: false,
+      isRequired: true,
+    },
+    {
+      id: "property-budget",
+      title: "Property Details & Budget",
+      isValid: false,
+      isRequired: true,
+    },
+    {
+      id: "features",
+      title: "Features & Amenities",
+      isValid: false,
+      isRequired: false,
+    },
+    {
+      id: "contact",
+      title: "Contact & Preferences",
+      isValid: false,
+      isRequired: true,
+    },
   ],
   formData: {},
   isSubmitting: false,
