@@ -280,13 +280,7 @@ const ContactInformation: React.FC<ContactInformationProps> = ({
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Enter your full name"
-                className={`w-full px-3 py-2.5 text-sm border rounded-lg focus:ring-2 focus:ring-emerald-500 transition-all duration-200 placeholder-gray-400 ${
-                  fullNameErrors.length > 0
-                    ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                    : fullName
-                      ? "border-emerald-500 focus:border-emerald-500"
-                      : "border-gray-200 focus:border-emerald-500"
-                }`}
+                className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400"
               />
               {fullNameErrors.length > 0 && (
                 <p className="text-sm text-red-500 font-medium">
