@@ -666,15 +666,15 @@ const PreferenceFormContent: React.FC = () => {
               <BudgetSelection preferenceType={selectedPreferenceType} />
             </StepWrapper>
 
-            {/* Step 2: Features + Property Details + Dates */}
+            {/* Step 2: Property Details + Features + Dates */}
             <StepWrapper
               stepId="features"
               currentStep={state.currentStep}
               targetStep={2}
             >
               <div className="space-y-8">
-                <FeatureSelection preferenceType={selectedPreferenceType} />
                 <PropertyDetails preferenceType={selectedPreferenceType} />
+                <FeatureSelection preferenceType={selectedPreferenceType} />
                 {selectedPreferenceType === "shortlet" && <DateSelection />}
               </div>
             </StepWrapper>
