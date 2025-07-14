@@ -344,12 +344,16 @@ const PreferenceFormContent: React.FC = () => {
   const handlePreferenceTypeChange = useCallback(
     (preferenceKey: keyof typeof PREFERENCE_CONFIGS) => {
       setSelectedPreferenceType(preferenceKey);
-      resetForm();
+      // Reset form data immediately without confirmation
+      dispatch({ type: "RESET_FORM" });
+      // Set the new preference type
       updateFormData({
         preferenceType: PREFERENCE_CONFIGS[preferenceKey].preferenceType,
       });
+      // Reset to first step
+      goToStep(0);
     },
-    [resetForm, updateFormData],
+    [dispatch, updateFormData, goToStep],
   );
 
   // Generate API payload - memoized to prevent recreation
@@ -520,16 +524,18 @@ const PreferenceFormContent: React.FC = () => {
   // Handle submit new preference - memoized to prevent recreation
   const handleSubmitNew = useCallback(() => {
     setShowSuccessModal(false);
-    resetForm();
+    // Reset form data immediately without confirmation
+    dispatch({ type: "RESET_FORM" });
     goToStep(0);
-  }, [resetForm, goToStep]);
+  }, [dispatch, goToStep]);
 
   // Handle go to marketplace - memoized to prevent recreation
   const handleGoToMarketplace = useCallback(() => {
     setShowSuccessModal(false);
-    resetForm();
+    // Reset form data immediately without confirmation
+    dispatch({ type: "RESET_FORM" });
     router.push("/market-place");
-  }, [resetForm, router]);
+  }, [dispatch, router]);
 
   // Render preference type selector - memoized to prevent recreation
   const renderPreferenceTypeSelector = useMemo(
