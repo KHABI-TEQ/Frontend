@@ -254,6 +254,58 @@ const FeatureSelection: React.FC<FeatureSelectionProps> = ({
         </div>
       </div>
 
+      {/* Comfort Features (for Shortlet) */}
+      {preferenceType === "shortlet" && availableFeatures.comfort && (
+        <div className="space-y-4">
+          <h4 className="text-base font-semibold text-gray-900 flex items-center">
+            <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+            Comfort Features
+          </h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {availableFeatures.comfort.map((feature) => (
+              <motion.div
+                key={feature.name}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                  selectedPremiumFeatures.includes(feature.name)
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50"
+                }`}
+                onClick={() => handlePremiumFeatureToggle(feature.name)}
+              >
+                <div className="flex items-center space-x-2">
+                  <div
+                    className={`w-4 h-4 rounded border-2 transition-all ${
+                      selectedPremiumFeatures.includes(feature.name)
+                        ? "border-blue-500 bg-blue-500"
+                        : "border-gray-300"
+                    }`}
+                  >
+                    {selectedPremiumFeatures.includes(feature.name) && (
+                      <svg
+                        className="w-2.5 h-2.5 text-white absolute top-0.5 left-0.5"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    )}
+                  </div>
+                  <span className="text-sm font-medium text-gray-800">
+                    {feature.name}
+                  </span>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Premium Features */}
       <div className="space-y-4">
         <h4 className="text-base font-semibold text-gray-900 flex items-center">
