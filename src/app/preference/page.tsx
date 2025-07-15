@@ -347,17 +347,25 @@ const PreferenceFormContent: React.FC = () => {
   // Handle preference type change - memoized to prevent recreation
   const handlePreferenceTypeChange = useCallback(
     (preferenceKey: keyof typeof PREFERENCE_CONFIGS) => {
+      // Only proceed if actually changing preference type
+      if (preferenceKey === selectedPreferenceType) return;
+
       setSelectedPreferenceType(preferenceKey);
+
       // Reset form data immediately without confirmation
       dispatch({ type: "RESET_FORM" });
-      // Set the new preference type
-      updateFormData({
-        preferenceType: PREFERENCE_CONFIGS[preferenceKey].preferenceType,
-      });
-      // Reset to first step
-      goToStep(0);
+
+      // Use a small delay to ensure reset completes before setting new data
+      setTimeout(() => {
+        // Set the new preference type
+        updateFormData({
+          preferenceType: PREFERENCE_CONFIGS[preferenceKey].preferenceType,
+        });
+        // Reset to first step
+        goToStep(0);
+      }, 100);
     },
-    [dispatch, updateFormData, goToStep],
+    [dispatch, updateFormData, goToStep, selectedPreferenceType],
   );
 
   // Generate API payload with filtering - memoized to prevent recreation
@@ -374,8 +382,14 @@ const PreferenceFormContent: React.FC = () => {
         state: formData.location?.state || "",
         localGovernmentAreas:
           formData.location?.lgas?.filter((lga) => lga.trim() !== "") || [],
-        selectedAreas:
-          formData.location?.areas?.filter((area) => area.trim() !== "") || [],
+        lgasWithAreas: (
+          (formData as any).enhancedLocation?.lgasWithAreas ||
+          // Fallback: create lgasWithAreas structure from legacy data
+          (formData.location?.lgas || []).map((lga: string) => ({
+            lgaName: lga,
+            areas: [], // Areas would be distributed among LGAs in real implementation
+          }))
+        ).filter((item: any) => item.lgaName.trim() !== ""),
         customLocation: formData.location?.customLocation?.trim() || "",
       },
       budget: {
@@ -783,7 +797,7 @@ const PreferenceFormContent: React.FC = () => {
         </pre>
       </div>
     );
-  }, [state.formData, generatePayload]);
+  }, [state.formData, state.currentStep, generatePayload]); // Added currentStep to trigger updates
 
   // Handle step navigation - memoized to prevent recreation
   const handleStepClick = useCallback(

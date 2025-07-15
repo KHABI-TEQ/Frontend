@@ -29,12 +29,12 @@ const SubmitButton: React.FC<SubmitButtonProps> = ({
   // Check if current step is valid
   const canProceed = useMemo(() => {
     return canProceedToNextStep();
-  }, [canProceedToNextStep]);
+  }, [canProceedToNextStep, state.formData]); // Added formData dependency
 
   // Check if entire form is valid for final submission
   const canSubmit = useMemo(() => {
     return isFormValid() && isLastStep;
-  }, [isFormValid, isLastStep]);
+  }, [isFormValid, isLastStep, state.formData]); // Added formData dependency
 
   // Get button text based on current step and state
   const getButtonText = useMemo(() => {

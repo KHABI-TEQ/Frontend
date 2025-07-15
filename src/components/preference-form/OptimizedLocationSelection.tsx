@@ -12,6 +12,7 @@ import React, {
 import Select, { MultiValue, SingleValue } from "react-select";
 import CreatableSelect from "react-select/creatable";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "react-hot-toast";
 import { usePreferenceForm } from "@/context/preference-form-context";
 import { LocationSelection as LocationSelectionType } from "@/types/preference-form";
 import {
@@ -24,6 +25,17 @@ import {
 interface Option {
   value: string;
   label: string;
+}
+
+interface LGAAreaMapping {
+  lgaName: string;
+  areas: string[];
+}
+
+interface EnhancedLocationData {
+  state: string;
+  lgasWithAreas: LGAAreaMapping[];
+  customLocation: string;
 }
 
 // Memoized custom select styles to prevent recreation
@@ -117,10 +129,10 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
     const { state, updateFormData } = usePreferenceForm();
     const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Local state for form values to prevent excessive re-renders
+    // Enhanced local state for LGA-area mapping
     const [selectedState, setSelectedState] = useState<Option | null>(null);
     const [selectedLGAs, setSelectedLGAs] = useState<Option[]>([]);
-    const [selectedAreas, setSelectedAreas] = useState<Option[]>([]);
+    const [lgasWithAreas, setLgasWithAreas] = useState<LGAAreaMapping[]>([]);
     const [customLocation, setCustomLocation] = useState("");
     const [showCustomLocation, setShowCustomLocation] = useState(false);
 
@@ -142,24 +154,28 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
       }));
     }, [selectedState?.value]);
 
-    const areaOptions = useMemo(() => {
-      if (!selectedState?.value || selectedLGAs.length === 0) return [];
-
-      const allAreas = selectedLGAs.flatMap((lga) =>
-        getAreasByStateLGA(selectedState.value, lga.value).map((area) => ({
+    // Get available areas for a specific LGA
+    const getAreasForLGA = useCallback(
+      (lgaName: string) => {
+        if (!selectedState?.value) return [];
+        return getAreasByStateLGA(selectedState.value, lgaName).map((area) => ({
           value: area,
           label: area,
-        })),
-      );
+        }));
+      },
+      [selectedState?.value],
+    );
 
-      // Remove duplicates
-      const uniqueAreas = allAreas.filter(
-        (area, index, self) =>
-          index === self.findIndex((a) => a.value === area.value),
-      );
-
-      return uniqueAreas;
-    }, [selectedState?.value, selectedLGAs]);
+    // Get already selected areas for an LGA
+    const getSelectedAreasForLGA = useCallback(
+      (lgaName: string) => {
+        const lgaData = lgasWithAreas.find((item) => item.lgaName === lgaName);
+        return lgaData
+          ? lgaData.areas.map((area) => ({ value: area, label: area }))
+          : [];
+      },
+      [lgasWithAreas],
+    );
 
     // Initialize local state from context
     useEffect(() => {
@@ -172,20 +188,33 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
           });
         }
 
+        // Initialize enhanced LGA-area mapping from existing data
         if (locationData.lgas && locationData.lgas.length > 0) {
           const lgaOptions = locationData.lgas.map((lga) => ({
             value: lga,
             label: lga,
           }));
           setSelectedLGAs(lgaOptions);
-        }
 
-        if (locationData.areas && locationData.areas.length > 0) {
-          const areaOptions = locationData.areas.map((area) => ({
-            value: area,
-            label: area,
-          }));
-          setSelectedAreas(areaOptions);
+          // Create initial LGA-area mapping from legacy data
+          const initialMapping: LGAAreaMapping[] = locationData.lgas.map(
+            (lga) => ({
+              lgaName: lga,
+              areas: [], // Areas will be distributed among LGAs later
+            }),
+          );
+
+          // If we have legacy areas data, distribute them among LGAs
+          if (locationData.areas && locationData.areas.length > 0) {
+            locationData.areas.forEach((area, index) => {
+              const lgaIndex = index % initialMapping.length;
+              if (initialMapping[lgaIndex].areas.length < 3) {
+                initialMapping[lgaIndex].areas.push(area);
+              }
+            });
+          }
+
+          setLgasWithAreas(initialMapping);
         }
 
         if (locationData.customLocation) {
@@ -197,32 +226,43 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
 
     // Debounced update function
     const debouncedUpdateFormData = useCallback(
-      (locationData: LocationSelectionType) => {
+      (data: any) => {
         if (debounceTimeoutRef.current) {
           clearTimeout(debounceTimeoutRef.current);
         }
 
         debounceTimeoutRef.current = setTimeout(() => {
-          updateFormData({ location: locationData });
+          updateFormData(data);
         }, 300);
       },
       [updateFormData],
     );
 
-    // Update form data when local state changes
+    // Update form data when local state changes with enhanced structure
     useEffect(() => {
-      const locationData: LocationSelectionType = {
+      const enhancedLocationData: EnhancedLocationData = {
         state: selectedState?.value || "",
-        lgas: selectedLGAs.map((lga) => lga.value),
-        areas: selectedAreas.map((area) => area.value),
+        lgasWithAreas: lgasWithAreas,
         customLocation: showCustomLocation ? customLocation : "",
       };
 
-      debouncedUpdateFormData(locationData);
+      // Also maintain backward compatibility
+      const locationData: LocationSelectionType = {
+        state: selectedState?.value || "",
+        lgas: selectedLGAs.map((lga) => lga.value),
+        areas: lgasWithAreas.flatMap((item) => item.areas),
+        customLocation: showCustomLocation ? customLocation : "",
+      };
+
+      // Update with both structures for compatibility and debug display
+      debouncedUpdateFormData({
+        location: locationData,
+        enhancedLocation: enhancedLocationData,
+      } as any);
     }, [
       selectedState,
       selectedLGAs,
-      selectedAreas,
+      lgasWithAreas,
       customLocation,
       showCustomLocation,
       debouncedUpdateFormData,
@@ -233,24 +273,55 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
       setSelectedState(newValue);
       // Reset LGAs and areas when state changes
       setSelectedLGAs([]);
-      setSelectedAreas([]);
+      setLgasWithAreas([]);
     }, []);
 
-    const handleLGAChange = useCallback((newValue: MultiValue<Option>) => {
-      const lgaArray = Array.from(newValue);
-      setSelectedLGAs(lgaArray);
-      // Reset areas when LGAs change
-      setSelectedAreas([]);
-    }, []);
+    const handleLGAChange = useCallback(
+      (newValue: MultiValue<Option>) => {
+        const lgaArray = Array.from(newValue);
 
-    const handleAreaChange = useCallback((newValue: MultiValue<Option>) => {
-      const areaArray = Array.from(newValue);
+        // Limit to 3 LGAs maximum
+        if (lgaArray.length > 3) {
+          toast.error("Maximum 3 LGAs can be selected");
+          return;
+        }
 
-      // Limit to 3 areas maximum
-      if (areaArray.length <= 3) {
-        setSelectedAreas(areaArray);
-      }
-    }, []);
+        setSelectedLGAs(lgaArray);
+
+        // Update LGA-area mapping, preserving existing areas for unchanged LGAs
+        const newLgasWithAreas: LGAAreaMapping[] = lgaArray.map((lga) => {
+          const existingMapping = lgasWithAreas.find(
+            (item) => item.lgaName === lga.value,
+          );
+          return existingMapping || { lgaName: lga.value, areas: [] };
+        });
+
+        setLgasWithAreas(newLgasWithAreas);
+      },
+      [lgasWithAreas],
+    );
+
+    // Handle area selection for a specific LGA
+    const handleAreaChangeForLGA = useCallback(
+      (lgaName: string, newAreas: MultiValue<Option>) => {
+        const areaArray = Array.from(newAreas);
+
+        // Limit to 3 areas per LGA
+        if (areaArray.length > 3) {
+          toast.error(`Maximum 3 areas can be selected per LGA`);
+          return;
+        }
+
+        setLgasWithAreas((prev) =>
+          prev.map((item) =>
+            item.lgaName === lgaName
+              ? { ...item, areas: areaArray.map((area) => area.value) }
+              : item,
+          ),
+        );
+      },
+      [],
+    );
 
     const handleCustomLocationChange = useCallback(
       (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -321,61 +392,241 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
                 onChange={handleLGAChange}
                 options={lgaOptions}
                 styles={customSelectStyles}
-                placeholder="Select local government areas"
+                placeholder="Select up to 3 local government areas"
                 isSearchable={true}
                 className="react-select-container"
                 classNamePrefix="react-select"
                 noOptionsMessage={() => "No LGAs found for selected state"}
+                isOptionDisabled={() => selectedLGAs.length >= 3}
               />
               <p className="text-xs text-gray-500">
-                Select one or more local government areas in{" "}
-                {selectedState.label}
+                Select up to 3 local government areas in {selectedState.label}
+                {selectedLGAs.length > 0 && (
+                  <span className="text-emerald-600 font-medium ml-1">
+                    ({selectedLGAs.length}/3 selected)
+                  </span>
+                )}
               </p>
+              {selectedLGAs.length >= 3 && (
+                <div className="text-xs text-amber-600 font-medium">
+                  Maximum LGAs reached. Remove some to add more.
+                </div>
+              )}
             </motion.div>
           )}
 
-          {/* Area Selection */}
+          {/* Enhanced Area Selection per LGA */}
           {selectedLGAs.length > 0 && (
             <motion.div
-              className="space-y-2"
+              className="space-y-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <label className="block text-sm font-semibold text-gray-800">
-                Specific Areas
-                {selectedAreas.length > 0 && (
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-800">
+                  Areas by Local Government
                   <span className="text-emerald-600 text-xs ml-2">
-                    ({selectedAreas.length}/3 selected)
+                    (Up to 3 areas per LGA)
                   </span>
-                )}
-              </label>
-              <CreatableSelect
-                isMulti
-                value={selectedAreas}
-                onChange={handleAreaChange}
-                options={areaOptions}
-                styles={customSelectStyles}
-                placeholder="Select or type specific areas"
-                isSearchable={true}
-                isClearable={false}
-                formatCreateLabel={(inputValue) => `Add "${inputValue}"`}
-                className="react-select-container"
-                classNamePrefix="react-select"
-                noOptionsMessage={() => "Type to add a custom area"}
-                isValidNewOption={(inputValue) =>
-                  inputValue.length > 0 && selectedAreas.length < 3
-                }
-              />
-              <p className="text-xs text-gray-500">
-                Select up to 3 specific areas or neighborhoods. You can type to
-                add custom areas.
-              </p>
+                </label>
+                <p className="text-xs text-gray-500">
+                  Select specific areas for each chosen LGA. You can select up
+                  to 3 areas per LGA.
+                </p>
+              </div>
 
-              {selectedAreas.length >= 3 && (
-                <div className="text-xs text-amber-600 font-medium">
-                  Maximum of 3 areas allowed. Remove some to add more.
-                </div>
+              {/* Clean minimal area selection with dynamic layout */}
+              <div
+                className={`${
+                  selectedLGAs.length === 2
+                    ? "grid grid-cols-1 md:grid-cols-2 gap-4"
+                    : selectedLGAs.length === 3
+                      ? "space-y-4"
+                      : "space-y-4"
+                }`}
+              >
+                {selectedLGAs
+                  .sort((a, b) => {
+                    const aHasAreas =
+                      getSelectedAreasForLGA(a.value).length > 0;
+                    const bHasAreas =
+                      getSelectedAreasForLGA(b.value).length > 0;
+                    if (aHasAreas && !bHasAreas) return -1;
+                    if (!aHasAreas && bHasAreas) return 1;
+                    return a.label.localeCompare(b.label);
+                  })
+                  .map((lga, index) => {
+                    const selectedAreasForLGA = getSelectedAreasForLGA(
+                      lga.value,
+                    );
+                    const availableAreasForLGA = getAreasForLGA(lga.value);
+                    const isAtLimit = selectedAreasForLGA.length >= 3;
+
+                    // For 3 LGAs: first two side by side, third full width
+                    const shouldUseSpecialLayout = selectedLGAs.length === 3;
+                    const isFirstTwo = shouldUseSpecialLayout && index < 2;
+                    const isThird = shouldUseSpecialLayout && index === 2;
+
+                    const containerClass = shouldUseSpecialLayout
+                      ? isFirstTwo
+                        ? "grid grid-cols-1 md:grid-cols-2 gap-4 col-span-full"
+                        : isThird
+                          ? "col-span-full"
+                          : ""
+                      : "";
+
+                    const itemClass =
+                      shouldUseSpecialLayout && isFirstTwo ? "" : "space-y-2";
+
+                    if (shouldUseSpecialLayout && index === 0) {
+                      // Render first two items together for 3 LGA layout
+                      return (
+                        <div key="first-two" className={containerClass}>
+                          {selectedLGAs.slice(0, 2).map((subLga, subIndex) => {
+                            const subSelectedAreas = getSelectedAreasForLGA(
+                              subLga.value,
+                            );
+                            const subAvailableAreas = getAreasForLGA(
+                              subLga.value,
+                            );
+                            const subIsAtLimit = subSelectedAreas.length >= 3;
+
+                            return (
+                              <motion.div
+                                key={subLga.value}
+                                className="space-y-2"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{
+                                  duration: 0.2,
+                                  delay: subIndex * 0.1,
+                                }}
+                              >
+                                <label className="block text-sm font-medium text-gray-700">
+                                  {subLga.label}
+                                  <span className="text-xs text-gray-500 ml-1">
+                                    ({subSelectedAreas.length}/3)
+                                  </span>
+                                </label>
+
+                                <CreatableSelect
+                                  isMulti
+                                  value={subSelectedAreas}
+                                  onChange={(newAreas) =>
+                                    handleAreaChangeForLGA(
+                                      subLga.value,
+                                      newAreas,
+                                    )
+                                  }
+                                  options={subAvailableAreas}
+                                  styles={customSelectStyles}
+                                  placeholder={`Areas in ${subLga.label}...`}
+                                  isSearchable={true}
+                                  isClearable={false}
+                                  formatCreateLabel={(inputValue) =>
+                                    `Add "${inputValue}"`
+                                  }
+                                  className="react-select-container"
+                                  classNamePrefix="react-select"
+                                  noOptionsMessage={() => "Type to add area"}
+                                  isValidNewOption={(inputValue) =>
+                                    inputValue.length > 0 &&
+                                    subSelectedAreas.length < 3
+                                  }
+                                />
+
+                                {subIsAtLimit && (
+                                  <p className="text-xs text-amber-600">
+                                    Maximum areas reached.
+                                  </p>
+                                )}
+                              </motion.div>
+                            );
+                          })}
+                        </div>
+                      );
+                    } else if (shouldUseSpecialLayout && index < 2) {
+                      // Skip rendering items 0 and 1 individually since they're handled above
+                      return null;
+                    }
+
+                    return (
+                      <motion.div
+                        key={lga.value}
+                        className={itemClass}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.2, delay: index * 0.1 }}
+                      >
+                        <label className="block text-sm font-medium text-gray-700">
+                          {lga.label}
+                          <span className="text-xs text-gray-500 ml-1">
+                            ({selectedAreasForLGA.length}/3)
+                          </span>
+                        </label>
+
+                        <CreatableSelect
+                          isMulti
+                          value={selectedAreasForLGA}
+                          onChange={(newAreas) =>
+                            handleAreaChangeForLGA(lga.value, newAreas)
+                          }
+                          options={availableAreasForLGA}
+                          styles={customSelectStyles}
+                          placeholder={`Areas in ${lga.label}...`}
+                          isSearchable={true}
+                          isClearable={false}
+                          formatCreateLabel={(inputValue) =>
+                            `Add "${inputValue}"`
+                          }
+                          className="react-select-container"
+                          classNamePrefix="react-select"
+                          noOptionsMessage={() => "Type to add area"}
+                          isValidNewOption={(inputValue) =>
+                            inputValue.length > 0 &&
+                            selectedAreasForLGA.length < 3
+                          }
+                        />
+
+                        {isAtLimit && (
+                          <p className="text-xs text-amber-600">
+                            Maximum areas reached.
+                          </p>
+                        )}
+                      </motion.div>
+                    );
+                  })}
+              </div>
+
+              {/* Quick stats summary */}
+              {selectedLGAs.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg"
+                >
+                  <div className="flex items-center space-x-4 text-sm">
+                    <span className="text-blue-700">
+                      <strong>{selectedLGAs.length}</strong> LGA
+                      {selectedLGAs.length !== 1 ? "s" : ""} selected
+                    </span>
+                    <span className="text-blue-600">
+                      <strong>
+                        {lgasWithAreas.reduce(
+                          (total, item) => total + item.areas.length,
+                          0,
+                        )}
+                      </strong>{" "}
+                      areas total
+                    </span>
+                  </div>
+                  <div className="text-xs text-blue-600">
+                    {selectedLGAs.length < 3 &&
+                      "Add more LGAs for broader search"}
+                    {selectedLGAs.length === 3 && "Maximum LGAs reached"}
+                  </div>
+                </motion.div>
               )}
             </motion.div>
           )}
@@ -432,7 +683,7 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
           {/* Location Summary */}
           {(selectedState ||
             selectedLGAs.length > 0 ||
-            selectedAreas.length > 0 ||
+            lgasWithAreas.some((item) => item.areas.length > 0) ||
             (showCustomLocation && customLocation)) && (
             <motion.div
               className="bg-emerald-50 border border-emerald-200 rounded-lg p-4"
@@ -443,7 +694,7 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
               <h4 className="text-sm font-semibold text-emerald-800 mb-2">
                 Location Summary
               </h4>
-              <div className="space-y-1 text-sm text-emerald-700">
+              <div className="space-y-2 text-sm text-emerald-700">
                 {selectedState && (
                   <div>
                     <span className="font-medium">State:</span>{" "}
@@ -452,14 +703,24 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
                 )}
                 {selectedLGAs.length > 0 && (
                   <div>
-                    <span className="font-medium">LGAs:</span>{" "}
+                    <span className="font-medium">
+                      LGAs ({selectedLGAs.length}/3):
+                    </span>{" "}
                     {selectedLGAs.map((lga) => lga.label).join(", ")}
                   </div>
                 )}
-                {selectedAreas.length > 0 && (
-                  <div>
-                    <span className="font-medium">Areas:</span>{" "}
-                    {selectedAreas.map((area) => area.label).join(", ")}
+                {lgasWithAreas.length > 0 && (
+                  <div className="space-y-1">
+                    <span className="font-medium">Areas by LGA:</span>
+                    {lgasWithAreas.map(
+                      (item, index) =>
+                        item.areas.length > 0 && (
+                          <div key={index} className="ml-2 text-xs">
+                            <span className="font-medium">{item.lgaName}:</span>{" "}
+                            {item.areas.join(", ")} ({item.areas.length}/3)
+                          </div>
+                        ),
+                    )}
                   </div>
                 )}
                 {showCustomLocation && customLocation && (
@@ -478,5 +739,45 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
 );
 
 OptimizedLocationSelection.displayName = "OptimizedLocationSelection";
+
+// Memoized LGA Area Field Component for better performance
+const LGAAreaField = memo(
+  ({
+    lga,
+    index,
+    selectedAreas,
+    availableAreas,
+    onAreaChange,
+    hasAreas,
+    isAtLimit,
+  }: {
+    lga: { value: string; label: string };
+    index: number;
+    selectedAreas: { value: string; label: string }[];
+    availableAreas: { value: string; label: string }[];
+    onAreaChange: (lgaName: string, areas: any) => void;
+    hasAreas: boolean;
+    isAtLimit: boolean;
+  }) => {
+    return (
+      <motion.div
+        key={lga.value}
+        className={`rounded-lg p-4 border transition-all duration-200 ${
+          hasAreas
+            ? "bg-emerald-50 border-emerald-200 shadow-sm"
+            : "bg-gray-50 border-gray-200 hover:bg-gray-100"
+        }`}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2, delay: index * 0.1 }}
+        whileHover={{ scale: 1.02 }}
+      >
+        {/* Component content stays the same */}
+      </motion.div>
+    );
+  },
+);
+
+LGAAreaField.displayName = "LGAAreaField";
 
 export default OptimizedLocationSelection;

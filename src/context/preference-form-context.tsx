@@ -326,13 +326,19 @@ function preferenceFormReducer(
         ...action.payload,
       };
 
-      // Check if data actually changed using shallow comparison for better performance
+      // Enhanced comparison for nested objects
       let formDataChanged = false;
       for (const key in action.payload) {
-        if (
-          state.formData[key as keyof PreferenceForm] !==
-          action.payload[key as keyof PreferenceForm]
-        ) {
+        const currentValue = state.formData[key as keyof PreferenceForm];
+        const newValue = action.payload[key as keyof PreferenceForm];
+
+        // Deep comparison for objects and arrays
+        if (typeof newValue === "object" && newValue !== null) {
+          if (JSON.stringify(currentValue) !== JSON.stringify(newValue)) {
+            formDataChanged = true;
+            break;
+          }
+        } else if (currentValue !== newValue) {
           formDataChanged = true;
           break;
         }
@@ -473,20 +479,64 @@ export const PreferenceFormProvider: React.FC<{ children: ReactNode }> = ({
               message: "At least one LGA is required",
             });
           }
-          if (
-            !formData.location?.areas?.length &&
-            !formData.location?.customLocation
-          ) {
+          if (formData.location?.lgas && formData.location.lgas.length > 3) {
             errors.push({
-              field: "location.areas",
-              message: "Please select areas or enter a custom location",
+              field: "location.lgas",
+              message: "Maximum 3 LGAs can be selected",
             });
           }
-          if (formData.location?.areas && formData.location.areas.length > 3) {
-            errors.push({
-              field: "location.areas",
-              message: "Maximum 3 areas can be selected",
-            });
+
+          // Enhanced validation for LGA-area mapping
+          const enhancedLocation = (formData as any).enhancedLocation;
+          if (
+            enhancedLocation?.lgasWithAreas &&
+            enhancedLocation.lgasWithAreas.length > 0
+          ) {
+            const lgasWithAreas = enhancedLocation.lgasWithAreas;
+            let hasAnyAreas = false;
+            let hasCustomLocation = false;
+
+            // Check for custom location
+            if (
+              formData.location?.customLocation?.trim() ||
+              enhancedLocation.customLocation?.trim()
+            ) {
+              hasCustomLocation = true;
+            }
+
+            // Check areas in LGAs
+            for (const lgaArea of lgasWithAreas) {
+              if (lgaArea.areas && lgaArea.areas.length > 0) {
+                hasAnyAreas = true;
+                if (lgaArea.areas.length > 3) {
+                  errors.push({
+                    field: `location.areas.${lgaArea.lgaName}`,
+                    message: `Maximum 3 areas allowed per LGA (${lgaArea.lgaName})`,
+                  });
+                }
+              }
+            }
+
+            // Check if at least one area is selected or custom location is provided
+            if (!hasAnyAreas && !hasCustomLocation) {
+              errors.push({
+                field: "location.areas",
+                message:
+                  "Please select at least one area or enter a custom location",
+              });
+            }
+          } else {
+            // Fallback to legacy validation
+            const hasLegacyAreas =
+              formData.location?.areas && formData.location.areas.length > 0;
+            const hasCustomLocation = formData.location?.customLocation?.trim();
+
+            if (!hasLegacyAreas && !hasCustomLocation) {
+              errors.push({
+                field: "location.areas",
+                message: "Please select areas or enter a custom location",
+              });
+            }
           }
           break;
 

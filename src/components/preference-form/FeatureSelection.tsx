@@ -66,30 +66,44 @@ const FeatureSelection: React.FC<FeatureSelectionProps> = memo(
     // Initialize from context data and clear when form is reset
     useEffect(() => {
       // If formData is empty (form was reset), clear all local state
-      if (
-        !state.formData ||
-        Object.keys(state.formData).length === 0 ||
-        !state.formData.features
-      ) {
+      if (!state.formData || Object.keys(state.formData).length === 0) {
         setSelectedBasicFeatures([]);
         setSelectedPremiumFeatures([]);
         setAutoAdjustToBudget(false);
         return;
       }
 
+      // Only update local state if features data exists and is different
       if (state.formData.features) {
         const features = state.formData.features;
-        setSelectedBasicFeatures(features.basicFeatures || []);
-        setSelectedPremiumFeatures(features.premiumFeatures || []);
-        setAutoAdjustToBudget(features.autoAdjustToBudget || false);
+        const newBasicFeatures = features.basicFeatures || [];
+        const newPremiumFeatures = features.premiumFeatures || [];
+        const newAutoAdjust = features.autoAdjustToBudget || false;
+
+        // Only update if there are actual changes to prevent infinite loops
+        if (
+          JSON.stringify(newBasicFeatures) !==
+          JSON.stringify(selectedBasicFeatures)
+        ) {
+          setSelectedBasicFeatures(newBasicFeatures);
+        }
+        if (
+          JSON.stringify(newPremiumFeatures) !==
+          JSON.stringify(selectedPremiumFeatures)
+        ) {
+          setSelectedPremiumFeatures(newPremiumFeatures);
+        }
+        if (newAutoAdjust !== autoAdjustToBudget) {
+          setAutoAdjustToBudget(newAutoAdjust);
+        }
       }
-    }, [state.formData]);
+    }, [state.formData.features]); // Only depend on features, not entire formData
 
     // Ref to track if we're updating to prevent loops
     const isUpdatingRef = useRef(false);
     const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Debounced update context when values change
+    // Optimized debounced update that preserves other form data
     const debouncedUpdateFeatures = useCallback(() => {
       if (isUpdatingRef.current) return;
 
@@ -104,20 +118,32 @@ const FeatureSelection: React.FC<FeatureSelectionProps> = memo(
           autoAdjustToBudget,
         };
 
-        isUpdatingRef.current = true;
-        updateFormData({
-          features: featureData,
-        });
+        // Only update if features data actually changed
+        const currentFeatures = state.formData.features;
+        if (
+          !currentFeatures ||
+          JSON.stringify(currentFeatures.basicFeatures) !==
+            JSON.stringify(featureData.basicFeatures) ||
+          JSON.stringify(currentFeatures.premiumFeatures) !==
+            JSON.stringify(featureData.premiumFeatures) ||
+          currentFeatures.autoAdjustToBudget !== featureData.autoAdjustToBudget
+        ) {
+          isUpdatingRef.current = true;
+          updateFormData({
+            features: featureData,
+          });
 
-        setTimeout(() => {
-          isUpdatingRef.current = false;
-        }, 100);
+          setTimeout(() => {
+            isUpdatingRef.current = false;
+          }, 100);
+        }
       }, 300);
     }, [
       selectedBasicFeatures,
       selectedPremiumFeatures,
       autoAdjustToBudget,
       updateFormData,
+      state.formData.features,
     ]);
 
     // Update context when values change
