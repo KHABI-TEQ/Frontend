@@ -487,11 +487,24 @@ export const PreferenceFormProvider: React.FC<{ children: ReactNode }> = ({
           }
 
           // Enhanced validation for LGA-area mapping
-          if ((formData as any).enhancedLocation?.lgasWithAreas) {
-            const lgasWithAreas = (formData as any).enhancedLocation
-              .lgasWithAreas;
+          const enhancedLocation = (formData as any).enhancedLocation;
+          if (
+            enhancedLocation?.lgasWithAreas &&
+            enhancedLocation.lgasWithAreas.length > 0
+          ) {
+            const lgasWithAreas = enhancedLocation.lgasWithAreas;
             let hasAnyAreas = false;
+            let hasCustomLocation = false;
 
+            // Check for custom location
+            if (
+              formData.location?.customLocation?.trim() ||
+              enhancedLocation.customLocation?.trim()
+            ) {
+              hasCustomLocation = true;
+            }
+
+            // Check areas in LGAs
             for (const lgaArea of lgasWithAreas) {
               if (lgaArea.areas && lgaArea.areas.length > 0) {
                 hasAnyAreas = true;
@@ -505,7 +518,7 @@ export const PreferenceFormProvider: React.FC<{ children: ReactNode }> = ({
             }
 
             // Check if at least one area is selected or custom location is provided
-            if (!hasAnyAreas && !formData.location?.customLocation) {
+            if (!hasAnyAreas && !hasCustomLocation) {
               errors.push({
                 field: "location.areas",
                 message:
@@ -514,10 +527,10 @@ export const PreferenceFormProvider: React.FC<{ children: ReactNode }> = ({
             }
           } else {
             // Fallback to legacy validation
-            if (
-              !formData.location?.areas?.length &&
-              !formData.location?.customLocation
-            ) {
+            const hasLegacyAreas = formData.location?.areas?.length > 0;
+            const hasCustomLocation = formData.location?.customLocation?.trim();
+
+            if (!hasLegacyAreas && !hasCustomLocation) {
               errors.push({
                 field: "location.areas",
                 message: "Please select areas or enter a custom location",
