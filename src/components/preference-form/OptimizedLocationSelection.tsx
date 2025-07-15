@@ -12,6 +12,7 @@ import React, {
 import Select, { MultiValue, SingleValue } from "react-select";
 import CreatableSelect from "react-select/creatable";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "react-hot-toast";
 import { usePreferenceForm } from "@/context/preference-form-context";
 import { LocationSelection as LocationSelectionType } from "@/types/preference-form";
 import {
