@@ -299,7 +299,7 @@ const DateSelection: React.FC<DateSelectionProps> = ({ className = "" }) => {
         className="space-y-8"
       >
         {/* Date Selection */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="space-y-8">
           {/* Check-in Date */}
           <div className="space-y-3">
             <label className="block text-sm font-semibold text-gray-800">
@@ -474,7 +474,7 @@ const DateSelection: React.FC<DateSelectionProps> = ({ className = "" }) => {
             </svg>
             Preferred Check-in & Check-out Times
           </h5>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">
                 Preferred Check-in Time
