@@ -299,14 +299,15 @@ const DateSelection: React.FC<DateSelectionProps> = ({ className = "" }) => {
         className="space-y-8"
       >
         {/* Date Selection */}
-        <div className="space-y-8">
+        <div className="w-full flex flex-col md:flex-row gap-5 justify-start items-start">
           {/* Check-in Date */}
-          <div className="space-y-3">
+          <div className="space-y-3 w-full">
             <label className="block text-sm font-semibold text-gray-800">
               Check-in Date <span className="text-red-500">*</span>
             </label>
             <DatePicker
               selected={checkInDate}
+              className="w-full"
               onChange={handleCheckInChange}
               minDate={new Date()}
               placeholderText="Select check-in date"
@@ -356,11 +357,12 @@ const DateSelection: React.FC<DateSelectionProps> = ({ className = "" }) => {
           </div>
 
           {/* Check-out Date */}
-          <div className="space-y-3">
+          <div className="space-y-3 w-full">
             <label className="block text-sm font-semibold text-gray-800">
               Check-out Date <span className="text-red-500">*</span>
             </label>
             <DatePicker
+              className="w-full"
               selected={checkOutDate}
               onChange={handleCheckOutChange}
               minDate={
@@ -514,7 +516,7 @@ const DateSelection: React.FC<DateSelectionProps> = ({ className = "" }) => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="p-6 bg-gradient-to-r from-emerald-50 via-teal-50 to-cyan-50 rounded-2xl border-2 border-emerald-200 shadow-lg"
+            className="p-6 bg-gradient-to-r from-emerald-50 via-teal-50 to-cyan-50 rounded-2xl border-2 border-emerald-200 shadow-sm"
           >
             <div className="flex items-center justify-between mb-4">
               <motion.h4
