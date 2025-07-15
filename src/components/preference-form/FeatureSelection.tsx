@@ -39,7 +39,7 @@ const FeatureSelection: React.FC<FeatureSelectionProps> = ({
     const propertyDetails = state.formData.propertyDetails as any;
     const propertySubtype = propertyDetails?.propertySubtype || "residential";
 
-    let featureKey = preferenceType;
+    let featureKey: string;
 
     // For shortlet, use shortlet features
     if (preferenceType === "shortlet") {
@@ -166,6 +166,50 @@ const FeatureSelection: React.FC<FeatureSelectionProps> = ({
     setShowTooltip(null);
   }, []);
 
+  // Show NOT AVAILABLE message for Joint Venture
+  if (preferenceType === "joint-venture") {
+    return (
+      <div className={`space-y-6 ${className}`}>
+        {/* Header */}
+        <div className="text-center">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Features Selection
+          </h3>
+          <p className="text-sm text-gray-600">
+            Feature preferences for joint venture properties
+          </p>
+        </div>
+
+        {/* Not Available Message */}
+        <div className="flex flex-col items-center justify-center py-12 px-6">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+            <svg
+              className="w-8 h-8 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L5.636 5.636"
+              />
+            </svg>
+          </div>
+          <h4 className="text-lg font-semibold text-gray-800 mb-2">
+            Features Not Available
+          </h4>
+          <p className="text-sm text-gray-600 text-center max-w-md">
+            Feature selection is not applicable for joint venture property
+            preferences. Features will be determined based on the development
+            agreement and property specifications.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`space-y-6 ${className}`}>
       {/* Header */}
@@ -255,53 +299,55 @@ const FeatureSelection: React.FC<FeatureSelectionProps> = ({
       </div>
 
       {/* Comfort Features (for Shortlet) */}
-      {preferenceType === "shortlet" && availableFeatures.comfort && (
+      {preferenceType === "shortlet" && (availableFeatures as any).comfort && (
         <div className="space-y-4">
           <h4 className="text-base font-semibold text-gray-900 flex items-center">
             <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
             Comfort Features
           </h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {availableFeatures.comfort.map((feature) => (
-              <motion.div
-                key={feature.name}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                  selectedPremiumFeatures.includes(feature.name)
-                    ? "border-blue-500 bg-blue-50"
-                    : "border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50"
-                }`}
-                onClick={() => handlePremiumFeatureToggle(feature.name)}
-              >
-                <div className="flex items-center space-x-2">
-                  <div
-                    className={`w-4 h-4 rounded border-2 transition-all ${
-                      selectedPremiumFeatures.includes(feature.name)
-                        ? "border-blue-500 bg-blue-500"
-                        : "border-gray-300"
-                    }`}
-                  >
-                    {selectedPremiumFeatures.includes(feature.name) && (
-                      <svg
-                        className="w-2.5 h-2.5 text-white absolute top-0.5 left-0.5"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    )}
+            {(availableFeatures as any).comfort.map(
+              (feature: FeatureDefinition) => (
+                <motion.div
+                  key={feature.name}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                    selectedPremiumFeatures.includes(feature.name)
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50"
+                  }`}
+                  onClick={() => handlePremiumFeatureToggle(feature.name)}
+                >
+                  <div className="flex items-center space-x-2">
+                    <div
+                      className={`w-4 h-4 rounded border-2 transition-all ${
+                        selectedPremiumFeatures.includes(feature.name)
+                          ? "border-blue-500 bg-blue-500"
+                          : "border-gray-300"
+                      }`}
+                    >
+                      {selectedPremiumFeatures.includes(feature.name) && (
+                        <svg
+                          className="w-2.5 h-2.5 text-white absolute top-0.5 left-0.5"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      )}
+                    </div>
+                    <span className="text-sm font-medium text-gray-800">
+                      {feature.name}
+                    </span>
                   </div>
-                  <span className="text-sm font-medium text-gray-800">
-                    {feature.name}
-                  </span>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              ),
+            )}
           </div>
         </div>
       )}

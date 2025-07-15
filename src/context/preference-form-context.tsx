@@ -553,6 +553,15 @@ export const PreferenceFormProvider: React.FC<{ children: ReactNode }> = ({
               field: "contactInfo.email",
               message: "Email is required",
             });
+          } else {
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(formData.contactInfo.email)) {
+              errors.push({
+                field: "contactInfo.email",
+                message: "Please enter a valid email address",
+              });
+            }
           }
           if (!formData.contactInfo?.phoneNumber) {
             errors.push({
@@ -649,7 +658,7 @@ export const PreferenceFormProvider: React.FC<{ children: ReactNode }> = ({
       if (preferenceType === "shortlet") {
         return {
           basic: config.basic || [],
-          comfort: config.comfort || [],
+          comfort: (config as any).comfort || [],
           premium: config.premium || [],
         };
       }
@@ -658,7 +667,7 @@ export const PreferenceFormProvider: React.FC<{ children: ReactNode }> = ({
         return {
           basic: config.basic || [],
           premium: config.premium || [],
-          comfort: config.comfort || [],
+          comfort: (config as any).comfort || [],
         };
       }
 
@@ -672,7 +681,7 @@ export const PreferenceFormProvider: React.FC<{ children: ReactNode }> = ({
       return {
         basic: config.basic || [],
         premium: availablePremium,
-        comfort: config.comfort || [],
+        comfort: (config as any).comfort || [],
       };
     },
     [state.featureConfigs],

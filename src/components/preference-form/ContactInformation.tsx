@@ -106,6 +106,16 @@ const ContactInformation: React.FC<ContactInformationProps> = ({
     useState<string>("");
   const [cancellationPolicy, setCancellationPolicy] = useState<any>(null);
 
+  // Auto-populate max budget per night from budget range
+  React.useEffect(() => {
+    if (preferenceType === "shortlet" && state.formData.budget?.maxPrice) {
+      const formattedBudget = formatNumberWithCommas(
+        state.formData.budget.maxPrice.toString(),
+      );
+      setMaxBudgetPerNight(formattedBudget);
+    }
+  }, [preferenceType, state.formData.budget?.maxPrice, formatNumberWithCommas]);
+
   // Clear all fields when form is reset
   useEffect(() => {
     if (!state.formData || Object.keys(state.formData).length === 0) {
@@ -256,7 +266,7 @@ const ContactInformation: React.FC<ContactInformationProps> = ({
 
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-800">
-                Email Address <span className="text-gray-500">(Optional)</span>
+                Email Address <span className="text-red-500">*</span>
               </label>
               <input
                 type="email"
@@ -308,33 +318,33 @@ const ContactInformation: React.FC<ContactInformationProps> = ({
             <h5 className="text-sm font-semibold text-gray-800">
               Property Rules Preferences
             </h5>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <label className="flex items-center space-x-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <label className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
                 <input
                   type="checkbox"
                   checked={petsAllowed}
                   onChange={(e) => setPetsAllowed(e.target.checked)}
-                  className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                  className="w-4 h-4 text-emerald-600 bg-white border-gray-300 rounded focus:ring-emerald-500 focus:ring-2"
                 />
                 <span className="text-sm text-gray-700">Pets Allowed</span>
               </label>
 
-              <label className="flex items-center space-x-3">
+              <label className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
                 <input
                   type="checkbox"
                   checked={smokingAllowed}
                   onChange={(e) => setSmokingAllowed(e.target.checked)}
-                  className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                  className="w-4 h-4 text-emerald-600 bg-white border-gray-300 rounded focus:ring-emerald-500 focus:ring-2"
                 />
                 <span className="text-sm text-gray-700">Smoking Allowed</span>
               </label>
 
-              <label className="flex items-center space-x-3">
+              <label className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
                 <input
                   type="checkbox"
                   checked={partiesAllowed}
                   onChange={(e) => setPartiesAllowed(e.target.checked)}
-                  className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                  className="w-4 h-4 text-emerald-600 bg-white border-gray-300 rounded focus:ring-emerald-500 focus:ring-2"
                 />
                 <span className="text-sm text-gray-700">
                   Parties/Events Allowed
@@ -362,13 +372,14 @@ const ContactInformation: React.FC<ContactInformationProps> = ({
                 <input
                   type="text"
                   value={maxBudgetPerNight}
-                  onChange={(e) =>
-                    setMaxBudgetPerNight(formatNumberWithCommas(e.target.value))
-                  }
-                  placeholder="Enter max budget per night"
-                  className="w-full pl-8 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400"
+                  readOnly
+                  disabled
+                  className="w-full pl-8 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg bg-gray-50 cursor-not-allowed text-gray-700 font-medium"
                 />
               </div>
+              <p className="text-xs text-gray-500">
+                Auto-populated from your budget range (max price)
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -412,11 +423,25 @@ const ContactInformation: React.FC<ContactInformationProps> = ({
                     <input
                       type="text"
                       value={cleaningFeeBudget}
-                      onChange={(e) =>
-                        setCleaningFeeBudget(
-                          formatNumberWithCommas(e.target.value),
-                        )
-                      }
+                      onChange={(e) => {
+                        const numericValue = e.target.value.replace(
+                          /[^0-9]/g,
+                          "",
+                        );
+                        if (
+                          numericValue === "" ||
+                          parseInt(numericValue) >= 0
+                        ) {
+                          setCleaningFeeBudget(
+                            formatNumberWithCommas(numericValue),
+                          );
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "-" || e.key === "+" || e.key === "e") {
+                          e.preventDefault();
+                        }
+                      }}
                       placeholder="Enter cleaning fee budget"
                       className="w-full pl-8 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400"
                     />
@@ -435,11 +460,25 @@ const ContactInformation: React.FC<ContactInformationProps> = ({
                     <input
                       type="text"
                       value={securityDepositBudget}
-                      onChange={(e) =>
-                        setSecurityDepositBudget(
-                          formatNumberWithCommas(e.target.value),
-                        )
-                      }
+                      onChange={(e) => {
+                        const numericValue = e.target.value.replace(
+                          /[^0-9]/g,
+                          "",
+                        );
+                        if (
+                          numericValue === "" ||
+                          parseInt(numericValue) >= 0
+                        ) {
+                          setSecurityDepositBudget(
+                            formatNumberWithCommas(numericValue),
+                          );
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "-" || e.key === "+" || e.key === "e") {
+                          e.preventDefault();
+                        }
+                      }}
                       placeholder="Enter security deposit budget"
                       className="w-full pl-8 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400"
                     />
@@ -600,7 +639,7 @@ const ContactInformation: React.FC<ContactInformationProps> = ({
 
           <div className="space-y-2">
             <label className="block text-sm font-semibold text-gray-800">
-              Email Address <span className="text-gray-500">(Optional)</span>
+              Email Address <span className="text-red-500">*</span>
             </label>
             <input
               type="email"
