@@ -17,7 +17,7 @@ import PropertyDetails from "@/components/preference-form/PropertyDetails";
 import DateSelection from "@/components/preference-form/DateSelection";
 import OptimizedContactInformation from "@/components/preference-form/OptimizedContactInformation";
 import SubmitButton from "@/components/preference-form/SubmitButton";
-import StepWrapper from "@/components/preference-form/StepWrapper";
+import OptimizedStepWrapper from "@/components/preference-form/OptimizedStepWrapper";
 import {
   PreferencePayload,
   BuyPreferencePayload,
@@ -884,68 +884,38 @@ const PreferenceFormContent: React.FC = () => {
           />
         </motion.div>
 
-        {/* Form Content with Step Wrapper to preserve state */}
+        {/* Form Content with Enhanced Mobile-Responsive Step Wrapper */}
         <motion.div
-          className="bg-white rounded-xl p-6 shadow-lg border"
+          className="bg-white rounded-xl p-3 sm:p-6 shadow-lg border"
           initial={{ y: 50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.8, duration: 0.6 }}
           whileHover={{ shadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)" }}
         >
-          <div className="min-h-[80px]">
+          <div className="min-h-[400px] sm:min-h-[300px]">
             {/* Step 0: Location */}
-            <AnimatePresence mode="wait">
-              <StepWrapper
-                stepId="location"
-                currentStep={state.currentStep}
-                targetStep={0}
-              >
-                <motion.div
-                  key="location"
-                  initial={{ x: 50, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  exit={{ x: -50, opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <OptimizedLocationSelection />
-                </motion.div>
-              </StepWrapper>
-            </AnimatePresence>
+            <OptimizedStepWrapper
+              stepId="location"
+              currentStep={state.currentStep}
+              targetStep={0}
+            >
+              <OptimizedLocationSelection />
+            </OptimizedStepWrapper>
 
             {/* Step 1: Property Details & Budget */}
-            <AnimatePresence mode="wait">
-              <StepWrapper
-                stepId="property-budget"
-                currentStep={state.currentStep}
-                targetStep={1}
-              >
-                <motion.div
-                  key="property-budget"
-                  initial={{ x: 50, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  exit={{ x: -50, opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="space-y-8"
-                >
-                  <motion.div
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.1 }}
-                  >
-                    <PropertyDetails preferenceType={selectedPreferenceType} />
-                  </motion.div>
-                  <motion.div
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.2 }}
-                  >
-                    <OptimizedBudgetSelection
-                      preferenceType={selectedPreferenceType}
-                    />
-                  </motion.div>
-                </motion.div>
-              </StepWrapper>
-            </AnimatePresence>
+            <OptimizedStepWrapper
+              stepId="property-budget"
+              currentStep={state.currentStep}
+              targetStep={1}
+              className="space-y-6 sm:space-y-8"
+            >
+              <div className="space-y-6 sm:space-y-8">
+                <PropertyDetails preferenceType={selectedPreferenceType} />
+                <OptimizedBudgetSelection
+                  preferenceType={selectedPreferenceType}
+                />
+              </div>
+            </OptimizedStepWrapper>
 
             {/* Step 2: Features & Amenities */}
             <AnimatePresence mode="wait">
