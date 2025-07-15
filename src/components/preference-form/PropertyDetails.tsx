@@ -270,7 +270,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
         travelType: travelType?.value || "",
         nearbyLandmark,
       };
-      updateFormData({ propertyDetails: shortletData });
+      updateFormData({ propertyDetails: shortletData } as any);
     } else {
       const propertyData = {
         propertySubtype: propertySubtype?.value || "",
@@ -283,7 +283,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
         bathrooms: parseInt(bathrooms) || 0,
         landConditions: landConditions.map((lc) => lc.value) || [],
       };
-      updateFormData({ propertyDetails: propertyData });
+      updateFormData({ propertyDetails: propertyData } as any);
     }
   }, [
     preferenceType,
