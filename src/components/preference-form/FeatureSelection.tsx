@@ -166,6 +166,50 @@ const FeatureSelection: React.FC<FeatureSelectionProps> = ({
     setShowTooltip(null);
   }, []);
 
+  // Show NOT AVAILABLE message for Joint Venture
+  if (preferenceType === "joint-venture") {
+    return (
+      <div className={`space-y-6 ${className}`}>
+        {/* Header */}
+        <div className="text-center">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Features Selection
+          </h3>
+          <p className="text-sm text-gray-600">
+            Feature preferences for joint venture properties
+          </p>
+        </div>
+
+        {/* Not Available Message */}
+        <div className="flex flex-col items-center justify-center py-12 px-6">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+            <svg
+              className="w-8 h-8 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L5.636 5.636"
+              />
+            </svg>
+          </div>
+          <h4 className="text-lg font-semibold text-gray-800 mb-2">
+            Features Not Available
+          </h4>
+          <p className="text-sm text-gray-600 text-center max-w-md">
+            Feature selection is not applicable for joint venture property
+            preferences. Features will be determined based on the development
+            agreement and property specifications.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`space-y-6 ${className}`}>
       {/* Header */}
