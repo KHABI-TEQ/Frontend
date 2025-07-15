@@ -553,6 +553,15 @@ export const PreferenceFormProvider: React.FC<{ children: ReactNode }> = ({
               field: "contactInfo.email",
               message: "Email is required",
             });
+          } else {
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(formData.contactInfo.email)) {
+              errors.push({
+                field: "contactInfo.email",
+                message: "Please enter a valid email address",
+              });
+            }
           }
           if (!formData.contactInfo?.phoneNumber) {
             errors.push({
