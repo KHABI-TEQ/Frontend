@@ -347,17 +347,25 @@ const PreferenceFormContent: React.FC = () => {
   // Handle preference type change - memoized to prevent recreation
   const handlePreferenceTypeChange = useCallback(
     (preferenceKey: keyof typeof PREFERENCE_CONFIGS) => {
+      // Only proceed if actually changing preference type
+      if (preferenceKey === selectedPreferenceType) return;
+
       setSelectedPreferenceType(preferenceKey);
+
       // Reset form data immediately without confirmation
       dispatch({ type: "RESET_FORM" });
-      // Set the new preference type
-      updateFormData({
-        preferenceType: PREFERENCE_CONFIGS[preferenceKey].preferenceType,
-      });
-      // Reset to first step
-      goToStep(0);
+
+      // Use a small delay to ensure reset completes before setting new data
+      setTimeout(() => {
+        // Set the new preference type
+        updateFormData({
+          preferenceType: PREFERENCE_CONFIGS[preferenceKey].preferenceType,
+        });
+        // Reset to first step
+        goToStep(0);
+      }, 100);
     },
-    [dispatch, updateFormData, goToStep],
+    [dispatch, updateFormData, goToStep, selectedPreferenceType],
   );
 
   // Generate API payload with filtering - memoized to prevent recreation
