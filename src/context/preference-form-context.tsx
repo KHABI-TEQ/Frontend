@@ -527,7 +527,8 @@ export const PreferenceFormProvider: React.FC<{ children: ReactNode }> = ({
             }
           } else {
             // Fallback to legacy validation
-            const hasLegacyAreas = formData.location?.areas?.length > 0;
+            const hasLegacyAreas =
+              formData.location?.areas && formData.location.areas.length > 0;
             const hasCustomLocation = formData.location?.customLocation?.trim();
 
             if (!hasLegacyAreas && !hasCustomLocation) {
