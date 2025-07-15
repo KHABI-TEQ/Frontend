@@ -433,16 +433,22 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
                 </p>
               </div>
 
-              {/* Auto-arranged dynamic area fields for each selected LGA */}
-              <div className="space-y-4">
+              {/* Clean minimal area selection with dynamic layout */}
+              <div
+                className={`${
+                  selectedLGAs.length === 2
+                    ? "grid grid-cols-1 md:grid-cols-2 gap-4"
+                    : selectedLGAs.length === 3
+                      ? "space-y-4"
+                      : "space-y-4"
+                }`}
+              >
                 {selectedLGAs
                   .sort((a, b) => {
-                    // Sort by: 1) LGAs with areas first, 2) Alphabetically
                     const aHasAreas =
                       getSelectedAreasForLGA(a.value).length > 0;
                     const bHasAreas =
                       getSelectedAreasForLGA(b.value).length > 0;
-
                     if (aHasAreas && !bHasAreas) return -1;
                     if (!aHasAreas && bHasAreas) return 1;
                     return a.label.localeCompare(b.label);
@@ -452,64 +458,110 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
                       lga.value,
                     );
                     const availableAreasForLGA = getAreasForLGA(lga.value);
-                    const hasAreas = selectedAreasForLGA.length > 0;
                     const isAtLimit = selectedAreasForLGA.length >= 3;
+
+                    // For 3 LGAs: first two side by side, third full width
+                    const shouldUseSpecialLayout = selectedLGAs.length === 3;
+                    const isFirstTwo = shouldUseSpecialLayout && index < 2;
+                    const isThird = shouldUseSpecialLayout && index === 2;
+
+                    const containerClass = shouldUseSpecialLayout
+                      ? isFirstTwo
+                        ? "grid grid-cols-1 md:grid-cols-2 gap-4 col-span-full"
+                        : isThird
+                          ? "col-span-full"
+                          : ""
+                      : "";
+
+                    const itemClass =
+                      shouldUseSpecialLayout && isFirstTwo ? "" : "space-y-2";
+
+                    if (shouldUseSpecialLayout && index === 0) {
+                      // Render first two items together for 3 LGA layout
+                      return (
+                        <div key="first-two" className={containerClass}>
+                          {selectedLGAs.slice(0, 2).map((subLga, subIndex) => {
+                            const subSelectedAreas = getSelectedAreasForLGA(
+                              subLga.value,
+                            );
+                            const subAvailableAreas = getAreasForLGA(
+                              subLga.value,
+                            );
+                            const subIsAtLimit = subSelectedAreas.length >= 3;
+
+                            return (
+                              <motion.div
+                                key={subLga.value}
+                                className="space-y-2"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{
+                                  duration: 0.2,
+                                  delay: subIndex * 0.1,
+                                }}
+                              >
+                                <label className="block text-sm font-medium text-gray-700">
+                                  {subLga.label}
+                                  <span className="text-xs text-gray-500 ml-1">
+                                    ({subSelectedAreas.length}/3)
+                                  </span>
+                                </label>
+
+                                <CreatableSelect
+                                  isMulti
+                                  value={subSelectedAreas}
+                                  onChange={(newAreas) =>
+                                    handleAreaChangeForLGA(
+                                      subLga.value,
+                                      newAreas,
+                                    )
+                                  }
+                                  options={subAvailableAreas}
+                                  styles={customSelectStyles}
+                                  placeholder={`Areas in ${subLga.label}...`}
+                                  isSearchable={true}
+                                  isClearable={false}
+                                  formatCreateLabel={(inputValue) =>
+                                    `Add "${inputValue}"`
+                                  }
+                                  className="react-select-container"
+                                  classNamePrefix="react-select"
+                                  noOptionsMessage={() => "Type to add area"}
+                                  isValidNewOption={(inputValue) =>
+                                    inputValue.length > 0 &&
+                                    subSelectedAreas.length < 3
+                                  }
+                                />
+
+                                {subIsAtLimit && (
+                                  <p className="text-xs text-amber-600">
+                                    Maximum areas reached.
+                                  </p>
+                                )}
+                              </motion.div>
+                            );
+                          })}
+                        </div>
+                      );
+                    } else if (shouldUseSpecialLayout && index < 2) {
+                      // Skip rendering items 0 and 1 individually since they're handled above
+                      return null;
+                    }
 
                     return (
                       <motion.div
                         key={lga.value}
-                        className={`rounded-lg p-4 border transition-all duration-200 ${
-                          hasAreas
-                            ? "bg-emerald-50 border-emerald-200 shadow-sm"
-                            : "bg-gray-50 border-gray-200 hover:bg-gray-100"
-                        }`}
+                        className={itemClass}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.2, delay: index * 0.1 }}
-                        whileHover={{ scale: 1.02 }}
                       >
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center space-x-2">
-                            {hasAreas && (
-                              <motion.div
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                className="w-2 h-2 bg-emerald-500 rounded-full"
-                              />
-                            )}
-                            <h4
-                              className={`text-sm font-medium ${
-                                hasAreas ? "text-emerald-900" : "text-gray-900"
-                              }`}
-                            >
-                              {lga.label}
-                            </h4>
-                            {index === 0 && selectedLGAs.length > 1 && (
-                              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-                                Primary
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <span
-                              className={`text-xs px-2 py-1 rounded font-medium ${
-                                hasAreas
-                                  ? "bg-emerald-100 text-emerald-700"
-                                  : "bg-white text-gray-500 border border-gray-200"
-                              }`}
-                            >
-                              {selectedAreasForLGA.length}/3 areas
-                            </span>
-                            {isAtLimit && (
-                              <motion.div
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                className="w-2 h-2 bg-amber-500 rounded-full"
-                                title="Maximum areas reached"
-                              />
-                            )}
-                          </div>
-                        </div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          {lga.label}
+                          <span className="text-xs text-gray-500 ml-1">
+                            ({selectedAreasForLGA.length}/3)
+                          </span>
+                        </label>
 
                         <CreatableSelect
                           isMulti
@@ -518,29 +570,16 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
                             handleAreaChangeForLGA(lga.value, newAreas)
                           }
                           options={availableAreasForLGA}
-                          styles={{
-                            ...customSelectStyles,
-                            control: (provided: any, state: any) => ({
-                              ...customSelectStyles.control(provided, state),
-                              borderColor: hasAreas
-                                ? state.isFocused
-                                  ? "#10B981"
-                                  : "#059669"
-                                : state.isFocused
-                                  ? "#10B981"
-                                  : "#E5E7EB",
-                              backgroundColor: hasAreas ? "#FFFFFF" : "#F9FAFB",
-                            }),
-                          }}
-                          placeholder={`Select areas in ${lga.label}...`}
+                          styles={customSelectStyles}
+                          placeholder={`Areas in ${lga.label}...`}
                           isSearchable={true}
                           isClearable={false}
                           formatCreateLabel={(inputValue) =>
-                            `Add "${inputValue}" to ${lga.label}`
+                            `Add "${inputValue}"`
                           }
                           className="react-select-container"
                           classNamePrefix="react-select"
-                          noOptionsMessage={() => "Type to add a custom area"}
+                          noOptionsMessage={() => "Type to add area"}
                           isValidNewOption={(inputValue) =>
                             inputValue.length > 0 &&
                             selectedAreasForLGA.length < 3
@@ -548,47 +587,9 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
                         />
 
                         {isAtLimit && (
-                          <motion.div
-                            initial={{ opacity: 0, y: -5 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="text-xs text-amber-600 font-medium mt-2 flex items-center space-x-1"
-                          >
-                            <svg
-                              className="w-3 h-3"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                            <span>
-                              Maximum areas reached for this LGA. Remove some to
-                              add more.
-                            </span>
-                          </motion.div>
-                        )}
-
-                        {hasAreas && (
-                          <motion.div
-                            initial={{ opacity: 0, y: 5 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="mt-2 flex flex-wrap gap-1"
-                          >
-                            {selectedAreasForLGA.map((area, areaIndex) => (
-                              <motion.span
-                                key={area.value}
-                                initial={{ opacity: 0, scale: 0.8 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ delay: areaIndex * 0.05 }}
-                                className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full"
-                              >
-                                {area.label}
-                              </motion.span>
-                            ))}
-                          </motion.div>
+                          <p className="text-xs text-amber-600">
+                            Maximum areas reached.
+                          </p>
                         )}
                       </motion.div>
                     );
