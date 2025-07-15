@@ -378,7 +378,16 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
             <input
               type="number"
               value={maxGuests}
-              onChange={(e) => setMaxGuests(e.target.value)}
+              onChange={(e) => {
+                const value = Math.max(1, parseInt(e.target.value) || 1);
+                setMaxGuests(value.toString());
+              }}
+              onInput={(e) => {
+                const target = e.target as HTMLInputElement;
+                if (parseInt(target.value) < 1) {
+                  target.value = "1";
+                }
+              }}
               placeholder="Number of guests"
               min="1"
               className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
@@ -446,8 +455,19 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
               <input
                 type="number"
                 value={landSize}
-                onChange={(e) => setLandSize(e.target.value)}
+                onChange={(e) => {
+                  const value = Math.max(0, parseFloat(e.target.value) || 0);
+                  setLandSize(value.toString());
+                }}
+                onInput={(e) => {
+                  const target = e.target as HTMLInputElement;
+                  if (parseFloat(target.value) < 0) {
+                    target.value = "0";
+                  }
+                }}
                 placeholder="Enter land size"
+                min="0"
+                step="0.01"
                 className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
               />
             </div>
@@ -573,9 +593,18 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
                 <input
                   type="number"
                   value={bathrooms}
-                  onChange={(e) => setBathrooms(e.target.value)}
+                  onChange={(e) => {
+                    const value = Math.max(0, parseInt(e.target.value) || 0);
+                    setBathrooms(value.toString());
+                  }}
+                  onInput={(e) => {
+                    const target = e.target as HTMLInputElement;
+                    if (parseInt(target.value) < 0) {
+                      target.value = "0";
+                    }
+                  }}
                   placeholder="Number of bathrooms"
-                  min="1"
+                  min="0"
                   className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                 />
               </div>
@@ -591,9 +620,18 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
               <input
                 type="number"
                 value={bathrooms}
-                onChange={(e) => setBathrooms(e.target.value)}
+                onChange={(e) => {
+                  const value = Math.max(0, parseInt(e.target.value) || 0);
+                  setBathrooms(value.toString());
+                }}
+                onInput={(e) => {
+                  const target = e.target as HTMLInputElement;
+                  if (parseInt(target.value) < 0) {
+                    target.value = "0";
+                  }
+                }}
                 placeholder="Number of bathrooms"
-                min="1"
+                min="0"
                 className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
               />
             </div>
