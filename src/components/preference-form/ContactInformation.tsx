@@ -119,7 +119,7 @@ const shortletContactSchema = Yup.object({
   cancellationPolicy: Yup.string().nullable(),
 });
 
-const ContactInformation: React.FC<ContactInformationProps> = ({
+const ContactInformation: React.FC<ContactInformationProps> = memo(({
   preferenceType,
   className = "",
 }) => {
@@ -185,69 +185,67 @@ const ContactInformation: React.FC<ContactInformationProps> = ({
   }, [preferenceType]);
 
   // Memoized Custom Field component with animation
-  const AnimatedField = memo(
-    ({
-      name,
-      label,
-      required = false,
-      type = "text",
-      placeholder,
-      ...props
-    }: any) => (
-      <Field name={name}>
-        {({ field, meta }: any) => (
-          <motion.div
-            className="space-y-2"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <label className="block text-sm font-semibold text-gray-800">
-              {label} {required && <span className="text-red-500">*</span>}
-            </label>
-            <motion.input
-              {...field}
-              {...props}
-              type={type}
-              placeholder={placeholder}
-              className={`w-full px-3 py-2.5 text-sm border rounded-lg focus:ring-2 focus:ring-emerald-500 transition-all duration-200 placeholder-gray-400 ${
-                meta.touched && meta.error
-                  ? "border-red-400 focus:border-red-500 focus:ring-red-100"
-                  : "border-gray-200 focus:border-emerald-500"
-              }`}
-              whileFocus={{ scale: 1.01 }}
-              transition={{ type: "spring", stiffness: 300 }}
-            />
-            <AnimatePresence>
-              {meta.touched && meta.error && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="text-sm text-red-500 font-medium flex items-center space-x-1"
+  const AnimatedField = memo(({
+    name,
+    label,
+    required = false,
+    type = "text",
+    placeholder,
+    ...props
+  }: any) => (
+    <Field name={name}>
+      {({ field, meta }: any) => (
+        <motion.div
+          className="space-y-2"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <label className="block text-sm font-semibold text-gray-800">
+            {label} {required && <span className="text-red-500">*</span>}
+          </label>
+          <motion.input
+            {...field}
+            {...props}
+            type={type}
+            placeholder={placeholder}
+            className={`w-full px-3 py-2.5 text-sm border rounded-lg focus:ring-2 focus:ring-emerald-500 transition-all duration-200 placeholder-gray-400 ${
+              meta.touched && meta.error
+                ? "border-red-400 focus:border-red-500 focus:ring-red-100"
+                : "border-gray-200 focus:border-emerald-500"
+            }`}
+            whileFocus={{ scale: 1.01 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          />
+          <AnimatePresence>
+            {meta.touched && meta.error && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="text-sm text-red-500 font-medium flex items-center space-x-1"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
                 >
-                  <svg
-                    className="w-4 h-4"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  <span>{meta.error}</span>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-        )}
-      </Field>
-    ),
-  );
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <span>{meta.error}</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      )}
+    </Field>
+  ));
 
-  // Memoized Custom Phone Field component
+    // Memoized Custom Phone Field component
   const PhoneField = memo(({ name, label, required = false }: any) => (
     <Field name={name}>
       {({ field, meta, form }: any) => (
@@ -298,7 +296,7 @@ const ContactInformation: React.FC<ContactInformationProps> = ({
     </Field>
   ));
 
-  // Handle form submission - debounced
+    // Handle form submission - debounced
   const submitTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleSubmit = useCallback(
@@ -334,7 +332,7 @@ const ContactInformation: React.FC<ContactInformationProps> = ({
         onSubmit={handleSubmit}
         enableReinitialize
       >
-        {({ values, setFieldValue, errors, touched }) => {
+                {({ values, setFieldValue, errors, touched }) => {
           // Auto-submit when values change using useEffect with debouncing
           React.useEffect(() => {
             // Only update if values have actually changed and are not empty
