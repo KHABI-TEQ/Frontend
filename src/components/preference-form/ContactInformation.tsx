@@ -106,6 +106,16 @@ const ContactInformation: React.FC<ContactInformationProps> = ({
     useState<string>("");
   const [cancellationPolicy, setCancellationPolicy] = useState<any>(null);
 
+  // Auto-populate max budget per night from budget range
+  React.useEffect(() => {
+    if (preferenceType === "shortlet" && state.formData.budget?.maxPrice) {
+      const formattedBudget = formatNumberWithCommas(
+        state.formData.budget.maxPrice.toString(),
+      );
+      setMaxBudgetPerNight(formattedBudget);
+    }
+  }, [preferenceType, state.formData.budget?.maxPrice, formatNumberWithCommas]);
+
   // Clear all fields when form is reset
   useEffect(() => {
     if (!state.formData || Object.keys(state.formData).length === 0) {
@@ -362,13 +372,14 @@ const ContactInformation: React.FC<ContactInformationProps> = ({
                 <input
                   type="text"
                   value={maxBudgetPerNight}
-                  onChange={(e) =>
-                    setMaxBudgetPerNight(formatNumberWithCommas(e.target.value))
-                  }
-                  placeholder="Enter max budget per night"
-                  className="w-full pl-8 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400"
+                  readOnly
+                  disabled
+                  className="w-full pl-8 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg bg-gray-50 cursor-not-allowed text-gray-700 font-medium"
                 />
               </div>
+              <p className="text-xs text-gray-500">
+                Auto-populated from your budget range (max price)
+              </p>
             </div>
 
             <div className="space-y-2">
