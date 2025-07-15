@@ -369,7 +369,7 @@ const PreferenceFormContent: React.FC = () => {
         state: formData.location?.state || "",
         localGovernmentAreas: formData.location?.lgas || [],
         selectedAreas: formData.location?.areas || [],
-        customLocation: formData.location?.customLocation,
+        customLocation: formData.location?.customLocation || "",
       },
       budget: {
         minPrice: formData.budget?.minPrice || 0,
@@ -417,8 +417,10 @@ const PreferenceFormContent: React.FC = () => {
             phoneNumber: buyData.contactInfo?.phoneNumber || "",
           },
           nearbyLandmark:
-            buyData.propertyDetails?.nearbyLandmark || buyData.nearbyLandmark,
-          additionalNotes: buyData.additionalNotes,
+            buyData.propertyDetails?.nearbyLandmark ||
+            buyData.nearbyLandmark ||
+            "",
+          additionalNotes: buyData.additionalNotes || "",
         } as BuyPreferencePayload;
       }
 
@@ -448,13 +450,19 @@ const PreferenceFormContent: React.FC = () => {
             purpose: rentData.propertyDetails?.purpose || "Residential",
             landSize: rentData.propertyDetails?.landSize || "",
             measurementUnit: rentData.propertyDetails?.measurementUnit || "",
+            documentTypes: rentData.propertyDetails?.documentTypes || [],
+            landConditions: rentData.propertyDetails?.landConditions || [],
           },
           contactInfo: {
             fullName: rentData.contactInfo?.fullName || "",
             email: rentData.contactInfo?.email || "",
             phoneNumber: rentData.contactInfo?.phoneNumber || "",
           },
-          additionalNotes: rentData.additionalNotes,
+          nearbyLandmark:
+            rentData.propertyDetails?.nearbyLandmark ||
+            rentData.nearbyLandmark ||
+            "",
+          additionalNotes: rentData.additionalNotes || "",
         } as RentPreferencePayload;
       }
 
@@ -481,20 +489,29 @@ const PreferenceFormContent: React.FC = () => {
             expectedStructureType:
               jvData.developmentDetails?.expectedStructureType || "",
             timeline: jvData.developmentDetails?.timeline || "",
-            budgetRange: jvData.developmentDetails?.budgetRange,
+            budgetRange: jvData.developmentDetails?.budgetRange || "",
             documentTypes: jvData.propertyDetails?.documentTypes || [],
             landConditions: jvData.propertyDetails?.landConditions || [],
             buildingType: jvData.propertyDetails?.buildingType || "",
             propertyCondition: jvData.propertyDetails?.propertyCondition || "",
+            minBedrooms: jvData.propertyDetails?.minBedrooms || "",
+            minBathrooms: jvData.propertyDetails?.minBathrooms || 0,
+            purpose: jvData.propertyDetails?.purpose || "",
           },
           contactInfo: {
             companyName: jvData.contactInfo?.companyName || "",
             contactPerson: jvData.contactInfo?.contactPerson || "",
             email: jvData.contactInfo?.email || "",
             phoneNumber: jvData.contactInfo?.phoneNumber || "",
-            cacRegistrationNumber: jvData.contactInfo?.cacRegistrationNumber,
+            cacRegistrationNumber:
+              jvData.contactInfo?.cacRegistrationNumber || "",
           },
-          partnerExpectations: jvData.partnerExpectations,
+          partnerExpectations: jvData.partnerExpectations || "",
+          nearbyLandmark:
+            jvData.propertyDetails?.nearbyLandmark ||
+            jvData.nearbyLandmark ||
+            "",
+          additionalNotes: jvData.additionalNotes || "",
         } as JointVenturePreferencePayload;
       }
 
@@ -509,6 +526,7 @@ const PreferenceFormContent: React.FC = () => {
               shortletData.propertyDetails?.propertyType ||
               shortletData.bookingDetails?.propertyType ||
               "",
+            buildingType: shortletData.propertyDetails?.buildingType || "",
             minBedrooms:
               shortletData.propertyDetails?.bedrooms ||
               shortletData.bookingDetails?.minBedrooms ||
@@ -531,16 +549,38 @@ const PreferenceFormContent: React.FC = () => {
               shortletData.contactInfo?.preferredCheckInTime || "",
             preferredCheckOutTime:
               shortletData.contactInfo?.preferredCheckOutTime || "",
+            propertyCondition:
+              shortletData.propertyDetails?.propertyCondition || "",
+            purpose: shortletData.propertyDetails?.purpose || "",
+            landSize: shortletData.propertyDetails?.landSize || "",
+            measurementUnit:
+              shortletData.propertyDetails?.measurementUnit || "",
+            documentTypes: shortletData.propertyDetails?.documentTypes || [],
+            landConditions: shortletData.propertyDetails?.landConditions || [],
           },
           contactInfo: {
             fullName: shortletData.contactInfo?.fullName || "",
             email: shortletData.contactInfo?.email || "",
             phoneNumber: shortletData.contactInfo?.phoneNumber || "",
+            petsAllowed: shortletData.contactInfo?.petsAllowed || false,
+            smokingAllowed: shortletData.contactInfo?.smokingAllowed || false,
+            partiesAllowed: shortletData.contactInfo?.partiesAllowed || false,
+            additionalRequests:
+              shortletData.contactInfo?.additionalRequests || "",
+            maxBudgetPerNight: shortletData.contactInfo?.maxBudgetPerNight || 0,
+            willingToPayExtra:
+              shortletData.contactInfo?.willingToPayExtra || false,
+            cleaningFeeBudget: shortletData.contactInfo?.cleaningFeeBudget || 0,
+            securityDepositBudget:
+              shortletData.contactInfo?.securityDepositBudget || 0,
+            cancellationPolicy:
+              shortletData.contactInfo?.cancellationPolicy || "",
           },
           nearbyLandmark:
             shortletData.propertyDetails?.nearbyLandmark ||
-            shortletData.nearbyLandmark,
-          additionalNotes: shortletData.additionalNotes,
+            shortletData.nearbyLandmark ||
+            "",
+          additionalNotes: shortletData.additionalNotes || "",
         } as ShortletPreferencePayload;
       }
 
