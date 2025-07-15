@@ -797,7 +797,7 @@ const PreferenceFormContent: React.FC = () => {
         </pre>
       </div>
     );
-  }, [state.formData, generatePayload]);
+  }, [state.formData, state.currentStep, generatePayload]); // Added currentStep to trigger updates
 
   // Handle step navigation - memoized to prevent recreation
   const handleStepClick = useCallback(
