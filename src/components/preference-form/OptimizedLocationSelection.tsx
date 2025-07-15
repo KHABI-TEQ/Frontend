@@ -392,16 +392,26 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
                 onChange={handleLGAChange}
                 options={lgaOptions}
                 styles={customSelectStyles}
-                placeholder="Select local government areas"
+                placeholder="Select up to 3 local government areas"
                 isSearchable={true}
                 className="react-select-container"
                 classNamePrefix="react-select"
                 noOptionsMessage={() => "No LGAs found for selected state"}
+                isOptionDisabled={() => selectedLGAs.length >= 3}
               />
               <p className="text-xs text-gray-500">
-                Select one or more local government areas in{" "}
-                {selectedState.label}
+                Select up to 3 local government areas in {selectedState.label}
+                {selectedLGAs.length > 0 && (
+                  <span className="text-emerald-600 font-medium ml-1">
+                    ({selectedLGAs.length}/3 selected)
+                  </span>
+                )}
               </p>
+              {selectedLGAs.length >= 3 && (
+                <div className="text-xs text-amber-600 font-medium">
+                  Maximum LGAs reached. Remove some to add more.
+                </div>
+              )}
             </motion.div>
           )}
 
