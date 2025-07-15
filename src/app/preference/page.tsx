@@ -450,13 +450,19 @@ const PreferenceFormContent: React.FC = () => {
             purpose: rentData.propertyDetails?.purpose || "Residential",
             landSize: rentData.propertyDetails?.landSize || "",
             measurementUnit: rentData.propertyDetails?.measurementUnit || "",
+            documentTypes: rentData.propertyDetails?.documentTypes || [],
+            landConditions: rentData.propertyDetails?.landConditions || [],
           },
           contactInfo: {
             fullName: rentData.contactInfo?.fullName || "",
             email: rentData.contactInfo?.email || "",
             phoneNumber: rentData.contactInfo?.phoneNumber || "",
           },
-          additionalNotes: rentData.additionalNotes,
+          nearbyLandmark:
+            rentData.propertyDetails?.nearbyLandmark ||
+            rentData.nearbyLandmark ||
+            "",
+          additionalNotes: rentData.additionalNotes || "",
         } as RentPreferencePayload;
       }
 
