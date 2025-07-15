@@ -690,30 +690,20 @@ export const PreferenceFormProvider: React.FC<{ children: ReactNode }> = ({
   }, [state.currentStep, validateStep]);
 
   // STABLE updateFormData function that never changes
-  const updateFormData = useCallback(
-    (data: Partial<PreferenceForm>) => {
-      // Prevent infinite loops with update guard
-      if (isUpdatingRef.current) {
-        return;
-      }
+  const updateFormData = useCallback((data: Partial<PreferenceForm>) => {
+    // Prevent infinite loops with update guard
+    if (isUpdatingRef.current) {
+      return;
+    }
 
-      isUpdatingRef.current = true;
+    isUpdatingRef.current = true;
 
-      // Use requestAnimationFrame to batch updates more efficiently
-      requestAnimationFrame(() => {
-        dispatch({ type: "UPDATE_FORM_DATA", payload: data });
-
-        // Trigger validation after form data update
-        setTimeout(() => {
-          const currentErrors = validateStep(state.currentStep);
-          dispatch({ type: "SET_VALIDATION_ERRORS", payload: currentErrors });
-        }, 100);
-
-        isUpdatingRef.current = false;
-      });
-    },
-    [validateStep, state.currentStep],
-  ); // Added dependencies for validation
+    // Use requestAnimationFrame to batch updates more efficiently
+    requestAnimationFrame(() => {
+      dispatch({ type: "UPDATE_FORM_DATA", payload: data });
+      isUpdatingRef.current = false;
+    });
+  }, []); // Empty dependencies - this function never changes
 
   const getAvailableFeatures = useCallback(
     (preferenceType: string, budget?: number) => {
