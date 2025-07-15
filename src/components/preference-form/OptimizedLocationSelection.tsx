@@ -254,13 +254,6 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
         customLocation: showCustomLocation ? customLocation : "",
       };
 
-      // Store both legacy and enhanced location structures
-      const enhancedLocationData: EnhancedLocationData = {
-        state: selectedState?.value || "",
-        lgasWithAreas: lgasWithAreas,
-        customLocation: showCustomLocation ? customLocation : "",
-      };
-
       // Update with both structures for compatibility and debug display
       debouncedUpdateFormData({
         location: locationData,
