@@ -698,15 +698,10 @@ const ContactInformation: React.FC<ContactInformationProps> = ({
               </motion.div>
             )}
 
-            {/* Auto-submit when values change */}
-            <div style={{ display: "none" }}>
-              {JSON.stringify(values, (key, value) => {
-                if (key && typeof value !== "undefined") {
-                  setTimeout(() => handleSubmit(values), 100);
-                }
-                return value;
-              })}
-            </div>
+            {/* Auto-submit when values change using useEffect */}
+            {React.useEffect(() => {
+              handleSubmit(values);
+            }, [values, handleSubmit])}
           </Form>
         )}
       </Formik>
