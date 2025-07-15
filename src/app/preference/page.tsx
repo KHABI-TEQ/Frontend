@@ -519,69 +519,92 @@ const PreferenceFormContent: React.FC = () => {
 
       case "joint-venture": {
         const jvData = formData as any;
-        return {
+        const jvPayload = {
           ...basePayload,
           preferenceType: "joint-venture",
           preferenceMode: "developer",
           developmentDetails: {
-            minLandSize:
+            minLandSize: (
               jvData.propertyDetails?.landSize ||
               jvData.developmentDetails?.minLandSize ||
-              "",
-            measurementUnit:
+              ""
+            ).trim(),
+            measurementUnit: (
               jvData.propertyDetails?.measurementUnit ||
               jvData.developmentDetails?.measurementUnit ||
-              "",
+              ""
+            ).trim(),
             jvType: jvData.developmentDetails?.jvType || "Equity Split",
-            propertyType:
+            propertyType: (
               jvData.propertyDetails?.propertySubtype ||
               jvData.developmentDetails?.propertyType ||
-              "",
-            expectedStructureType:
-              jvData.developmentDetails?.expectedStructureType || "",
-            timeline: jvData.developmentDetails?.timeline || "",
-            budgetRange: jvData.developmentDetails?.budgetRange || "",
-            documentTypes: jvData.propertyDetails?.documentTypes || [],
-            landConditions: jvData.propertyDetails?.landConditions || [],
-            buildingType: jvData.propertyDetails?.buildingType || "",
-            propertyCondition: jvData.propertyDetails?.propertyCondition || "",
-            minBedrooms: jvData.propertyDetails?.minBedrooms || "",
+              ""
+            ).trim(),
+            expectedStructureType: (
+              jvData.developmentDetails?.expectedStructureType || ""
+            ).trim(),
+            timeline: (jvData.developmentDetails?.timeline || "").trim(),
+            budgetRange: (jvData.developmentDetails?.budgetRange || "").trim(),
+            documentTypes:
+              jvData.propertyDetails?.documentTypes?.filter(
+                (doc: string) => doc.trim() !== "",
+              ) || [],
+            landConditions:
+              jvData.propertyDetails?.landConditions?.filter(
+                (condition: string) => condition.trim() !== "",
+              ) || [],
+            buildingType: (jvData.propertyDetails?.buildingType || "").trim(),
+            propertyCondition: (
+              jvData.propertyDetails?.propertyCondition || ""
+            ).trim(),
+            minBedrooms: (jvData.propertyDetails?.minBedrooms || "")
+              .toString()
+              .trim(),
             minBathrooms: jvData.propertyDetails?.minBathrooms || 0,
-            purpose: jvData.propertyDetails?.purpose || "",
+            purpose: (jvData.propertyDetails?.purpose || "").trim(),
           },
           contactInfo: {
-            companyName: jvData.contactInfo?.companyName || "",
-            contactPerson: jvData.contactInfo?.contactPerson || "",
-            email: jvData.contactInfo?.email || "",
-            phoneNumber: jvData.contactInfo?.phoneNumber || "",
-            cacRegistrationNumber:
-              jvData.contactInfo?.cacRegistrationNumber || "",
+            companyName: (jvData.contactInfo?.companyName || "").trim(),
+            contactPerson: (jvData.contactInfo?.contactPerson || "").trim(),
+            email: (jvData.contactInfo?.email || "").trim(),
+            phoneNumber: (jvData.contactInfo?.phoneNumber || "").trim(),
+            cacRegistrationNumber: (
+              jvData.contactInfo?.cacRegistrationNumber || ""
+            ).trim(),
           },
-          partnerExpectations: jvData.partnerExpectations || "",
-          nearbyLandmark:
+          partnerExpectations: (jvData.partnerExpectations || "").trim(),
+          nearbyLandmark: (
             jvData.propertyDetails?.nearbyLandmark ||
             jvData.nearbyLandmark ||
-            "",
-          additionalNotes: jvData.additionalNotes || "",
-        } as JointVenturePreferencePayload;
+            ""
+          ).trim(),
+          additionalNotes: (jvData.additionalNotes || "").trim(),
+        };
+        return cleanObject(jvPayload) as JointVenturePreferencePayload;
       }
 
       case "shortlet": {
         const shortletData = formData as any;
-        return {
+        const shortletPayload = {
           ...basePayload,
           preferenceType: "shortlet",
           preferenceMode: "shortlet",
           bookingDetails: {
-            propertyType:
+            propertyType: (
               shortletData.propertyDetails?.propertyType ||
               shortletData.bookingDetails?.propertyType ||
-              "",
-            buildingType: shortletData.propertyDetails?.buildingType || "",
-            minBedrooms:
+              ""
+            ).trim(),
+            buildingType: (
+              shortletData.propertyDetails?.buildingType || ""
+            ).trim(),
+            minBedrooms: (
               shortletData.propertyDetails?.bedrooms ||
               shortletData.bookingDetails?.minBedrooms ||
-              "",
+              ""
+            )
+              .toString()
+              .trim(),
             minBathrooms:
               shortletData.propertyDetails?.bathrooms ||
               shortletData.bookingDetails?.minBathrooms ||
@@ -590,49 +613,68 @@ const PreferenceFormContent: React.FC = () => {
               shortletData.propertyDetails?.maxGuests ||
               shortletData.bookingDetails?.numberOfGuests ||
               0,
-            checkInDate: shortletData.bookingDetails?.checkInDate || "",
-            checkOutDate: shortletData.bookingDetails?.checkOutDate || "",
-            travelType:
+            checkInDate: (
+              shortletData.bookingDetails?.checkInDate || ""
+            ).trim(),
+            checkOutDate: (
+              shortletData.bookingDetails?.checkOutDate || ""
+            ).trim(),
+            travelType: (
               shortletData.propertyDetails?.travelType ||
               shortletData.bookingDetails?.travelType ||
-              "",
-            preferredCheckInTime:
-              shortletData.contactInfo?.preferredCheckInTime || "",
-            preferredCheckOutTime:
-              shortletData.contactInfo?.preferredCheckOutTime || "",
-            propertyCondition:
-              shortletData.propertyDetails?.propertyCondition || "",
-            purpose: shortletData.propertyDetails?.purpose || "",
-            landSize: shortletData.propertyDetails?.landSize || "",
-            measurementUnit:
-              shortletData.propertyDetails?.measurementUnit || "",
-            documentTypes: shortletData.propertyDetails?.documentTypes || [],
-            landConditions: shortletData.propertyDetails?.landConditions || [],
+              ""
+            ).trim(),
+            preferredCheckInTime: (
+              shortletData.contactInfo?.preferredCheckInTime || ""
+            ).trim(),
+            preferredCheckOutTime: (
+              shortletData.contactInfo?.preferredCheckOutTime || ""
+            ).trim(),
+            propertyCondition: (
+              shortletData.propertyDetails?.propertyCondition || ""
+            ).trim(),
+            purpose: (shortletData.propertyDetails?.purpose || "").trim(),
+            landSize: (shortletData.propertyDetails?.landSize || "").trim(),
+            measurementUnit: (
+              shortletData.propertyDetails?.measurementUnit || ""
+            ).trim(),
+            documentTypes:
+              shortletData.propertyDetails?.documentTypes?.filter(
+                (doc: string) => doc.trim() !== "",
+              ) || [],
+            landConditions:
+              shortletData.propertyDetails?.landConditions?.filter(
+                (condition: string) => condition.trim() !== "",
+              ) || [],
           },
           contactInfo: {
-            fullName: shortletData.contactInfo?.fullName || "",
-            email: shortletData.contactInfo?.email || "",
-            phoneNumber: shortletData.contactInfo?.phoneNumber || "",
+            fullName: (shortletData.contactInfo?.fullName || "").trim(),
+            email: (shortletData.contactInfo?.email || "").trim(),
+            phoneNumber: (shortletData.contactInfo?.phoneNumber || "").trim(),
             petsAllowed: shortletData.contactInfo?.petsAllowed || false,
             smokingAllowed: shortletData.contactInfo?.smokingAllowed || false,
             partiesAllowed: shortletData.contactInfo?.partiesAllowed || false,
-            additionalRequests:
-              shortletData.contactInfo?.additionalRequests || "",
+            additionalRequests: (
+              shortletData.contactInfo?.additionalRequests || ""
+            ).trim(),
             maxBudgetPerNight: shortletData.contactInfo?.maxBudgetPerNight || 0,
             willingToPayExtra:
               shortletData.contactInfo?.willingToPayExtra || false,
             cleaningFeeBudget: shortletData.contactInfo?.cleaningFeeBudget || 0,
             securityDepositBudget:
               shortletData.contactInfo?.securityDepositBudget || 0,
-            cancellationPolicy:
-              shortletData.contactInfo?.cancellationPolicy || "",
+            cancellationPolicy: (
+              shortletData.contactInfo?.cancellationPolicy || ""
+            ).trim(),
           },
-          nearbyLandmark:
+          nearbyLandmark: (
             shortletData.propertyDetails?.nearbyLandmark ||
             shortletData.nearbyLandmark ||
-            "",
-          additionalNotes: shortletData.additionalNotes || "",
-        } as ShortletPreferencePayload;
+            ""
+          ).trim(),
+          additionalNotes: (shortletData.additionalNotes || "").trim(),
+        };
+        return cleanObject(shortletPayload) as ShortletPreferencePayload;
       }
 
       default:
