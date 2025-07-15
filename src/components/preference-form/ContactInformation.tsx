@@ -423,11 +423,25 @@ const ContactInformation: React.FC<ContactInformationProps> = ({
                     <input
                       type="text"
                       value={cleaningFeeBudget}
-                      onChange={(e) =>
-                        setCleaningFeeBudget(
-                          formatNumberWithCommas(e.target.value),
-                        )
-                      }
+                      onChange={(e) => {
+                        const numericValue = e.target.value.replace(
+                          /[^0-9]/g,
+                          "",
+                        );
+                        if (
+                          numericValue === "" ||
+                          parseInt(numericValue) >= 0
+                        ) {
+                          setCleaningFeeBudget(
+                            formatNumberWithCommas(numericValue),
+                          );
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "-" || e.key === "+" || e.key === "e") {
+                          e.preventDefault();
+                        }
+                      }}
                       placeholder="Enter cleaning fee budget"
                       className="w-full pl-8 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400"
                     />
@@ -446,11 +460,25 @@ const ContactInformation: React.FC<ContactInformationProps> = ({
                     <input
                       type="text"
                       value={securityDepositBudget}
-                      onChange={(e) =>
-                        setSecurityDepositBudget(
-                          formatNumberWithCommas(e.target.value),
-                        )
-                      }
+                      onChange={(e) => {
+                        const numericValue = e.target.value.replace(
+                          /[^0-9]/g,
+                          "",
+                        );
+                        if (
+                          numericValue === "" ||
+                          parseInt(numericValue) >= 0
+                        ) {
+                          setSecurityDepositBudget(
+                            formatNumberWithCommas(numericValue),
+                          );
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "-" || e.key === "+" || e.key === "e") {
+                          e.preventDefault();
+                        }
+                      }}
                       placeholder="Enter security deposit budget"
                       className="w-full pl-8 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400"
                     />
