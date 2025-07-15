@@ -497,36 +497,59 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
                   Select all applicable document types you prefer
                 </p>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {DOCUMENT_TYPES.map((doc) => (
-                  <label
-                    key={doc.value}
-                    className={`flex items-center space-x-3 p-3 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                      documentTypes.includes(doc.value)
-                        ? "border-emerald-500 bg-emerald-50"
-                        : "border-gray-200 bg-white hover:border-emerald-300 hover:bg-emerald-50"
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={documentTypes.includes(doc.value)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setDocumentTypes((prev) => [...prev, doc.value]);
-                        } else {
-                          setDocumentTypes((prev) =>
-                            prev.filter((type) => type !== doc.value),
-                          );
-                        }
-                      }}
-                      className="w-4 h-4 text-emerald-600 bg-white border-gray-300 rounded focus:ring-emerald-500 focus:ring-2"
-                    />
-                    <span className="text-sm font-medium text-gray-800">
-                      {doc.label}
-                    </span>
-                  </label>
-                ))}
-              </div>
+              <Select
+                isMulti
+                options={DOCUMENT_TYPES}
+                value={DOCUMENT_TYPES.filter((doc) =>
+                  documentTypes.includes(doc.value),
+                )}
+                onChange={(selected) => {
+                  const selectedValues = selected
+                    ? selected.map((option: any) => option.value)
+                    : [];
+                  setDocumentTypes(selectedValues);
+                }}
+                placeholder="Select document types..."
+                styles={customSelectStyles}
+                closeMenuOnSelect={false}
+                hideSelectedOptions={false}
+                components={{
+                  Option: ({ innerRef, innerProps, isSelected, data }: any) => (
+                    <div
+                      ref={innerRef}
+                      {...innerProps}
+                      className={`flex items-center space-x-3 p-3 cursor-pointer transition-all duration-200 ${
+                        isSelected
+                          ? "bg-emerald-50 text-emerald-800"
+                          : "hover:bg-gray-50"
+                      }`}
+                    >
+                      <div
+                        className={`w-4 h-4 rounded border-2 transition-all ${
+                          isSelected
+                            ? "border-emerald-500 bg-emerald-500"
+                            : "border-gray-300"
+                        }`}
+                      >
+                        {isSelected && (
+                          <svg
+                            className="w-2.5 h-2.5 text-white absolute top-0.5 left-0.5"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        )}
+                      </div>
+                      <span className="text-sm font-medium">{data.label}</span>
+                    </div>
+                  ),
+                }}
+              />
             </div>
           )}
 

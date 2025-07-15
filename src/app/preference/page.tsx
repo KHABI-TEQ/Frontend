@@ -391,19 +391,33 @@ const PreferenceFormContent: React.FC = () => {
           preferenceType: "buy",
           preferenceMode: "buy",
           propertyDetails: {
-            propertyType: buyData.propertyDetails?.propertyType || "",
+            propertyType:
+              buyData.propertyDetails?.propertySubtype ||
+              buyData.propertyDetails?.propertyType ||
+              "",
             buildingType: buyData.propertyDetails?.buildingType || "",
-            minBedrooms: buyData.propertyDetails?.minBedrooms || "",
-            minBathrooms: buyData.propertyDetails?.minBathrooms || 0,
+            minBedrooms:
+              buyData.propertyDetails?.bedrooms ||
+              buyData.propertyDetails?.minBedrooms ||
+              "",
+            minBathrooms:
+              buyData.propertyDetails?.bathrooms ||
+              buyData.propertyDetails?.minBathrooms ||
+              0,
             propertyCondition: buyData.propertyDetails?.propertyCondition || "",
-            purpose: buyData.propertyDetails?.purpose || "",
+            purpose: buyData.propertyDetails?.purpose || "For living",
+            landSize: buyData.propertyDetails?.landSize || "",
+            measurementUnit: buyData.propertyDetails?.measurementUnit || "",
+            documentTypes: buyData.propertyDetails?.documentTypes || [],
+            landConditions: buyData.propertyDetails?.landConditions || [],
           },
           contactInfo: {
             fullName: buyData.contactInfo?.fullName || "",
             email: buyData.contactInfo?.email || "",
             phoneNumber: buyData.contactInfo?.phoneNumber || "",
           },
-          nearbyLandmark: buyData.nearbyLandmark,
+          nearbyLandmark:
+            buyData.propertyDetails?.nearbyLandmark || buyData.nearbyLandmark,
           additionalNotes: buyData.additionalNotes,
         } as BuyPreferencePayload;
       }
@@ -415,12 +429,25 @@ const PreferenceFormContent: React.FC = () => {
           preferenceType: "rent",
           preferenceMode: "tenant",
           propertyDetails: {
-            propertyType: rentData.propertyDetails?.propertyType || "",
-            minBedrooms: rentData.propertyDetails?.minBedrooms || "",
-            leaseTerm: rentData.propertyDetails?.leaseTerm || "",
+            propertyType:
+              rentData.propertyDetails?.propertySubtype ||
+              rentData.propertyDetails?.propertyType ||
+              "",
+            buildingType: rentData.propertyDetails?.buildingType || "",
+            minBedrooms:
+              rentData.propertyDetails?.bedrooms ||
+              rentData.propertyDetails?.minBedrooms ||
+              "",
+            minBathrooms:
+              rentData.propertyDetails?.bathrooms ||
+              rentData.propertyDetails?.minBathrooms ||
+              0,
+            leaseTerm: rentData.propertyDetails?.leaseTerm || "1 Year",
             propertyCondition:
               rentData.propertyDetails?.propertyCondition || "",
-            purpose: rentData.propertyDetails?.purpose || "",
+            purpose: rentData.propertyDetails?.purpose || "Residential",
+            landSize: rentData.propertyDetails?.landSize || "",
+            measurementUnit: rentData.propertyDetails?.measurementUnit || "",
           },
           contactInfo: {
             fullName: rentData.contactInfo?.fullName || "",
@@ -438,13 +465,27 @@ const PreferenceFormContent: React.FC = () => {
           preferenceType: "joint-venture",
           preferenceMode: "developer",
           developmentDetails: {
-            minLandSize: jvData.developmentDetails?.minLandSize || "",
-            jvType: jvData.developmentDetails?.jvType || "",
-            propertyType: jvData.developmentDetails?.propertyType || "",
+            minLandSize:
+              jvData.propertyDetails?.landSize ||
+              jvData.developmentDetails?.minLandSize ||
+              "",
+            measurementUnit:
+              jvData.propertyDetails?.measurementUnit ||
+              jvData.developmentDetails?.measurementUnit ||
+              "",
+            jvType: jvData.developmentDetails?.jvType || "Equity Split",
+            propertyType:
+              jvData.propertyDetails?.propertySubtype ||
+              jvData.developmentDetails?.propertyType ||
+              "",
             expectedStructureType:
               jvData.developmentDetails?.expectedStructureType || "",
             timeline: jvData.developmentDetails?.timeline || "",
             budgetRange: jvData.developmentDetails?.budgetRange,
+            documentTypes: jvData.propertyDetails?.documentTypes || [],
+            landConditions: jvData.propertyDetails?.landConditions || [],
+            buildingType: jvData.propertyDetails?.buildingType || "",
+            propertyCondition: jvData.propertyDetails?.propertyCondition || "",
           },
           contactInfo: {
             companyName: jvData.contactInfo?.companyName || "",
@@ -464,17 +505,41 @@ const PreferenceFormContent: React.FC = () => {
           preferenceType: "shortlet",
           preferenceMode: "shortlet",
           bookingDetails: {
-            propertyType: shortletData.bookingDetails?.propertyType || "",
-            minBedrooms: shortletData.bookingDetails?.minBedrooms || "",
-            numberOfGuests: shortletData.bookingDetails?.numberOfGuests || 0,
+            propertyType:
+              shortletData.propertyDetails?.propertyType ||
+              shortletData.bookingDetails?.propertyType ||
+              "",
+            minBedrooms:
+              shortletData.propertyDetails?.bedrooms ||
+              shortletData.bookingDetails?.minBedrooms ||
+              "",
+            minBathrooms:
+              shortletData.propertyDetails?.bathrooms ||
+              shortletData.bookingDetails?.minBathrooms ||
+              0,
+            numberOfGuests:
+              shortletData.propertyDetails?.maxGuests ||
+              shortletData.bookingDetails?.numberOfGuests ||
+              0,
             checkInDate: shortletData.bookingDetails?.checkInDate || "",
             checkOutDate: shortletData.bookingDetails?.checkOutDate || "",
+            travelType:
+              shortletData.propertyDetails?.travelType ||
+              shortletData.bookingDetails?.travelType ||
+              "",
+            preferredCheckInTime:
+              shortletData.contactInfo?.preferredCheckInTime || "",
+            preferredCheckOutTime:
+              shortletData.contactInfo?.preferredCheckOutTime || "",
           },
           contactInfo: {
             fullName: shortletData.contactInfo?.fullName || "",
             email: shortletData.contactInfo?.email || "",
             phoneNumber: shortletData.contactInfo?.phoneNumber || "",
           },
+          nearbyLandmark:
+            shortletData.propertyDetails?.nearbyLandmark ||
+            shortletData.nearbyLandmark,
           additionalNotes: shortletData.additionalNotes,
         } as ShortletPreferencePayload;
       }
@@ -597,22 +662,36 @@ const PreferenceFormContent: React.FC = () => {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 relative">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="min-h-screen bg-gradient-to-br from-gray-50 via-emerald-50/30 to-gray-100 relative"
+    >
       {/* Loading Overlay */}
       <LoadingOverlay isSubmitting={state.isSubmitting} />
 
       <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {/* Header */}
-        <div className="mb-6 sm:mb-8">
-          <button
+        <motion.div
+          initial={{ y: -50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="mb-6 sm:mb-8"
+        >
+          <motion.button
             onClick={handleBackClick}
-            className="mb-4 sm:mb-6 flex items-center space-x-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+            className="mb-4 sm:mb-6 flex items-center space-x-2 text-sm text-gray-600 hover:text-gray-800 transition-all duration-200"
+            whileHover={{ x: -5, scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            <svg
+            <motion.svg
               className="w-4 h-4"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
+              whileHover={{ x: -2 }}
+              transition={{ type: "spring", stiffness: 400 }}
             >
               <path
                 strokeLinecap="round"
@@ -620,82 +699,184 @@ const PreferenceFormContent: React.FC = () => {
                 strokeWidth={2}
                 d="M11 17l-5-5m0 0l5-5m-5 5h12"
               />
-            </svg>
+            </motion.svg>
             <span>Back to Marketplace</span>
-          </button>
+          </motion.button>
 
-          <div className="text-center">
-            <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-2 sm:mb-3">
+          <motion.div
+            className="text-center"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.6 }}
+          >
+            <motion.h1
+              className="text-2xl sm:text-4xl font-bold text-gray-900 mb-2 sm:mb-3"
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+            >
               Submit Your Property Preference
-            </h1>
-            <p className="text-base sm:text-xl text-gray-600">
+            </motion.h1>
+            <motion.p
+              className="text-base sm:text-xl text-gray-600"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >
               Tell us what you&apos;re looking for and we&apos;ll help you find
               the perfect match
-            </p>
-          </div>
-        </div>
+            </motion.p>
+          </motion.div>
+        </motion.div>
 
         {/* Preference Type Selector */}
-        {renderPreferenceTypeSelector}
+        <motion.div
+          initial={{ y: 30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.4, duration: 0.6 }}
+        >
+          {renderPreferenceTypeSelector}
+        </motion.div>
 
         {/* Step Progress */}
-        <StepProgressIndicator
-          steps={state.steps}
-          currentStep={state.currentStep}
-          onStepClick={handleStepClick}
-        />
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.6, duration: 0.5 }}
+        >
+          <StepProgressIndicator
+            steps={state.steps}
+            currentStep={state.currentStep}
+            onStepClick={handleStepClick}
+          />
+        </motion.div>
 
         {/* Form Content with Step Wrapper to preserve state */}
-        <div className="bg-white rounded-xl p-6 shadow-lg border">
+        <motion.div
+          className="bg-white rounded-xl p-6 shadow-lg border"
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.8, duration: 0.6 }}
+          whileHover={{ shadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)" }}
+        >
           <div className="min-h-[80px]">
             {/* Step 0: Location */}
-            <StepWrapper
-              stepId="location"
-              currentStep={state.currentStep}
-              targetStep={0}
-            >
-              <LocationSelection />
-            </StepWrapper>
+            <AnimatePresence mode="wait">
+              <StepWrapper
+                stepId="location"
+                currentStep={state.currentStep}
+                targetStep={0}
+              >
+                <motion.div
+                  key="location"
+                  initial={{ x: 50, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: -50, opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <LocationSelection />
+                </motion.div>
+              </StepWrapper>
+            </AnimatePresence>
 
             {/* Step 1: Property Details & Budget */}
-            <StepWrapper
-              stepId="property-budget"
-              currentStep={state.currentStep}
-              targetStep={1}
-            >
-              <div className="space-y-8">
-                <PropertyDetails preferenceType={selectedPreferenceType} />
-                <BudgetSelection preferenceType={selectedPreferenceType} />
-              </div>
-            </StepWrapper>
+            <AnimatePresence mode="wait">
+              <StepWrapper
+                stepId="property-budget"
+                currentStep={state.currentStep}
+                targetStep={1}
+              >
+                <motion.div
+                  key="property-budget"
+                  initial={{ x: 50, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: -50, opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-8"
+                >
+                  <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.1 }}
+                  >
+                    <PropertyDetails preferenceType={selectedPreferenceType} />
+                  </motion.div>
+                  <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    <BudgetSelection preferenceType={selectedPreferenceType} />
+                  </motion.div>
+                </motion.div>
+              </StepWrapper>
+            </AnimatePresence>
 
             {/* Step 2: Features & Amenities */}
-            <StepWrapper
-              stepId="features"
-              currentStep={state.currentStep}
-              targetStep={2}
-            >
-              <div className="space-y-8">
-                <FeatureSelection preferenceType={selectedPreferenceType} />
-                {selectedPreferenceType === "shortlet" && <DateSelection />}
-              </div>
-            </StepWrapper>
+            <AnimatePresence mode="wait">
+              <StepWrapper
+                stepId="features"
+                currentStep={state.currentStep}
+                targetStep={2}
+              >
+                <motion.div
+                  key="features"
+                  initial={{ x: 50, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: -50, opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-8"
+                >
+                  <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.1 }}
+                  >
+                    <FeatureSelection preferenceType={selectedPreferenceType} />
+                  </motion.div>
+                  {selectedPreferenceType === "shortlet" && (
+                    <motion.div
+                      initial={{ y: 20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      <DateSelection />
+                    </motion.div>
+                  )}
+                </motion.div>
+              </StepWrapper>
+            </AnimatePresence>
 
             {/* Step 3: Contact */}
-            <StepWrapper
-              stepId="contact"
-              currentStep={state.currentStep}
-              targetStep={3}
-            >
-              <ContactInformation preferenceType={selectedPreferenceType} />
-            </StepWrapper>
+            <AnimatePresence mode="wait">
+              <StepWrapper
+                stepId="contact"
+                currentStep={state.currentStep}
+                targetStep={3}
+              >
+                <motion.div
+                  key="contact"
+                  initial={{ x: 50, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: -50, opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <ContactInformation preferenceType={selectedPreferenceType} />
+                </motion.div>
+              </StepWrapper>
+            </AnimatePresence>
           </div>
 
           {/* Submit Button */}
-          <div className="mt-8 pt-6 border-t border-gray-200">
+          <motion.div
+            className="mt-8 pt-6 border-t border-gray-200"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
             <SubmitButton onSubmit={handleSubmit} />
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* Debug Panel - Show current form data in development only */}
         {debugPanel}
@@ -707,7 +888,7 @@ const PreferenceFormContent: React.FC = () => {
         onSubmitNew={handleSubmitNew}
         onGoToMarketplace={handleGoToMarketplace}
       />
-    </div>
+    </motion.div>
   );
 };
 
