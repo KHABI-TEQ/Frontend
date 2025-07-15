@@ -369,7 +369,7 @@ const PreferenceFormContent: React.FC = () => {
         state: formData.location?.state || "",
         localGovernmentAreas: formData.location?.lgas || [],
         selectedAreas: formData.location?.areas || [],
-        customLocation: formData.location?.customLocation,
+        customLocation: formData.location?.customLocation || "",
       },
       budget: {
         minPrice: formData.budget?.minPrice || 0,
@@ -417,8 +417,10 @@ const PreferenceFormContent: React.FC = () => {
             phoneNumber: buyData.contactInfo?.phoneNumber || "",
           },
           nearbyLandmark:
-            buyData.propertyDetails?.nearbyLandmark || buyData.nearbyLandmark,
-          additionalNotes: buyData.additionalNotes,
+            buyData.propertyDetails?.nearbyLandmark ||
+            buyData.nearbyLandmark ||
+            "",
+          additionalNotes: buyData.additionalNotes || "",
         } as BuyPreferencePayload;
       }
 
