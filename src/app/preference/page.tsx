@@ -384,17 +384,26 @@ const PreferenceFormContent: React.FC = () => {
     };
 
     switch (selectedPreferenceType) {
-            case "buy": {
+      case "buy": {
         const buyData = formData as any;
         return {
           ...basePayload,
           preferenceType: "buy",
           preferenceMode: "buy",
           propertyDetails: {
-            propertyType: buyData.propertyDetails?.propertySubtype || buyData.propertyDetails?.propertyType || "",
+            propertyType:
+              buyData.propertyDetails?.propertySubtype ||
+              buyData.propertyDetails?.propertyType ||
+              "",
             buildingType: buyData.propertyDetails?.buildingType || "",
-            minBedrooms: buyData.propertyDetails?.bedrooms || buyData.propertyDetails?.minBedrooms || "",
-            minBathrooms: buyData.propertyDetails?.bathrooms || buyData.propertyDetails?.minBathrooms || 0,
+            minBedrooms:
+              buyData.propertyDetails?.bedrooms ||
+              buyData.propertyDetails?.minBedrooms ||
+              "",
+            minBathrooms:
+              buyData.propertyDetails?.bathrooms ||
+              buyData.propertyDetails?.minBathrooms ||
+              0,
             propertyCondition: buyData.propertyDetails?.propertyCondition || "",
             purpose: buyData.propertyDetails?.purpose || "For living",
             landSize: buyData.propertyDetails?.landSize || "",
@@ -407,24 +416,35 @@ const PreferenceFormContent: React.FC = () => {
             email: buyData.contactInfo?.email || "",
             phoneNumber: buyData.contactInfo?.phoneNumber || "",
           },
-          nearbyLandmark: buyData.propertyDetails?.nearbyLandmark || buyData.nearbyLandmark,
+          nearbyLandmark:
+            buyData.propertyDetails?.nearbyLandmark || buyData.nearbyLandmark,
           additionalNotes: buyData.additionalNotes,
         } as BuyPreferencePayload;
       }
 
-            case "rent": {
+      case "rent": {
         const rentData = formData as any;
         return {
           ...basePayload,
           preferenceType: "rent",
           preferenceMode: "tenant",
           propertyDetails: {
-            propertyType: rentData.propertyDetails?.propertySubtype || rentData.propertyDetails?.propertyType || "",
+            propertyType:
+              rentData.propertyDetails?.propertySubtype ||
+              rentData.propertyDetails?.propertyType ||
+              "",
             buildingType: rentData.propertyDetails?.buildingType || "",
-            minBedrooms: rentData.propertyDetails?.bedrooms || rentData.propertyDetails?.minBedrooms || "",
-            minBathrooms: rentData.propertyDetails?.bathrooms || rentData.propertyDetails?.minBathrooms || 0,
+            minBedrooms:
+              rentData.propertyDetails?.bedrooms ||
+              rentData.propertyDetails?.minBedrooms ||
+              "",
+            minBathrooms:
+              rentData.propertyDetails?.bathrooms ||
+              rentData.propertyDetails?.minBathrooms ||
+              0,
             leaseTerm: rentData.propertyDetails?.leaseTerm || "1 Year",
-            propertyCondition: rentData.propertyDetails?.propertyCondition || "",
+            propertyCondition:
+              rentData.propertyDetails?.propertyCondition || "",
             purpose: rentData.propertyDetails?.purpose || "Residential",
             landSize: rentData.propertyDetails?.landSize || "",
             measurementUnit: rentData.propertyDetails?.measurementUnit || "",
@@ -438,18 +458,28 @@ const PreferenceFormContent: React.FC = () => {
         } as RentPreferencePayload;
       }
 
-            case "joint-venture": {
+      case "joint-venture": {
         const jvData = formData as any;
         return {
           ...basePayload,
           preferenceType: "joint-venture",
           preferenceMode: "developer",
           developmentDetails: {
-            minLandSize: jvData.propertyDetails?.landSize || jvData.developmentDetails?.minLandSize || "",
-            measurementUnit: jvData.propertyDetails?.measurementUnit || jvData.developmentDetails?.measurementUnit || "",
+            minLandSize:
+              jvData.propertyDetails?.landSize ||
+              jvData.developmentDetails?.minLandSize ||
+              "",
+            measurementUnit:
+              jvData.propertyDetails?.measurementUnit ||
+              jvData.developmentDetails?.measurementUnit ||
+              "",
             jvType: jvData.developmentDetails?.jvType || "Equity Split",
-            propertyType: jvData.propertyDetails?.propertySubtype || jvData.developmentDetails?.propertyType || "",
-            expectedStructureType: jvData.developmentDetails?.expectedStructureType || "",
+            propertyType:
+              jvData.propertyDetails?.propertySubtype ||
+              jvData.developmentDetails?.propertyType ||
+              "",
+            expectedStructureType:
+              jvData.developmentDetails?.expectedStructureType || "",
             timeline: jvData.developmentDetails?.timeline || "",
             budgetRange: jvData.developmentDetails?.budgetRange,
             documentTypes: jvData.propertyDetails?.documentTypes || [],
@@ -468,29 +498,48 @@ const PreferenceFormContent: React.FC = () => {
         } as JointVenturePreferencePayload;
       }
 
-            case "shortlet": {
+      case "shortlet": {
         const shortletData = formData as any;
         return {
           ...basePayload,
           preferenceType: "shortlet",
           preferenceMode: "shortlet",
           bookingDetails: {
-            propertyType: shortletData.propertyDetails?.propertyType || shortletData.bookingDetails?.propertyType || "",
-            minBedrooms: shortletData.propertyDetails?.bedrooms || shortletData.bookingDetails?.minBedrooms || "",
-            minBathrooms: shortletData.propertyDetails?.bathrooms || shortletData.bookingDetails?.minBathrooms || 0,
-            numberOfGuests: shortletData.propertyDetails?.maxGuests || shortletData.bookingDetails?.numberOfGuests || 0,
+            propertyType:
+              shortletData.propertyDetails?.propertyType ||
+              shortletData.bookingDetails?.propertyType ||
+              "",
+            minBedrooms:
+              shortletData.propertyDetails?.bedrooms ||
+              shortletData.bookingDetails?.minBedrooms ||
+              "",
+            minBathrooms:
+              shortletData.propertyDetails?.bathrooms ||
+              shortletData.bookingDetails?.minBathrooms ||
+              0,
+            numberOfGuests:
+              shortletData.propertyDetails?.maxGuests ||
+              shortletData.bookingDetails?.numberOfGuests ||
+              0,
             checkInDate: shortletData.bookingDetails?.checkInDate || "",
             checkOutDate: shortletData.bookingDetails?.checkOutDate || "",
-            travelType: shortletData.propertyDetails?.travelType || shortletData.bookingDetails?.travelType || "",
-            preferredCheckInTime: shortletData.contactInfo?.preferredCheckInTime || "",
-            preferredCheckOutTime: shortletData.contactInfo?.preferredCheckOutTime || "",
+            travelType:
+              shortletData.propertyDetails?.travelType ||
+              shortletData.bookingDetails?.travelType ||
+              "",
+            preferredCheckInTime:
+              shortletData.contactInfo?.preferredCheckInTime || "",
+            preferredCheckOutTime:
+              shortletData.contactInfo?.preferredCheckOutTime || "",
           },
           contactInfo: {
             fullName: shortletData.contactInfo?.fullName || "",
             email: shortletData.contactInfo?.email || "",
             phoneNumber: shortletData.contactInfo?.phoneNumber || "",
           },
-          nearbyLandmark: shortletData.propertyDetails?.nearbyLandmark || shortletData.nearbyLandmark,
+          nearbyLandmark:
+            shortletData.propertyDetails?.nearbyLandmark ||
+            shortletData.nearbyLandmark,
           additionalNotes: shortletData.additionalNotes,
         } as ShortletPreferencePayload;
       }
@@ -612,7 +661,7 @@ const PreferenceFormContent: React.FC = () => {
     router.back();
   }, [router]);
 
-    return (
+  return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -623,7 +672,7 @@ const PreferenceFormContent: React.FC = () => {
       <LoadingOverlay isSubmitting={state.isSubmitting} />
 
       <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
-                {/* Header */}
+        {/* Header */}
         <motion.div
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -680,7 +729,7 @@ const PreferenceFormContent: React.FC = () => {
           </motion.div>
         </motion.div>
 
-                {/* Preference Type Selector */}
+        {/* Preference Type Selector */}
         <motion.div
           initial={{ y: 30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -702,7 +751,7 @@ const PreferenceFormContent: React.FC = () => {
           />
         </motion.div>
 
-                {/* Form Content with Step Wrapper to preserve state */}
+        {/* Form Content with Step Wrapper to preserve state */}
         <motion.div
           className="bg-white rounded-xl p-6 shadow-lg border"
           initial={{ y: 50, opacity: 0 }}
@@ -711,7 +760,7 @@ const PreferenceFormContent: React.FC = () => {
           whileHover={{ shadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)" }}
         >
           <div className="min-h-[80px]">
-                        {/* Step 0: Location */}
+            {/* Step 0: Location */}
             <AnimatePresence mode="wait">
               <StepWrapper
                 stepId="location"
@@ -818,7 +867,7 @@ const PreferenceFormContent: React.FC = () => {
             </AnimatePresence>
           </div>
 
-                    {/* Submit Button */}
+          {/* Submit Button */}
           <motion.div
             className="mt-8 pt-6 border-t border-gray-200"
             initial={{ y: 20, opacity: 0 }}
@@ -839,7 +888,7 @@ const PreferenceFormContent: React.FC = () => {
         onSubmitNew={handleSubmitNew}
         onGoToMarketplace={handleGoToMarketplace}
       />
-    </div>
+    </motion.div>
   );
 };
 
