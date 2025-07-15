@@ -295,11 +295,16 @@ This document contains structured sample payloads for each preference type, show
 
 2. **Required Fields**:
    - State, at least 1 LGA
-   - At least 1 area or custom location
+   - At least 1 area in any LGA OR custom location filled
    - Budget range (min < max)
    - Contact information appropriate to preference type
 
-3. **Conditional Requirements**:
+3. **Location Step Validation**:
+   - Continue button activates when: state selected + at least 1 LGA + (at least 1 area in any LGA OR custom location provided)
+   - Enhanced location data stored in `enhancedLocation` field for internal processing
+   - Legacy compatibility maintained with `localGovernmentAreas` array
+
+4. **Conditional Requirements**:
    - Joint Venture: Company name and CAC registration
    - Shortlet: Check-in/out dates and guest details
    - Budget minimums vary by location and property type
