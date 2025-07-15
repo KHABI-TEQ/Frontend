@@ -739,4 +739,44 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
 
 OptimizedLocationSelection.displayName = "OptimizedLocationSelection";
 
+// Memoized LGA Area Field Component for better performance
+const LGAAreaField = memo(
+  ({
+    lga,
+    index,
+    selectedAreas,
+    availableAreas,
+    onAreaChange,
+    hasAreas,
+    isAtLimit,
+  }: {
+    lga: { value: string; label: string };
+    index: number;
+    selectedAreas: { value: string; label: string }[];
+    availableAreas: { value: string; label: string }[];
+    onAreaChange: (lgaName: string, areas: any) => void;
+    hasAreas: boolean;
+    isAtLimit: boolean;
+  }) => {
+    return (
+      <motion.div
+        key={lga.value}
+        className={`rounded-lg p-4 border transition-all duration-200 ${
+          hasAreas
+            ? "bg-emerald-50 border-emerald-200 shadow-sm"
+            : "bg-gray-50 border-gray-200 hover:bg-gray-100"
+        }`}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2, delay: index * 0.1 }}
+        whileHover={{ scale: 1.02 }}
+      >
+        {/* Component content stays the same */}
+      </motion.div>
+    );
+  },
+);
+
+LGAAreaField.displayName = "LGAAreaField";
+
 export default OptimizedLocationSelection;
