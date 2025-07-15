@@ -388,7 +388,7 @@ const LocationSelectionComponent: React.FC<LocationSelectionProps> = ({
             createOptionPosition="first"
           />
           <p className="text-xs text-gray-500">
-            💡 Can't find your LGA? Just type it and press Enter to add it.
+            💡 Can&apos;t find your LGA? Just type it and press Enter to add it.
           </p>
           {lgaErrors.length > 0 && (
             <p className="text-sm text-red-500 font-medium">
@@ -465,7 +465,7 @@ const LocationSelectionComponent: React.FC<LocationSelectionProps> = ({
           </div>
 
           <p className="text-xs text-gray-500">
-            💡 Can't find your area? Just type it and press Enter to add it.
+            💡 Can&apos;t find your area? Just type it and press Enter to add it.
           </p>
 
           {/* Selected areas display */}

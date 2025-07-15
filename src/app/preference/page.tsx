@@ -577,11 +577,11 @@ const PreferenceFormContent: React.FC = () => {
           Current Form Data (Debug):
         </h4>
         <pre className="text-xs whitespace-pre-wrap">
-          {JSON.stringify(state.formData, null, 2)}
+          {JSON.stringify(generatePayload(), null, 2)}
         </pre>
       </div>
     );
-  }, [state.formData]);
+  }, [state.formData, generatePayload]);
 
   // Handle step navigation - memoized to prevent recreation
   const handleStepClick = useCallback(
@@ -647,7 +647,7 @@ const PreferenceFormContent: React.FC = () => {
 
         {/* Form Content with Step Wrapper to preserve state */}
         <div className="bg-white rounded-xl p-6 shadow-lg border">
-          <div className="min-h-[400px]">
+          <div className="min-h-[80px]">
             {/* Step 0: Location */}
             <StepWrapper
               stepId="location"
