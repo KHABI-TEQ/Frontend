@@ -3,11 +3,68 @@
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
+import Select from "react-select";
 import { usePreferenceForm } from "@/context/preference-form-context";
 
 interface DateSelectionProps {
   className?: string;
 }
+
+// Check-in/out time options
+const CHECK_TIMES = [
+  { value: "08:00", label: "8:00 AM" },
+  { value: "09:00", label: "9:00 AM" },
+  { value: "10:00", label: "10:00 AM" },
+  { value: "11:00", label: "11:00 AM" },
+  { value: "12:00", label: "12:00 PM" },
+  { value: "13:00", label: "1:00 PM" },
+  { value: "14:00", label: "2:00 PM" },
+  { value: "15:00", label: "3:00 PM" },
+  { value: "16:00", label: "4:00 PM" },
+  { value: "17:00", label: "5:00 PM" },
+  { value: "18:00", label: "6:00 PM" },
+  { value: "19:00", label: "7:00 PM" },
+  { value: "20:00", label: "8:00 PM" },
+  { value: "21:00", label: "9:00 PM" },
+  { value: "22:00", label: "10:00 PM" },
+];
+
+// Custom select styles
+const customSelectStyles = {
+  control: (provided: any, state: any) => ({
+    ...provided,
+    minHeight: "44px",
+    border: state.isFocused ? "2px solid #10B981" : "1px solid #E5E7EB",
+    borderRadius: "8px",
+    backgroundColor: "#FFFFFF",
+    boxShadow: "none",
+    "&:hover": {
+      borderColor: "#10B981",
+    },
+    transition: "all 0.2s ease",
+  }),
+  valueContainer: (provided: any) => ({
+    ...provided,
+    padding: "8px 12px",
+    fontSize: "14px",
+  }),
+  placeholder: (provided: any) => ({
+    ...provided,
+    color: "#9CA3AF",
+    fontSize: "14px",
+  }),
+  option: (provided: any, state: any) => ({
+    ...provided,
+    backgroundColor: state.isSelected
+      ? "#10B981"
+      : state.isFocused
+        ? "#F3F4F6"
+        : "white",
+    color: state.isSelected ? "white" : "#374151",
+    padding: "10px 12px",
+    fontSize: "14px",
+  }),
+};
 
 const DateSelection: React.FC<DateSelectionProps> = ({ className = "" }) => {
   const { state, updateFormData, getValidationErrorsForField } =
@@ -16,6 +73,8 @@ const DateSelection: React.FC<DateSelectionProps> = ({ className = "" }) => {
   const [checkInDate, setCheckInDate] = useState<string>("");
   const [checkOutDate, setCheckOutDate] = useState<string>("");
   const [numberOfNights, setNumberOfNights] = useState<number>(0);
+  const [preferredCheckInTime, setPreferredCheckInTime] = useState<any>(null);
+  const [preferredCheckOutTime, setPreferredCheckOutTime] = useState<any>(null);
 
   // Get validation errors
   const checkInErrors = getValidationErrorsForField(
@@ -31,6 +90,20 @@ const DateSelection: React.FC<DateSelectionProps> = ({ className = "" }) => {
     if (formData.bookingDetails) {
       setCheckInDate(formData.bookingDetails.checkInDate || "");
       setCheckOutDate(formData.bookingDetails.checkOutDate || "");
+    }
+    if (formData.contactInfo) {
+      const checkInTime = formData.contactInfo.preferredCheckInTime;
+      const checkOutTime = formData.contactInfo.preferredCheckOutTime;
+      if (checkInTime) {
+        setPreferredCheckInTime(
+          CHECK_TIMES.find((t) => t.value === checkInTime) || null,
+        );
+      }
+      if (checkOutTime) {
+        setPreferredCheckOutTime(
+          CHECK_TIMES.find((t) => t.value === checkOutTime) || null,
+        );
+      }
     }
   }, [state.formData]);
 
@@ -50,6 +123,7 @@ const DateSelection: React.FC<DateSelectionProps> = ({ className = "" }) => {
   // Update context when values change
   useEffect(() => {
     const currentBookingDetails = (state.formData as any).bookingDetails || {};
+    const currentContactInfo = (state.formData as any).contactInfo || {};
 
     updateFormData({
       bookingDetails: {
@@ -57,8 +131,19 @@ const DateSelection: React.FC<DateSelectionProps> = ({ className = "" }) => {
         checkInDate,
         checkOutDate,
       },
+      contactInfo: {
+        ...currentContactInfo,
+        preferredCheckInTime: preferredCheckInTime?.value || "",
+        preferredCheckOutTime: preferredCheckOutTime?.value || "",
+      },
     });
-  }, [checkInDate, checkOutDate, updateFormData]);
+  }, [
+    checkInDate,
+    checkOutDate,
+    preferredCheckInTime,
+    preferredCheckOutTime,
+    updateFormData,
+  ]);
 
   // Get minimum date (today)
   const getMinDate = useCallback(() => {
@@ -163,105 +248,223 @@ const DateSelection: React.FC<DateSelectionProps> = ({ className = "" }) => {
           Select Your Dates
         </h3>
         <p className="text-sm text-gray-600">
-          Choose your check-in and check-out dates
+          Choose your check-in and check-out dates with time preferences
         </p>
       </div>
 
-      {/* Date Inputs */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Check-in Date */}
-        <div className="space-y-2">
-          <label className="block text-sm font-semibold text-gray-800">
-            Check-in Date <span className="text-red-500">*</span>
-          </label>
-          <div className="relative">
-            <input
-              type="date"
-              value={checkInDate}
-              onChange={handleCheckInChange}
-              min={getMinDate()}
-              className={`w-full px-3 py-2.5 text-sm border rounded-lg focus:ring-2 focus:ring-emerald-500 transition-all duration-200 ${
-                checkInErrors.length > 0
-                  ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                  : checkInDate
-                    ? "border-emerald-500 focus:border-emerald-500"
-                    : "border-gray-200 focus:border-emerald-500"
-              }`}
-            />
-            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-              <svg
-                className="w-5 h-5 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
+      {/* Advanced Date Inputs */}
+      <div className="space-y-8">
+        {/* Date Selection */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Check-in Date */}
+          <div className="space-y-3">
+            <label className="block text-sm font-semibold text-gray-800">
+              Check-in Date <span className="text-red-500">*</span>
+            </label>
+            <div className="relative group">
+              <input
+                type="date"
+                value={checkInDate}
+                onChange={handleCheckInChange}
+                min={getMinDate()}
+                className={`w-full px-4 py-3 text-sm border-2 rounded-xl bg-white focus:ring-4 focus:ring-emerald-100 transition-all duration-300 shadow-sm hover:shadow-md ${
+                  checkInErrors.length > 0
+                    ? "border-red-400 focus:border-red-500 focus:ring-red-100"
+                    : checkInDate
+                      ? "border-emerald-400 focus:border-emerald-500"
+                      : "border-gray-200 focus:border-emerald-400 hover:border-emerald-300"
+                }`}
+              />
+              <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                <div
+                  className={`p-1 rounded-lg transition-colors duration-200 ${
+                    checkInDate ? "bg-emerald-100" : "bg-gray-100"
+                  }`}
+                >
+                  <svg
+                    className={`w-4 h-4 transition-colors duration-200 ${
+                      checkInDate ? "text-emerald-600" : "text-gray-400"
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                </div>
+              </div>
             </div>
+            {checkInErrors.length > 0 && (
+              <motion.p
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-sm text-red-500 font-medium flex items-center space-x-1"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <span>{checkInErrors[0].message}</span>
+              </motion.p>
+            )}
+            {checkInDate && !checkInErrors.length && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-3 bg-emerald-50 rounded-lg border border-emerald-200"
+              >
+                <p className="text-sm font-medium text-emerald-800">
+                  Check-in: {formatDisplayDate(checkInDate)}
+                </p>
+              </motion.div>
+            )}
           </div>
-          {checkInErrors.length > 0 && (
-            <p className="text-sm text-red-500 font-medium">
-              {checkInErrors[0].message}
-            </p>
-          )}
-          {checkInDate && (
-            <p className="text-sm text-emerald-600">
-              {formatDisplayDate(checkInDate)}
-            </p>
-          )}
+
+          {/* Check-out Date */}
+          <div className="space-y-3">
+            <label className="block text-sm font-semibold text-gray-800">
+              Check-out Date <span className="text-red-500">*</span>
+            </label>
+            <div className="relative group">
+              <input
+                type="date"
+                value={checkOutDate}
+                onChange={handleCheckOutChange}
+                min={getMinCheckOutDate()}
+                disabled={!checkInDate}
+                className={`w-full px-4 py-3 text-sm border-2 rounded-xl bg-white focus:ring-4 focus:ring-emerald-100 transition-all duration-300 shadow-sm hover:shadow-md disabled:bg-gray-50 disabled:cursor-not-allowed disabled:border-gray-200 ${
+                  checkOutErrors.length > 0
+                    ? "border-red-400 focus:border-red-500 focus:ring-red-100"
+                    : checkOutDate
+                      ? "border-emerald-400 focus:border-emerald-500"
+                      : "border-gray-200 focus:border-emerald-400 hover:border-emerald-300"
+                }`}
+              />
+              <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                <div
+                  className={`p-1 rounded-lg transition-colors duration-200 ${
+                    checkOutDate
+                      ? "bg-emerald-100"
+                      : !checkInDate
+                        ? "bg-gray-50"
+                        : "bg-gray-100"
+                  }`}
+                >
+                  <svg
+                    className={`w-4 h-4 transition-colors duration-200 ${
+                      checkOutDate
+                        ? "text-emerald-600"
+                        : !checkInDate
+                          ? "text-gray-300"
+                          : "text-gray-400"
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+            {checkOutErrors.length > 0 && (
+              <motion.p
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-sm text-red-500 font-medium flex items-center space-x-1"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <span>{checkOutErrors[0].message}</span>
+              </motion.p>
+            )}
+            {checkOutDate && !checkOutErrors.length && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-3 bg-emerald-50 rounded-lg border border-emerald-200"
+              >
+                <p className="text-sm font-medium text-emerald-800">
+                  Check-out: {formatDisplayDate(checkOutDate)}
+                </p>
+              </motion.div>
+            )}
+          </div>
         </div>
 
-        {/* Check-out Date */}
-        <div className="space-y-2">
-          <label className="block text-sm font-semibold text-gray-800">
-            Check-out Date <span className="text-red-500">*</span>
-          </label>
-          <div className="relative">
-            <input
-              type="date"
-              value={checkOutDate}
-              onChange={handleCheckOutChange}
-              min={getMinCheckOutDate()}
-              disabled={!checkInDate}
-              className={`w-full px-3 py-2.5 text-sm border rounded-lg focus:ring-2 focus:ring-emerald-500 transition-all duration-200 ${
-                checkOutErrors.length > 0
-                  ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                  : checkOutDate
-                    ? "border-emerald-500 focus:border-emerald-500"
-                    : "border-gray-200 focus:border-emerald-500"
-              } ${!checkInDate ? "bg-gray-50 cursor-not-allowed" : ""}`}
-            />
-            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-              <svg
-                className="w-5 h-5 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
+        {/* Time Preferences */}
+        <div className="space-y-4">
+          <h5 className="text-sm font-semibold text-gray-800 flex items-center">
+            <svg
+              className="w-4 h-4 mr-2 text-gray-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            Preferred Check-in & Check-out Times
+          </h5>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Preferred Check-in Time
+              </label>
+              <Select
+                options={CHECK_TIMES}
+                value={preferredCheckInTime}
+                onChange={setPreferredCheckInTime}
+                placeholder="Select check-in time..."
+                styles={customSelectStyles}
+                isClearable
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Preferred Check-out Time
+              </label>
+              <Select
+                options={CHECK_TIMES}
+                value={preferredCheckOutTime}
+                onChange={setPreferredCheckOutTime}
+                placeholder="Select check-out time..."
+                styles={customSelectStyles}
+                isClearable
+              />
             </div>
           </div>
-          {checkOutErrors.length > 0 && (
-            <p className="text-sm text-red-500 font-medium">
-              {checkOutErrors[0].message}
-            </p>
-          )}
-          {checkOutDate && (
-            <p className="text-sm text-emerald-600">
-              {formatDisplayDate(checkOutDate)}
-            </p>
-          )}
         </div>
       </div>
 
@@ -284,43 +487,138 @@ const DateSelection: React.FC<DateSelectionProps> = ({ className = "" }) => {
         </div>
       </div>
 
-      {/* Date Summary */}
+      {/* Enhanced Date Summary */}
       {areDatesValid && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="p-4 bg-emerald-50 rounded-lg border border-emerald-200"
+          className="p-6 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border-2 border-emerald-200"
         >
-          <h4 className="text-sm font-semibold text-emerald-800 mb-2">
-            Booking Summary
-          </h4>
-          <div className="space-y-1 text-sm text-emerald-700">
-            <p>
-              <span className="font-medium">Check-in:</span>{" "}
-              {formatDisplayDate(checkInDate)}
-            </p>
-            <p>
-              <span className="font-medium">Check-out:</span>{" "}
-              {formatDisplayDate(checkOutDate)}
-            </p>
-            <p>
-              <span className="font-medium">Duration:</span> {numberOfNights}{" "}
-              night{numberOfNights !== 1 ? "s" : ""}
-            </p>
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-lg font-bold text-emerald-800 flex items-center">
+              <svg
+                className="w-5 h-5 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
+                />
+              </svg>
+              Booking Summary
+            </h4>
+            <div className="px-3 py-1 bg-emerald-100 rounded-full">
+              <span className="text-xs font-semibold text-emerald-700">
+                {numberOfNights} night{numberOfNights !== 1 ? "s" : ""}
+              </span>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                <span className="text-sm font-medium text-emerald-800">
+                  Check-in:
+                </span>
+              </div>
+              <p className="text-sm text-emerald-700 ml-4">
+                {formatDisplayDate(checkInDate)}
+                {preferredCheckInTime && (
+                  <span className="block text-xs text-emerald-600 mt-1">
+                    Preferred time: {preferredCheckInTime.label}
+                  </span>
+                )}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-teal-500 rounded-full"></div>
+                <span className="text-sm font-medium text-emerald-800">
+                  Check-out:
+                </span>
+              </div>
+              <p className="text-sm text-emerald-700 ml-4">
+                {formatDisplayDate(checkOutDate)}
+                {preferredCheckOutTime && (
+                  <span className="block text-xs text-emerald-600 mt-1">
+                    Preferred time: {preferredCheckOutTime.label}
+                  </span>
+                )}
+              </p>
+            </div>
           </div>
         </motion.div>
       )}
 
-      {/* Booking Guidelines */}
-      <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-        <h4 className="text-sm font-semibold text-gray-800 mb-2">
-          Booking Guidelines
-        </h4>
-        <div className="space-y-1 text-xs text-gray-600">
-          <p>• Minimum stay: 1 night</p>
-          <p>• Check-in time: Usually after 2:00 PM</p>
-          <p>• Check-out time: Usually before 11:00 AM</p>
-          <p>• Exact times will be confirmed with the property owner</p>
+      {/* Enhanced Booking Guidelines */}
+      <div className="p-6 bg-white rounded-xl border border-gray-200 shadow-sm">
+        <div className="flex items-center mb-4">
+          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+            <svg
+              className="w-4 h-4 text-blue-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </div>
+          <h4 className="text-base font-semibold text-gray-800">
+            Booking Guidelines
+          </h4>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-3">
+            <div className="flex items-start space-x-3">
+              <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2 flex-shrink-0"></div>
+              <div>
+                <p className="text-sm font-medium text-gray-800">
+                  Minimum Stay
+                </p>
+                <p className="text-xs text-gray-600">1 night minimum booking</p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-3">
+              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+              <div>
+                <p className="text-sm font-medium text-gray-800">
+                  Check-in Time
+                </p>
+                <p className="text-xs text-gray-600">Usually after 2:00 PM</p>
+              </div>
+            </div>
+          </div>
+          <div className="space-y-3">
+            <div className="flex items-start space-x-3">
+              <div className="w-1.5 h-1.5 bg-orange-500 rounded-full mt-2 flex-shrink-0"></div>
+              <div>
+                <p className="text-sm font-medium text-gray-800">
+                  Check-out Time
+                </p>
+                <p className="text-xs text-gray-600">Usually before 11:00 AM</p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-3">
+              <div className="w-1.5 h-1.5 bg-purple-500 rounded-full mt-2 flex-shrink-0"></div>
+              <div>
+                <p className="text-sm font-medium text-gray-800">
+                  Confirmation
+                </p>
+                <p className="text-xs text-gray-600">
+                  Exact times confirmed with owner
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
