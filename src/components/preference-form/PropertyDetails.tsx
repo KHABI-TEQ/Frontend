@@ -230,8 +230,6 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
 
   // Shortlet specific fields
   const [propertyType, setPropertyType] = useState<Option | null>(null);
-  const [checkInDate, setCheckInDate] = useState<string>("");
-  const [checkOutDate, setCheckOutDate] = useState<string>("");
   const [maxGuests, setMaxGuests] = useState<string>("");
   const [travelType, setTravelType] = useState<Option | null>(null);
   const [nearbyLandmark, setNearbyLandmark] = useState<string>("");
@@ -249,8 +247,6 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
       setBathrooms("");
       setLandConditions([]);
       setPropertyType(null);
-      setCheckInDate("");
-      setCheckOutDate("");
       setMaxGuests("");
       setTravelType(null);
       setNearbyLandmark("");
@@ -262,8 +258,6 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
     if (preferenceType === "shortlet") {
       const shortletData = {
         propertyType: propertyType?.value || "",
-        checkInDate,
-        checkOutDate,
         bedrooms: bedrooms?.value || "",
         bathrooms: parseInt(bathrooms) || 0,
         maxGuests: parseInt(maxGuests) || 0,
@@ -297,25 +291,11 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
     bathrooms,
     landConditions,
     propertyType,
-    checkInDate,
-    checkOutDate,
     maxGuests,
     travelType,
     nearbyLandmark,
     updateFormData,
   ]);
-
-  // Calculate minimum stay for shortlet
-  const calculateMinimumStay = useCallback(() => {
-    if (checkInDate && checkOutDate) {
-      const checkIn = new Date(checkInDate);
-      const checkOut = new Date(checkOutDate);
-      const diffTime = Math.abs(checkOut.getTime() - checkIn.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return diffDays;
-    }
-    return 0;
-  }, [checkInDate, checkOutDate]);
 
   // Render shortlet specific fields
   if (preferenceType === "shortlet") {
@@ -359,45 +339,6 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
             />
           </div>
         </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Check-in Date */}
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-800">
-              Check-in Date <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="date"
-              value={checkInDate}
-              onChange={(e) => setCheckInDate(e.target.value)}
-              min={new Date().toISOString().split("T")[0]}
-              className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-            />
-          </div>
-
-          {/* Check-out Date */}
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-800">
-              Check-out Date <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="date"
-              value={checkOutDate}
-              onChange={(e) => setCheckOutDate(e.target.value)}
-              min={checkInDate || new Date().toISOString().split("T")[0]}
-              className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-            />
-          </div>
-        </div>
-
-        {/* Minimum Stay Display */}
-        {checkInDate && checkOutDate && (
-          <div className="bg-emerald-50 p-4 rounded-lg">
-            <p className="text-sm font-medium text-emerald-800">
-              Minimum Stay: {calculateMinimumStay()} nights
-            </p>
-          </div>
-        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Bedrooms */}
