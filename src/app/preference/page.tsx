@@ -526,6 +526,7 @@ const PreferenceFormContent: React.FC = () => {
               shortletData.propertyDetails?.propertyType ||
               shortletData.bookingDetails?.propertyType ||
               "",
+            buildingType: shortletData.propertyDetails?.buildingType || "",
             minBedrooms:
               shortletData.propertyDetails?.bedrooms ||
               shortletData.bookingDetails?.minBedrooms ||
@@ -548,16 +549,38 @@ const PreferenceFormContent: React.FC = () => {
               shortletData.contactInfo?.preferredCheckInTime || "",
             preferredCheckOutTime:
               shortletData.contactInfo?.preferredCheckOutTime || "",
+            propertyCondition:
+              shortletData.propertyDetails?.propertyCondition || "",
+            purpose: shortletData.propertyDetails?.purpose || "",
+            landSize: shortletData.propertyDetails?.landSize || "",
+            measurementUnit:
+              shortletData.propertyDetails?.measurementUnit || "",
+            documentTypes: shortletData.propertyDetails?.documentTypes || [],
+            landConditions: shortletData.propertyDetails?.landConditions || [],
           },
           contactInfo: {
             fullName: shortletData.contactInfo?.fullName || "",
             email: shortletData.contactInfo?.email || "",
             phoneNumber: shortletData.contactInfo?.phoneNumber || "",
+            petsAllowed: shortletData.contactInfo?.petsAllowed || false,
+            smokingAllowed: shortletData.contactInfo?.smokingAllowed || false,
+            partiesAllowed: shortletData.contactInfo?.partiesAllowed || false,
+            additionalRequests:
+              shortletData.contactInfo?.additionalRequests || "",
+            maxBudgetPerNight: shortletData.contactInfo?.maxBudgetPerNight || 0,
+            willingToPayExtra:
+              shortletData.contactInfo?.willingToPayExtra || false,
+            cleaningFeeBudget: shortletData.contactInfo?.cleaningFeeBudget || 0,
+            securityDepositBudget:
+              shortletData.contactInfo?.securityDepositBudget || 0,
+            cancellationPolicy:
+              shortletData.contactInfo?.cancellationPolicy || "",
           },
           nearbyLandmark:
             shortletData.propertyDetails?.nearbyLandmark ||
-            shortletData.nearbyLandmark,
-          additionalNotes: shortletData.additionalNotes,
+            shortletData.nearbyLandmark ||
+            "",
+          additionalNotes: shortletData.additionalNotes || "",
         } as ShortletPreferencePayload;
       }
 
