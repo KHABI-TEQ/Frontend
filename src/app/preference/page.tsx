@@ -489,20 +489,29 @@ const PreferenceFormContent: React.FC = () => {
             expectedStructureType:
               jvData.developmentDetails?.expectedStructureType || "",
             timeline: jvData.developmentDetails?.timeline || "",
-            budgetRange: jvData.developmentDetails?.budgetRange,
+            budgetRange: jvData.developmentDetails?.budgetRange || "",
             documentTypes: jvData.propertyDetails?.documentTypes || [],
             landConditions: jvData.propertyDetails?.landConditions || [],
             buildingType: jvData.propertyDetails?.buildingType || "",
             propertyCondition: jvData.propertyDetails?.propertyCondition || "",
+            minBedrooms: jvData.propertyDetails?.minBedrooms || "",
+            minBathrooms: jvData.propertyDetails?.minBathrooms || 0,
+            purpose: jvData.propertyDetails?.purpose || "",
           },
           contactInfo: {
             companyName: jvData.contactInfo?.companyName || "",
             contactPerson: jvData.contactInfo?.contactPerson || "",
             email: jvData.contactInfo?.email || "",
             phoneNumber: jvData.contactInfo?.phoneNumber || "",
-            cacRegistrationNumber: jvData.contactInfo?.cacRegistrationNumber,
+            cacRegistrationNumber:
+              jvData.contactInfo?.cacRegistrationNumber || "",
           },
-          partnerExpectations: jvData.partnerExpectations,
+          partnerExpectations: jvData.partnerExpectations || "",
+          nearbyLandmark:
+            jvData.propertyDetails?.nearbyLandmark ||
+            jvData.nearbyLandmark ||
+            "",
+          additionalNotes: jvData.additionalNotes || "",
         } as JointVenturePreferencePayload;
       }
 
