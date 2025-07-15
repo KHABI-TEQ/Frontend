@@ -131,7 +131,7 @@ interface LocationSelectionProps {
   className?: string;
 }
 
-const LocationSelectionComponent: React.FC<LocationSelectionProps> = ({
+const LocationSelectionComponent: React.FC<LocationSelectionProps> = memo(({
   className = "",
 }) => {
   const { state, updateFormData, getValidationErrorsForField } =
@@ -465,8 +465,7 @@ const LocationSelectionComponent: React.FC<LocationSelectionProps> = ({
           </div>
 
           <p className="text-xs text-gray-500">
-            💡 Can&apos;t find your area? Just type it and press Enter to add
-            it.
+            💡 Can&apos;t find your area? Just type it and press Enter to add it.
           </p>
 
           {/* Selected areas display */}
