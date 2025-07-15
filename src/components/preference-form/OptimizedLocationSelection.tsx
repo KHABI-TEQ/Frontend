@@ -226,13 +226,13 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
 
     // Debounced update function
     const debouncedUpdateFormData = useCallback(
-      (locationData: LocationSelectionType) => {
+      (data: any) => {
         if (debounceTimeoutRef.current) {
           clearTimeout(debounceTimeoutRef.current);
         }
 
         debounceTimeoutRef.current = setTimeout(() => {
-          updateFormData({ location: locationData });
+          updateFormData(data);
         }, 300);
       },
       [updateFormData],
