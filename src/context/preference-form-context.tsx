@@ -326,13 +326,19 @@ function preferenceFormReducer(
         ...action.payload,
       };
 
-      // Check if data actually changed using shallow comparison for better performance
+      // Enhanced comparison for nested objects
       let formDataChanged = false;
       for (const key in action.payload) {
-        if (
-          state.formData[key as keyof PreferenceForm] !==
-          action.payload[key as keyof PreferenceForm]
-        ) {
+        const currentValue = state.formData[key as keyof PreferenceForm];
+        const newValue = action.payload[key as keyof PreferenceForm];
+
+        // Deep comparison for objects and arrays
+        if (typeof newValue === "object" && newValue !== null) {
+          if (JSON.stringify(currentValue) !== JSON.stringify(newValue)) {
+            formDataChanged = true;
+            break;
+          }
+        } else if (currentValue !== newValue) {
           formDataChanged = true;
           break;
         }
