@@ -391,19 +391,33 @@ const PreferenceFormContent: React.FC = () => {
           preferenceType: "buy",
           preferenceMode: "buy",
           propertyDetails: {
-            propertyType: buyData.propertyDetails?.propertyType || "",
+            propertyType:
+              buyData.propertyDetails?.propertySubtype ||
+              buyData.propertyDetails?.propertyType ||
+              "",
             buildingType: buyData.propertyDetails?.buildingType || "",
-            minBedrooms: buyData.propertyDetails?.minBedrooms || "",
-            minBathrooms: buyData.propertyDetails?.minBathrooms || 0,
+            minBedrooms:
+              buyData.propertyDetails?.bedrooms ||
+              buyData.propertyDetails?.minBedrooms ||
+              "",
+            minBathrooms:
+              buyData.propertyDetails?.bathrooms ||
+              buyData.propertyDetails?.minBathrooms ||
+              0,
             propertyCondition: buyData.propertyDetails?.propertyCondition || "",
-            purpose: buyData.propertyDetails?.purpose || "",
+            purpose: buyData.propertyDetails?.purpose || "For living",
+            landSize: buyData.propertyDetails?.landSize || "",
+            measurementUnit: buyData.propertyDetails?.measurementUnit || "",
+            documentTypes: buyData.propertyDetails?.documentTypes || [],
+            landConditions: buyData.propertyDetails?.landConditions || [],
           },
           contactInfo: {
             fullName: buyData.contactInfo?.fullName || "",
             email: buyData.contactInfo?.email || "",
             phoneNumber: buyData.contactInfo?.phoneNumber || "",
           },
-          nearbyLandmark: buyData.nearbyLandmark,
+          nearbyLandmark:
+            buyData.propertyDetails?.nearbyLandmark || buyData.nearbyLandmark,
           additionalNotes: buyData.additionalNotes,
         } as BuyPreferencePayload;
       }
@@ -415,12 +429,25 @@ const PreferenceFormContent: React.FC = () => {
           preferenceType: "rent",
           preferenceMode: "tenant",
           propertyDetails: {
-            propertyType: rentData.propertyDetails?.propertyType || "",
-            minBedrooms: rentData.propertyDetails?.minBedrooms || "",
-            leaseTerm: rentData.propertyDetails?.leaseTerm || "",
+            propertyType:
+              rentData.propertyDetails?.propertySubtype ||
+              rentData.propertyDetails?.propertyType ||
+              "",
+            buildingType: rentData.propertyDetails?.buildingType || "",
+            minBedrooms:
+              rentData.propertyDetails?.bedrooms ||
+              rentData.propertyDetails?.minBedrooms ||
+              "",
+            minBathrooms:
+              rentData.propertyDetails?.bathrooms ||
+              rentData.propertyDetails?.minBathrooms ||
+              0,
+            leaseTerm: rentData.propertyDetails?.leaseTerm || "1 Year",
             propertyCondition:
               rentData.propertyDetails?.propertyCondition || "",
-            purpose: rentData.propertyDetails?.purpose || "",
+            purpose: rentData.propertyDetails?.purpose || "Residential",
+            landSize: rentData.propertyDetails?.landSize || "",
+            measurementUnit: rentData.propertyDetails?.measurementUnit || "",
           },
           contactInfo: {
             fullName: rentData.contactInfo?.fullName || "",
@@ -438,13 +465,27 @@ const PreferenceFormContent: React.FC = () => {
           preferenceType: "joint-venture",
           preferenceMode: "developer",
           developmentDetails: {
-            minLandSize: jvData.developmentDetails?.minLandSize || "",
-            jvType: jvData.developmentDetails?.jvType || "",
-            propertyType: jvData.developmentDetails?.propertyType || "",
+            minLandSize:
+              jvData.propertyDetails?.landSize ||
+              jvData.developmentDetails?.minLandSize ||
+              "",
+            measurementUnit:
+              jvData.propertyDetails?.measurementUnit ||
+              jvData.developmentDetails?.measurementUnit ||
+              "",
+            jvType: jvData.developmentDetails?.jvType || "Equity Split",
+            propertyType:
+              jvData.propertyDetails?.propertySubtype ||
+              jvData.developmentDetails?.propertyType ||
+              "",
             expectedStructureType:
               jvData.developmentDetails?.expectedStructureType || "",
             timeline: jvData.developmentDetails?.timeline || "",
             budgetRange: jvData.developmentDetails?.budgetRange,
+            documentTypes: jvData.propertyDetails?.documentTypes || [],
+            landConditions: jvData.propertyDetails?.landConditions || [],
+            buildingType: jvData.propertyDetails?.buildingType || "",
+            propertyCondition: jvData.propertyDetails?.propertyCondition || "",
           },
           contactInfo: {
             companyName: jvData.contactInfo?.companyName || "",
@@ -464,17 +505,41 @@ const PreferenceFormContent: React.FC = () => {
           preferenceType: "shortlet",
           preferenceMode: "shortlet",
           bookingDetails: {
-            propertyType: shortletData.bookingDetails?.propertyType || "",
-            minBedrooms: shortletData.bookingDetails?.minBedrooms || "",
-            numberOfGuests: shortletData.bookingDetails?.numberOfGuests || 0,
+            propertyType:
+              shortletData.propertyDetails?.propertyType ||
+              shortletData.bookingDetails?.propertyType ||
+              "",
+            minBedrooms:
+              shortletData.propertyDetails?.bedrooms ||
+              shortletData.bookingDetails?.minBedrooms ||
+              "",
+            minBathrooms:
+              shortletData.propertyDetails?.bathrooms ||
+              shortletData.bookingDetails?.minBathrooms ||
+              0,
+            numberOfGuests:
+              shortletData.propertyDetails?.maxGuests ||
+              shortletData.bookingDetails?.numberOfGuests ||
+              0,
             checkInDate: shortletData.bookingDetails?.checkInDate || "",
             checkOutDate: shortletData.bookingDetails?.checkOutDate || "",
+            travelType:
+              shortletData.propertyDetails?.travelType ||
+              shortletData.bookingDetails?.travelType ||
+              "",
+            preferredCheckInTime:
+              shortletData.contactInfo?.preferredCheckInTime || "",
+            preferredCheckOutTime:
+              shortletData.contactInfo?.preferredCheckOutTime || "",
           },
           contactInfo: {
             fullName: shortletData.contactInfo?.fullName || "",
             email: shortletData.contactInfo?.email || "",
             phoneNumber: shortletData.contactInfo?.phoneNumber || "",
           },
+          nearbyLandmark:
+            shortletData.propertyDetails?.nearbyLandmark ||
+            shortletData.nearbyLandmark,
           additionalNotes: shortletData.additionalNotes,
         } as ShortletPreferencePayload;
       }
