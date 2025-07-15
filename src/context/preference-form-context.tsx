@@ -326,9 +326,18 @@ function preferenceFormReducer(
         ...action.payload,
       };
 
-      // Check if data actually changed using deep comparison
-      const formDataChanged =
-        JSON.stringify(state.formData) !== JSON.stringify(newFormData);
+      // Check if data actually changed using shallow comparison for better performance
+      let formDataChanged = false;
+      for (const key in action.payload) {
+        if (
+          state.formData[key as keyof PreferenceForm] !==
+          action.payload[key as keyof PreferenceForm]
+        ) {
+          formDataChanged = true;
+          break;
+        }
+      }
+
       if (!formDataChanged) {
         return state;
       }
@@ -640,11 +649,11 @@ export const PreferenceFormProvider: React.FC<{ children: ReactNode }> = ({
 
     isUpdatingRef.current = true;
 
-    // Use setTimeout to batch updates and prevent loops
-    setTimeout(() => {
+    // Use requestAnimationFrame to batch updates more efficiently
+    requestAnimationFrame(() => {
       dispatch({ type: "UPDATE_FORM_DATA", payload: data });
       isUpdatingRef.current = false;
-    }, 0);
+    });
   }, []); // Empty dependencies - this function never changes
 
   const getAvailableFeatures = useCallback(
