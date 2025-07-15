@@ -639,7 +639,7 @@ const ContactInformation: React.FC<ContactInformationProps> = ({
 
           <div className="space-y-2">
             <label className="block text-sm font-semibold text-gray-800">
-              Email Address <span className="text-gray-500">(Optional)</span>
+              Email Address <span className="text-red-500">*</span>
             </label>
             <input
               type="email"
