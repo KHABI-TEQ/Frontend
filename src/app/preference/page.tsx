@@ -230,7 +230,7 @@ const PreferenceTypeButton = memo(
     <motion.button
       type="button"
       onClick={() => onClick(preferenceKey as keyof typeof PREFERENCE_CONFIGS)}
-      className={`p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 text-left ${
+      className={`p-3 sm:p-4 lg:p-6 rounded-lg sm:rounded-xl border-2 transition-all duration-200 text-left ${
         isSelected
           ? "border-emerald-500 bg-emerald-50 ring-2 ring-emerald-100"
           : "border-gray-200 bg-white hover:border-emerald-300 hover:bg-emerald-50"
@@ -238,12 +238,16 @@ const PreferenceTypeButton = memo(
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
     >
-      <div className="text-2xl sm:text-3xl mb-2 sm:mb-3">{config.icon}</div>
-      <h3 className="font-bold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">
-        <span className="block sm:hidden">{config.shortLabel}</span>
-        <span className="hidden sm:block">{config.label}</span>
+      <div className="text-xl sm:text-2xl lg:text-3xl mb-1 sm:mb-2 lg:mb-3">
+        {config.icon}
+      </div>
+      <h3 className="font-bold text-gray-900 mb-1 sm:mb-2 text-xs sm:text-sm lg:text-base">
+        <span className="block lg:hidden">{config.shortLabel}</span>
+        <span className="hidden lg:block">{config.label}</span>
       </h3>
-      <p className="text-xs sm:text-sm text-gray-600">{config.description}</p>
+      <p className="text-xs sm:text-xs lg:text-sm text-gray-600 hidden sm:block">
+        {config.description}
+      </p>
     </motion.button>
   ),
 );
@@ -749,7 +753,7 @@ const PreferenceFormContent: React.FC = () => {
             Select the type of property transaction you&apos;re interested in
           </p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
           {Object.entries(PREFERENCE_CONFIGS).map(([key, config]) => (
             <PreferenceTypeButton
               key={key}
@@ -918,60 +922,28 @@ const PreferenceFormContent: React.FC = () => {
             </OptimizedStepWrapper>
 
             {/* Step 2: Features & Amenities */}
-            <AnimatePresence mode="wait">
-              <StepWrapper
-                stepId="features"
-                currentStep={state.currentStep}
-                targetStep={2}
-              >
-                <motion.div
-                  key="features"
-                  initial={{ x: 50, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  exit={{ x: -50, opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="space-y-8"
-                >
-                  <motion.div
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.1 }}
-                  >
-                    <FeatureSelection preferenceType={selectedPreferenceType} />
-                  </motion.div>
-                  {selectedPreferenceType === "shortlet" && (
-                    <motion.div
-                      initial={{ y: 20, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      transition={{ delay: 0.2 }}
-                    >
-                      <DateSelection />
-                    </motion.div>
-                  )}
-                </motion.div>
-              </StepWrapper>
-            </AnimatePresence>
+            <OptimizedStepWrapper
+              stepId="features"
+              currentStep={state.currentStep}
+              targetStep={2}
+              className="space-y-6 sm:space-y-8"
+            >
+              <div className="space-y-6 sm:space-y-8">
+                <FeatureSelection preferenceType={selectedPreferenceType} />
+                {selectedPreferenceType === "shortlet" && <DateSelection />}
+              </div>
+            </OptimizedStepWrapper>
 
             {/* Step 3: Contact */}
-            <AnimatePresence mode="wait">
-              <StepWrapper
-                stepId="contact"
-                currentStep={state.currentStep}
-                targetStep={3}
-              >
-                <motion.div
-                  key="contact"
-                  initial={{ x: 50, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  exit={{ x: -50, opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <OptimizedContactInformation
-                    preferenceType={selectedPreferenceType}
-                  />
-                </motion.div>
-              </StepWrapper>
-            </AnimatePresence>
+            <OptimizedStepWrapper
+              stepId="contact"
+              currentStep={state.currentStep}
+              targetStep={3}
+            >
+              <OptimizedContactInformation
+                preferenceType={selectedPreferenceType}
+              />
+            </OptimizedStepWrapper>
           </div>
 
           {/* Submit Button */}
