@@ -1,11 +1,18 @@
 /** @format */
 
 "use client";
-import React, { useState, useEffect, useCallback } from "react";
-import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
+import React, { useCallback, useEffect } from "react";
+import { Formik, Form, Field, ErrorMessage } from "formik";
+import PhoneInput from "react-phone-number-input";
 import Select from "react-select";
+import { motion, AnimatePresence } from "framer-motion";
 import "react-phone-number-input/style.css";
 import { usePreferenceForm } from "@/context/preference-form-context";
+import {
+  contactInfoSchema,
+  jointVentureContactSchema,
+} from "@/utils/validation/preference-validation";
+import * as Yup from "yup";
 
 interface ContactInformationProps {
   preferenceType: "buy" | "rent" | "joint-venture" | "shortlet";
@@ -75,140 +82,48 @@ const customSelectStyles = {
   }),
 };
 
+// Enhanced validation schema for shortlet
+const shortletContactSchema = Yup.object({
+  fullName: Yup.string()
+    .min(2, "Full name must be at least 2 characters")
+    .max(100, "Full name must be less than 100 characters")
+    .matches(/^[a-zA-Z\s]+$/, "Full name can only contain letters and spaces")
+    .required("Full name is required"),
+  email: Yup.string()
+    .email("Please enter a valid email address")
+    .required("Email is required"),
+  phoneNumber: Yup.string()
+    .matches(
+      /^(\+234|0)[789][01]\d{8}$/,
+      "Please enter a valid Nigerian phone number",
+    )
+    .required("Phone number is required"),
+  preferredCheckInTime: Yup.string().nullable(),
+  preferredCheckOutTime: Yup.string().nullable(),
+  petsAllowed: Yup.boolean().default(false),
+  smokingAllowed: Yup.boolean().default(false),
+  partiesAllowed: Yup.boolean().default(false),
+  additionalRequests: Yup.string()
+    .max(1000, "Additional requests must be less than 1000 characters")
+    .nullable(),
+  maxBudgetPerNight: Yup.number()
+    .min(0, "Budget cannot be negative")
+    .nullable(),
+  willingToPayExtra: Yup.boolean().default(false),
+  cleaningFeeBudget: Yup.number()
+    .min(0, "Cleaning fee budget cannot be negative")
+    .nullable(),
+  securityDepositBudget: Yup.number()
+    .min(0, "Security deposit budget cannot be negative")
+    .nullable(),
+  cancellationPolicy: Yup.string().nullable(),
+});
+
 const ContactInformation: React.FC<ContactInformationProps> = ({
   preferenceType,
   className = "",
 }) => {
   const { state, updateFormData } = usePreferenceForm();
-
-  // Common fields
-  const [email, setEmail] = useState<string>("");
-  const [phoneNumber, setPhoneNumber] = useState<string>("");
-  const [fullName, setFullName] = useState<string>("");
-
-  // Joint venture fields
-  const [companyName, setCompanyName] = useState<string>("");
-  const [contactPerson, setContactPerson] = useState<string>("");
-  const [cacRegistrationNumber, setCacRegistrationNumber] =
-    useState<string>("");
-
-  // Shortlet specific fields
-  const [preferredCheckInTime, setPreferredCheckInTime] = useState<any>(null);
-  const [preferredCheckOutTime, setPreferredCheckOutTime] = useState<any>(null);
-  const [petsAllowed, setPetsAllowed] = useState<boolean>(false);
-  const [smokingAllowed, setSmokingAllowed] = useState<boolean>(false);
-  const [partiesAllowed, setPartiesAllowed] = useState<boolean>(false);
-  const [additionalRequests, setAdditionalRequests] = useState<string>("");
-  const [maxBudgetPerNight, setMaxBudgetPerNight] = useState<string>("");
-  const [willingToPayExtra, setWillingToPayExtra] = useState<boolean>(false);
-  const [cleaningFeeBudget, setCleaningFeeBudget] = useState<string>("");
-  const [securityDepositBudget, setSecurityDepositBudget] =
-    useState<string>("");
-  const [cancellationPolicy, setCancellationPolicy] = useState<any>(null);
-
-  // Auto-populate max budget per night from budget range
-  React.useEffect(() => {
-    if (preferenceType === "shortlet" && state.formData.budget?.maxPrice) {
-      const formattedBudget = formatNumberWithCommas(
-        state.formData.budget.maxPrice.toString(),
-      );
-      setMaxBudgetPerNight(formattedBudget);
-    }
-  }, [preferenceType, state.formData.budget?.maxPrice, formatNumberWithCommas]);
-
-  // Clear all fields when form is reset
-  useEffect(() => {
-    if (!state.formData || Object.keys(state.formData).length === 0) {
-      setEmail("");
-      setPhoneNumber("");
-      setFullName("");
-      setCompanyName("");
-      setContactPerson("");
-      setCacRegistrationNumber("");
-      setPreferredCheckInTime(null);
-      setPreferredCheckOutTime(null);
-      setPetsAllowed(false);
-      setSmokingAllowed(false);
-      setPartiesAllowed(false);
-      setAdditionalRequests("");
-      setMaxBudgetPerNight("");
-      setWillingToPayExtra(false);
-      setCleaningFeeBudget("");
-      setSecurityDepositBudget("");
-      setCancellationPolicy(null);
-    }
-  }, [state.formData]);
-
-  // Update context when values change
-  useEffect(() => {
-    if (preferenceType === "joint-venture") {
-      const contactData = {
-        companyName,
-        contactPerson,
-        email,
-        phoneNumber,
-        cacRegistrationNumber: cacRegistrationNumber || undefined,
-      };
-      updateFormData({ contactInfo: contactData });
-    } else if (preferenceType === "shortlet") {
-      const contactData = {
-        fullName,
-        email,
-        phoneNumber,
-        preferredCheckInTime: preferredCheckInTime?.value || "",
-        preferredCheckOutTime: preferredCheckOutTime?.value || "",
-        petsAllowed,
-        smokingAllowed,
-        partiesAllowed,
-        additionalRequests,
-        maxBudgetPerNight: parseFloat(maxBudgetPerNight.replace(/,/g, "")) || 0,
-        willingToPayExtra,
-        cleaningFeeBudget: parseFloat(cleaningFeeBudget.replace(/,/g, "")) || 0,
-        securityDepositBudget:
-          parseFloat(securityDepositBudget.replace(/,/g, "")) || 0,
-        cancellationPolicy: cancellationPolicy?.value || "",
-      };
-      updateFormData({ contactInfo: contactData });
-    } else {
-      const contactData = {
-        fullName,
-        email,
-        phoneNumber,
-      };
-      updateFormData({ contactInfo: contactData });
-    }
-  }, [
-    preferenceType,
-    fullName,
-    companyName,
-    contactPerson,
-    email,
-    phoneNumber,
-    cacRegistrationNumber,
-    preferredCheckInTime,
-    preferredCheckOutTime,
-    petsAllowed,
-    smokingAllowed,
-    partiesAllowed,
-    additionalRequests,
-    maxBudgetPerNight,
-    willingToPayExtra,
-    cleaningFeeBudget,
-    securityDepositBudget,
-    cancellationPolicy,
-    updateFormData,
-  ]);
-
-  // Validate email
-  const isValidEmail = useCallback((email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  }, []);
-
-  // Validate phone number
-  const isValidPhone = useCallback((phone: string): boolean => {
-    return phone ? isValidPhoneNumber(phone) : false;
-  }, []);
 
   // Format number with commas
   const formatNumberWithCommas = useCallback((value: string): string => {
@@ -216,442 +131,614 @@ const ContactInformation: React.FC<ContactInformationProps> = ({
     return cleaned.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   }, []);
 
-  // Render shortlet contact and preferences
-  if (preferenceType === "shortlet") {
-    return (
-      <div className={`space-y-8 ${className}`}>
-        {/* Header */}
-        <div className="text-center">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            Contact Information & Stay Preferences
-          </h3>
-          <p className="text-sm text-gray-600">
-            Provide your contact details and specify your stay preferences
-          </p>
-        </div>
+  // Get initial values based on preference type
+  const getInitialValues = useCallback(() => {
+    const contactInfo = state.formData.contactInfo || {};
 
-        {/* Contact Information */}
-        <div className="space-y-6">
-          <h4 className="text-md font-semibold text-gray-800 border-b pb-2">
-            Contact Information
-          </h4>
+    if (preferenceType === "joint-venture") {
+      return {
+        companyName: contactInfo.companyName || "",
+        contactPerson: contactInfo.contactPerson || "",
+        email: contactInfo.email || "",
+        phoneNumber: contactInfo.phoneNumber || "",
+        cacRegistrationNumber: contactInfo.cacRegistrationNumber || "",
+      };
+    } else if (preferenceType === "shortlet") {
+      return {
+        fullName: contactInfo.fullName || "",
+        email: contactInfo.email || "",
+        phoneNumber: contactInfo.phoneNumber || "",
+        preferredCheckInTime: contactInfo.preferredCheckInTime || "",
+        preferredCheckOutTime: contactInfo.preferredCheckOutTime || "",
+        petsAllowed: contactInfo.petsAllowed || false,
+        smokingAllowed: contactInfo.smokingAllowed || false,
+        partiesAllowed: contactInfo.partiesAllowed || false,
+        additionalRequests: contactInfo.additionalRequests || "",
+        maxBudgetPerNight: state.formData.budget?.maxPrice || 0,
+        willingToPayExtra: contactInfo.willingToPayExtra || false,
+        cleaningFeeBudget: contactInfo.cleaningFeeBudget || 0,
+        securityDepositBudget: contactInfo.securityDepositBudget || 0,
+        cancellationPolicy: contactInfo.cancellationPolicy || "",
+      };
+    } else {
+      return {
+        fullName: contactInfo.fullName || "",
+        email: contactInfo.email || "",
+        phoneNumber: contactInfo.phoneNumber || "",
+      };
+    }
+  }, [
+    preferenceType,
+    state.formData.contactInfo,
+    state.formData.budget?.maxPrice,
+  ]);
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-800">
-                Full Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Enter your full name"
-                className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400"
-              />
-            </div>
+  // Get validation schema based on preference type
+  const getValidationSchema = useCallback(() => {
+    if (preferenceType === "joint-venture") {
+      return jointVentureContactSchema;
+    } else if (preferenceType === "shortlet") {
+      return shortletContactSchema;
+    } else {
+      return contactInfoSchema;
+    }
+  }, [preferenceType]);
 
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-800">
-                Phone Number <span className="text-red-500">*</span>
-              </label>
-              <PhoneInput
-                international
-                defaultCountry="NG"
-                value={phoneNumber}
-                onChange={(value) => setPhoneNumber(value || "")}
-                placeholder="Enter phone number"
-                className="modern-phone-input"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-800">
-                Email Address <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter email address"
-                className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Stay Preferences */}
-        <div className="space-y-6">
-          <h4 className="text-md font-semibold text-gray-800 border-b pb-2">
-            Stay Preferences
-          </h4>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-800">
-                Preferred Check-in Time
-              </label>
-              <Select
-                options={CHECK_TIMES}
-                value={preferredCheckInTime}
-                onChange={setPreferredCheckInTime}
-                placeholder="Select check-in time..."
-                styles={customSelectStyles}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-800">
-                Preferred Check-out Time
-              </label>
-              <Select
-                options={CHECK_TIMES}
-                value={preferredCheckOutTime}
-                onChange={setPreferredCheckOutTime}
-                placeholder="Select check-out time..."
-                styles={customSelectStyles}
-              />
-            </div>
-          </div>
-
-          {/* Property Rules */}
-          <div className="space-y-4">
-            <h5 className="text-sm font-semibold text-gray-800">
-              Property Rules Preferences
-            </h5>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <label className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
-                <input
-                  type="checkbox"
-                  checked={petsAllowed}
-                  onChange={(e) => setPetsAllowed(e.target.checked)}
-                  className="w-4 h-4 text-emerald-600 bg-white border-gray-300 rounded focus:ring-emerald-500 focus:ring-2"
-                />
-                <span className="text-sm text-gray-700">Pets Allowed</span>
-              </label>
-
-              <label className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
-                <input
-                  type="checkbox"
-                  checked={smokingAllowed}
-                  onChange={(e) => setSmokingAllowed(e.target.checked)}
-                  className="w-4 h-4 text-emerald-600 bg-white border-gray-300 rounded focus:ring-emerald-500 focus:ring-2"
-                />
-                <span className="text-sm text-gray-700">Smoking Allowed</span>
-              </label>
-
-              <label className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
-                <input
-                  type="checkbox"
-                  checked={partiesAllowed}
-                  onChange={(e) => setPartiesAllowed(e.target.checked)}
-                  className="w-4 h-4 text-emerald-600 bg-white border-gray-300 rounded focus:ring-emerald-500 focus:ring-2"
-                />
-                <span className="text-sm text-gray-700">
-                  Parties/Events Allowed
-                </span>
-              </label>
-            </div>
-          </div>
-        </div>
-
-        {/* Budget & Pricing */}
-        <div className="space-y-6">
-          <h4 className="text-md font-semibold text-gray-800 border-b pb-2">
-            Budget & Pricing Expectations
-          </h4>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-800">
-                Max Budget per Night <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                  ₦
-                </span>
-                <input
-                  type="text"
-                  value={maxBudgetPerNight}
-                  readOnly
-                  disabled
-                  className="w-full pl-8 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg bg-gray-50 cursor-not-allowed text-gray-700 font-medium"
-                />
-              </div>
-              <p className="text-xs text-gray-500">
-                Auto-populated from your budget range (max price)
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-800">
-                Preferred Cancellation Policy
-              </label>
-              <Select
-                options={CANCELLATION_POLICIES}
-                value={cancellationPolicy}
-                onChange={setCancellationPolicy}
-                placeholder="Select cancellation policy..."
-                styles={customSelectStyles}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <label className="flex items-center space-x-3">
-              <input
-                type="checkbox"
-                checked={willingToPayExtra}
-                onChange={(e) => setWillingToPayExtra(e.target.checked)}
-                className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
-              />
-              <span className="text-sm text-gray-700">
-                Willing to Pay Extra for Premium Features
-              </span>
-            </label>
-
-            {willingToPayExtra && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 ml-6">
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Cleaning Fee Budget{" "}
-                    <span className="text-gray-500">(Optional)</span>
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                      ₦
-                    </span>
-                    <input
-                      type="text"
-                      value={cleaningFeeBudget}
-                      onChange={(e) => {
-                        const numericValue = e.target.value.replace(
-                          /[^0-9]/g,
-                          "",
-                        );
-                        if (
-                          numericValue === "" ||
-                          parseInt(numericValue) >= 0
-                        ) {
-                          setCleaningFeeBudget(
-                            formatNumberWithCommas(numericValue),
-                          );
-                        }
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "-" || e.key === "+" || e.key === "e") {
-                          e.preventDefault();
-                        }
-                      }}
-                      placeholder="Enter cleaning fee budget"
-                      className="w-full pl-8 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Security Deposit Budget{" "}
-                    <span className="text-gray-500">(Optional)</span>
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                      ₦
-                    </span>
-                    <input
-                      type="text"
-                      value={securityDepositBudget}
-                      onChange={(e) => {
-                        const numericValue = e.target.value.replace(
-                          /[^0-9]/g,
-                          "",
-                        );
-                        if (
-                          numericValue === "" ||
-                          parseInt(numericValue) >= 0
-                        ) {
-                          setSecurityDepositBudget(
-                            formatNumberWithCommas(numericValue),
-                          );
-                        }
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "-" || e.key === "+" || e.key === "e") {
-                          e.preventDefault();
-                        }
-                      }}
-                      placeholder="Enter security deposit budget"
-                      className="w-full pl-8 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400"
-                    />
-                  </div>
-                </div>
-              </div>
+  // Custom Field component with animation
+  const AnimatedField = ({
+    name,
+    label,
+    required = false,
+    type = "text",
+    placeholder,
+    ...props
+  }: any) => (
+    <Field name={name}>
+      {({ field, meta }: any) => (
+        <motion.div
+          className="space-y-2"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <label className="block text-sm font-semibold text-gray-800">
+            {label} {required && <span className="text-red-500">*</span>}
+          </label>
+          <motion.input
+            {...field}
+            {...props}
+            type={type}
+            placeholder={placeholder}
+            className={`w-full px-3 py-2.5 text-sm border rounded-lg focus:ring-2 focus:ring-emerald-500 transition-all duration-200 placeholder-gray-400 ${
+              meta.touched && meta.error
+                ? "border-red-400 focus:border-red-500 focus:ring-red-100"
+                : "border-gray-200 focus:border-emerald-500"
+            }`}
+            whileFocus={{ scale: 1.01 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          />
+          <AnimatePresence>
+            {meta.touched && meta.error && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="text-sm text-red-500 font-medium flex items-center space-x-1"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <span>{meta.error}</span>
+              </motion.div>
             )}
-          </div>
-        </div>
+          </AnimatePresence>
+        </motion.div>
+      )}
+    </Field>
+  );
 
-        {/* Additional Requests */}
-        <div className="space-y-2">
+  // Custom Phone Field component
+  const PhoneField = ({ name, label, required = false }: any) => (
+    <Field name={name}>
+      {({ field, meta, form }: any) => (
+        <motion.div
+          className="space-y-2"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
           <label className="block text-sm font-semibold text-gray-800">
-            Additional Requests or Notes{" "}
-            <span className="text-gray-500">(Optional)</span>
+            {label} {required && <span className="text-red-500">*</span>}
           </label>
-          <textarea
-            value={additionalRequests}
-            onChange={(e) => setAdditionalRequests(e.target.value)}
-            placeholder="Enter any additional requests or special requirements..."
-            rows={4}
-            className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400 resize-none"
+          <PhoneInput
+            international
+            defaultCountry="NG"
+            value={field.value}
+            onChange={(value) => form.setFieldValue(name, value || "")}
+            placeholder="Enter phone number"
+            className={`modern-phone-input ${
+              meta.touched && meta.error ? "error" : ""
+            }`}
           />
-        </div>
-      </div>
-    );
-  }
+          <AnimatePresence>
+            {meta.touched && meta.error && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="text-sm text-red-500 font-medium flex items-center space-x-1"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <span>{meta.error}</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      )}
+    </Field>
+  );
 
-  // Render joint venture contact form
-  if (preferenceType === "joint-venture") {
-    return (
-      <div className={`space-y-6 ${className}`}>
-        <div className="text-center">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            Company Information
-          </h3>
-          <p className="text-sm text-gray-600">
-            Provide your company details for partnership opportunities
-          </p>
-        </div>
+  // Handle form submission
+  const handleSubmit = useCallback(
+    (values: any) => {
+      updateFormData({ contactInfo: values });
+    },
+    [updateFormData],
+  );
 
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-800">
-                Company / Developer Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-                placeholder="Enter company or developer name"
-                className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-800">
-                Contact Person <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={contactPerson}
-                onChange={(e) => setContactPerson(e.target.value)}
-                placeholder="Enter contact person name"
-                className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-800">
-                Phone Number <span className="text-red-500">*</span>
-              </label>
-              <PhoneInput
-                international
-                defaultCountry="NG"
-                value={phoneNumber}
-                onChange={(value) => setPhoneNumber(value || "")}
-                placeholder="Enter phone number"
-                className="modern-phone-input"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-800">
-                Email Address <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter email address"
-                className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-800">
-              CAC Registration Number{" "}
-              <span className="text-gray-500">(Optional)</span>
-            </label>
-            <input
-              type="text"
-              value={cacRegistrationNumber}
-              onChange={(e) => setCacRegistrationNumber(e.target.value)}
-              placeholder="Enter CAC registration number"
-              className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400"
-            />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Render individual contact form for Buy and Rent
   return (
-    <div className={`space-y-6 ${className}`}>
-      <div className="text-center">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          Contact Information
-        </h3>
-        <p className="text-sm text-gray-600">
-          We'll use this information to contact you about matching properties
-        </p>
-      </div>
+    <motion.div
+      className={`space-y-8 ${className}`}
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <Formik
+        initialValues={getInitialValues()}
+        validationSchema={getValidationSchema()}
+        onSubmit={handleSubmit}
+        enableReinitialize
+      >
+        {({ values, setFieldValue, errors, touched }) => (
+          <Form>
+            {/* Header */}
+            <motion.div
+              className="text-center mb-8"
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.1 }}
+            >
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {preferenceType === "joint-venture"
+                  ? "Company Information"
+                  : preferenceType === "shortlet"
+                    ? "Contact Information & Stay Preferences"
+                    : "Contact Information"}
+              </h3>
+              <p className="text-sm text-gray-600">
+                {preferenceType === "joint-venture"
+                  ? "Provide your company details for partnership opportunities"
+                  : preferenceType === "shortlet"
+                    ? "Provide your contact details and specify your stay preferences"
+                    : "We'll use this information to contact you about matching properties"}
+              </p>
+            </motion.div>
 
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <label className="block text-sm font-semibold text-gray-800">
-            Full Name <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            placeholder="Enter your full name"
-            className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400"
-          />
-        </div>
+            {/* Joint Venture Form */}
+            {preferenceType === "joint-venture" && (
+              <motion.div
+                className="space-y-6"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <AnimatedField
+                    name="companyName"
+                    label="Company / Developer Name"
+                    required
+                    placeholder="Enter company or developer name"
+                  />
+                  <AnimatedField
+                    name="contactPerson"
+                    label="Contact Person"
+                    required
+                    placeholder="Enter contact person name"
+                  />
+                </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-800">
-              Phone Number <span className="text-red-500">*</span>
-            </label>
-            <PhoneInput
-              international
-              defaultCountry="NG"
-              value={phoneNumber}
-              onChange={(value) => setPhoneNumber(value || "")}
-              placeholder="Enter phone number"
-              className="modern-phone-input"
-            />
-          </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <PhoneField
+                    name="phoneNumber"
+                    label="Phone Number"
+                    required
+                  />
+                  <AnimatedField
+                    name="email"
+                    label="Email Address"
+                    type="email"
+                    required
+                    placeholder="Enter email address"
+                  />
+                </div>
 
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-800">
-              Email Address <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter email address"
-              className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
+                <AnimatedField
+                  name="cacRegistrationNumber"
+                  label="CAC Registration Number"
+                  placeholder="Enter CAC registration number (e.g., RC123456)"
+                />
+              </motion.div>
+            )}
+
+            {/* Shortlet Form */}
+            {preferenceType === "shortlet" && (
+              <motion.div
+                className="space-y-8"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                {/* Contact Information Section */}
+                <div className="space-y-6">
+                  <h4 className="text-md font-semibold text-gray-800 border-b pb-2">
+                    Contact Information
+                  </h4>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <AnimatedField
+                      name="fullName"
+                      label="Full Name"
+                      required
+                      placeholder="Enter your full name"
+                    />
+                    <PhoneField
+                      name="phoneNumber"
+                      label="Phone Number"
+                      required
+                    />
+                    <AnimatedField
+                      name="email"
+                      label="Email Address"
+                      type="email"
+                      required
+                      placeholder="Enter email address"
+                    />
+                  </div>
+                </div>
+
+                {/* Stay Preferences Section */}
+                <div className="space-y-6">
+                  <h4 className="text-md font-semibold text-gray-800 border-b pb-2">
+                    Stay Preferences
+                  </h4>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-gray-800">
+                        Preferred Check-in Time
+                      </label>
+                      <Select
+                        options={CHECK_TIMES}
+                        value={CHECK_TIMES.find(
+                          (time) => time.value === values.preferredCheckInTime,
+                        )}
+                        onChange={(option) =>
+                          setFieldValue(
+                            "preferredCheckInTime",
+                            option?.value || "",
+                          )
+                        }
+                        placeholder="Select check-in time..."
+                        styles={customSelectStyles}
+                        isClearable
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-gray-800">
+                        Preferred Check-out Time
+                      </label>
+                      <Select
+                        options={CHECK_TIMES}
+                        value={CHECK_TIMES.find(
+                          (time) => time.value === values.preferredCheckOutTime,
+                        )}
+                        onChange={(option) =>
+                          setFieldValue(
+                            "preferredCheckOutTime",
+                            option?.value || "",
+                          )
+                        }
+                        placeholder="Select check-out time..."
+                        styles={customSelectStyles}
+                        isClearable
+                      />
+                    </div>
+                  </div>
+
+                  {/* Property Rules */}
+                  <div className="space-y-4">
+                    <h5 className="text-sm font-semibold text-gray-800">
+                      Property Rules Preferences
+                    </h5>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <motion.label
+                        className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <Field
+                          name="petsAllowed"
+                          type="checkbox"
+                          className="w-4 h-4 text-emerald-600 bg-white border-gray-300 rounded focus:ring-emerald-500 focus:ring-2"
+                        />
+                        <span className="text-sm text-gray-700">
+                          Pets Allowed
+                        </span>
+                      </motion.label>
+
+                      <motion.label
+                        className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <Field
+                          name="smokingAllowed"
+                          type="checkbox"
+                          className="w-4 h-4 text-emerald-600 bg-white border-gray-300 rounded focus:ring-emerald-500 focus:ring-2"
+                        />
+                        <span className="text-sm text-gray-700">
+                          Smoking Allowed
+                        </span>
+                      </motion.label>
+
+                      <motion.label
+                        className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <Field
+                          name="partiesAllowed"
+                          type="checkbox"
+                          className="w-4 h-4 text-emerald-600 bg-white border-gray-300 rounded focus:ring-emerald-500 focus:ring-2"
+                        />
+                        <span className="text-sm text-gray-700">
+                          Parties/Events Allowed
+                        </span>
+                      </motion.label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Budget & Pricing */}
+                <div className="space-y-6">
+                  <h4 className="text-md font-semibold text-gray-800 border-b pb-2">
+                    Budget & Pricing Expectations
+                  </h4>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-gray-800">
+                        Max Budget per Night{" "}
+                        <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                          ₦
+                        </span>
+                        <input
+                          type="text"
+                          value={formatNumberWithCommas(
+                            values.maxBudgetPerNight?.toString() || "0",
+                          )}
+                          readOnly
+                          disabled
+                          className="w-full pl-8 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg bg-gray-50 cursor-not-allowed text-gray-700 font-medium"
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        Auto-populated from your budget range (max price)
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-gray-800">
+                        Preferred Cancellation Policy
+                      </label>
+                      <Select
+                        options={CANCELLATION_POLICIES}
+                        value={CANCELLATION_POLICIES.find(
+                          (policy) =>
+                            policy.value === values.cancellationPolicy,
+                        )}
+                        onChange={(option) =>
+                          setFieldValue(
+                            "cancellationPolicy",
+                            option?.value || "",
+                          )
+                        }
+                        placeholder="Select cancellation policy..."
+                        styles={customSelectStyles}
+                        isClearable
+                      />
+                    </div>
+                  </div>
+
+                  <motion.div className="space-y-4">
+                    <motion.label
+                      className="flex items-center space-x-3"
+                      whileHover={{ x: 5 }}
+                      transition={{ type: "spring", stiffness: 400 }}
+                    >
+                      <Field
+                        name="willingToPayExtra"
+                        type="checkbox"
+                        className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                      />
+                      <span className="text-sm text-gray-700">
+                        Willing to Pay Extra for Premium Features
+                      </span>
+                    </motion.label>
+
+                    <AnimatePresence>
+                      {values.willingToPayExtra && (
+                        <motion.div
+                          className="grid grid-cols-1 lg:grid-cols-2 gap-6 ml-6"
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <AnimatedField
+                            name="cleaningFeeBudget"
+                            label="Cleaning Fee Budget"
+                            type="number"
+                            placeholder="Enter cleaning fee budget"
+                          />
+                          <AnimatedField
+                            name="securityDepositBudget"
+                            label="Security Deposit Budget"
+                            type="number"
+                            placeholder="Enter security deposit budget"
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                </div>
+
+                {/* Additional Requests */}
+                <Field name="additionalRequests">
+                  {({ field, meta }: any) => (
+                    <motion.div
+                      className="space-y-2"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                    >
+                      <label className="block text-sm font-semibold text-gray-800">
+                        Additional Requests or Notes{" "}
+                        <span className="text-gray-500">(Optional)</span>
+                      </label>
+                      <motion.textarea
+                        {...field}
+                        placeholder="Enter any additional requests or special requirements..."
+                        rows={4}
+                        className={`w-full px-3 py-2.5 text-sm border rounded-lg focus:ring-2 focus:ring-emerald-500 transition-all duration-200 placeholder-gray-400 resize-none ${
+                          meta.touched && meta.error
+                            ? "border-red-400 focus:border-red-500 focus:ring-red-100"
+                            : "border-gray-200 focus:border-emerald-500"
+                        }`}
+                        whileFocus={{ scale: 1.01 }}
+                      />
+                      <AnimatePresence>
+                        {meta.touched && meta.error && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="text-sm text-red-500 font-medium"
+                          >
+                            {meta.error}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+                  )}
+                </Field>
+              </motion.div>
+            )}
+
+            {/* Regular Form (Buy/Rent) */}
+            {(preferenceType === "buy" || preferenceType === "rent") && (
+              <motion.div
+                className="space-y-6"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                <AnimatedField
+                  name="fullName"
+                  label="Full Name"
+                  required
+                  placeholder="Enter your full name"
+                />
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <PhoneField
+                    name="phoneNumber"
+                    label="Phone Number"
+                    required
+                  />
+                  <AnimatedField
+                    name="email"
+                    label="Email Address"
+                    type="email"
+                    required
+                    placeholder="Enter email address"
+                  />
+                </div>
+              </motion.div>
+            )}
+
+            {/* Auto-submit when values change */}
+            <div style={{ display: "none" }}>
+              {JSON.stringify(values, (key, value) => {
+                if (key && typeof value !== "undefined") {
+                  setTimeout(() => handleSubmit(values), 100);
+                }
+                return value;
+              })}
+            </div>
+          </Form>
+        )}
+      </Formik>
+
+      {/* Enhanced Phone Input Styles */}
+      <style jsx global>{`
+        .modern-phone-input .PhoneInputInput {
+          border: 1px solid #e5e7eb;
+          border-radius: 8px;
+          padding: 10px 12px;
+          font-size: 15px;
+          transition: all 0.2s ease;
+          width: 100%;
+        }
+
+        .modern-phone-input .PhoneInputInput:focus {
+          outline: none;
+          border-color: #10b981;
+          ring: 2px solid #dcfce7;
+        }
+
+        .modern-phone-input.error .PhoneInputInput {
+          border-color: #ef4444;
+        }
+
+        .modern-phone-input .PhoneInputCountrySelect {
+          border: none;
+          background: transparent;
+          margin-right: 8px;
+        }
+      `}</style>
+    </motion.div>
   );
 };
 
