@@ -382,8 +382,14 @@ const PreferenceFormContent: React.FC = () => {
         state: formData.location?.state || "",
         localGovernmentAreas:
           formData.location?.lgas?.filter((lga) => lga.trim() !== "") || [],
-        selectedAreas:
-          formData.location?.areas?.filter((area) => area.trim() !== "") || [],
+        lgasWithAreas: (
+          (formData as any).enhancedLocation?.lgasWithAreas ||
+          // Fallback: create lgasWithAreas structure from legacy data
+          (formData.location?.lgas || []).map((lga: string) => ({
+            lgaName: lga,
+            areas: [], // Areas would be distributed among LGAs in real implementation
+          }))
+        ).filter((item: any) => item.lgaName.trim() !== ""),
         customLocation: formData.location?.customLocation?.trim() || "",
       },
       budget: {
