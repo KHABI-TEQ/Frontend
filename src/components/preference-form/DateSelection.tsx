@@ -83,7 +83,7 @@ const CustomDateInput = forwardRef<HTMLInputElement, any>(
         onClick={onClick}
         placeholder={placeholder}
         readOnly
-        className={`w-full px-4 py-3 text-sm border-2 rounded-xl bg-white focus:ring-4 focus:ring-emerald-100 transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer ${
+        className={`w-full px-6 py-4 text-base border-2 rounded-xl bg-white focus:ring-4 focus:ring-emerald-100 transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer ${
           hasError
             ? "border-red-400 focus:border-red-500 focus:ring-red-100"
             : value
