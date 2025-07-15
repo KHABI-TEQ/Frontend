@@ -318,33 +318,33 @@ const ContactInformation: React.FC<ContactInformationProps> = ({
             <h5 className="text-sm font-semibold text-gray-800">
               Property Rules Preferences
             </h5>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <label className="flex items-center space-x-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <label className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
                 <input
                   type="checkbox"
                   checked={petsAllowed}
                   onChange={(e) => setPetsAllowed(e.target.checked)}
-                  className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                  className="w-4 h-4 text-emerald-600 bg-white border-gray-300 rounded focus:ring-emerald-500 focus:ring-2"
                 />
                 <span className="text-sm text-gray-700">Pets Allowed</span>
               </label>
 
-              <label className="flex items-center space-x-3">
+              <label className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
                 <input
                   type="checkbox"
                   checked={smokingAllowed}
                   onChange={(e) => setSmokingAllowed(e.target.checked)}
-                  className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                  className="w-4 h-4 text-emerald-600 bg-white border-gray-300 rounded focus:ring-emerald-500 focus:ring-2"
                 />
                 <span className="text-sm text-gray-700">Smoking Allowed</span>
               </label>
 
-              <label className="flex items-center space-x-3">
+              <label className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
                 <input
                   type="checkbox"
                   checked={partiesAllowed}
                   onChange={(e) => setPartiesAllowed(e.target.checked)}
-                  className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                  className="w-4 h-4 text-emerald-600 bg-white border-gray-300 rounded focus:ring-emerald-500 focus:ring-2"
                 />
                 <span className="text-sm text-gray-700">
                   Parties/Events Allowed
