@@ -10,12 +10,12 @@ import {
   PreferenceFormProvider,
   usePreferenceForm,
 } from "@/context/preference-form-context";
-import LocationSelection from "@/components/preference-form/LocationSelection";
-import BudgetSelection from "@/components/preference-form/BudgetSelection";
+import OptimizedLocationSelection from "@/components/preference-form/OptimizedLocationSelection";
+import OptimizedBudgetSelection from "@/components/preference-form/OptimizedBudgetSelection";
 import FeatureSelection from "@/components/preference-form/FeatureSelection";
 import PropertyDetails from "@/components/preference-form/PropertyDetails";
 import DateSelection from "@/components/preference-form/DateSelection";
-import ContactInformation from "@/components/preference-form/ContactInformation";
+import OptimizedContactInformation from "@/components/preference-form/OptimizedContactInformation";
 import SubmitButton from "@/components/preference-form/SubmitButton";
 import StepWrapper from "@/components/preference-form/StepWrapper";
 import {
@@ -356,20 +356,23 @@ const PreferenceFormContent: React.FC = () => {
     [dispatch, updateFormData, goToStep],
   );
 
-  // Generate API payload - memoized to prevent recreation
+  // Generate API payload with filtering - memoized to prevent recreation
   const generatePayload = useCallback((): PreferencePayload => {
     const { formData } = state;
 
     const config = PREFERENCE_CONFIGS[selectedPreferenceType];
 
+    // Base payload with only relevant fields
     const basePayload = {
       preferenceType: config.preferenceType,
       preferenceMode: config.preferenceMode,
       location: {
         state: formData.location?.state || "",
-        localGovernmentAreas: formData.location?.lgas || [],
-        selectedAreas: formData.location?.areas || [],
-        customLocation: formData.location?.customLocation || "",
+        localGovernmentAreas:
+          formData.location?.lgas?.filter((lga) => lga.trim() !== "") || [],
+        selectedAreas:
+          formData.location?.areas?.filter((area) => area.trim() !== "") || [],
+        customLocation: formData.location?.customLocation?.trim() || "",
       },
       budget: {
         minPrice: formData.budget?.minPrice || 0,
@@ -377,16 +380,48 @@ const PreferenceFormContent: React.FC = () => {
         currency: "NGN" as const,
       },
       features: {
-        baseFeatures: formData.features?.basicFeatures || [],
-        premiumFeatures: formData.features?.premiumFeatures || [],
+        baseFeatures:
+          formData.features?.basicFeatures?.filter(
+            (feature) => feature.trim() !== "",
+          ) || [],
+        premiumFeatures:
+          formData.features?.premiumFeatures?.filter(
+            (feature) => feature.trim() !== "",
+          ) || [],
         autoAdjustToFeatures: formData.features?.autoAdjustToBudget || false,
       },
+    };
+
+    // Helper function to remove empty/null/undefined values
+    const cleanObject = (obj: any): any => {
+      if (Array.isArray(obj)) {
+        return obj
+          .filter((item) => item !== null && item !== undefined && item !== "")
+          .map(cleanObject);
+      }
+      if (obj !== null && typeof obj === "object") {
+        const cleaned: any = {};
+        Object.keys(obj).forEach((key) => {
+          const value = cleanObject(obj[key]);
+          if (
+            value !== null &&
+            value !== undefined &&
+            value !== "" &&
+            !(Array.isArray(value) && value.length === 0) &&
+            !(typeof value === "object" && Object.keys(value).length === 0)
+          ) {
+            cleaned[key] = value;
+          }
+        });
+        return cleaned;
+      }
+      return obj;
     };
 
     switch (selectedPreferenceType) {
       case "buy": {
         const buyData = formData as any;
-        return {
+        const buyPayload = {
           ...basePayload,
           preferenceType: "buy",
           preferenceMode: "buy",
@@ -408,25 +443,33 @@ const PreferenceFormContent: React.FC = () => {
             purpose: buyData.propertyDetails?.purpose || "For living",
             landSize: buyData.propertyDetails?.landSize || "",
             measurementUnit: buyData.propertyDetails?.measurementUnit || "",
-            documentTypes: buyData.propertyDetails?.documentTypes || [],
-            landConditions: buyData.propertyDetails?.landConditions || [],
+            documentTypes:
+              buyData.propertyDetails?.documentTypes?.filter(
+                (doc: string) => doc.trim() !== "",
+              ) || [],
+            landConditions:
+              buyData.propertyDetails?.landConditions?.filter(
+                (condition: string) => condition.trim() !== "",
+              ) || [],
           },
           contactInfo: {
-            fullName: buyData.contactInfo?.fullName || "",
-            email: buyData.contactInfo?.email || "",
-            phoneNumber: buyData.contactInfo?.phoneNumber || "",
+            fullName: buyData.contactInfo?.fullName?.trim() || "",
+            email: buyData.contactInfo?.email?.trim() || "",
+            phoneNumber: buyData.contactInfo?.phoneNumber?.trim() || "",
           },
-          nearbyLandmark:
+          nearbyLandmark: (
             buyData.propertyDetails?.nearbyLandmark ||
             buyData.nearbyLandmark ||
-            "",
-          additionalNotes: buyData.additionalNotes || "",
-        } as BuyPreferencePayload;
+            ""
+          ).trim(),
+          additionalNotes: (buyData.additionalNotes || "").trim(),
+        };
+        return cleanObject(buyPayload) as BuyPreferencePayload;
       }
 
       case "rent": {
         const rentData = formData as any;
-        return {
+        const rentPayload = {
           ...basePayload,
           preferenceType: "rent",
           preferenceMode: "tenant",
@@ -450,20 +493,28 @@ const PreferenceFormContent: React.FC = () => {
             purpose: rentData.propertyDetails?.purpose || "Residential",
             landSize: rentData.propertyDetails?.landSize || "",
             measurementUnit: rentData.propertyDetails?.measurementUnit || "",
-            documentTypes: rentData.propertyDetails?.documentTypes || [],
-            landConditions: rentData.propertyDetails?.landConditions || [],
+            documentTypes:
+              rentData.propertyDetails?.documentTypes?.filter(
+                (doc: string) => doc.trim() !== "",
+              ) || [],
+            landConditions:
+              rentData.propertyDetails?.landConditions?.filter(
+                (condition: string) => condition.trim() !== "",
+              ) || [],
           },
           contactInfo: {
-            fullName: rentData.contactInfo?.fullName || "",
-            email: rentData.contactInfo?.email || "",
-            phoneNumber: rentData.contactInfo?.phoneNumber || "",
+            fullName: rentData.contactInfo?.fullName?.trim() || "",
+            email: rentData.contactInfo?.email?.trim() || "",
+            phoneNumber: rentData.contactInfo?.phoneNumber?.trim() || "",
           },
-          nearbyLandmark:
+          nearbyLandmark: (
             rentData.propertyDetails?.nearbyLandmark ||
             rentData.nearbyLandmark ||
-            "",
-          additionalNotes: rentData.additionalNotes || "",
-        } as RentPreferencePayload;
+            ""
+          ).trim(),
+          additionalNotes: (rentData.additionalNotes || "").trim(),
+        };
+        return cleanObject(rentPayload) as RentPreferencePayload;
       }
 
       case "joint-venture": {
@@ -814,7 +865,7 @@ const PreferenceFormContent: React.FC = () => {
                   exit={{ x: -50, opacity: 0 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <LocationSelection />
+                  <OptimizedLocationSelection />
                 </motion.div>
               </StepWrapper>
             </AnimatePresence>
@@ -846,7 +897,9 @@ const PreferenceFormContent: React.FC = () => {
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.2 }}
                   >
-                    <BudgetSelection preferenceType={selectedPreferenceType} />
+                    <OptimizedBudgetSelection
+                      preferenceType={selectedPreferenceType}
+                    />
                   </motion.div>
                 </motion.div>
               </StepWrapper>
@@ -901,7 +954,9 @@ const PreferenceFormContent: React.FC = () => {
                   exit={{ x: -50, opacity: 0 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <ContactInformation preferenceType={selectedPreferenceType} />
+                  <OptimizedContactInformation
+                    preferenceType={selectedPreferenceType}
+                  />
                 </motion.div>
               </StepWrapper>
             </AnimatePresence>
