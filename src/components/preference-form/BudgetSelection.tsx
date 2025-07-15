@@ -31,21 +31,6 @@ const BudgetSelection: React.FC<BudgetSelectionProps> = ({
   const minPriceErrors = getValidationErrorsForField("budget.minPrice");
   const maxPriceErrors = getValidationErrorsForField("budget.maxPrice");
 
-  // Initialize from context data
-  useEffect(() => {
-    if (state.formData.budget) {
-      const budget = state.formData.budget;
-      if (budget.minPrice) {
-        setMinPriceRaw(budget.minPrice);
-        setMinPriceInput(formatNumberWithCommas(budget.minPrice.toString()));
-      }
-      if (budget.maxPrice) {
-        setMaxPriceRaw(budget.maxPrice);
-        setMaxPriceInput(formatNumberWithCommas(budget.maxPrice.toString()));
-      }
-    }
-  }, [state.formData.budget]);
-
   // Format number with commas
   const formatNumberWithCommas = useCallback((value: string): string => {
     const cleaned = value.replace(/\D/g, "");
@@ -56,6 +41,40 @@ const BudgetSelection: React.FC<BudgetSelectionProps> = ({
   const parseFormattedNumber = useCallback((value: string): number => {
     return parseInt(value.replace(/,/g, ""), 10) || 0;
   }, []);
+
+  // Initialize from context data and clear when form is reset
+  useEffect(() => {
+    // If formData is empty (form was reset), clear all local state
+    if (
+      !state.formData ||
+      Object.keys(state.formData).length === 0 ||
+      !state.formData.budget
+    ) {
+      setMinPriceInput("");
+      setMaxPriceInput("");
+      setMinPriceRaw(0);
+      setMaxPriceRaw(0);
+      return;
+    }
+
+    if (state.formData.budget) {
+      const budget = state.formData.budget;
+      if (budget.minPrice) {
+        setMinPriceRaw(budget.minPrice);
+        setMinPriceInput(formatNumberWithCommas(budget.minPrice.toString()));
+      } else {
+        setMinPriceInput("");
+        setMinPriceRaw(0);
+      }
+      if (budget.maxPrice) {
+        setMaxPriceRaw(budget.maxPrice);
+        setMaxPriceInput(formatNumberWithCommas(budget.maxPrice.toString()));
+      } else {
+        setMaxPriceInput("");
+        setMaxPriceRaw(0);
+      }
+    }
+  }, [state.formData, formatNumberWithCommas]);
 
   // Get minimum budget requirement
   const minBudgetRequired = useMemo(() => {
@@ -194,13 +213,7 @@ const BudgetSelection: React.FC<BudgetSelectionProps> = ({
               value={minPriceInput}
               onChange={handleMinPriceChange}
               placeholder={placeholders.min}
-              className={`w-full pl-8 pr-3 py-2.5 text-sm border rounded-lg focus:ring-2 focus:ring-emerald-500 transition-all duration-200 placeholder-gray-400 ${
-                hasMinPriceError || isMinBelowThreshold
-                  ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                  : minPriceRaw > 0
-                    ? "border-emerald-500 focus:border-emerald-500"
-                    : "border-gray-200 focus:border-emerald-500"
-              }`}
+              className="w-full pl-8 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400"
             />
           </div>
 
@@ -249,13 +262,7 @@ const BudgetSelection: React.FC<BudgetSelectionProps> = ({
               value={maxPriceInput}
               onChange={handleMaxPriceChange}
               placeholder={placeholders.max}
-              className={`w-full pl-8 pr-3 py-2.5 text-sm border rounded-lg focus:ring-2 focus:ring-emerald-500 transition-all duration-200 placeholder-gray-400 ${
-                hasMaxPriceError || isMaxLessThanMin
-                  ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                  : maxPriceRaw > 0
-                    ? "border-emerald-500 focus:border-emerald-500"
-                    : "border-gray-200 focus:border-emerald-500"
-              }`}
+              className="w-full pl-8 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400"
             />
           </div>
 
@@ -319,7 +326,7 @@ const BudgetSelection: React.FC<BudgetSelectionProps> = ({
         <div className="space-y-1 text-xs text-gray-600">
           <p>
             • Minimum budget for{" "}
-            {state.formData.location?.state || "this location"}: ₦
+            {state.formData.location?.state || "this location"}: ��
             {minBudgetRequired.toLocaleString()}
           </p>
           <p>• Your budget range will help us find the best matches for you</p>

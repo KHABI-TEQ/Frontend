@@ -24,19 +24,12 @@ const customSelectStyles = {
   control: (provided: any, state: any) => ({
     ...provided,
     minHeight: "48px",
-    border:
-      state.hasValue && !state.selectProps.hasError
-        ? "2px solid #10B981"
-        : state.selectProps.hasError
-          ? "2px solid #EF4444"
-          : state.isFocused
-            ? "2px solid #10B981"
-            : "1px solid #E5E7EB",
+    border: state.isFocused ? "2px solid #10B981" : "1px solid #E5E7EB",
     borderRadius: "8px",
     backgroundColor: "#FFFFFF",
     boxShadow: "none",
     "&:hover": {
-      borderColor: state.selectProps.hasError ? "#EF4444" : "#10B981",
+      borderColor: "#10B981",
     },
     transition: "all 0.2s ease",
   }),
@@ -153,8 +146,21 @@ const LocationSelectionComponent: React.FC<LocationSelectionProps> = ({
   const lgaErrors = getValidationErrorsForField("location.lgas");
   const areaErrors = getValidationErrorsForField("location.areas");
 
-  // Initialize from context data ONLY ONCE
+  // Initialize from context data and clear when form is reset
   useEffect(() => {
+    // If formData is empty (form was reset), clear all local state
+    if (
+      !state.formData ||
+      Object.keys(state.formData).length === 0 ||
+      !state.formData.location
+    ) {
+      setSelectedState(null);
+      setSelectedLGAs([]);
+      setSelectedAreas([]);
+      setLgaAreaMap({});
+      return;
+    }
+
     if (state.formData.location) {
       const location = state.formData.location;
 
@@ -178,7 +184,7 @@ const LocationSelectionComponent: React.FC<LocationSelectionProps> = ({
         setSelectedAreas(areaOptions);
       }
     }
-  }, []);
+  }, [state.formData]);
 
   // Memoized options
   const stateOptions = useMemo(

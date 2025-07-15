@@ -344,12 +344,16 @@ const PreferenceFormContent: React.FC = () => {
   const handlePreferenceTypeChange = useCallback(
     (preferenceKey: keyof typeof PREFERENCE_CONFIGS) => {
       setSelectedPreferenceType(preferenceKey);
-      resetForm();
+      // Reset form data immediately without confirmation
+      dispatch({ type: "RESET_FORM" });
+      // Set the new preference type
       updateFormData({
         preferenceType: PREFERENCE_CONFIGS[preferenceKey].preferenceType,
       });
+      // Reset to first step
+      goToStep(0);
     },
-    [resetForm, updateFormData],
+    [dispatch, updateFormData, goToStep],
   );
 
   // Generate API payload - memoized to prevent recreation
@@ -504,7 +508,9 @@ const PreferenceFormContent: React.FC = () => {
       if (response.status === 201 || response.status === 200) {
         console.log("Preference submitted successfully:", response);
         toast.success("Preference submitted successfully!");
-        // Show success modal instead of redirecting immediately
+        // Reset form data immediately after successful submission
+        dispatch({ type: "RESET_FORM" });
+        // Show success modal
         setShowSuccessModal(true);
       } else {
         throw new Error("Submission failed");
@@ -520,16 +526,18 @@ const PreferenceFormContent: React.FC = () => {
   // Handle submit new preference - memoized to prevent recreation
   const handleSubmitNew = useCallback(() => {
     setShowSuccessModal(false);
-    resetForm();
+    // Reset form data immediately without confirmation
+    dispatch({ type: "RESET_FORM" });
     goToStep(0);
-  }, [resetForm, goToStep]);
+  }, [dispatch, goToStep]);
 
   // Handle go to marketplace - memoized to prevent recreation
   const handleGoToMarketplace = useCallback(() => {
     setShowSuccessModal(false);
-    resetForm();
+    // Reset form data immediately without confirmation
+    dispatch({ type: "RESET_FORM" });
     router.push("/market-place");
-  }, [resetForm, router]);
+  }, [dispatch, router]);
 
   // Render preference type selector - memoized to prevent recreation
   const renderPreferenceTypeSelector = useMemo(
@@ -649,16 +657,19 @@ const PreferenceFormContent: React.FC = () => {
               <LocationSelection />
             </StepWrapper>
 
-            {/* Step 1: Budget */}
+            {/* Step 1: Property Details & Budget */}
             <StepWrapper
-              stepId="budget"
+              stepId="property-budget"
               currentStep={state.currentStep}
               targetStep={1}
             >
-              <BudgetSelection preferenceType={selectedPreferenceType} />
+              <div className="space-y-8">
+                <PropertyDetails preferenceType={selectedPreferenceType} />
+                <BudgetSelection preferenceType={selectedPreferenceType} />
+              </div>
             </StepWrapper>
 
-            {/* Step 2: Features + Property Details + Dates */}
+            {/* Step 2: Features & Amenities */}
             <StepWrapper
               stepId="features"
               currentStep={state.currentStep}
@@ -666,7 +677,6 @@ const PreferenceFormContent: React.FC = () => {
             >
               <div className="space-y-8">
                 <FeatureSelection preferenceType={selectedPreferenceType} />
-                <PropertyDetails preferenceType={selectedPreferenceType} />
                 {selectedPreferenceType === "shortlet" && <DateSelection />}
               </div>
             </StepWrapper>

@@ -71,7 +71,7 @@ const UploadLolDocumentModal: React.FC<UploadLolDocumentProps> = ({
 
   const getAvailableDates = () => {
     const dates: string[] = [];
-    let date = new Date();
+    const date = new Date();
     date.setDate(date.getDate() + 3);
   
     while (dates.length < 6) {
