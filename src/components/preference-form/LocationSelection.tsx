@@ -1,7 +1,7 @@
 /** @format */
 
 "use client";
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, memo } from "react";
 import Select, { MultiValue, SingleValue } from "react-select";
 import CreatableSelect from "react-select/creatable";
 import { motion, AnimatePresence } from "framer-motion";
@@ -465,7 +465,8 @@ const LocationSelectionComponent: React.FC<LocationSelectionProps> = ({
           </div>
 
           <p className="text-xs text-gray-500">
-            💡 Can&apos;t find your area? Just type it and press Enter to add it.
+            💡 Can&apos;t find your area? Just type it and press Enter to add
+            it.
           </p>
 
           {/* Selected areas display */}
