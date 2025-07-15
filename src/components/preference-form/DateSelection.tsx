@@ -181,31 +181,51 @@ const DateSelection: React.FC<DateSelectionProps> = ({ className = "" }) => {
     }
   }, [checkInDate, checkOutDate]);
 
-  // Update context when values change
+  // Optimized update context when values change with debouncing
   useEffect(() => {
-    const currentBookingDetails = (state.formData as any).bookingDetails || {};
-    const currentContactInfo = (state.formData as any).contactInfo || {};
+    const timeoutId = setTimeout(() => {
+      const currentBookingDetails =
+        (state.formData as any).bookingDetails || {};
+      const currentContactInfo = (state.formData as any).contactInfo || {};
 
-    updateFormData({
-      bookingDetails: {
+      const newBookingDetails = {
         ...currentBookingDetails,
         checkInDate: checkInDate ? checkInDate.toISOString().split("T")[0] : "",
         checkOutDate: checkOutDate
           ? checkOutDate.toISOString().split("T")[0]
           : "",
-      },
-      contactInfo: {
+      };
+
+      const newContactInfo = {
         ...currentContactInfo,
         preferredCheckInTime: preferredCheckInTime?.value || "",
         preferredCheckOutTime: preferredCheckOutTime?.value || "",
-      },
-    });
+      };
+
+      // Only update if there are actual changes
+      const hasBookingChanges =
+        JSON.stringify(currentBookingDetails) !==
+        JSON.stringify(newBookingDetails);
+      const hasContactChanges =
+        JSON.stringify(currentContactInfo) !== JSON.stringify(newContactInfo);
+
+      if (hasBookingChanges || hasContactChanges) {
+        updateFormData({
+          bookingDetails: newBookingDetails,
+          contactInfo: newContactInfo,
+        });
+      }
+    }, 300); // Debounce updates
+
+    return () => clearTimeout(timeoutId);
   }, [
     checkInDate,
     checkOutDate,
     preferredCheckInTime,
     preferredCheckOutTime,
     updateFormData,
+    state.formData.bookingDetails,
+    state.formData.contactInfo,
   ]);
 
   // Handle check-in date change
