@@ -473,20 +473,50 @@ export const PreferenceFormProvider: React.FC<{ children: ReactNode }> = ({
               message: "At least one LGA is required",
             });
           }
-          if (
-            !formData.location?.areas?.length &&
-            !formData.location?.customLocation
-          ) {
+          if (formData.location?.lgas && formData.location.lgas.length > 3) {
             errors.push({
-              field: "location.areas",
-              message: "Please select areas or enter a custom location",
+              field: "location.lgas",
+              message: "Maximum 3 LGAs can be selected",
             });
           }
-          if (formData.location?.areas && formData.location.areas.length > 3) {
-            errors.push({
-              field: "location.areas",
-              message: "Maximum 3 areas can be selected",
-            });
+
+          // Enhanced validation for LGA-area mapping
+          if ((formData as any).enhancedLocation?.lgasWithAreas) {
+            const lgasWithAreas = (formData as any).enhancedLocation
+              .lgasWithAreas;
+            let hasAnyAreas = false;
+
+            for (const lgaArea of lgasWithAreas) {
+              if (lgaArea.areas && lgaArea.areas.length > 0) {
+                hasAnyAreas = true;
+                if (lgaArea.areas.length > 3) {
+                  errors.push({
+                    field: `location.areas.${lgaArea.lgaName}`,
+                    message: `Maximum 3 areas allowed per LGA (${lgaArea.lgaName})`,
+                  });
+                }
+              }
+            }
+
+            // Check if at least one area is selected or custom location is provided
+            if (!hasAnyAreas && !formData.location?.customLocation) {
+              errors.push({
+                field: "location.areas",
+                message:
+                  "Please select at least one area or enter a custom location",
+              });
+            }
+          } else {
+            // Fallback to legacy validation
+            if (
+              !formData.location?.areas?.length &&
+              !formData.location?.customLocation
+            ) {
+              errors.push({
+                field: "location.areas",
+                message: "Please select areas or enter a custom location",
+              });
+            }
           }
           break;
 
