@@ -254,11 +254,8 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
         customLocation: showCustomLocation ? customLocation : "",
       };
 
-      // Update with both structures for flexibility
-      debouncedUpdateFormData({
-        location: locationData,
-        enhancedLocation: enhancedLocationData,
-      });
+      // Update with location data (enhanced structure stored in areas mapping)
+      debouncedUpdateFormData(locationData);
     }, [
       selectedState,
       selectedLGAs,
@@ -273,7 +270,7 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
       setSelectedState(newValue);
       // Reset LGAs and areas when state changes
       setSelectedLGAs([]);
-      setSelectedAreas([]);
+      setLgasWithAreas([]);
     }, []);
 
     const handleLGAChange = useCallback(
