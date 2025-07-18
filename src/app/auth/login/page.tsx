@@ -126,8 +126,8 @@ const Login: FC = () => {
     flow: "auth-code",
     onSuccess: async (codeResponse) => {
       try {
-        const url = URLS.BASE + URLS.user + URLS.googleLogin;
-        const response = await POST_REQUEST(url, { code: codeResponse.code });
+        const url = URLS.BASE + URLS.authGoogle;
+        const response = await POST_REQUEST(url, { idToken: codeResponse.code });
 
         if (response.user?.id) {
           toast.success("Sign in successful");

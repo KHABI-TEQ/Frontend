@@ -162,9 +162,9 @@ const Register = () => {
       }
 
       try {
-        const url = URLS.BASE + URLS.user + URLS.googleSignup;
+        const url = URLS.BASE + URLS.authGoogle;
         const response = await POST_REQUEST(url, {
-          code: codeResponse.code,
+          idToken: codeResponse.code,
           userType: formik.values.userType,
         });
 
