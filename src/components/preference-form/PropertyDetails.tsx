@@ -1,8 +1,8 @@
 /** @format */
 
 "use client";
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import Select, { SingleValue } from "react-select";
+import React, { useState, useEffect, useCallback } from "react";
+import Select from "react-select";
 import { usePreferenceForm } from "@/context/preference-form-context";
 
 interface Option {
@@ -15,88 +15,129 @@ interface PropertyDetailsProps {
   className?: string;
 }
 
-// Property type options by preference type
-const PROPERTY_TYPE_OPTIONS = {
-  buy: [
-    { value: "Land", label: "Land" },
-    { value: "Residential", label: "Residential" },
-    { value: "Commercial", label: "Commercial" },
-  ],
-  rent: [
-    { value: "Self-con", label: "Self-con" },
-    { value: "Flat", label: "Flat" },
-    { value: "Mini Flat", label: "Mini Flat" },
-    { value: "Bungalow", label: "Bungalow" },
-  ],
-  "joint-venture": [
-    { value: "Land", label: "Land" },
-    { value: "Old Building", label: "Old Building" },
-    { value: "Structure to demolish", label: "Structure to demolish" },
-  ],
-  shortlet: [
-    { value: "Studio", label: "Studio" },
-    { value: "1-Bed Apartment", label: "1-Bed Apartment" },
-    { value: "2-Bed Flat", label: "2-Bed Flat" },
-  ],
+// Property sub-types
+const PROPERTY_SUBTYPES = [
+  { value: "land", label: "Land" },
+  { value: "residential", label: "Residential" },
+  { value: "commercial", label: "Commercial" },
+];
+
+// Document types
+const DOCUMENT_TYPES = [
+  { value: "deed-of-assignment", label: "Deed of Assignment" },
+  { value: "deed-of-ownership", label: "Deed of Ownership" },
+  { value: "deed-of-conveyance", label: "Deed of Conveyance" },
+  { value: "survey-plan", label: "Survey Plan" },
+  { value: "governors-consent", label: "Governor's Consent" },
+  { value: "certificate-of-occupancy", label: "Certificate of Occupancy" },
+  { value: "family-receipt", label: "Family Receipt" },
+  { value: "contract-of-sale", label: "Contract of Sale" },
+  { value: "land-certificate", label: "Land Certificate" },
+  { value: "gazette", label: "Gazette" },
+  { value: "excision", label: "Excision" },
+];
+
+// Measurement units
+const MEASUREMENT_UNITS = [
+  { value: "plot", label: "Plot" },
+  { value: "sqm", label: "SQM" },
+  { value: "hectares", label: "Hectares" },
+];
+
+// Property conditions
+const PROPERTY_CONDITIONS = {
+  buy: {
+    residential: [
+      { value: "new", label: "New" },
+      { value: "renovated", label: "Renovated" },
+      { value: "old", label: "Old" },
+    ],
+    commercial: [
+      { value: "new", label: "New" },
+      { value: "renovated", label: "Renovated" },
+      { value: "old", label: "Old" },
+    ],
+  },
+  rent: {
+    residential: [
+      { value: "new", label: "New" },
+      { value: "good-condition", label: "Good Condition" },
+      { value: "renovation", label: "Renovation" },
+    ],
+    commercial: [
+      { value: "new", label: "New" },
+      { value: "good-condition", label: "Good Condition" },
+      { value: "renovation", label: "Renovation" },
+    ],
+  },
+  "joint-venture": {
+    residential: [
+      { value: "new", label: "New" },
+      { value: "renovated", label: "Renovated" },
+      { value: "uncompleted", label: "Uncompleted" },
+    ],
+    commercial: [
+      { value: "new", label: "New" },
+      { value: "renovated", label: "Renovated" },
+      { value: "uncompleted", label: "Uncompleted" },
+    ],
+  },
 };
 
-// Building type options (for buy)
-const BUILDING_TYPE_OPTIONS = [
-  { value: "Detached", label: "Detached" },
-  { value: "Semi-Detached", label: "Semi-Detached" },
-  { value: "Block of Flats", label: "Block of Flats" },
-];
-
-// Property condition options
-const PROPERTY_CONDITION_OPTIONS = {
-  buy: [
-    { value: "New", label: "New" },
-    { value: "Renovated", label: "Renovated" },
-    { value: "Any", label: "Any" },
-  ],
-  rent: [
-    { value: "New", label: "New" },
-    { value: "Renovated", label: "Renovated" },
-  ],
+// Building types
+const BUILDING_TYPES = {
+  buy: {
+    residential: [
+      { value: "bungalow", label: "Bungalow" },
+      { value: "duplex-fully-detached", label: "Duplex (Fully Detached)" },
+      { value: "duplex-semi-detached", label: "Duplex (Semi Detached)" },
+      { value: "duplex-terrace", label: "Duplex (Terrace)" },
+      { value: "blocks-of-flat", label: "Blocks of Flat" },
+    ],
+    commercial: [
+      { value: "office-complex", label: "Office Complex" },
+      { value: "warehouse", label: "Warehouse" },
+      { value: "plaza", label: "Plaza" },
+      { value: "shop", label: "Shop" },
+    ],
+  },
+  rent: {
+    residential: [
+      { value: "detached", label: "Detached" },
+      { value: "semi-detached", label: "Semi-detached" },
+      { value: "bungalow", label: "Bungalow" },
+      { value: "duplex", label: "Duplex" },
+      { value: "blocks-of-flat", label: "Blocks of Flat" },
+    ],
+    commercial: [
+      { value: "office-complex", label: "Office Complex" },
+      { value: "plaza", label: "Plaza" },
+      { value: "shop", label: "Shop" },
+      { value: "warehouse", label: "Warehouse" },
+    ],
+  },
+  "joint-venture": {
+    residential: [
+      { value: "block-of-flats", label: "Block of Flats" },
+      { value: "duplex", label: "Duplex" },
+      { value: "bungalow", label: "Bungalow" },
+      { value: "terrace", label: "Terrace" },
+    ],
+    commercial: [
+      { value: "plaza", label: "Plaza" },
+      { value: "office-complex", label: "Office Complex" },
+      { value: "warehouse", label: "Warehouse" },
+      { value: "shop-space", label: "Shop Space" },
+    ],
+  },
 };
 
-// Purpose options
-const PURPOSE_OPTIONS = {
-  buy: [
-    { value: "For living", label: "For living" },
-    { value: "Resale", label: "Resale" },
-    { value: "Development", label: "Development" },
-  ],
-  rent: [
-    { value: "Residential", label: "Residential" },
-    { value: "Office", label: "Office" },
-  ],
-};
-
-// Lease term options (for rent)
-const LEASE_TERM_OPTIONS = [
-  { value: "6 Months", label: "6 Months" },
-  { value: "1 Year", label: "1 Year" },
-];
-
-// JV Type options (for joint-venture)
-const JV_TYPE_OPTIONS = [
-  { value: "Equity Split", label: "Equity Split" },
-  { value: "Lease-to-Build", label: "Lease-to-Build" },
-  { value: "Development Partner", label: "Development Partner" },
-];
-
-// Expected structure type options (for joint-venture)
-const EXPECTED_STRUCTURE_TYPE_OPTIONS = [
-  { value: "Mini Flats", label: "Mini Flats" },
-  { value: "Luxury Duplexes", label: "Luxury Duplexes" },
-];
-
-// Timeline options (for joint-venture)
-const TIMELINE_OPTIONS = [
-  { value: "Ready Now", label: "Ready Now" },
-  { value: "In 3 Months", label: "In 3 Months" },
-  { value: "Within 1 Year", label: "Within 1 Year" },
+// Land conditions (for Joint Venture)
+const LAND_CONDITIONS = [
+  { value: "fenced", label: "Fenced" },
+  { value: "dry", label: "Dry" },
+  { value: "gated", label: "Gated" },
+  { value: "accessible-road", label: "Accessible Road" },
 ];
 
 // Bedroom options
@@ -111,7 +152,24 @@ const BEDROOM_OPTIONS = [
   { value: "8", label: "8 Bedrooms" },
   { value: "9", label: "9 Bedrooms" },
   { value: "10", label: "10 Bedrooms" },
-  { value: "More", label: "More than 10" },
+  { value: "more", label: "More than 10" },
+];
+
+// Shortlet property types
+const SHORTLET_PROPERTY_TYPES = [
+  { value: "studio", label: "Studio" },
+  { value: "apartment", label: "Apartment" },
+  { value: "duplex", label: "Duplex" },
+  { value: "bungalow", label: "Bungalow" },
+];
+
+// Travel types for shortlet
+const TRAVEL_TYPES = [
+  { value: "solo", label: "Solo" },
+  { value: "couple", label: "Couple" },
+  { value: "family", label: "Family" },
+  { value: "group", label: "Group" },
+  { value: "business", label: "Business" },
 ];
 
 // Custom select styles
@@ -119,19 +177,12 @@ const customSelectStyles = {
   control: (provided: any, state: any) => ({
     ...provided,
     minHeight: "48px",
-    border:
-      state.hasValue && !state.selectProps.hasError
-        ? "2px solid #10B981"
-        : state.selectProps.hasError
-          ? "2px solid #EF4444"
-          : state.isFocused
-            ? "2px solid #10B981"
-            : "1px solid #E5E7EB",
+    border: state.isFocused ? "2px solid #10B981" : "1px solid #E5E7EB",
     borderRadius: "8px",
     backgroundColor: "#FFFFFF",
     boxShadow: "none",
     "&:hover": {
-      borderColor: state.selectProps.hasError ? "#EF4444" : "#10B981",
+      borderColor: "#10B981",
     },
     transition: "all 0.2s ease",
   }),
@@ -139,11 +190,6 @@ const customSelectStyles = {
     ...provided,
     padding: "8px 12px",
     fontSize: "15px",
-  }),
-  input: (provided: any) => ({
-    ...provided,
-    margin: 0,
-    padding: 0,
   }),
   placeholder: (provided: any) => ({
     ...provided,
@@ -160,32 +206,6 @@ const customSelectStyles = {
     color: state.isSelected ? "white" : "#374151",
     padding: "10px 12px",
     fontSize: "15px",
-    "&:hover": {
-      backgroundColor: state.isSelected ? "#10B981" : "#F3F4F6",
-    },
-  }),
-  menu: (provided: any) => ({
-    ...provided,
-    borderRadius: "8px",
-    border: "1px solid #E5E7EB",
-    boxShadow:
-      "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-    zIndex: 50,
-  }),
-  menuList: (provided: any) => ({
-    ...provided,
-    padding: "4px",
-    borderRadius: "8px",
-  }),
-  indicatorSeparator: () => ({
-    display: "none",
-  }),
-  dropdownIndicator: (provided: any) => ({
-    ...provided,
-    color: "#6B7280",
-    "&:hover": {
-      color: "#10B981",
-    },
   }),
 };
 
@@ -193,578 +213,206 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
   preferenceType,
   className = "",
 }) => {
-  const { state, updateFormData, getValidationErrorsForField } =
-    usePreferenceForm();
+  const { state, updateFormData } = usePreferenceForm();
 
   // Form state
-  const [propertyType, setPropertyType] = useState<Option | null>(null);
-  const [buildingType, setBuildingType] = useState<Option | null>(null);
-  const [minBedrooms, setMinBedrooms] = useState<Option | null>(null);
-  const [minBathrooms, setMinBathrooms] = useState<string>("");
+  const [propertySubtype, setPropertySubtype] = useState<Option | null>(null);
+  const [landSize, setLandSize] = useState<string>("");
+  const [measurementUnit, setMeasurementUnit] = useState<Option | null>(null);
+  const [documentTypes, setDocumentTypes] = useState<string[]>([]);
   const [propertyCondition, setPropertyCondition] = useState<Option | null>(
     null,
   );
-  const [purpose, setPurpose] = useState<Option | null>(null);
-  const [leaseTerm, setLeaseTerm] = useState<Option | null>(null);
-  const [jvType, setJvType] = useState<Option | null>(null);
-  const [expectedStructureType, setExpectedStructureType] =
-    useState<Option | null>(null);
-  const [timeline, setTimeline] = useState<Option | null>(null);
-  const [minLandSize, setMinLandSize] = useState<string>("");
-  const [budgetRange, setBudgetRange] = useState<string>("");
-  const [numberOfGuests, setNumberOfGuests] = useState<string>("");
+  const [buildingType, setBuildingType] = useState<Option | null>(null);
+  const [bedrooms, setBedrooms] = useState<Option | null>(null);
+  const [bathrooms, setBathrooms] = useState<string>("");
+  const [landConditions, setLandConditions] = useState<Option[]>([]);
+
+  // Shortlet specific fields
+  const [propertyType, setPropertyType] = useState<Option | null>(null);
+  const [maxGuests, setMaxGuests] = useState<string>("");
+  const [travelType, setTravelType] = useState<Option | null>(null);
   const [nearbyLandmark, setNearbyLandmark] = useState<string>("");
 
-  // Initialize from context data
+  // Clear all fields when form is reset
   useEffect(() => {
-    const formData = state.formData as any;
-
-    if (formData.propertyDetails) {
-      const details = formData.propertyDetails;
-
-      // Common fields
-      if (details.propertyType) {
-        const option = PROPERTY_TYPE_OPTIONS[preferenceType].find(
-          (opt) => opt.value === details.propertyType,
-        );
-        setPropertyType(option || null);
-      }
-
-      if (details.minBedrooms) {
-        const option = BEDROOM_OPTIONS.find(
-          (opt) => opt.value === details.minBedrooms,
-        );
-        setMinBedrooms(option || null);
-      }
-
-      if (details.propertyCondition) {
-        const options =
-          PROPERTY_CONDITION_OPTIONS[
-            preferenceType as keyof typeof PROPERTY_CONDITION_OPTIONS
-          ];
-        const option = options?.find(
-          (opt) => opt.value === details.propertyCondition,
-        );
-        setPropertyCondition(option || null);
-      }
-
-      if (details.purpose) {
-        const options =
-          PURPOSE_OPTIONS[preferenceType as keyof typeof PURPOSE_OPTIONS];
-        const option = options?.find((opt) => opt.value === details.purpose);
-        setPurpose(option || null);
-      }
-
-      // Buy specific fields
-      if (preferenceType === "buy") {
-        if (details.buildingType) {
-          const option = BUILDING_TYPE_OPTIONS.find(
-            (opt) => opt.value === details.buildingType,
-          );
-          setBuildingType(option || null);
-        }
-        setMinBathrooms(details.minBathrooms || "");
-      }
-
-      // Rent specific fields
-      if (preferenceType === "rent" && details.leaseTerm) {
-        const option = LEASE_TERM_OPTIONS.find(
-          (opt) => opt.value === details.leaseTerm,
-        );
-        setLeaseTerm(option || null);
-      }
-
-      // Joint venture specific fields
-      if (preferenceType === "joint-venture") {
-        if (details.jvType) {
-          const option = JV_TYPE_OPTIONS.find(
-            (opt) => opt.value === details.jvType,
-          );
-          setJvType(option || null);
-        }
-        if (details.expectedStructureType) {
-          const option = EXPECTED_STRUCTURE_TYPE_OPTIONS.find(
-            (opt) => opt.value === details.expectedStructureType,
-          );
-          setExpectedStructureType(option || null);
-        }
-        if (details.timeline) {
-          const option = TIMELINE_OPTIONS.find(
-            (opt) => opt.value === details.timeline,
-          );
-          setTimeline(option || null);
-        }
-        setMinLandSize(details.minLandSize || "");
-        setBudgetRange(details.budgetRange || "");
-      }
-
-      // Shortlet specific fields
-      if (preferenceType === "shortlet") {
-        setNumberOfGuests(details.numberOfGuests || "");
-      }
+    if (!state.formData || Object.keys(state.formData).length === 0) {
+      setPropertySubtype(null);
+      setLandSize("");
+      setMeasurementUnit(null);
+      setDocumentTypes([]);
+      setPropertyCondition(null);
+      setBuildingType(null);
+      setBedrooms(null);
+      setBathrooms("");
+      setLandConditions([]);
+      setPropertyType(null);
+      setMaxGuests("");
+      setTravelType(null);
+      setNearbyLandmark("");
     }
-
-    // Initialize other fields
-    if (formData.nearbyLandmark) {
-      setNearbyLandmark(formData.nearbyLandmark);
-    }
-  }, [state.formData, preferenceType]);
+  }, [state.formData]);
 
   // Update context when values change
   useEffect(() => {
-    switch (preferenceType) {
-      case "buy":
-        const buyPropertyDetails = {
-          propertyType: (propertyType?.value || "") as
-            | "Land"
-            | "Residential"
-            | "Commercial",
-          buildingType: (buildingType?.value || "") as
-            | "Detached"
-            | "Semi-Detached"
-            | "Block of Flats",
-          minBedrooms:
-            minBedrooms?.value === "More"
-              ? ("More" as const)
-              : parseInt(minBedrooms?.value || "0") || 0,
-          minBathrooms: parseInt(minBathrooms) || 0,
-          propertyCondition: (propertyCondition?.value || "") as
-            | "New"
-            | "Renovated"
-            | "Any",
-          purpose: (purpose?.value || "") as
-            | "For living"
-            | "Resale"
-            | "Development",
-        };
-        updateFormData({
-          propertyDetails: buyPropertyDetails,
-          nearbyLandmark,
-        });
-        break;
-
-      case "rent":
-        const rentPropertyDetails = {
-          propertyType: (propertyType?.value || "") as
-            | "Self-con"
-            | "Flat"
-            | "Mini Flat"
-            | "Bungalow",
-          minBedrooms:
-            minBedrooms?.value === "More"
-              ? ("More" as const)
-              : parseInt(minBedrooms?.value || "0") || 0,
-          leaseTerm: (leaseTerm?.value || "") as "6 Months" | "1 Year",
-          propertyCondition: (propertyCondition?.value || "") as
-            | "New"
-            | "Renovated",
-          purpose: (purpose?.value || "") as "Residential" | "Office",
-        };
-        updateFormData({
-          propertyDetails: rentPropertyDetails,
-        });
-        break;
-
-      case "joint-venture":
-        const developmentDetails = {
-          minLandSize: minLandSize || "",
-          jvType: (jvType?.value || "") as
-            | "Equity Split"
-            | "Lease-to-Build"
-            | "Development Partner",
-          propertyType: (propertyType?.value || "") as
-            | "Land"
-            | "Old Building"
-            | "Structure to demolish",
-          expectedStructureType: (expectedStructureType?.value || "") as
-            | "Mini Flats"
-            | "Luxury Duplexes",
-          timeline: (timeline?.value || "") as
-            | "Ready Now"
-            | "In 3 Months"
-            | "Within 1 Year",
-          budgetRange: budgetRange
-            ? parseFloat(budgetRange.replace(/,/g, ""))
-            : undefined,
-        };
-        updateFormData({
-          developmentDetails,
-        });
-        break;
-
-      case "shortlet":
-        const bookingDetails = {
-          propertyType: (propertyType?.value || "") as
-            | "Studio"
-            | "1-Bed Apartment"
-            | "2-Bed Flat",
-          minBedrooms:
-            minBedrooms?.value === "More"
-              ? ("More" as const)
-              : parseInt(minBedrooms?.value || "0") || 0,
-          numberOfGuests: parseInt(numberOfGuests) || 0,
-          checkInDate: "", // These need to be set elsewhere in the form
-          checkOutDate: "", // These need to be set elsewhere in the form
-        };
-        updateFormData({
-          bookingDetails,
-        });
-        break;
+    if (preferenceType === "shortlet") {
+      const shortletData = {
+        propertyType: propertyType?.value || "",
+        bedrooms: bedrooms?.value || "",
+        bathrooms: parseInt(bathrooms) || 0,
+        maxGuests: parseInt(maxGuests) || 0,
+        travelType: travelType?.value || "",
+        nearbyLandmark,
+      };
+      updateFormData({ propertyDetails: shortletData } as any);
+    } else {
+      const propertyData = {
+        propertySubtype: propertySubtype?.value || "",
+        landSize,
+        measurementUnit: measurementUnit?.value || "",
+        documentTypes: documentTypes || [],
+        propertyCondition: propertyCondition?.value || "",
+        buildingType: buildingType?.value || "",
+        bedrooms: bedrooms?.value || "",
+        bathrooms: parseInt(bathrooms) || 0,
+        landConditions: landConditions.map((lc) => lc.value) || [],
+      };
+      updateFormData({ propertyDetails: propertyData } as any);
     }
   }, [
     preferenceType,
-    propertyType,
-    buildingType,
-    minBedrooms,
-    minBathrooms,
+    propertySubtype,
+    landSize,
+    measurementUnit,
+    documentTypes,
     propertyCondition,
-    purpose,
-    leaseTerm,
-    jvType,
-    expectedStructureType,
-    timeline,
-    minLandSize,
-    budgetRange,
-    numberOfGuests,
+    buildingType,
+    bedrooms,
+    bathrooms,
+    landConditions,
+    propertyType,
+    maxGuests,
+    travelType,
     nearbyLandmark,
     updateFormData,
   ]);
 
-  // Format number with commas
-  const formatNumberWithCommas = useCallback((value: string): string => {
-    const cleaned = value.replace(/\D/g, "");
-    return cleaned.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  }, []);
-
-  // Render buy property details
-  const renderBuyDetails = () => (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <label className="block text-sm font-semibold text-gray-800">
-            Property Type <span className="text-red-500">*</span>
-          </label>
-          <Select
-            options={PROPERTY_TYPE_OPTIONS.buy}
-            value={propertyType}
-            onChange={(selected) => setPropertyType(selected)}
-            placeholder="Select property type..."
-            styles={customSelectStyles}
-            isSearchable
-          />
+  // Render shortlet specific fields
+  if (preferenceType === "shortlet") {
+    return (
+      <div className={`space-y-6 ${className}`}>
+        <div className="text-center">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Shortlet Property Details
+          </h3>
+          <p className="text-sm text-gray-600">
+            Specify your stay requirements and preferences
+          </p>
         </div>
 
-        <div className="space-y-2">
-          <label className="block text-sm font-semibold text-gray-800">
-            Building Type <span className="text-red-500">*</span>
-          </label>
-          <Select
-            options={BUILDING_TYPE_OPTIONS}
-            value={buildingType}
-            onChange={(selected) => setBuildingType(selected)}
-            placeholder="Select building type..."
-            styles={customSelectStyles}
-            isSearchable
-          />
-        </div>
-      </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Property Type */}
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-gray-800">
+              Property Type <span className="text-red-500">*</span>
+            </label>
+            <Select
+              options={SHORTLET_PROPERTY_TYPES}
+              value={propertyType}
+              onChange={setPropertyType}
+              placeholder="Select property type..."
+              styles={customSelectStyles}
+            />
+          </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <label className="block text-sm font-semibold text-gray-800">
-            Minimum Bedrooms <span className="text-red-500">*</span>
-          </label>
-          <Select
-            options={BEDROOM_OPTIONS}
-            value={minBedrooms}
-            onChange={(selected) => setMinBedrooms(selected)}
-            placeholder="Select bedrooms..."
-            styles={customSelectStyles}
-            isSearchable
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label className="block text-sm font-semibold text-gray-800">
-            Minimum Bathrooms <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="number"
-            value={minBathrooms}
-            onChange={(e) => setMinBathrooms(e.target.value)}
-            placeholder="Enter number of bathrooms"
-            className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <label className="block text-sm font-semibold text-gray-800">
-            Property Condition <span className="text-red-500">*</span>
-          </label>
-          <Select
-            options={PROPERTY_CONDITION_OPTIONS.buy}
-            value={propertyCondition}
-            onChange={(selected) => setPropertyCondition(selected)}
-            placeholder="Select condition..."
-            styles={customSelectStyles}
-            isSearchable
-          />
+          {/* Travel Type */}
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-gray-800">
+              Type of Travel <span className="text-red-500">*</span>
+            </label>
+            <Select
+              options={TRAVEL_TYPES}
+              value={travelType}
+              onChange={setTravelType}
+              placeholder="Select travel type..."
+              styles={customSelectStyles}
+            />
+          </div>
         </div>
 
-        <div className="space-y-2">
-          <label className="block text-sm font-semibold text-gray-800">
-            Purpose <span className="text-red-500">*</span>
-          </label>
-          <Select
-            options={PURPOSE_OPTIONS.buy}
-            value={purpose}
-            onChange={(selected) => setPurpose(selected)}
-            placeholder="Select purpose..."
-            styles={customSelectStyles}
-            isSearchable
-          />
-        </div>
-      </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Bedrooms */}
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-gray-800">
+              Bedrooms <span className="text-red-500">*</span>
+            </label>
+            <Select
+              options={BEDROOM_OPTIONS}
+              value={bedrooms}
+              onChange={setBedrooms}
+              placeholder="Select bedrooms..."
+              styles={customSelectStyles}
+            />
+          </div>
 
-      <div className="space-y-2">
-        <label className="block text-sm font-semibold text-gray-800">
-          Nearby Landmark <span className="text-gray-500">(Optional)</span>
-        </label>
-        <input
-          type="text"
-          value={nearbyLandmark}
-          onChange={(e) => setNearbyLandmark(e.target.value)}
-          placeholder="Enter nearby landmark"
-          className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400"
-        />
-      </div>
-    </div>
-  );
+          {/* Bathrooms */}
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-gray-800">
+              Bathrooms <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              value={bathrooms}
+              onChange={(e) => setBathrooms(e.target.value)}
+              placeholder="Number of bathrooms"
+              min="1"
+              className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+            />
+          </div>
 
-  // Render rent property details
-  const renderRentDetails = () => (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <label className="block text-sm font-semibold text-gray-800">
-            Property Type <span className="text-red-500">*</span>
-          </label>
-          <Select
-            options={PROPERTY_TYPE_OPTIONS.rent}
-            value={propertyType}
-            onChange={(selected) => setPropertyType(selected)}
-            placeholder="Select property type..."
-            styles={customSelectStyles}
-            isSearchable
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label className="block text-sm font-semibold text-gray-800">
-            Minimum Bedrooms <span className="text-red-500">*</span>
-          </label>
-          <Select
-            options={BEDROOM_OPTIONS}
-            value={minBedrooms}
-            onChange={(selected) => setMinBedrooms(selected)}
-            placeholder="Select bedrooms..."
-            styles={customSelectStyles}
-            isSearchable
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <label className="block text-sm font-semibold text-gray-800">
-            Lease Term <span className="text-red-500">*</span>
-          </label>
-          <Select
-            options={LEASE_TERM_OPTIONS}
-            value={leaseTerm}
-            onChange={(selected) => setLeaseTerm(selected)}
-            placeholder="Select lease term..."
-            styles={customSelectStyles}
-            isSearchable
-          />
+          {/* Maximum Guests */}
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-gray-800">
+              Maximum Guests <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              value={maxGuests}
+              onChange={(e) => {
+                const value = Math.max(1, parseInt(e.target.value) || 1);
+                setMaxGuests(value.toString());
+              }}
+              onInput={(e) => {
+                const target = e.target as HTMLInputElement;
+                if (parseInt(target.value) < 1) {
+                  target.value = "1";
+                }
+              }}
+              placeholder="Number of guests"
+              min="1"
+              className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+            />
+          </div>
         </div>
 
+        {/* Nearby Landmark */}
         <div className="space-y-2">
           <label className="block text-sm font-semibold text-gray-800">
-            Property Condition <span className="text-red-500">*</span>
-          </label>
-          <Select
-            options={PROPERTY_CONDITION_OPTIONS.rent}
-            value={propertyCondition}
-            onChange={(selected) => setPropertyCondition(selected)}
-            placeholder="Select condition..."
-            styles={customSelectStyles}
-            isSearchable
-          />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <label className="block text-sm font-semibold text-gray-800">
-          Purpose <span className="text-red-500">*</span>
-        </label>
-        <Select
-          options={PURPOSE_OPTIONS.rent}
-          value={purpose}
-          onChange={(selected) => setPurpose(selected)}
-          placeholder="Select purpose..."
-          styles={customSelectStyles}
-          isSearchable
-        />
-      </div>
-    </div>
-  );
-
-  // Render joint venture details
-  const renderJointVentureDetails = () => (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <label className="block text-sm font-semibold text-gray-800">
-            Minimum Land Size <span className="text-red-500">*</span>
+            Nearby Landmark <span className="text-gray-500">(Optional)</span>
           </label>
           <input
             type="text"
-            value={minLandSize}
-            onChange={(e) => setMinLandSize(e.target.value)}
-            placeholder="e.g., 2 plots, 1000 sqm"
-            className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label className="block text-sm font-semibold text-gray-800">
-            Budget Range <span className="text-gray-500">(Optional)</span>
-          </label>
-          <input
-            type="text"
-            value={budgetRange}
-            onChange={(e) =>
-              setBudgetRange(formatNumberWithCommas(e.target.value))
-            }
-            placeholder="Enter investment budget"
-            className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400"
+            value={nearbyLandmark}
+            onChange={(e) => setNearbyLandmark(e.target.value)}
+            placeholder="Enter nearby landmark"
+            className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
           />
         </div>
       </div>
+    );
+  }
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <label className="block text-sm font-semibold text-gray-800">
-            Preferred JV Type <span className="text-red-500">*</span>
-          </label>
-          <Select
-            options={JV_TYPE_OPTIONS}
-            value={jvType}
-            onChange={(selected) => setJvType(selected)}
-            placeholder="Select JV type..."
-            styles={customSelectStyles}
-            isSearchable
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label className="block text-sm font-semibold text-gray-800">
-            Property Type <span className="text-red-500">*</span>
-          </label>
-          <Select
-            options={PROPERTY_TYPE_OPTIONS["joint-venture"]}
-            value={propertyType}
-            onChange={(selected) => setPropertyType(selected)}
-            placeholder="Select property type..."
-            styles={customSelectStyles}
-            isSearchable
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <label className="block text-sm font-semibold text-gray-800">
-            Expected Structure Type <span className="text-red-500">*</span>
-          </label>
-          <Select
-            options={EXPECTED_STRUCTURE_TYPE_OPTIONS}
-            value={expectedStructureType}
-            onChange={(selected) => setExpectedStructureType(selected)}
-            placeholder="Select structure type..."
-            styles={customSelectStyles}
-            isSearchable
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label className="block text-sm font-semibold text-gray-800">
-            Timeline <span className="text-red-500">*</span>
-          </label>
-          <Select
-            options={TIMELINE_OPTIONS}
-            value={timeline}
-            onChange={(selected) => setTimeline(selected)}
-            placeholder="Select timeline..."
-            styles={customSelectStyles}
-            isSearchable
-          />
-        </div>
-      </div>
-    </div>
-  );
-
-  // Render shortlet details
-  const renderShortletDetails = () => (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <label className="block text-sm font-semibold text-gray-800">
-          Property Type <span className="text-red-500">*</span>
-        </label>
-        <Select
-          options={PROPERTY_TYPE_OPTIONS.shortlet}
-          value={propertyType}
-          onChange={(selected) => setPropertyType(selected)}
-          placeholder="Select property type..."
-          styles={customSelectStyles}
-          isSearchable
-        />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <label className="block text-sm font-semibold text-gray-800">
-            Minimum Bedrooms <span className="text-red-500">*</span>
-          </label>
-          <Select
-            options={BEDROOM_OPTIONS}
-            value={minBedrooms}
-            onChange={(selected) => setMinBedrooms(selected)}
-            placeholder="Select bedrooms..."
-            styles={customSelectStyles}
-            isSearchable
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label className="block text-sm font-semibold text-gray-800">
-            Number of Guests <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="number"
-            value={numberOfGuests}
-            onChange={(e) => setNumberOfGuests(e.target.value)}
-            placeholder="Enter number of guests"
-            className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400"
-          />
-        </div>
-      </div>
-    </div>
-  );
-
+  // Render regular property details for Buy, Rent, Joint Venture
   return (
     <div className={`space-y-6 ${className}`}>
       <div className="text-center">
@@ -776,10 +424,263 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
         </p>
       </div>
 
-      {preferenceType === "buy" && renderBuyDetails()}
-      {preferenceType === "rent" && renderRentDetails()}
-      {preferenceType === "joint-venture" && renderJointVentureDetails()}
-      {preferenceType === "shortlet" && renderShortletDetails()}
+      {/* Property Sub-type Selection */}
+      <div className="space-y-2">
+        <label className="block text-sm font-semibold text-gray-800">
+          Property Type <span className="text-red-500">*</span>
+        </label>
+        <Select
+          options={PROPERTY_SUBTYPES}
+          value={propertySubtype}
+          onChange={(selected) => {
+            setPropertySubtype(selected);
+            // Reset dependent fields when property type changes
+            setBuildingType(null);
+            setPropertyCondition(null);
+            setDocumentTypes([]);
+          }}
+          placeholder="Select property type..."
+          styles={customSelectStyles}
+        />
+      </div>
+
+      {propertySubtype && (
+        <>
+          {/* Land Size and Measurement Unit */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-800">
+                Land Size <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                value={landSize}
+                onChange={(e) => {
+                  const value = Math.max(0, parseFloat(e.target.value) || 0);
+                  setLandSize(value.toString());
+                }}
+                onInput={(e) => {
+                  const target = e.target as HTMLInputElement;
+                  if (parseFloat(target.value) < 0) {
+                    target.value = "0";
+                  }
+                }}
+                placeholder="Enter land size"
+                min="0"
+                step="0.01"
+                className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-800">
+                Measurement Unit <span className="text-red-500">*</span>
+              </label>
+              <Select
+                options={MEASUREMENT_UNITS}
+                value={measurementUnit}
+                onChange={setMeasurementUnit}
+                placeholder="Select unit..."
+                styles={customSelectStyles}
+              />
+            </div>
+          </div>
+
+          {/* Document Types */}
+          {(preferenceType === "buy" || preferenceType === "joint-venture") && (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  Document Types <span className="text-red-500">*</span>
+                </label>
+                <p className="text-xs text-gray-500">
+                  Select all applicable document types you prefer
+                </p>
+              </div>
+              <Select
+                isMulti
+                options={DOCUMENT_TYPES}
+                value={DOCUMENT_TYPES.filter((doc) =>
+                  documentTypes.includes(doc.value),
+                )}
+                onChange={(selected) => {
+                  const selectedValues = selected
+                    ? selected.map((option: any) => option.value)
+                    : [];
+                  setDocumentTypes(selectedValues);
+                }}
+                placeholder="Select document types..."
+                styles={customSelectStyles}
+                closeMenuOnSelect={false}
+                hideSelectedOptions={false}
+                components={{
+                  Option: ({ innerRef, innerProps, isSelected, data }: any) => (
+                    <div
+                      ref={innerRef}
+                      {...innerProps}
+                      className={`flex items-center space-x-3 p-3 cursor-pointer transition-all duration-200 ${
+                        isSelected
+                          ? "bg-emerald-50 text-emerald-800"
+                          : "hover:bg-gray-50"
+                      }`}
+                    >
+                      <div
+                        className={`w-4 h-4 rounded border-2 transition-all ${
+                          isSelected
+                            ? "border-emerald-500 bg-emerald-500"
+                            : "border-gray-300"
+                        }`}
+                      >
+                        {isSelected && (
+                          <svg
+                            className="w-2.5 h-2.5 text-white absolute top-0.5 left-0.5"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        )}
+                      </div>
+                      <span className="text-sm font-medium">{data.label}</span>
+                    </div>
+                  ),
+                }}
+              />
+            </div>
+          )}
+
+          {/* Property Condition (for residential and commercial) */}
+          {propertySubtype.value !== "land" && (
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-800">
+                Property Condition <span className="text-red-500">*</span>
+              </label>
+              <Select
+                options={
+                  PROPERTY_CONDITIONS[preferenceType]?.[
+                    propertySubtype.value as keyof (typeof PROPERTY_CONDITIONS)[typeof preferenceType]
+                  ] || []
+                }
+                value={propertyCondition}
+                onChange={setPropertyCondition}
+                placeholder="Select condition..."
+                styles={customSelectStyles}
+              />
+            </div>
+          )}
+
+          {/* Building Type (for residential and commercial) */}
+          {propertySubtype.value !== "land" && (
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-800">
+                Building Type <span className="text-red-500">*</span>
+              </label>
+              <Select
+                options={
+                  BUILDING_TYPES[preferenceType]?.[
+                    propertySubtype.value as keyof (typeof BUILDING_TYPES)[typeof preferenceType]
+                  ] || []
+                }
+                value={buildingType}
+                onChange={setBuildingType}
+                placeholder="Select building type..."
+                styles={customSelectStyles}
+              />
+            </div>
+          )}
+
+          {/* Bedrooms and Bathrooms (for residential) */}
+          {propertySubtype.value === "residential" && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-800">
+                  Bedrooms <span className="text-red-500">*</span>
+                </label>
+                <Select
+                  options={BEDROOM_OPTIONS}
+                  value={bedrooms}
+                  onChange={setBedrooms}
+                  placeholder="Select bedrooms..."
+                  styles={customSelectStyles}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-800">
+                  Bathrooms <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  value={bathrooms}
+                  onChange={(e) => {
+                    const value = Math.max(0, parseInt(e.target.value) || 0);
+                    setBathrooms(value.toString());
+                  }}
+                  onInput={(e) => {
+                    const target = e.target as HTMLInputElement;
+                    if (parseInt(target.value) < 0) {
+                      target.value = "0";
+                    }
+                  }}
+                  placeholder="Number of bathrooms"
+                  min="0"
+                  className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Bathrooms only (for commercial) */}
+          {propertySubtype.value === "commercial" && (
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-800">
+                Bathrooms <span className="text-gray-500">(Optional)</span>
+              </label>
+              <input
+                type="number"
+                value={bathrooms}
+                onChange={(e) => {
+                  const value = Math.max(0, parseInt(e.target.value) || 0);
+                  setBathrooms(value.toString());
+                }}
+                onInput={(e) => {
+                  const target = e.target as HTMLInputElement;
+                  if (parseInt(target.value) < 0) {
+                    target.value = "0";
+                  }
+                }}
+                placeholder="Number of bathrooms"
+                min="0"
+                className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              />
+            </div>
+          )}
+
+          {/* Land Conditions (for Joint Venture Land) */}
+          {preferenceType === "joint-venture" &&
+            propertySubtype.value === "land" && (
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-800">
+                  Land Condition <span className="text-red-500">*</span>
+                </label>
+                <Select
+                  isMulti
+                  options={LAND_CONDITIONS}
+                  value={landConditions}
+                  onChange={(selected) =>
+                    setLandConditions(selected as Option[])
+                  }
+                  placeholder="Select land conditions..."
+                  styles={customSelectStyles}
+                />
+              </div>
+            )}
+        </>
+      )}
     </div>
   );
 };

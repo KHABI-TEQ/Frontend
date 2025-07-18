@@ -44,7 +44,7 @@ const SelectPreferableInspectionDate = ({
 }) => {
 const getAvailableDates = () => {
   const dates: string[] = [];
-  let date = new Date();
+  const date = new Date();
   date.setDate(date.getDate() + 3); // start from 3 days from now
 
   // Get the last day of the next month

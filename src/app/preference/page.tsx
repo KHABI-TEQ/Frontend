@@ -10,14 +10,14 @@ import {
   PreferenceFormProvider,
   usePreferenceForm,
 } from "@/context/preference-form-context";
-import LocationSelection from "@/components/preference-form/LocationSelection";
-import BudgetSelection from "@/components/preference-form/BudgetSelection";
+import OptimizedLocationSelection from "@/components/preference-form/OptimizedLocationSelection";
+import OptimizedBudgetSelection from "@/components/preference-form/OptimizedBudgetSelection";
 import FeatureSelection from "@/components/preference-form/FeatureSelection";
 import PropertyDetails from "@/components/preference-form/PropertyDetails";
 import DateSelection from "@/components/preference-form/DateSelection";
-import ContactInformation from "@/components/preference-form/ContactInformation";
+import OptimizedContactInformation from "@/components/preference-form/OptimizedContactInformation";
 import SubmitButton from "@/components/preference-form/SubmitButton";
-import StepWrapper from "@/components/preference-form/StepWrapper";
+import OptimizedStepWrapper from "@/components/preference-form/OptimizedStepWrapper";
 import {
   PreferencePayload,
   BuyPreferencePayload,
@@ -230,7 +230,7 @@ const PreferenceTypeButton = memo(
     <motion.button
       type="button"
       onClick={() => onClick(preferenceKey as keyof typeof PREFERENCE_CONFIGS)}
-      className={`p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 text-left ${
+      className={`p-3 sm:p-4 lg:p-6 rounded-lg sm:rounded-xl border-2 transition-all duration-200 text-left ${
         isSelected
           ? "border-emerald-500 bg-emerald-50 ring-2 ring-emerald-100"
           : "border-gray-200 bg-white hover:border-emerald-300 hover:bg-emerald-50"
@@ -238,12 +238,16 @@ const PreferenceTypeButton = memo(
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
     >
-      <div className="text-2xl sm:text-3xl mb-2 sm:mb-3">{config.icon}</div>
-      <h3 className="font-bold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">
-        <span className="block sm:hidden">{config.shortLabel}</span>
-        <span className="hidden sm:block">{config.label}</span>
+      <div className="text-xl sm:text-2xl lg:text-3xl mb-1 sm:mb-2 lg:mb-3">
+        {config.icon}
+      </div>
+      <h3 className="font-bold text-gray-900 mb-1 sm:mb-2 text-xs sm:text-sm lg:text-base">
+        <span className="block lg:hidden">{config.shortLabel}</span>
+        <span className="hidden lg:block">{config.label}</span>
       </h3>
-      <p className="text-xs sm:text-sm text-gray-600">{config.description}</p>
+      <p className="text-xs sm:text-xs lg:text-sm text-gray-600 hidden sm:block">
+        {config.description}
+      </p>
     </motion.button>
   ),
 );
@@ -343,29 +347,50 @@ const PreferenceFormContent: React.FC = () => {
   // Handle preference type change - memoized to prevent recreation
   const handlePreferenceTypeChange = useCallback(
     (preferenceKey: keyof typeof PREFERENCE_CONFIGS) => {
+      // Only proceed if actually changing preference type
+      if (preferenceKey === selectedPreferenceType) return;
+
       setSelectedPreferenceType(preferenceKey);
-      resetForm();
-      updateFormData({
-        preferenceType: PREFERENCE_CONFIGS[preferenceKey].preferenceType,
-      });
+
+      // Reset form data immediately without confirmation
+      dispatch({ type: "RESET_FORM" });
+
+      // Use a small delay to ensure reset completes before setting new data
+      setTimeout(() => {
+        // Set the new preference type
+        updateFormData({
+          preferenceType: PREFERENCE_CONFIGS[preferenceKey].preferenceType,
+        });
+        // Reset to first step
+        goToStep(0);
+      }, 100);
     },
-    [resetForm, updateFormData],
+    [dispatch, updateFormData, goToStep, selectedPreferenceType],
   );
 
-  // Generate API payload - memoized to prevent recreation
+  // Generate API payload with filtering - memoized to prevent recreation
   const generatePayload = useCallback((): PreferencePayload => {
     const { formData } = state;
 
     const config = PREFERENCE_CONFIGS[selectedPreferenceType];
 
+    // Base payload with only relevant fields
     const basePayload = {
       preferenceType: config.preferenceType,
       preferenceMode: config.preferenceMode,
       location: {
         state: formData.location?.state || "",
-        localGovernmentAreas: formData.location?.lgas || [],
-        selectedAreas: formData.location?.areas || [],
-        customLocation: formData.location?.customLocation,
+        localGovernmentAreas:
+          formData.location?.lgas?.filter((lga) => lga.trim() !== "") || [],
+        lgasWithAreas: (
+          (formData as any).enhancedLocation?.lgasWithAreas ||
+          // Fallback: create lgasWithAreas structure from legacy data
+          (formData.location?.lgas || []).map((lga: string) => ({
+            lgaName: lga,
+            areas: [], // Areas would be distributed among LGAs in real implementation
+          }))
+        ).filter((item: any) => item.lgaName.trim() !== ""),
+        customLocation: formData.location?.customLocation?.trim() || "",
       },
       budget: {
         minPrice: formData.budget?.minPrice || 0,
@@ -373,106 +398,301 @@ const PreferenceFormContent: React.FC = () => {
         currency: "NGN" as const,
       },
       features: {
-        baseFeatures: formData.features?.basicFeatures || [],
-        premiumFeatures: formData.features?.premiumFeatures || [],
+        baseFeatures:
+          formData.features?.basicFeatures?.filter(
+            (feature) => feature.trim() !== "",
+          ) || [],
+        premiumFeatures:
+          formData.features?.premiumFeatures?.filter(
+            (feature) => feature.trim() !== "",
+          ) || [],
         autoAdjustToFeatures: formData.features?.autoAdjustToBudget || false,
       },
+    };
+
+    // Helper function to remove empty/null/undefined values
+    const cleanObject = (obj: any): any => {
+      if (Array.isArray(obj)) {
+        return obj
+          .filter((item) => item !== null && item !== undefined && item !== "")
+          .map(cleanObject);
+      }
+      if (obj !== null && typeof obj === "object") {
+        const cleaned: any = {};
+        Object.keys(obj).forEach((key) => {
+          const value = cleanObject(obj[key]);
+          if (
+            value !== null &&
+            value !== undefined &&
+            value !== "" &&
+            !(Array.isArray(value) && value.length === 0) &&
+            !(typeof value === "object" && Object.keys(value).length === 0)
+          ) {
+            cleaned[key] = value;
+          }
+        });
+        return cleaned;
+      }
+      return obj;
     };
 
     switch (selectedPreferenceType) {
       case "buy": {
         const buyData = formData as any;
-        return {
+        const buyPayload = {
           ...basePayload,
           preferenceType: "buy",
           preferenceMode: "buy",
           propertyDetails: {
-            propertyType: buyData.propertyDetails?.propertyType || "",
+            propertyType:
+              buyData.propertyDetails?.propertySubtype ||
+              buyData.propertyDetails?.propertyType ||
+              "",
             buildingType: buyData.propertyDetails?.buildingType || "",
-            minBedrooms: buyData.propertyDetails?.minBedrooms || "",
-            minBathrooms: buyData.propertyDetails?.minBathrooms || 0,
+            minBedrooms:
+              buyData.propertyDetails?.bedrooms ||
+              buyData.propertyDetails?.minBedrooms ||
+              "",
+            minBathrooms:
+              buyData.propertyDetails?.bathrooms ||
+              buyData.propertyDetails?.minBathrooms ||
+              0,
             propertyCondition: buyData.propertyDetails?.propertyCondition || "",
-            purpose: buyData.propertyDetails?.purpose || "",
+            purpose: buyData.propertyDetails?.purpose || "For living",
+            landSize: buyData.propertyDetails?.landSize || "",
+            measurementUnit: buyData.propertyDetails?.measurementUnit || "",
+            documentTypes:
+              buyData.propertyDetails?.documentTypes?.filter(
+                (doc: string) => doc.trim() !== "",
+              ) || [],
+            landConditions:
+              buyData.propertyDetails?.landConditions?.filter(
+                (condition: string) => condition.trim() !== "",
+              ) || [],
           },
           contactInfo: {
-            fullName: buyData.contactInfo?.fullName || "",
-            email: buyData.contactInfo?.email || "",
-            phoneNumber: buyData.contactInfo?.phoneNumber || "",
+            fullName: buyData.contactInfo?.fullName?.trim() || "",
+            email: buyData.contactInfo?.email?.trim() || "",
+            phoneNumber: buyData.contactInfo?.phoneNumber?.trim() || "",
           },
-          nearbyLandmark: buyData.nearbyLandmark,
-          additionalNotes: buyData.additionalNotes,
-        } as BuyPreferencePayload;
+          nearbyLandmark: (
+            buyData.propertyDetails?.nearbyLandmark ||
+            buyData.nearbyLandmark ||
+            ""
+          ).trim(),
+          additionalNotes: (buyData.additionalNotes || "").trim(),
+        };
+        return cleanObject(buyPayload) as BuyPreferencePayload;
       }
 
       case "rent": {
         const rentData = formData as any;
-        return {
+        const rentPayload = {
           ...basePayload,
           preferenceType: "rent",
           preferenceMode: "tenant",
           propertyDetails: {
-            propertyType: rentData.propertyDetails?.propertyType || "",
-            minBedrooms: rentData.propertyDetails?.minBedrooms || "",
-            leaseTerm: rentData.propertyDetails?.leaseTerm || "",
+            propertyType:
+              rentData.propertyDetails?.propertySubtype ||
+              rentData.propertyDetails?.propertyType ||
+              "",
+            buildingType: rentData.propertyDetails?.buildingType || "",
+            minBedrooms:
+              rentData.propertyDetails?.bedrooms ||
+              rentData.propertyDetails?.minBedrooms ||
+              "",
+            minBathrooms:
+              rentData.propertyDetails?.bathrooms ||
+              rentData.propertyDetails?.minBathrooms ||
+              0,
+            leaseTerm: rentData.propertyDetails?.leaseTerm || "1 Year",
             propertyCondition:
               rentData.propertyDetails?.propertyCondition || "",
-            purpose: rentData.propertyDetails?.purpose || "",
+            purpose: rentData.propertyDetails?.purpose || "Residential",
+            landSize: rentData.propertyDetails?.landSize || "",
+            measurementUnit: rentData.propertyDetails?.measurementUnit || "",
+            documentTypes:
+              rentData.propertyDetails?.documentTypes?.filter(
+                (doc: string) => doc.trim() !== "",
+              ) || [],
+            landConditions:
+              rentData.propertyDetails?.landConditions?.filter(
+                (condition: string) => condition.trim() !== "",
+              ) || [],
           },
           contactInfo: {
-            fullName: rentData.contactInfo?.fullName || "",
-            email: rentData.contactInfo?.email || "",
-            phoneNumber: rentData.contactInfo?.phoneNumber || "",
+            fullName: rentData.contactInfo?.fullName?.trim() || "",
+            email: rentData.contactInfo?.email?.trim() || "",
+            phoneNumber: rentData.contactInfo?.phoneNumber?.trim() || "",
           },
-          additionalNotes: rentData.additionalNotes,
-        } as RentPreferencePayload;
+          nearbyLandmark: (
+            rentData.propertyDetails?.nearbyLandmark ||
+            rentData.nearbyLandmark ||
+            ""
+          ).trim(),
+          additionalNotes: (rentData.additionalNotes || "").trim(),
+        };
+        return cleanObject(rentPayload) as RentPreferencePayload;
       }
 
       case "joint-venture": {
         const jvData = formData as any;
-        return {
+        const jvPayload = {
           ...basePayload,
           preferenceType: "joint-venture",
           preferenceMode: "developer",
           developmentDetails: {
-            minLandSize: jvData.developmentDetails?.minLandSize || "",
-            jvType: jvData.developmentDetails?.jvType || "",
-            propertyType: jvData.developmentDetails?.propertyType || "",
-            expectedStructureType:
-              jvData.developmentDetails?.expectedStructureType || "",
-            timeline: jvData.developmentDetails?.timeline || "",
-            budgetRange: jvData.developmentDetails?.budgetRange,
+            minLandSize: (
+              jvData.propertyDetails?.landSize ||
+              jvData.developmentDetails?.minLandSize ||
+              ""
+            ).trim(),
+            measurementUnit: (
+              jvData.propertyDetails?.measurementUnit ||
+              jvData.developmentDetails?.measurementUnit ||
+              ""
+            ).trim(),
+            jvType: jvData.developmentDetails?.jvType || "Equity Split",
+            propertyType: (
+              jvData.propertyDetails?.propertySubtype ||
+              jvData.developmentDetails?.propertyType ||
+              ""
+            ).trim(),
+            expectedStructureType: (
+              jvData.developmentDetails?.expectedStructureType || ""
+            ).trim(),
+            timeline: (jvData.developmentDetails?.timeline || "").trim(),
+            budgetRange: (jvData.developmentDetails?.budgetRange || "").trim(),
+            documentTypes:
+              jvData.propertyDetails?.documentTypes?.filter(
+                (doc: string) => doc.trim() !== "",
+              ) || [],
+            landConditions:
+              jvData.propertyDetails?.landConditions?.filter(
+                (condition: string) => condition.trim() !== "",
+              ) || [],
+            buildingType: (jvData.propertyDetails?.buildingType || "").trim(),
+            propertyCondition: (
+              jvData.propertyDetails?.propertyCondition || ""
+            ).trim(),
+            minBedrooms: (jvData.propertyDetails?.minBedrooms || "")
+              .toString()
+              .trim(),
+            minBathrooms: jvData.propertyDetails?.minBathrooms || 0,
+            purpose: (jvData.propertyDetails?.purpose || "").trim(),
           },
           contactInfo: {
-            companyName: jvData.contactInfo?.companyName || "",
-            contactPerson: jvData.contactInfo?.contactPerson || "",
-            email: jvData.contactInfo?.email || "",
-            phoneNumber: jvData.contactInfo?.phoneNumber || "",
-            cacRegistrationNumber: jvData.contactInfo?.cacRegistrationNumber,
+            companyName: (jvData.contactInfo?.companyName || "").trim(),
+            contactPerson: (jvData.contactInfo?.contactPerson || "").trim(),
+            email: (jvData.contactInfo?.email || "").trim(),
+            phoneNumber: (jvData.contactInfo?.phoneNumber || "").trim(),
+            cacRegistrationNumber: (
+              jvData.contactInfo?.cacRegistrationNumber || ""
+            ).trim(),
           },
-          partnerExpectations: jvData.partnerExpectations,
-        } as JointVenturePreferencePayload;
+          partnerExpectations: (jvData.partnerExpectations || "").trim(),
+          nearbyLandmark: (
+            jvData.propertyDetails?.nearbyLandmark ||
+            jvData.nearbyLandmark ||
+            ""
+          ).trim(),
+          additionalNotes: (jvData.additionalNotes || "").trim(),
+        };
+        return cleanObject(jvPayload) as JointVenturePreferencePayload;
       }
 
       case "shortlet": {
         const shortletData = formData as any;
-        return {
+        const shortletPayload = {
           ...basePayload,
           preferenceType: "shortlet",
           preferenceMode: "shortlet",
           bookingDetails: {
-            propertyType: shortletData.bookingDetails?.propertyType || "",
-            minBedrooms: shortletData.bookingDetails?.minBedrooms || "",
-            numberOfGuests: shortletData.bookingDetails?.numberOfGuests || 0,
-            checkInDate: shortletData.bookingDetails?.checkInDate || "",
-            checkOutDate: shortletData.bookingDetails?.checkOutDate || "",
+            propertyType: (
+              shortletData.propertyDetails?.propertyType ||
+              shortletData.bookingDetails?.propertyType ||
+              ""
+            ).trim(),
+            buildingType: (
+              shortletData.propertyDetails?.buildingType || ""
+            ).trim(),
+            minBedrooms: (
+              shortletData.propertyDetails?.bedrooms ||
+              shortletData.bookingDetails?.minBedrooms ||
+              ""
+            )
+              .toString()
+              .trim(),
+            minBathrooms:
+              shortletData.propertyDetails?.bathrooms ||
+              shortletData.bookingDetails?.minBathrooms ||
+              0,
+            numberOfGuests:
+              shortletData.propertyDetails?.maxGuests ||
+              shortletData.bookingDetails?.numberOfGuests ||
+              0,
+            checkInDate: (
+              shortletData.bookingDetails?.checkInDate || ""
+            ).trim(),
+            checkOutDate: (
+              shortletData.bookingDetails?.checkOutDate || ""
+            ).trim(),
+            travelType: (
+              shortletData.propertyDetails?.travelType ||
+              shortletData.bookingDetails?.travelType ||
+              ""
+            ).trim(),
+            preferredCheckInTime: (
+              shortletData.contactInfo?.preferredCheckInTime || ""
+            ).trim(),
+            preferredCheckOutTime: (
+              shortletData.contactInfo?.preferredCheckOutTime || ""
+            ).trim(),
+            propertyCondition: (
+              shortletData.propertyDetails?.propertyCondition || ""
+            ).trim(),
+            purpose: (shortletData.propertyDetails?.purpose || "").trim(),
+            landSize: (shortletData.propertyDetails?.landSize || "").trim(),
+            measurementUnit: (
+              shortletData.propertyDetails?.measurementUnit || ""
+            ).trim(),
+            documentTypes:
+              shortletData.propertyDetails?.documentTypes?.filter(
+                (doc: string) => doc.trim() !== "",
+              ) || [],
+            landConditions:
+              shortletData.propertyDetails?.landConditions?.filter(
+                (condition: string) => condition.trim() !== "",
+              ) || [],
           },
           contactInfo: {
-            fullName: shortletData.contactInfo?.fullName || "",
-            email: shortletData.contactInfo?.email || "",
-            phoneNumber: shortletData.contactInfo?.phoneNumber || "",
+            fullName: (shortletData.contactInfo?.fullName || "").trim(),
+            email: (shortletData.contactInfo?.email || "").trim(),
+            phoneNumber: (shortletData.contactInfo?.phoneNumber || "").trim(),
+            petsAllowed: shortletData.contactInfo?.petsAllowed || false,
+            smokingAllowed: shortletData.contactInfo?.smokingAllowed || false,
+            partiesAllowed: shortletData.contactInfo?.partiesAllowed || false,
+            additionalRequests: (
+              shortletData.contactInfo?.additionalRequests || ""
+            ).trim(),
+            maxBudgetPerNight: shortletData.contactInfo?.maxBudgetPerNight || 0,
+            willingToPayExtra:
+              shortletData.contactInfo?.willingToPayExtra || false,
+            cleaningFeeBudget: shortletData.contactInfo?.cleaningFeeBudget || 0,
+            securityDepositBudget:
+              shortletData.contactInfo?.securityDepositBudget || 0,
+            cancellationPolicy: (
+              shortletData.contactInfo?.cancellationPolicy || ""
+            ).trim(),
           },
-          additionalNotes: shortletData.additionalNotes,
-        } as ShortletPreferencePayload;
+          nearbyLandmark: (
+            shortletData.propertyDetails?.nearbyLandmark ||
+            shortletData.nearbyLandmark ||
+            ""
+          ).trim(),
+          additionalNotes: (shortletData.additionalNotes || "").trim(),
+        };
+        return cleanObject(shortletPayload) as ShortletPreferencePayload;
       }
 
       default:
@@ -504,7 +724,9 @@ const PreferenceFormContent: React.FC = () => {
       if (response.status === 201 || response.status === 200) {
         console.log("Preference submitted successfully:", response);
         toast.success("Preference submitted successfully!");
-        // Show success modal instead of redirecting immediately
+        // Reset form data immediately after successful submission
+        dispatch({ type: "RESET_FORM" });
+        // Show success modal
         setShowSuccessModal(true);
       } else {
         throw new Error("Submission failed");
@@ -520,16 +742,18 @@ const PreferenceFormContent: React.FC = () => {
   // Handle submit new preference - memoized to prevent recreation
   const handleSubmitNew = useCallback(() => {
     setShowSuccessModal(false);
-    resetForm();
+    // Reset form data immediately without confirmation
+    dispatch({ type: "RESET_FORM" });
     goToStep(0);
-  }, [resetForm, goToStep]);
+  }, [dispatch, goToStep]);
 
   // Handle go to marketplace - memoized to prevent recreation
   const handleGoToMarketplace = useCallback(() => {
     setShowSuccessModal(false);
-    resetForm();
+    // Reset form data immediately without confirmation
+    dispatch({ type: "RESET_FORM" });
     router.push("/market-place");
-  }, [resetForm, router]);
+  }, [dispatch, router]);
 
   // Render preference type selector - memoized to prevent recreation
   const renderPreferenceTypeSelector = useMemo(
@@ -543,7 +767,7 @@ const PreferenceFormContent: React.FC = () => {
             Select the type of property transaction you&apos;re interested in
           </p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
           {Object.entries(PREFERENCE_CONFIGS).map(([key, config]) => (
             <PreferenceTypeButton
               key={key}
@@ -569,11 +793,11 @@ const PreferenceFormContent: React.FC = () => {
           Current Form Data (Debug):
         </h4>
         <pre className="text-xs whitespace-pre-wrap">
-          {JSON.stringify(state.formData, null, 2)}
+          {JSON.stringify(generatePayload(), null, 2)}
         </pre>
       </div>
     );
-  }, [state.formData]);
+  }, [state.formData, state.currentStep, generatePayload]); // Added currentStep to trigger updates
 
   // Handle step navigation - memoized to prevent recreation
   const handleStepClick = useCallback(
@@ -589,22 +813,36 @@ const PreferenceFormContent: React.FC = () => {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 relative">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="min-h-screen bg-gradient-to-br from-gray-50 via-emerald-50/30 to-gray-100 relative"
+    >
       {/* Loading Overlay */}
       <LoadingOverlay isSubmitting={state.isSubmitting} />
 
       <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {/* Header */}
-        <div className="mb-6 sm:mb-8">
-          <button
+        <motion.div
+          initial={{ y: -50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="mb-6 sm:mb-8"
+        >
+          <motion.button
             onClick={handleBackClick}
-            className="mb-4 sm:mb-6 flex items-center space-x-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+            className="mb-4 sm:mb-6 flex items-center space-x-2 text-sm text-gray-600 hover:text-gray-800 transition-all duration-200"
+            whileHover={{ x: -5, scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            <svg
+            <motion.svg
               className="w-4 h-4"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
+              whileHover={{ x: -2 }}
+              transition={{ type: "spring", stiffness: 400 }}
             >
               <path
                 strokeLinecap="round"
@@ -612,80 +850,126 @@ const PreferenceFormContent: React.FC = () => {
                 strokeWidth={2}
                 d="M11 17l-5-5m0 0l5-5m-5 5h12"
               />
-            </svg>
+            </motion.svg>
             <span>Back to Marketplace</span>
-          </button>
+          </motion.button>
 
-          <div className="text-center">
-            <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-2 sm:mb-3">
+          <motion.div
+            className="text-center"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.6 }}
+          >
+            <motion.h1
+              className="text-2xl sm:text-4xl font-bold text-gray-900 mb-2 sm:mb-3"
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+            >
               Submit Your Property Preference
-            </h1>
-            <p className="text-base sm:text-xl text-gray-600">
+            </motion.h1>
+            <motion.p
+              className="text-base sm:text-xl text-gray-600"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >
               Tell us what you&apos;re looking for and we&apos;ll help you find
               the perfect match
-            </p>
-          </div>
-        </div>
+            </motion.p>
+          </motion.div>
+        </motion.div>
 
         {/* Preference Type Selector */}
-        {renderPreferenceTypeSelector}
+        <motion.div
+          initial={{ y: 30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.4, duration: 0.6 }}
+        >
+          {renderPreferenceTypeSelector}
+        </motion.div>
 
         {/* Step Progress */}
-        <StepProgressIndicator
-          steps={state.steps}
-          currentStep={state.currentStep}
-          onStepClick={handleStepClick}
-        />
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.6, duration: 0.5 }}
+        >
+          <StepProgressIndicator
+            steps={state.steps}
+            currentStep={state.currentStep}
+            onStepClick={handleStepClick}
+          />
+        </motion.div>
 
-        {/* Form Content with Step Wrapper to preserve state */}
-        <div className="bg-white rounded-xl p-6 shadow-lg border">
-          <div className="min-h-[400px]">
+        {/* Form Content with Enhanced Mobile-Responsive Step Wrapper */}
+        <motion.div
+          className="bg-white rounded-xl p-3 sm:p-6 shadow-lg border"
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.8, duration: 0.6 }}
+          whileHover={{ shadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)" }}
+        >
+          <div className="min-h-[400px] sm:min-h-[300px]">
             {/* Step 0: Location */}
-            <StepWrapper
+            <OptimizedStepWrapper
               stepId="location"
               currentStep={state.currentStep}
               targetStep={0}
             >
-              <LocationSelection />
-            </StepWrapper>
+              <OptimizedLocationSelection />
+            </OptimizedStepWrapper>
 
-            {/* Step 1: Budget */}
-            <StepWrapper
-              stepId="budget"
+            {/* Step 1: Property Details & Budget */}
+            <OptimizedStepWrapper
+              stepId="property-budget"
               currentStep={state.currentStep}
               targetStep={1}
+              className="space-y-6 sm:space-y-8"
             >
-              <BudgetSelection preferenceType={selectedPreferenceType} />
-            </StepWrapper>
+              <div className="space-y-6 sm:space-y-8">
+                <PropertyDetails preferenceType={selectedPreferenceType} />
+                <OptimizedBudgetSelection
+                  preferenceType={selectedPreferenceType}
+                />
+              </div>
+            </OptimizedStepWrapper>
 
-            {/* Step 2: Features + Property Details + Dates */}
-            <StepWrapper
+            {/* Step 2: Features & Amenities */}
+            <OptimizedStepWrapper
               stepId="features"
               currentStep={state.currentStep}
               targetStep={2}
+              className="space-y-6 sm:space-y-8"
             >
-              <div className="space-y-8">
+              <div className="space-y-6 sm:space-y-8">
                 <FeatureSelection preferenceType={selectedPreferenceType} />
-                <PropertyDetails preferenceType={selectedPreferenceType} />
                 {selectedPreferenceType === "shortlet" && <DateSelection />}
               </div>
-            </StepWrapper>
+            </OptimizedStepWrapper>
 
             {/* Step 3: Contact */}
-            <StepWrapper
+            <OptimizedStepWrapper
               stepId="contact"
               currentStep={state.currentStep}
               targetStep={3}
             >
-              <ContactInformation preferenceType={selectedPreferenceType} />
-            </StepWrapper>
+              <OptimizedContactInformation
+                preferenceType={selectedPreferenceType}
+              />
+            </OptimizedStepWrapper>
           </div>
 
           {/* Submit Button */}
-          <div className="mt-8 pt-6 border-t border-gray-200">
+          <motion.div
+            className="mt-8 pt-6 border-t border-gray-200"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
             <SubmitButton onSubmit={handleSubmit} />
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* Debug Panel - Show current form data in development only */}
         {debugPanel}
@@ -697,7 +981,7 @@ const PreferenceFormContent: React.FC = () => {
         onSubmitNew={handleSubmitNew}
         onGoToMarketplace={handleGoToMarketplace}
       />
-    </div>
+    </motion.div>
   );
 };
 

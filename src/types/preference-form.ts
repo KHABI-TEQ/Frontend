@@ -1,5 +1,5 @@
 /** @format */
- 
+
 // Core form interfaces
 export interface LocationSelection {
   state: string;
@@ -228,7 +228,7 @@ export interface FormValidationState {
 // Feature definitions with budget requirements
 export interface FeatureDefinition {
   name: string;
-  type: "basic" | "premium";
+  type: "basic" | "premium" | "comfort";
   minBudgetRequired?: number; // In Naira
   tooltip?: string;
 }
@@ -236,6 +236,7 @@ export interface FeatureDefinition {
 export interface FeatureConfig {
   basic: FeatureDefinition[];
   premium: FeatureDefinition[];
+  comfort?: FeatureDefinition[]; // Optional comfort features for shortlet
 }
 
 // Budget threshold configurations

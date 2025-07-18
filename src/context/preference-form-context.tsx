@@ -23,7 +23,7 @@ import {
 
 // Feature configurations with budget requirements - Memoized static data
 const FEATURE_CONFIGS: Record<string, FeatureConfig> = {
-  buy: {
+  "buy-residential": {
     basic: [
       { name: "Kitchenette", type: "basic" },
       { name: "Security Cameras", type: "basic" },
@@ -45,165 +45,48 @@ const FEATURE_CONFIGS: Record<string, FeatureConfig> = {
       { name: "Garden", type: "basic" },
     ],
     premium: [
-      {
-        name: "Gym House",
-        type: "premium",
-        minBudgetRequired: 30000000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Swimming Pool",
-        type: "premium",
-        minBudgetRequired: 30000000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Outdoor Kitchen",
-        type: "premium",
-        minBudgetRequired: 25000000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Rooftops",
-        type: "premium",
-        minBudgetRequired: 20000000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "In-house Cinema",
-        type: "premium",
-        minBudgetRequired: 40000000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Tennis Court",
-        type: "premium",
-        minBudgetRequired: 50000000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Elevator",
-        type: "premium",
-        minBudgetRequired: 35000000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Electric Fencing",
-        type: "premium",
-        minBudgetRequired: 15000000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Inverter",
-        type: "premium",
-        minBudgetRequired: 10000000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Sea View",
-        type: "premium",
-        minBudgetRequired: 60000000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Jacuzzi",
-        type: "premium",
-        minBudgetRequired: 20000000,
-        tooltip: "This feature requires a higher budget.",
-      },
+      { name: "Gym House", type: "premium" },
+      { name: "Swimming Pool", type: "premium" },
+      { name: "Outdoor Kitchen", type: "premium" },
+      { name: "Rooftops", type: "premium" },
+      { name: "In-house Cinema", type: "premium" },
+      { name: "Tennis Court", type: "premium" },
+      { name: "Elevator", type: "premium" },
+      { name: "Electric Fencing", type: "premium" },
+      { name: "Inverter", type: "premium" },
+      { name: "Sea View", type: "premium" },
+      { name: "Jacuzzi", type: "premium" },
     ],
   },
-  rent: {
+  "buy-commercial": {
     basic: [
-      { name: "Kitchenette", type: "basic" },
-      { name: "Security Cameras", type: "basic" },
-      { name: "Children Playground", type: "basic" },
-      { name: "Open Floor Plan", type: "basic" },
-      { name: "Walk-in Closet", type: "basic" },
-      { name: "WiFi", type: "basic" },
-      { name: "Library", type: "basic" },
-      { name: "Home Office", type: "basic" },
-      { name: "Bathtub", type: "basic" },
-      { name: "Garage", type: "basic" },
-      { name: "Staff Room", type: "basic" },
-      { name: "Pantry", type: "basic" },
-      { name: "Built-in Cupboards", type: "basic" },
-      { name: "Security Post", type: "basic" },
-      { name: "Access Gate", type: "basic" },
-      { name: "Air Conditioner", type: "basic" },
-      { name: "Wheelchair Friendly", type: "basic" },
-      { name: "Garden", type: "basic" },
+      { name: "Power Supply", type: "basic" },
+      { name: "Water Supply", type: "basic" },
+      { name: "Air Conditioning", type: "basic" },
+      { name: "Parking Space", type: "basic" },
+      { name: "Security", type: "basic" },
+      { name: "Internet (Wi-Fi)", type: "basic" },
+      { name: "Reception Area", type: "basic" },
+      { name: "Elevator", type: "basic" },
+      { name: "Standby Generator", type: "basic" },
     ],
     premium: [
-      {
-        name: "Gym House",
-        type: "premium",
-        minBudgetRequired: 800000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Swimming Pool",
-        type: "premium",
-        minBudgetRequired: 1000000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Outdoor Kitchen",
-        type: "premium",
-        minBudgetRequired: 600000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Rooftops",
-        type: "premium",
-        minBudgetRequired: 500000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "In-house Cinema",
-        type: "premium",
-        minBudgetRequired: 1200000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Tennis Court",
-        type: "premium",
-        minBudgetRequired: 1500000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Elevator",
-        type: "premium",
-        minBudgetRequired: 900000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Electric Fencing",
-        type: "premium",
-        minBudgetRequired: 400000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Inverter",
-        type: "premium",
-        minBudgetRequired: 300000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Sea View",
-        type: "premium",
-        minBudgetRequired: 2000000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Jacuzzi",
-        type: "premium",
-        minBudgetRequired: 700000,
-        tooltip: "This feature requires a higher budget.",
-      },
+      { name: "Central Cooling System", type: "premium" },
+      { name: "Fire Safety Equipment", type: "premium" },
+      { name: "Industrial Lift", type: "premium" },
+      { name: "CCTV Monitoring System", type: "premium" },
+      { name: "Conference Room", type: "premium" },
+      { name: "Fiber Optic Internet", type: "premium" },
+      { name: "Backup Solar/Inverter", type: "premium" },
+      { name: "Loading Dock", type: "premium" },
+      { name: "Smart Building Automation", type: "premium" },
     ],
   },
-  "joint-venture": {
+  "buy-land": {
+    basic: [],
+    premium: [],
+  },
+  "rent-residential": {
     basic: [
       { name: "Kitchenette", type: "basic" },
       { name: "Security Cameras", type: "basic" },
@@ -225,162 +108,142 @@ const FEATURE_CONFIGS: Record<string, FeatureConfig> = {
       { name: "Garden", type: "basic" },
     ],
     premium: [
-      {
-        name: "Gym House",
-        type: "premium",
-        minBudgetRequired: 15000000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Swimming Pool",
-        type: "premium",
-        minBudgetRequired: 20000000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Outdoor Kitchen",
-        type: "premium",
-        minBudgetRequired: 12000000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Rooftops",
-        type: "premium",
-        minBudgetRequired: 10000000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "In-house Cinema",
-        type: "premium",
-        minBudgetRequired: 25000000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Tennis Court",
-        type: "premium",
-        minBudgetRequired: 30000000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Elevator",
-        type: "premium",
-        minBudgetRequired: 20000000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Electric Fencing",
-        type: "premium",
-        minBudgetRequired: 8000000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Inverter",
-        type: "premium",
-        minBudgetRequired: 5000000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Sea View",
-        type: "premium",
-        minBudgetRequired: 40000000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Jacuzzi",
-        type: "premium",
-        minBudgetRequired: 15000000,
-        tooltip: "This feature requires a higher budget.",
-      },
+      { name: "Gym House", type: "premium" },
+      { name: "Swimming Pool", type: "premium" },
+      { name: "Outdoor Kitchen", type: "premium" },
+      { name: "Rooftops", type: "premium" },
+      { name: "In-house Cinema", type: "premium" },
+      { name: "Tennis Court", type: "premium" },
+      { name: "Elevator", type: "premium" },
+      { name: "Electric Fencing", type: "premium" },
+      { name: "Inverter", type: "premium" },
+      { name: "Sea View", type: "premium" },
+      { name: "Jacuzzi", type: "premium" },
     ],
+  },
+  "rent-commercial": {
+    basic: [
+      { name: "Power Supply", type: "basic" },
+      { name: "Water Supply", type: "basic" },
+      { name: "Air Conditioning", type: "basic" },
+      { name: "Parking Space", type: "basic" },
+      { name: "Security", type: "basic" },
+      { name: "Internet (Wi-Fi)", type: "basic" },
+      { name: "Reception Area", type: "basic" },
+      { name: "Elevator", type: "basic" },
+      { name: "Standby Generator", type: "basic" },
+    ],
+    premium: [
+      { name: "Central Cooling System", type: "premium" },
+      { name: "Fire Safety Equipment", type: "premium" },
+      { name: "Industrial Lift", type: "premium" },
+      { name: "CCTV Monitoring System", type: "premium" },
+      { name: "Conference Room", type: "premium" },
+      { name: "Fiber Optic Internet", type: "premium" },
+      { name: "Backup Solar/Inverter", type: "premium" },
+      { name: "Loading Dock", type: "premium" },
+      { name: "Smart Building Automation", type: "premium" },
+    ],
+  },
+  "rent-land": {
+    basic: [],
+    premium: [],
+  },
+  "joint-venture-residential": {
+    basic: [
+      { name: "Kitchenette", type: "basic" },
+      { name: "Security Cameras", type: "basic" },
+      { name: "Children Playground", type: "basic" },
+      { name: "Open Floor Plan", type: "basic" },
+      { name: "Walk-in Closet", type: "basic" },
+      { name: "WiFi", type: "basic" },
+      { name: "Library", type: "basic" },
+      { name: "Home Office", type: "basic" },
+      { name: "Bathtub", type: "basic" },
+      { name: "Garage", type: "basic" },
+      { name: "Staff Room", type: "basic" },
+      { name: "Pantry", type: "basic" },
+      { name: "Built-in Cupboards", type: "basic" },
+      { name: "Security Post", type: "basic" },
+      { name: "Access Gate", type: "basic" },
+      { name: "Air Conditioner", type: "basic" },
+      { name: "Wheelchair Friendly", type: "basic" },
+      { name: "Garden", type: "basic" },
+    ],
+    premium: [
+      { name: "Gym House", type: "premium" },
+      { name: "Swimming Pool", type: "premium" },
+      { name: "Outdoor Kitchen", type: "premium" },
+      { name: "Rooftops", type: "premium" },
+      { name: "In-house Cinema", type: "premium" },
+      { name: "Tennis Court", type: "premium" },
+      { name: "Elevator", type: "premium" },
+      { name: "Electric Fencing", type: "premium" },
+      { name: "Inverter", type: "premium" },
+      { name: "Sea View", type: "premium" },
+      { name: "Jacuzzi", type: "premium" },
+    ],
+  },
+  "joint-venture-commercial": {
+    basic: [
+      { name: "Power Supply", type: "basic" },
+      { name: "Water Supply", type: "basic" },
+      { name: "Air Conditioning", type: "basic" },
+      { name: "Parking Space", type: "basic" },
+      { name: "Security", type: "basic" },
+      { name: "Internet (Wi-Fi)", type: "basic" },
+      { name: "Reception Area", type: "basic" },
+      { name: "Elevator", type: "basic" },
+      { name: "Standby Generator", type: "basic" },
+    ],
+    premium: [
+      { name: "Central Cooling System", type: "premium" },
+      { name: "Fire Safety Equipment", type: "premium" },
+      { name: "Industrial Lift", type: "premium" },
+      { name: "CCTV Monitoring System", type: "premium" },
+      { name: "Conference Room", type: "premium" },
+      { name: "Fiber Optic Internet", type: "premium" },
+      { name: "Backup Solar/Inverter", type: "premium" },
+      { name: "Loading Dock", type: "premium" },
+      { name: "Smart Building Automation", type: "premium" },
+    ],
+  },
+  "joint-venture-land": {
+    basic: [],
+    premium: [],
   },
   shortlet: {
     basic: [
-      { name: "Kitchenette", type: "basic" },
-      { name: "Security Cameras", type: "basic" },
-      { name: "Children Playground", type: "basic" },
-      { name: "Open Floor Plan", type: "basic" },
-      { name: "Walk-in Closet", type: "basic" },
-      { name: "WiFi", type: "basic" },
-      { name: "Library", type: "basic" },
-      { name: "Home Office", type: "basic" },
-      { name: "Bathtub", type: "basic" },
-      { name: "Garage", type: "basic" },
-      { name: "Staff Room", type: "basic" },
-      { name: "Pantry", type: "basic" },
-      { name: "Built-in Cupboards", type: "basic" },
-      { name: "Security Post", type: "basic" },
-      { name: "Access Gate", type: "basic" },
-      { name: "Air Conditioner", type: "basic" },
-      { name: "Wheelchair Friendly", type: "basic" },
-      { name: "Garden", type: "basic" },
+      { name: "Wi-Fi", type: "basic" },
+      { name: "Air Conditioning", type: "basic" },
+      { name: "Power Supply", type: "basic" },
+      { name: "Security", type: "basic" },
+      { name: "Parking", type: "basic" },
+      { name: "Clean Water", type: "basic" },
+      { name: "Kitchen", type: "basic" },
+      { name: "Clean Bathroom", type: "basic" },
+    ],
+    comfort: [
+      { name: "Laundry", type: "comfort" },
+      { name: "Smart TV / Netflix", type: "comfort" },
+      { name: "Balcony", type: "comfort" },
+      { name: "Housekeeping", type: "comfort" },
+      { name: "Breakfast Included", type: "comfort" },
+      { name: "Private Entrance", type: "comfort" },
+      { name: "POP Ceiling", type: "comfort" },
+      { name: "Access Gate", type: "comfort" },
     ],
     premium: [
-      {
-        name: "Gym House",
-        type: "premium",
-        minBudgetRequired: 80000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Swimming Pool",
-        type: "premium",
-        minBudgetRequired: 100000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Outdoor Kitchen",
-        type: "premium",
-        minBudgetRequired: 60000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Rooftops",
-        type: "premium",
-        minBudgetRequired: 50000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "In-house Cinema",
-        type: "premium",
-        minBudgetRequired: 120000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Tennis Court",
-        type: "premium",
-        minBudgetRequired: 150000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Elevator",
-        type: "premium",
-        minBudgetRequired: 90000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Electric Fencing",
-        type: "premium",
-        minBudgetRequired: 40000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Inverter",
-        type: "premium",
-        minBudgetRequired: 30000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Sea View",
-        type: "premium",
-        minBudgetRequired: 200000,
-        tooltip: "This feature requires a higher budget.",
-      },
-      {
-        name: "Jacuzzi",
-        type: "premium",
-        minBudgetRequired: 70000,
-        tooltip: "This feature requires a higher budget.",
-      },
+      { name: "Gym Access", type: "premium" },
+      { name: "Swimming Pool", type: "premium" },
+      { name: "Inverter / Solar Backup", type: "premium" },
+      { name: "Rooftop Lounge", type: "premium" },
+      { name: "Jacuzzi", type: "premium" },
+      { name: "Sea View", type: "premium" },
+      { name: "Pet-Friendly", type: "premium" },
+      { name: "Outdoor Kitchen", type: "premium" },
+      { name: "Smart Lock", type: "premium" },
+      { name: "Close to Major Attractions", type: "premium" },
     ],
   },
 };
@@ -410,10 +273,30 @@ const DEFAULT_BUDGET_THRESHOLDS: BudgetThreshold[] = [
 const createInitialState = (): PreferenceFormState => ({
   currentStep: 0,
   steps: [
-    { id: "location", title: "Location", isValid: false, isRequired: true },
-    { id: "budget", title: "Budget", isValid: false, isRequired: true },
-    { id: "features", title: "Features", isValid: false, isRequired: false },
-    { id: "contact", title: "Contact", isValid: false, isRequired: true },
+    {
+      id: "location",
+      title: "Location & Area",
+      isValid: false,
+      isRequired: true,
+    },
+    {
+      id: "property-budget",
+      title: "Property Details & Budget",
+      isValid: false,
+      isRequired: true,
+    },
+    {
+      id: "features",
+      title: "Features & Amenities",
+      isValid: false,
+      isRequired: false,
+    },
+    {
+      id: "contact",
+      title: "Contact & Preferences",
+      isValid: false,
+      isRequired: true,
+    },
   ],
   formData: {},
   isSubmitting: false,
@@ -443,9 +326,24 @@ function preferenceFormReducer(
         ...action.payload,
       };
 
-      // Check if data actually changed using deep comparison
-      const formDataChanged =
-        JSON.stringify(state.formData) !== JSON.stringify(newFormData);
+      // Enhanced comparison for nested objects
+      let formDataChanged = false;
+      for (const key in action.payload) {
+        const currentValue = state.formData[key as keyof PreferenceForm];
+        const newValue = action.payload[key as keyof PreferenceForm];
+
+        // Deep comparison for objects and arrays
+        if (typeof newValue === "object" && newValue !== null) {
+          if (JSON.stringify(currentValue) !== JSON.stringify(newValue)) {
+            formDataChanged = true;
+            break;
+          }
+        } else if (currentValue !== newValue) {
+          formDataChanged = true;
+          break;
+        }
+      }
+
       if (!formDataChanged) {
         return state;
       }
@@ -581,20 +479,64 @@ export const PreferenceFormProvider: React.FC<{ children: ReactNode }> = ({
               message: "At least one LGA is required",
             });
           }
-          if (
-            !formData.location?.areas?.length &&
-            !formData.location?.customLocation
-          ) {
+          if (formData.location?.lgas && formData.location.lgas.length > 3) {
             errors.push({
-              field: "location.areas",
-              message: "Please select areas or enter a custom location",
+              field: "location.lgas",
+              message: "Maximum 3 LGAs can be selected",
             });
           }
-          if (formData.location?.areas && formData.location.areas.length > 3) {
-            errors.push({
-              field: "location.areas",
-              message: "Maximum 3 areas can be selected",
-            });
+
+          // Enhanced validation for LGA-area mapping
+          const enhancedLocation = (formData as any).enhancedLocation;
+          if (
+            enhancedLocation?.lgasWithAreas &&
+            enhancedLocation.lgasWithAreas.length > 0
+          ) {
+            const lgasWithAreas = enhancedLocation.lgasWithAreas;
+            let hasAnyAreas = false;
+            let hasCustomLocation = false;
+
+            // Check for custom location
+            if (
+              formData.location?.customLocation?.trim() ||
+              enhancedLocation.customLocation?.trim()
+            ) {
+              hasCustomLocation = true;
+            }
+
+            // Check areas in LGAs
+            for (const lgaArea of lgasWithAreas) {
+              if (lgaArea.areas && lgaArea.areas.length > 0) {
+                hasAnyAreas = true;
+                if (lgaArea.areas.length > 3) {
+                  errors.push({
+                    field: `location.areas.${lgaArea.lgaName}`,
+                    message: `Maximum 3 areas allowed per LGA (${lgaArea.lgaName})`,
+                  });
+                }
+              }
+            }
+
+            // Check if at least one area is selected or custom location is provided
+            if (!hasAnyAreas && !hasCustomLocation) {
+              errors.push({
+                field: "location.areas",
+                message:
+                  "Please select at least one area or enter a custom location",
+              });
+            }
+          } else {
+            // Fallback to legacy validation
+            const hasLegacyAreas =
+              formData.location?.areas && formData.location.areas.length > 0;
+            const hasCustomLocation = formData.location?.customLocation?.trim();
+
+            if (!hasLegacyAreas && !hasCustomLocation) {
+              errors.push({
+                field: "location.areas",
+                message: "Please select areas or enter a custom location",
+              });
+            }
           }
           break;
 
@@ -670,6 +612,15 @@ export const PreferenceFormProvider: React.FC<{ children: ReactNode }> = ({
               field: "contactInfo.email",
               message: "Email is required",
             });
+          } else {
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(formData.contactInfo.email)) {
+              errors.push({
+                field: "contactInfo.email",
+                message: "Please enter a valid email address",
+              });
+            }
           }
           if (!formData.contactInfo?.phoneNumber) {
             errors.push({
@@ -748,33 +699,48 @@ export const PreferenceFormProvider: React.FC<{ children: ReactNode }> = ({
 
     isUpdatingRef.current = true;
 
-    // Use setTimeout to batch updates and prevent loops
-    setTimeout(() => {
+    // Use requestAnimationFrame to batch updates more efficiently
+    requestAnimationFrame(() => {
       dispatch({ type: "UPDATE_FORM_DATA", payload: data });
       isUpdatingRef.current = false;
-    }, 0);
+    });
   }, []); // Empty dependencies - this function never changes
 
   const getAvailableFeatures = useCallback(
     (preferenceType: string, budget?: number) => {
       const config = state.featureConfigs[preferenceType];
       if (!config) {
-        return { basic: [], premium: [] };
+        return { basic: [], premium: [], comfort: [] };
+      }
+
+      // For shortlet, return all feature types
+      if (preferenceType === "shortlet") {
+        return {
+          basic: config.basic || [],
+          comfort: (config as any).comfort || [],
+          premium: config.premium || [],
+        };
       }
 
       if (!budget) {
-        return config;
+        return {
+          basic: config.basic || [],
+          premium: config.premium || [],
+          comfort: (config as any).comfort || [],
+        };
       }
 
       // Filter premium features based on budget
-      const availablePremium = config.premium.filter(
-        (feature) =>
-          !feature.minBudgetRequired || budget >= feature.minBudgetRequired,
-      );
+      const availablePremium =
+        config.premium?.filter(
+          (feature) =>
+            !feature.minBudgetRequired || budget >= feature.minBudgetRequired,
+        ) || [];
 
       return {
-        basic: config.basic,
+        basic: config.basic || [],
         premium: availablePremium,
+        comfort: (config as any).comfort || [],
       };
     },
     [state.featureConfigs],
@@ -811,21 +777,9 @@ export const PreferenceFormProvider: React.FC<{ children: ReactNode }> = ({
   );
 
   const resetForm = useCallback(() => {
-    // Show confirmation before clearing form if there's data
-    const hasData = Object.keys(state.formData).length > 0;
-
-    if (hasData) {
-      if (
-        typeof window !== "undefined" &&
-        window.confirm("Are you sure you want to clear all form data?")
-      ) {
-        dispatch({ type: "RESET_FORM" });
-        toast.success("Form data cleared successfully");
-      }
-    } else {
-      dispatch({ type: "RESET_FORM" });
-    }
-  }, [state.formData]);
+    // Reset form data immediately without confirmation
+    dispatch({ type: "RESET_FORM" });
+  }, []);
 
   // Manual validation - removed automatic validation to prevent infinite loops
   // Validation will be triggered on step changes and form submission
