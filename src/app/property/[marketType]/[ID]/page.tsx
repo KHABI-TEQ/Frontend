@@ -793,9 +793,7 @@ const ProductDetailsPage = () => {
         setLoading(true);
 
         // Use the new endpoint format
-        const apiUrl = `${URLS.BASE}/properties/${id}/getOne`;
-
-        const response = await axios.get(apiUrl);
+        const response = await api.get(`/properties/${id}/getOne`);
 
         if (!response || !response.data || !response.data.success) {
           throw new Error("Property not found");
