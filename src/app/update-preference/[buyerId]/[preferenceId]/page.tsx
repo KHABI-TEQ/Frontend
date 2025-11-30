@@ -4,7 +4,7 @@
 import React, { useState, useCallback, useMemo, memo, Suspense, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, useParams } from "next/navigation";
-import axios from "axios";
+import api from "@/utils/axiosConfig";
 import { toast } from "react-hot-toast";
 import {
   PreferenceFormProvider,
