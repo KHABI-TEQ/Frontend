@@ -28,7 +28,7 @@ import {
   House,
 } from "lucide-react";
 import Image from "next/image";
-import axios from "axios";
+import api from "@/utils/axiosConfig";
 import toast from "react-hot-toast";
 import { URLS } from "@/utils/URLS";
 import { useSelectedBriefs } from "@/context/selected-briefs-context";
