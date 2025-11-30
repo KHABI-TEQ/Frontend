@@ -7,7 +7,7 @@ import emailIcon from '@/svgs/emaiIcon.svg';
 import { ArrowLeft, Circle } from 'lucide-react';
 import { epilogue } from '@/styles/font';
 import Input from './general-components/Input';
-import axios from 'axios';
+import api from '@/utils/axiosConfig';
 import { URLS } from '@/utils/URLS';
 import toast from 'react-hot-toast';
 
