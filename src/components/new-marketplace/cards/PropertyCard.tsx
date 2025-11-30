@@ -241,4 +241,4 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
   );
 };
 
-export default PropertyCard;
+export default memo(PropertyCard);
