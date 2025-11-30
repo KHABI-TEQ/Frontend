@@ -1,6 +1,6 @@
 import './globals.css';
 import HeaderFooterWrapper from '@/components/new-homepage/header_footer_wrapper';
-import { epilogue, roboto, archivo, ubuntu } from '@/styles/font';
+import { roboto, archivo } from '@/styles/font';
 import { Toaster } from 'react-hot-toast';
 import Body from '@/components/general-components/body';
 import { GoogleOAuthProvider } from '@react-oauth/google';
