@@ -167,12 +167,7 @@ const UpdateRentPropertyForm: React.FC<UpdateRentPropertyFormProps> = ({
           return;
         }
 
-        const url = `${process.env.NEXT_PUBLIC_API_URL}/account/properties/${propertyId}/getOne`;
-        const response = await axios.get(url, {
-          headers: {
-            Authorization: `Bearer ${Cookies.get("token")}`,
-          },
-        });
+        const response = await api.get(`/account/properties/${propertyId}/getOne`);
 
         if (response.data && response.data.success) {
           const property = response.data.data;
