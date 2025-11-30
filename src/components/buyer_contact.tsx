@@ -49,8 +49,8 @@ const Buyer_Contact = ({
       };
       setIsSubmitting(true);
       try {
-        const response = await axios.post(
-          URLS.BASE + '/property/request-inspection',
+        const response = await api.post(
+          '/property/request-inspection',
           payload
         );
         if (response.status === 200) {
