@@ -116,8 +116,8 @@ const RentalReference = ({
       setFormStatus('pending');
       setDataLoading?.(true);
       try {
-        const response = await axios.post(
-          URLS.BASE + '/properties/rent/request/rent/search',
+        const response = await api.post(
+          '/properties/rent/request/rent/search',
           payload
         );
         console.log(response);
