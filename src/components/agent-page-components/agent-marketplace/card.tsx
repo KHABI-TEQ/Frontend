@@ -88,7 +88,7 @@ const RectangleContent = ({
 }) => {
   return (
     <div className='bg-[#F7F7F8] h-[60px] py-[20px] px-[15px] justify-center flex flex-col gap-[6px]'>
-      <h5 className={`${ubuntu.className} text-sm text-[#707281]`}>
+      <h5 className="text-sm text-[#707281]">
         {heading}
       </h5>
       <h3 className='text-sm text-black font-medium'>
