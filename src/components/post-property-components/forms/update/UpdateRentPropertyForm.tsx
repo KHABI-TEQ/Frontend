@@ -9,7 +9,7 @@ import { usePostPropertyContext } from "@/context/post-property-context";
 import { extractNumericValue } from "@/utils/price-helpers";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
-import axios from "axios";
+import api from "@/utils/axiosConfig";
 
 // Components
 import Stepper from "@/components/post-property-components/Stepper";
