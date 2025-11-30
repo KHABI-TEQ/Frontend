@@ -313,7 +313,7 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
               <h4 className={`text-white font-bold text-xl mb-2 ${epilogue.className}`}>
                 Stay Updated with Property Deals
               </h4>
-              <p className={`text-[#D6DDEB] ${epilogue.className}`}>
+              <p className="text-[#D6DDEB]">
                 Get notified about new properties, market insights, and exclusive offers.
               </p>
             </div>
