@@ -62,14 +62,14 @@ type DetailsProps = {
 const Details = ({ heading, value, isMultiple }: DetailsProps) => {
   return (
     <div className='min-w-fit min-h-fit p-[20px] flex flex-col gap-[6px] bg-[#FAFAFA]'>
-      <h4 className={`${ubuntu.className} text-sm text-[#585B6C]`}>
+      <h4 className="text-sm text-[#585B6C]">
         {heading}
       </h4>
       {Array.isArray(value) ? (
         <ol className='list-inside list-disc list pl-[10px]'>
           {value.map((item) => (
             <li
-              className={`${ubuntu.className} font-medium text-sm text-[#141A16]`}
+              className="font-medium text-sm text-[#141A16]"
               key={item}>
               {item}
             </li>
@@ -77,7 +77,7 @@ const Details = ({ heading, value, isMultiple }: DetailsProps) => {
         </ol>
       ) : (
         <h2
-          className={`${ubuntu.className} font-medium text-sm text-[#141A16]`}>
+          className="font-medium text-sm text-[#141A16]">
           {value}
         </h2>
       )}
