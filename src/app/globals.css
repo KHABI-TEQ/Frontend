@@ -1,0 +1,245 @@
+/** @format */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Import preference form styles */
+@import "../styles/preference-form.css";
+
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  /* color: var(--foreground);
+  background: var(--background); */
+  background: #eef1f1;
+  font-family: "Roboto", sans-serif;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  scrollbar-width: none; /* Firefox */
+}
+
+/* Scrollbar hide utility for testimonials */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
+.font-epilogue {
+  font-family: var(--font-epilogue);
+}
+
+.font-archivo {
+  font-family: var(--font-archivo), sans-serif;
+}
+
+.font-ubuntu {
+  font-family: var(--font-ubuntu), sans-serif;
+}
+
+* {
+  font-family: var(--font-roboto);
+}
+
+@font-face {
+  font-family: "Clash Display";
+  src:
+    url("/Fonts/WEB/fonts/ClashDisplay-Regular.woff2") format("woff2"),
+    url("/Fonts/OTF/ClashDisplay-Regular.otf") format("opentype"),
+    url("/Fonts/WEB/fonts/ClashDisplay-Regular.woff") format("woff"); /* Optional fallback */
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Clash Display";
+  src:
+    url("/Fonts/WEB/fonts/ClashDisplay-Semibold.woff2") format("woff2"),
+    url("/Fonts/OTF/ClashDisplay-Medium.otf") format("opentype"),
+    url("/Fonts/WEB/fonts/ClashDisplay-Medium.woff") format("woff"); /* Optional fallback */
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Clash Display";
+  src:
+    url("/Fonts/WEB/fonts/ClashDisplay-Bold.woff2") format("woff2"),
+    url("/Fonts/OTF/ClashDisplay-Bold.otf") format("opentype"),
+    url("/Fonts/WEB/fonts/ClashDisplay-Bold.woff") format("woff"); /* Optional fallback */
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+.container {
+  width: 100%; /* Full width by default */
+  /* padding-left: 1rem;
+  padding-right: 1rem; */
+}
+
+/* Phones (default: full width) */
+
+/* Tablets (min-width: 640px) */
+@media (min-width: 640px) {
+  .container {
+    max-width: 100%;
+  }
+}
+
+/* Laptops (min-width: 1024px) */
+@media (min-width: 1024px) {
+  .container {
+    max-width: 1250px;
+  }
+}
+
+/* Larger Screens (min-width: 1440px) */
+@media (min-width: 1440px) {
+  .container {
+    max-width: 1400px;
+  }
+}
+
+/* Modal and scroll utilities */
+.no-scroll {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  top: 0;
+  left: 0;
+}
+
+.modal-backdrop {
+  backdrop-filter: blur(2px);
+}
+
+/* Modal overlay and scroll prevention */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  margin: auto;
+}
+
+/* Prevent body scroll when modal is open */
+.modal-open {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .modal-overlay {
+    padding: 10px;
+  }
+
+  .modal-content {
+    max-width: 95vw;
+    max-height: 95vh;
+    margin: 0;
+  }
+}
+
+/* Negotiation modal specific styles */
+.negotiation-modal {
+  min-height: 400px;
+  width: 100%;
+  max-width: 800px;
+}
+
+@media (max-width: 640px) {
+  .negotiation-modal {
+    min-height: 300px;
+    max-width: 100%;
+  }
+}
+
+/* Full screen overlay utility classes */
+.overlay-full {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.overlay-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.3);
+  z-index: 999;
+}
+
+/* Embla Carousel Styles */
+.embla {
+  overflow: hidden;
+}
+
+.embla__container {
+  display: flex;
+}
+
+.embla__slide {
+  flex: 0 0 100%;
+  min-width: 0;
+}

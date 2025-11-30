@@ -1,0 +1,19 @@
+/** @format */
+
+.blended-image {
+  background-image: url('/CEO.webp');
+  /* background-color: #0b423db2;
+  background-blend-mode: soft-light; */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.blended-image2 {
+  background-image: url('../assets/khabi.png');
+  /* background-color: #0b423d; */
+  background-blend-mode: soft-light;
+  background-size: cover;
+  background-position: top;
+  background-repeat: no-repeat;
+}

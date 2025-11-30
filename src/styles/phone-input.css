@@ -1,0 +1,117 @@
+/* Custom styling for react-phone-number-input */
+
+.phone-input-container {
+  position: relative;
+}
+
+.phone-input-container .PhoneInput {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid #c7cad0;
+  border-radius: 8px;
+  background-color: white;
+  transition:
+    border-color 0.2s ease-in-out,
+    box-shadow 0.2s ease-in-out;
+}
+
+.phone-input-container .PhoneInput:focus-within {
+  border-color: #8ddb90;
+  box-shadow: 0 0 0 2px rgba(141, 219, 144, 0.2);
+}
+
+.phone-input-container .PhoneInput--focus {
+  border-color: #8ddb90;
+  box-shadow: 0 0 0 2px rgba(141, 219, 144, 0.2);
+}
+
+.phone-input-container .PhoneInputCountrySelect {
+  padding: 8px 4px 8px 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #374151;
+  font-size: 14px;
+}
+
+.phone-input-container .PhoneInputCountrySelect:focus {
+  outline: none;
+}
+
+.phone-input-container .PhoneInputCountryIcon {
+  width: 20px;
+  height: auto;
+  border-radius: 2px;
+  display: block;
+}
+
+.phone-input-container .PhoneInputInput {
+  flex: 1;
+  padding: 12px 12px 12px 8px;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.4;
+}
+
+.phone-input-container .PhoneInputInput:focus {
+  outline: none;
+}
+
+.phone-input-container .PhoneInputInput::placeholder {
+  color: #9ca3af;
+}
+
+/* Error state */
+.phone-input-container.has-error .PhoneInput {
+  border-color: #ef4444;
+}
+
+.phone-input-container.has-error .PhoneInput:focus-within {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+}
+
+/* Success state */
+.phone-input-container.has-success .PhoneInput {
+  border-color: #22c55e;
+}
+
+.phone-input-container.has-success .PhoneInput:focus-within {
+  border-color: #22c55e;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2);
+}
+
+/* Disabled state */
+.phone-input-container .PhoneInput--disabled {
+  background-color: #f9fafb;
+  border-color: #e5e7eb;
+  cursor: not-allowed;
+}
+
+.phone-input-container .PhoneInput--disabled .PhoneInputInput {
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.phone-input-container .PhoneInput--disabled .PhoneInputCountrySelect {
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* Custom dropdown for country selection */
+.phone-input-container .PhoneInputCountrySelectArrow {
+  display: none;
+}
+
+.phone-input-container .PhoneInputCountrySelect::after {
+  content: "▼";
+  color: #9ca3af;
+  font-size: 10px;
+  margin-left: 4px;
+  pointer-events: none;
+}

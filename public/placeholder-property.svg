@@ -1,0 +1,7 @@
+<svg width="400" height="300" viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="400" height="300" fill="#F3F4F6"/>
+<path d="m175 110 50 40 50-40v80H175v-80Z" fill="#D1D5E9"/>
+<path d="m150 150 25-20 25 20v50H150v-50Z" fill="#D1D5E9"/>
+<circle cx="310" cy="90" r="20" fill="#FFD700"/>
+<text x="200" y="250" fill="#6B7280" font-family="Arial, sans-serif" font-size="14" text-anchor="middle">Property Image</text>
+</svg>
