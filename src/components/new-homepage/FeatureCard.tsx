@@ -243,4 +243,4 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ feature, index, loading }) =>
   );
 };
 
-export default FeatureCard;
+export default memo(FeatureCard);
