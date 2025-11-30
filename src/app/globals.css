@@ -4,10 +4,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Import preference form styles */
-@import "../styles/preference-form.css";
-
-
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -21,10 +17,8 @@
 }
 
 body {
-  /* color: var(--foreground);
-  background: var(--background); */
   background: #eef1f1;
-  font-family: "Roboto", sans-serif;
+  font-family: var(--font-roboto), sans-serif;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -36,53 +30,28 @@ body {
 }
 
 .hide-scrollbar {
-  -ms-overflow-style: none; /* Internet Explorer 10+ */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-/* Scrollbar hide utility for testimonials */
 .scrollbar-hide {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .scrollbar-hide::-webkit-scrollbar {
-  display: none; /* Chrome, Safari and Opera */
-}
-
-.font-epilogue {
-  font-family: var(--font-epilogue);
+  display: none;
 }
 
 .font-archivo {
   font-family: var(--font-archivo), sans-serif;
 }
 
-.font-ubuntu {
-  font-family: var(--font-ubuntu), sans-serif;
-}
-
-* {
-  font-family: var(--font-roboto);
-}
-
 @font-face {
   font-family: "Clash Display";
   src:
     url("/Fonts/WEB/fonts/ClashDisplay-Regular.woff2") format("woff2"),
-    url("/Fonts/OTF/ClashDisplay-Regular.otf") format("opentype"),
-    url("/Fonts/WEB/fonts/ClashDisplay-Regular.woff") format("woff"); /* Optional fallback */
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Clash Display";
-  src:
-    url("/Fonts/WEB/fonts/ClashDisplay-Semibold.woff2") format("woff2"),
-    url("/Fonts/OTF/ClashDisplay-Medium.otf") format("opentype"),
-    url("/Fonts/WEB/fonts/ClashDisplay-Medium.woff") format("woff"); /* Optional fallback */
+    url("/Fonts/WEB/fonts/ClashDisplay-Regular.woff") format("woff");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -92,9 +61,8 @@ body {
   font-family: "Clash Display";
   src:
     url("/Fonts/WEB/fonts/ClashDisplay-Bold.woff2") format("woff2"),
-    url("/Fonts/OTF/ClashDisplay-Bold.otf") format("opentype"),
-    url("/Fonts/WEB/fonts/ClashDisplay-Bold.woff") format("woff"); /* Optional fallback */
-  font-weight: 400;
+    url("/Fonts/WEB/fonts/ClashDisplay-Bold.woff") format("woff");
+  font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
