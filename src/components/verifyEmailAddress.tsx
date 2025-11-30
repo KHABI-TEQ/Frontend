@@ -5,7 +5,6 @@ import Image from 'next/image';
 import React, { useEffect, useState } from 'react';
 import emailIcon from '@/svgs/emaiIcon.svg';
 import { ArrowLeft, Circle } from 'lucide-react';
-import { epilogue } from '@/styles/font';
 import Input from './general-components/Input';
 import api from '@/utils/axiosConfig';
 import { URLS } from '@/utils/URLS';
