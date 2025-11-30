@@ -14,10 +14,14 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: false,
   },
   experimental: {
-    optimizePackageImports: ["react-icons", "framer-motion", "lucide-react"],
+    optimizePackageImports: ["lucide-react", "framer-motion", "axios"],
     optimizeCss: true,
+    serverComponentsExternalPackages: ["axios"],
   },
   compress: true,
+  poweredByHeader: false,
+  productionBrowserSourceMaps: false,
+  swcMinify: true,
   images: {
     remotePatterns: [
       {
@@ -32,26 +36,48 @@ const nextConfig: NextConfig = {
       },
     ],
     dangerouslyAllowSVG: false,
-    minimumCacheTTL: 31536000, // 1 year cache for optimized images
+    minimumCacheTTL: 31536000,
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     unoptimized: process.env.NODE_ENV === "development",
     formats: ['image/avif', 'image/webp'],
+    loader: 'default',
+    domains: ['res.cloudinary.com', 'www.res.cloudinary.com'],
   },
   headers: async () => {
     return [
       {
-        source: '/:path*',
+        source: '/fonts/:path*',
         headers: [
           {
             key: 'Cache-Control',
             value: 'public, max-age=31536000, immutable'
           }
-        ],
-        has: [
+        ]
+      },
+      {
+        source: '/:path*.woff2',
+        headers: [
           {
-            type: 'query',
-            key: '_next'
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable'
+          },
+          {
+            key: 'Content-Type',
+            value: 'font/woff2'
+          }
+        ]
+      },
+      {
+        source: '/:path*.woff',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable'
+          },
+          {
+            key: 'Content-Type',
+            value: 'font/woff'
           }
         ]
       }
@@ -76,5 +102,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-// ✅ Wrap config with bundle analyzer
 export default withBundleAnalyzer(nextConfig);
