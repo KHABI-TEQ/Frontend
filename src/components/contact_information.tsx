@@ -83,7 +83,7 @@ const ContactUs = () => {
           // Send all requests in parallel
           const responses = await Promise.all(
             payloads.map((payload: any) =>
-              axios.post(URLS.BASE + '/properties/buy/request/new', payload)
+              api.post('/properties/buy/request/new', payload)
             )
           );
 
