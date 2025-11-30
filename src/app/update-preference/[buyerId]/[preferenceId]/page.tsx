@@ -349,8 +349,7 @@ const UpdatePreferenceFormContent: React.FC = () => {
         setIsLoading(true);
         setLoadingError(null);
 
-        const url = `${process.env.NEXT_PUBLIC_API_URL}/preferences/getByBuyer/${buyerId}/${preferenceId}`;
-        const response = await axios.get(url);
+        const response = await api.get(`/preferences/getByBuyer/${buyerId}/${preferenceId}`);
 
         if (response.data && response.data.success) {
           const preferenceData = response.data.data;
