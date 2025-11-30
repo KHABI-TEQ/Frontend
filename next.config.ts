@@ -14,10 +14,10 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: false,
   },
   experimental: {
-    optimizePackageImports: ["lucide-react", "framer-motion", "axios"],
+    optimizePackageImports: ["lucide-react", "framer-motion"],
     optimizeCss: true,
-    serverComponentsExternalPackages: ["axios"],
   },
+  serverExternalPackages: ["axios"],
   compress: true,
   poweredByHeader: false,
   productionBrowserSourceMaps: false,
