@@ -262,4 +262,4 @@ const StandardPropertyCard: React.FC<StandardPropertyCardProps> = ({
   );
 };
 
-export default StandardPropertyCard;
+export default memo(StandardPropertyCard);
