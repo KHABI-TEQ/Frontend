@@ -139,7 +139,7 @@ const submitEmail = async () => {
           className='w-[4px] h-[4px]'
         />
         <span
-          className={`${epilogue.className} text-xl text-[#25324B] font-semibold`}>
+          className="text-xl text-[#25324B] font-semibold">
           Back
         </span>
       </div>
