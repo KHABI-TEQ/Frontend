@@ -103,8 +103,8 @@ const submitEmail = async () => {
       setReqStatus('failed');
       return;
     }
-    const response = await axios.post(
-      `${URLS.BASE}/user/change-email`,
+    const response = await api.post(
+      '/user/change-email',
       {
         email: userEmail,
         token: token,
