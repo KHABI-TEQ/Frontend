@@ -126,8 +126,8 @@ const ContactUs = () => {
         setIsSubmitting(true);
         if (propertyReference.type === 'rental') {
           try {
-            const response = await axios.post(
-              URLS.BASE + '/properties/rent/request/rent/new',
+            const response = await api.post(
+              '/properties/rent/request/rent/new',
               payload
             );
             if (response.status === 201) {
@@ -162,8 +162,8 @@ const ContactUs = () => {
         }
         if (propertyReference.type === 'buy') {
           try {
-            const response = await axios.post(
-              URLS.BASE + '/properties/buy/request/new',
+            const response = await api.post(
+              '/properties/buy/request/new',
               payload
             );
             if (response.status === 201) {
