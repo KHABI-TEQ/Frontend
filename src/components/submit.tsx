@@ -50,7 +50,7 @@ const SubmitPopUp: React.FC<SubmitPopUpProps> = ({
         <div className='w-full h-[294px] gap-[24px] flex flex-col justify-center items-center'>
           <div className='flex flex-col min-h-[59px] gap-[10px]'>
             <h2
-              className={`text-[25px] text-[#202430] font-bold leading-[30px] text-center ${product_sans.className}`}>
+              className="text-[25px] text-[#202430] font-bold leading-[30px] text-center">
               {title}
             </h2>
             <p className='text-base font-normal text-[#5A5D63] leading-[19.2px] text-center'>
