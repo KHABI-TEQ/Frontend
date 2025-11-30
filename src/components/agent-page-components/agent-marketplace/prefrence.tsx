@@ -1,6 +1,5 @@
 /** @format */
 
-import { ubuntu } from '@/styles/font';
 import { PropertySelectedProps } from './types';
 
 const Preference = ({
