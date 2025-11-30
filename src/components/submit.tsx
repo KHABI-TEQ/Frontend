@@ -7,7 +7,6 @@ import bigMarkIcon from '@/svgs/bigMark.svg';
 import Link from 'next/link';
 import { usePageContext } from '@/context/page-context';
 import useClickOutside from '@/hooks/clickOutside';
-import { product_sans } from '@/styles/font';
 import { motion } from 'framer-motion';
 import PopUpModal from './pop-up-modal-reusability';
 import { useRouter } from 'next/navigation';
