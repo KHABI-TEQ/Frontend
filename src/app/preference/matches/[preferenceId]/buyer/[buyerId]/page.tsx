@@ -95,7 +95,7 @@ const PreferenceMatchesPage: React.FC = () => {
 
       try {
         setLoading(true);
-        const response = await axios.get(
+        const response = await api.get(
           `/api/preferences/getMatchedProps/${buyerId}/${preferenceId}`
         );
 
