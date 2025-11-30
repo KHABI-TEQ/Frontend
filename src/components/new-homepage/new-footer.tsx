@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useSocialLinskSettings } from '@/hooks/useSystemSettings';
 import khabiTeqIcon from '@/svgs/white-khabi-teq.svg';
-import { epilogue } from '@/styles/font';
 import toast from 'react-hot-toast';
 import SuccessModal from '@/components/modals/SuccessModal';
 import { POST_REQUEST } from '@/utils/requests';
