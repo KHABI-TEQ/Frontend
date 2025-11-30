@@ -234,4 +234,4 @@ const GlobalJVPropertyCard: React.FC<GlobalJVPropertyCardProps> = ({
   );
 };
 
-export default GlobalJVPropertyCard;
+export default memo(GlobalJVPropertyCard);
