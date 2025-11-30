@@ -7,7 +7,7 @@ import { usePostPropertyContext } from "@/context/post-property-context";
 import Loading from "@/components/loading-component/loading";
 import toast from "react-hot-toast";
 import Cookies from "js-cookie";
-import axios from "axios";
+import api from "@/utils/axiosConfig";
 
 const UpdatePropertyRedirect = () => {
   const router = useRouter();
