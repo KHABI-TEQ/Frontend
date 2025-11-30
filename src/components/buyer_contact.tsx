@@ -12,8 +12,7 @@ import * as Yup from 'yup';
 import Button from './general-components/button';
 import toast from 'react-hot-toast';
 import { URLS } from '@/utils/URLS';
-//import { POST_REQUEST } from '@/utils/requests';
-import axios from 'axios';
+import api from '@/utils/axiosConfig';
 
 const Buyer_Contact = ({
   propertyId,
