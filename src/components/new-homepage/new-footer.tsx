@@ -286,13 +286,13 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
               {/* Contact Info */}
               <div className='mt-6 pt-6 border-t border-white/20'>
                 <div className='space-y-2'>
-                  <p className={`text-[#D6DDEB] text-sm ${epilogue.className}`}>
+                  <p className="text-[#D6DDEB] text-sm">
                     📧 info@khabiteqrealty.com
                   </p>
-                  <p className={`text-[#D6DDEB] text-sm ${epilogue.className}`}>
+                  <p className="text-[#D6DDEB] text-sm">
                     📞 +234 813 210 8659, 02013306352
                   </p>
-                  <p className={`text-[#D6DDEB] text-sm ${epilogue.className}`}>
+                  <p className="text-[#D6DDEB] text-sm">
                     📍 Lagos, Nigeria
                   </p>
                 </div>
