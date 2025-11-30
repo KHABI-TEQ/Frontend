@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Sidebar from './sidebar';
 import Mainbar from './main-bar';
-import axios from 'axios';
+import api from '@/utils/axiosConfig';
 import { URLS } from '@/utils/URLS';
 import Cookies from 'js-cookie';
 import { usePageContext } from '@/context/page-context';
