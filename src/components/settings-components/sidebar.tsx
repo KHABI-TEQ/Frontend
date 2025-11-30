@@ -4,7 +4,6 @@
 import Image from 'next/image';
 import React, { useEffect, useState } from 'react';
 import randomImage from '@/assets/noImageAvailable.png';
-import { product_sans } from '@/styles/font';
 import { usePageContext } from '@/context/page-context';
 import { motion } from 'framer-motion';
 import axios from 'axios';
