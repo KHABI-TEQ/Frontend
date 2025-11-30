@@ -356,7 +356,7 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
               transition={{ duration: 0.6, delay: 0.6 }}
               viewport={{ once: true }}
               className='flex items-center gap-4'>
-              <span className={`text-[#D6DDEB] text-sm mr-2 ${epilogue.className}`}>
+              <span className="text-[#D6DDEB] text-sm mr-2">
                 Follow us:
               </span>
               {(computedLinks.length ? computedLinks : defaultSocialLinks).map((social, index) => (
