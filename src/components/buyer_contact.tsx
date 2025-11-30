@@ -12,8 +12,7 @@ import * as Yup from 'yup';
 import Button from './general-components/button';
 import toast from 'react-hot-toast';
 import { URLS } from '@/utils/URLS';
-//import { POST_REQUEST } from '@/utils/requests';
-import axios from 'axios';
+import api from '@/utils/axiosConfig';
 
 const Buyer_Contact = ({
   propertyId,
@@ -50,8 +49,8 @@ const Buyer_Contact = ({
       };
       setIsSubmitting(true);
       try {
-        const response = await axios.post(
-          URLS.BASE + '/property/request-inspection',
+        const response = await api.post(
+          '/property/request-inspection',
           payload
         );
         if (response.status === 200) {

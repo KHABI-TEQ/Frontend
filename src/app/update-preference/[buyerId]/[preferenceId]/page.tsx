@@ -4,7 +4,7 @@
 import React, { useState, useCallback, useMemo, memo, Suspense, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, useParams } from "next/navigation";
-import axios from "axios";
+import api from "@/utils/axiosConfig";
 import { toast } from "react-hot-toast";
 import {
   PreferenceFormProvider,
@@ -349,8 +349,7 @@ const UpdatePreferenceFormContent: React.FC = () => {
         setIsLoading(true);
         setLoadingError(null);
 
-        const url = `${process.env.NEXT_PUBLIC_API_URL}/preferences/getByBuyer/${buyerId}/${preferenceId}`;
-        const response = await axios.get(url);
+        const response = await api.get(`/preferences/getByBuyer/${buyerId}/${preferenceId}`);
 
         if (response.data && response.data.success) {
           const preferenceData = response.data.data;
@@ -755,9 +754,7 @@ const UpdatePreferenceFormContent: React.FC = () => {
         console.log("Generated Update Payload:", JSON.stringify(payload, null, 2));
       }
 
-      const url = `${process.env.NEXT_PUBLIC_API_URL}/preferences/update/${buyerId}/${preferenceId}`;
-
-      const response = await axios.put(url, payload);
+      const response = await api.put(`/preferences/update/${buyerId}/${preferenceId}`, payload);
 
       if (response.status === 200 || response.status === 201) {
         console.log("Preference updated successfully:", response);

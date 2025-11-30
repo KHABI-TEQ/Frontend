@@ -1,7 +1,7 @@
 /** @format */
 
 "use client";
-import React from "react";
+import React, { memo } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -262,4 +262,4 @@ const StandardPropertyCard: React.FC<StandardPropertyCardProps> = ({
   );
 };
 
-export default StandardPropertyCard;
+export default memo(StandardPropertyCard);

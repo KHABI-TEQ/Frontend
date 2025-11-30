@@ -1,7 +1,7 @@
 /** @format */
 
 "use client";
-import React from "react";
+import React, { memo } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -234,4 +234,4 @@ const GlobalJVPropertyCard: React.FC<GlobalJVPropertyCardProps> = ({
   );
 };
 
-export default GlobalJVPropertyCard;
+export default memo(GlobalJVPropertyCard);

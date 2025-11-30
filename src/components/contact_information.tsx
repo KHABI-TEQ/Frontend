@@ -12,8 +12,7 @@ import * as Yup from 'yup';
 import Button from './general-components/button';
 import toast from 'react-hot-toast';
 import { URLS } from '@/utils/URLS';
-//import { POST_REQUEST } from '@/utils/requests';
-import axios from 'axios';
+import api from '@/utils/axiosConfig';
 
 const ContactUs = () => {
   const ref = useRef<HTMLFormElement | null>(null);
@@ -84,7 +83,7 @@ const ContactUs = () => {
           // Send all requests in parallel
           const responses = await Promise.all(
             payloads.map((payload: any) =>
-              axios.post(URLS.BASE + '/properties/buy/request/new', payload)
+              api.post('/properties/buy/request/new', payload)
             )
           );
 
@@ -127,8 +126,8 @@ const ContactUs = () => {
         setIsSubmitting(true);
         if (propertyReference.type === 'rental') {
           try {
-            const response = await axios.post(
-              URLS.BASE + '/properties/rent/request/rent/new',
+            const response = await api.post(
+              '/properties/rent/request/rent/new',
               payload
             );
             if (response.status === 201) {
@@ -163,8 +162,8 @@ const ContactUs = () => {
         }
         if (propertyReference.type === 'buy') {
           try {
-            const response = await axios.post(
-              URLS.BASE + '/properties/buy/request/new',
+            const response = await api.post(
+              '/properties/buy/request/new',
               payload
             );
             if (response.status === 201) {

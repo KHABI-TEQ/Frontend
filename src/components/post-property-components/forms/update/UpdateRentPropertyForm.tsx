@@ -9,7 +9,7 @@ import { usePostPropertyContext } from "@/context/post-property-context";
 import { extractNumericValue } from "@/utils/price-helpers";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
-import axios from "axios";
+import api from "@/utils/axiosConfig";
 
 // Components
 import Stepper from "@/components/post-property-components/Stepper";
@@ -167,12 +167,7 @@ const UpdateRentPropertyForm: React.FC<UpdateRentPropertyFormProps> = ({
           return;
         }
 
-        const url = `${process.env.NEXT_PUBLIC_API_URL}/account/properties/${propertyId}/getOne`;
-        const response = await axios.get(url, {
-          headers: {
-            Authorization: `Bearer ${Cookies.get("token")}`,
-          },
-        });
+        const response = await api.get(`/account/properties/${propertyId}/getOne`);
 
         if (response.data && response.data.success) {
           const property = response.data.data;

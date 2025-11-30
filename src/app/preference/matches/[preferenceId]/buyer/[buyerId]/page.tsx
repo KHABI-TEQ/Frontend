@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import axios from 'axios';
+import api from '@/utils/axiosConfig';
 import { Property } from '@/types/property.types';
 import GlobalPropertyCard from '@/components/common/property-cards/GlobalPropertyCard';
 import GlobalJVPropertyCard from '@/components/common/property-cards/GlobalJVPropertyCard';
@@ -95,7 +95,7 @@ const PreferenceMatchesPage: React.FC = () => {
 
       try {
         setLoading(true);
-        const response = await axios.get(
+        const response = await api.get(
           `/api/preferences/getMatchedProps/${buyerId}/${preferenceId}`
         );
 

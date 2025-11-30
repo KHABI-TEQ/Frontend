@@ -6,7 +6,7 @@ import { useUserContext } from "@/context/user-context";
 import { usePostPropertyContext } from "@/context/post-property-context";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
-import axios from "axios";
+import api from "@/utils/axiosConfig";
 import Loading from "@/components/loading-component/loading";
 import OutrightSalesPropertyForm from "@/components/post-property-components/forms/OutrightSalesPropertyForm";
 

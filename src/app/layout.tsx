@@ -1,6 +1,6 @@
 import './globals.css';
 import HeaderFooterWrapper from '@/components/new-homepage/header_footer_wrapper';
-import { epilogue, roboto, archivo, ubuntu } from '@/styles/font';
+import { roboto, archivo } from '@/styles/font';
 import { Toaster } from 'react-hot-toast';
 import Body from '@/components/general-components/body';
 import { GoogleOAuthProvider } from '@react-oauth/google';
@@ -55,7 +55,7 @@ export default function RootLayout({
                         <PromoProvider>
                           <html lang="en" suppressHydrationWarning>
                             <body
-                              className={`${roboto.variable} ${archivo.variable} ${epilogue.variable} ${ubuntu.variable} antialiased`}
+                              className={`${roboto.variable} ${archivo.variable} antialiased`}
                             >
                               <div id="promo-top-placeholder" className="w-full overflow-hidden bg-transparent" />
                               <HeaderFooterWrapper>

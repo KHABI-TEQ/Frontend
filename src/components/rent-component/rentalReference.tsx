@@ -12,8 +12,7 @@ import Button from '../general-components/button';
 import { useFormik } from 'formik';
 import ReactSelect, { components } from 'react-select';
 import Input from '../general-components/Input';
-//import naijaStates from 'naija-state-local-government';
-import axios from 'axios';
+import api from '@/utils/axiosConfig';
 import { URLS } from '@/utils/URLS';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -117,8 +116,8 @@ const RentalReference = ({
       setFormStatus('pending');
       setDataLoading?.(true);
       try {
-        const response = await axios.post(
-          URLS.BASE + '/properties/rent/request/rent/search',
+        const response = await api.post(
+          '/properties/rent/request/rent/search',
           payload
         );
         console.log(response);

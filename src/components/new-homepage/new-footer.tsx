@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useSocialLinskSettings } from '@/hooks/useSystemSettings';
 import khabiTeqIcon from '@/svgs/white-khabi-teq.svg';
-import { epilogue } from '@/styles/font';
 import toast from 'react-hot-toast';
 import SuccessModal from '@/components/modals/SuccessModal';
 import { POST_REQUEST } from '@/utils/requests';
@@ -287,13 +286,13 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
               {/* Contact Info */}
               <div className='mt-6 pt-6 border-t border-white/20'>
                 <div className='space-y-2'>
-                  <p className={`text-[#D6DDEB] text-sm ${epilogue.className}`}>
+                  <p className="text-[#D6DDEB] text-sm">
                     📧 info@khabiteqrealty.com
                   </p>
-                  <p className={`text-[#D6DDEB] text-sm ${epilogue.className}`}>
+                  <p className="text-[#D6DDEB] text-sm">
                     📞 +234 813 210 8659, 02013306352
                   </p>
-                  <p className={`text-[#D6DDEB] text-sm ${epilogue.className}`}>
+                  <p className="text-[#D6DDEB] text-sm">
                     📍 Lagos, Nigeria
                   </p>
                 </div>
@@ -314,7 +313,7 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
               <h4 className={`text-white font-bold text-xl mb-2 ${epilogue.className}`}>
                 Stay Updated with Property Deals
               </h4>
-              <p className={`text-[#D6DDEB] ${epilogue.className}`}>
+              <p className="text-[#D6DDEB]">
                 Get notified about new properties, market insights, and exclusive offers.
               </p>
             </div>
@@ -357,7 +356,7 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
               transition={{ duration: 0.6, delay: 0.6 }}
               viewport={{ once: true }}
               className='flex items-center gap-4'>
-              <span className={`text-[#D6DDEB] text-sm mr-2 ${epilogue.className}`}>
+              <span className="text-[#D6DDEB] text-sm mr-2">
                 Follow us:
               </span>
               {(computedLinks.length ? computedLinks : defaultSocialLinks).map((social, index) => (

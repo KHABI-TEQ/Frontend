@@ -1,7 +1,7 @@
 /** @format */
 
 'use client';
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, memo } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 
@@ -243,4 +243,4 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ feature, index, loading }) =>
   );
 };
 
-export default FeatureCard;
+export default memo(FeatureCard);

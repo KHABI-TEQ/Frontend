@@ -1,7 +1,6 @@
 /** @format */
 'use client';
 import Select from 'react-select';
-import { epilogue } from '@/styles/font';
 import { useFormik, FormikProps } from 'formik';
 import React, { Fragment, useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Circle } from 'lucide-react';
@@ -157,7 +156,7 @@ const AgentMarketPlace = () => {
                 color='#25324B'
               />
               <h2
-                className={`text-[#25324B] text-lg ${epilogue.className} font-semibold`}>
+                className="text-[#25324B] text-lg font-semibold">
                 {renderedPage && renderDynamically().subHeading}
               </h2>
             </div>

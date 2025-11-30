@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Sidebar from './sidebar';
 import Mainbar from './main-bar';
-import axios from 'axios';
+import api from '@/utils/axiosConfig';
 import { URLS } from '@/utils/URLS';
 import Cookies from 'js-cookie';
 import { usePageContext } from '@/context/page-context';
@@ -28,11 +28,7 @@ const Settings = () => {
     setFormikStatus('pending');
     //console.log(Cookies.get('token'));
     try {
-      const response = await axios.get(URLS.BASE + URLS.accountSettingsBaseUrl, {
-        headers: {
-          Authorization: `Bearer ${Cookies.get('token')}`,
-        },
-      });
+      const response = await api.get(URLS.accountSettingsBaseUrl);
       //console.log('response', response);
       if (response.status === 200) {
         setIsLoading(false);

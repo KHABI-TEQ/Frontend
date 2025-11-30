@@ -4,7 +4,6 @@
 import Image from 'next/image';
 import React, { useEffect, useState } from 'react';
 import randomImage from '@/assets/noImageAvailable.png';
-import { product_sans } from '@/styles/font';
 import { usePageContext } from '@/context/page-context';
 import { motion } from 'framer-motion';
 import axios from 'axios';
@@ -194,11 +193,11 @@ const Sidebar = () => {
         </div>
         <div className='flex flex-col justify-center items-center lg:h-[58px]'>
           <h2
-            className={`text-[#000000] font-bold text-[20px] ${product_sans.className}`}>
+            className="text-[#000000] font-bold text-[20px]">
             {userDetails.lastName} {userDetails.firstName}
           </h2>
           <p
-            className={`text-[#000000] font-normal text-base ${product_sans.className}`}>
+            className="text-[#000000] font-normal text-base">
             {userDetails.email}
           </p>
         </div>
