@@ -156,7 +156,7 @@ const AgentMarketPlace = () => {
                 color='#25324B'
               />
               <h2
-                className={`text-[#25324B] text-lg ${epilogue.className} font-semibold`}>
+                className="text-[#25324B] text-lg font-semibold">
                 {renderedPage && renderDynamically().subHeading}
               </h2>
             </div>
