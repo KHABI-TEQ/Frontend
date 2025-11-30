@@ -1,7 +1,6 @@
 /** @format */
 'use client';
 import Select from 'react-select';
-import { epilogue } from '@/styles/font';
 import { useFormik, FormikProps } from 'formik';
 import React, { Fragment, useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Circle } from 'lucide-react';
