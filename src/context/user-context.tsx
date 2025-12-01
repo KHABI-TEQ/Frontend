@@ -162,6 +162,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   );
 
   useEffect(() => {
+    // Only initialize once on mount, not on every route change
+    if (initRef.current) return;
+    initRef.current = true;
+
     const token = Cookies.get("token");
     if (token) {
       getUser();
@@ -173,7 +177,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         // router.push("/auth/login");
       }
     }
-  }, [pathName, router]);
+  }, []); // Only run on mount, not on every route change
 
   const contextValue = useMemo(
     () => ({
