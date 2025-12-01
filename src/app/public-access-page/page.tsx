@@ -34,24 +34,12 @@ const OverviewTab = dynamic(() => import("@/components/public-access-page/tabs/O
 import TabsHeader from "@/components/public-access-page/TabsHeader";
 
 const HomeSettingsTab = dynamic(() => import("@/components/public-access-page/tabs/HomeSettingsTab"), { ssr: false });
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js";
 import OverlayPreloader from "@/components/general-components/OverlayPreloader";
 import ModalWrapper from "@/components/general-components/modal-wrapper";
 import ConfirmationModal from "@/components/modals/confirmation-modal";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import Link from "next/link";
-
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 interface SocialLinks {
   website?: string;

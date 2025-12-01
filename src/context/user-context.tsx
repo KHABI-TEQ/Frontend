@@ -11,6 +11,7 @@ import React, {
   useEffect,
   useMemo,
   useCallback,
+  useRef,
 } from "react";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
@@ -81,6 +82,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUserState] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
+  const initRef = useRef(false);
 
   const pathName = usePathname();
   const router = useRouter();
@@ -161,6 +163,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   );
 
   useEffect(() => {
+    // Only initialize once on mount, not on every route change
+    if (initRef.current) return;
+    initRef.current = true;
+
     const token = Cookies.get("token");
     if (token) {
       getUser();
@@ -172,7 +178,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         // router.push("/auth/login");
       }
     }
-  }, [pathName, router]);
+  }, []); // Only run on mount, not on every route change
 
   const contextValue = useMemo(
     () => ({

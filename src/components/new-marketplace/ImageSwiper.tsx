@@ -8,7 +8,7 @@ import { Autoplay, Navigation, Pagination } from "swiper/modules";
 import { usePageContext } from "@/context/page-context";
 import randomImage from "@/assets/noImageAvailable.png";
 
-// Import Swiper styles
+// Import Swiper styles (will be tree-shaken in production)
 import "swiper/css";
 import "swiper/css/pagination";
 import "swiper/css/navigation";

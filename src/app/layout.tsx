@@ -34,6 +34,7 @@ import ReduxWrapper from '@/components/providers/ReduxWrapper';
 import SubscriptionInitializer from '@/components/providers/SubscriptionInitializer';
 import { PromoProvider } from '@/context/promo-context';
 import PromoMount from '@/components/promo/PromoMount';
+import ApiMockInitializer from '@/components/providers/ApiMockInitializer';
 
 export default function RootLayout({
   children,
@@ -65,10 +66,11 @@ export default function RootLayout({
                               <GlobalPropertyActionsFAB />
                               <SubscriptionFeaturesClient />
                               <Suspense fallback={null}>
-                                <WhatsAppChatWidget />
-                              </Suspense>
-                              <Toaster />
-                              <ChunkErrorHandler />
+                          <WhatsAppChatWidget />
+                        </Suspense>
+                        <ApiMockInitializer />
+                        <Toaster />
+                        <ChunkErrorHandler />
                             </body>
                           </html>
                         </PromoProvider>
