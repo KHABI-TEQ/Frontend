@@ -359,6 +359,12 @@ const DEFAULT_SETTINGS: DealSiteSettings = {
   contactUs: {},
   homeSettings: {},
   subscribeSettings: {},
+  securitySettings: {
+    enablePasswordProtection: false,
+    enableRateLimiting: true,
+    enableSpamFilter: true,
+    requireEmailVerification: false,
+  },
 };
 
 export function DealSiteProvider({ children }: { children: ReactNode }) {
