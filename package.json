@@ -3,8 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "NODE_ENV=development next dev",
+    "dev:mock": "NODE_ENV=development DEBUG_API_MOCKS=true next dev",
+    "dev:analyze": "NODE_ENV=development ANALYZE=true next dev",
     "build": "next build",
+    "build:analyze": "ANALYZE=true next build",
     "start": "next start",
     "lint": "next lint"
   },
