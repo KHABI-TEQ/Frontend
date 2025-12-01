@@ -92,23 +92,27 @@ export default function ProfileSettingsPage() {
   const fetchUserProfile = async () => {
     try {
       setIsLoading(true);
- 
-      // Mock data - replace with actual API call
-      const mockProfile: UserProfile = {
-        _id: user?._id || "1",
-        firstName: user?.firstName || "John",
-        lastName: user?.lastName || "Doe",
-        email: user?.email || "john.doe@email.com",
-        phoneNumber: user?.phoneNumber || "+234 803 123 4567",
-        address: user?.address?.street || "123 Victoria Island, Lagos State",
-        profileImage: user?.profile_picture,
-        userType: user?.userType || "Agent",
-        accountApproved: user?.accountApproved || true,
-        createdAt: user?.createdAt || "2024-01-01T00:00:00.000Z",
-        accountId: user?.accountId || '2345532',
+
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
+
+      const userProfile: UserProfile = {
+        _id: user._id || "1",
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        email: user.email || "",
+        phoneNumber: user.phoneNumber || "",
+        address: user.address?.street || "",
+        profileImage: user.profile_picture,
+        userType: user.userType || "Agent",
+        accountApproved: user.accountApproved || false,
+        createdAt: user.createdAt || new Date().toISOString(),
+        accountId: user.accountId || "",
       };
 
-      setUserProfile(mockProfile);
+      setUserProfile(userProfile);
     } catch (error) {
       console.error("Failed to fetch user profile:", error);
       toast.error("Failed to load profile");
@@ -182,14 +186,20 @@ export default function ProfileSettingsPage() {
     onSubmit: async (values) => {
       setIsChangingPassword(true);
       try {
-        // Mock API call - replace with actual endpoint
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        const response = await api.put("/account/changePassword", {
+          currentPassword: values.currentPassword,
+          newPassword: values.newPassword,
+        });
 
-        toast.success("Password changed successfully");
-        passwordFormik.resetForm();
+        if (response.data.success) {
+          toast.success("Password changed successfully");
+          passwordFormik.resetForm();
+        } else {
+          throw new Error(response.data.message || "Failed to change password");
+        }
       } catch (error) {
         console.error("Failed to change password:", error);
-        toast.error("Failed to change password");
+        toast.error(error instanceof Error ? error.message : "Failed to change password");
       } finally {
         setIsChangingPassword(false);
       }
@@ -314,19 +324,24 @@ export default function ProfileSettingsPage() {
 
     setIsRequestingEmailChange(true);
     try {
-      // Mock API call - replace with actual endpoint
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await api.put("/account/changeEmail", {
+        newEmail: newEmailRequest,
+      });
 
-      setIsEmailChangeRequested(true);
-      setShowEmailChangeModal(false);
-      setNewEmailRequest("");
+      if (response.data.success) {
+        setIsEmailChangeRequested(true);
+        setShowEmailChangeModal(false);
+        setNewEmailRequest("");
 
-      toast.success(
-        `Email change request submitted. Please check ${newEmailRequest} for verification instructions.`,
-      );
+        toast.success(
+          `Email change request submitted. Please check ${newEmailRequest} for verification instructions.`,
+        );
+      } else {
+        throw new Error(response.data.message || "Failed to request email change");
+      }
     } catch (error) {
       console.error("Failed to request email change:", error);
-      toast.error("Failed to request email change");
+      toast.error(error instanceof Error ? error.message : "Failed to request email change");
     } finally {
       setIsRequestingEmailChange(false);
     }
@@ -334,9 +349,6 @@ export default function ProfileSettingsPage() {
 
   const handleCancelEmailChange = async () => {
     try {
-      // Mock API call - replace with actual endpoint
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
       setIsEmailChangeRequested(false);
       toast.success("Email change request cancelled");
     } catch (error) {

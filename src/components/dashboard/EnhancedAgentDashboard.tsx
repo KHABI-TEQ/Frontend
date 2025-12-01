@@ -23,6 +23,7 @@ import {
 import Link from "next/link";
 import { useUserContext } from "@/context/user-context";
 import AgentShortProfile from "@/components/dashboard/AgentShortProfile";
+import api from "@/utils/axiosConfig";
 
 interface DashboardStats {
   totalListings: number;
@@ -51,58 +52,62 @@ const EnhancedAgentDashboard: React.FC = () => {
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Mock agent state - in real implementation, this would come from user context or API
-  const agentState = "free"; // "free" | "verified" | "expired"
-  const isVerifiedAgent = false; ///
+  // Determine agent verification status from user context
+  const isVerifiedAgent = user?.agentData?.kycStatus === "approved";
 
-  // Mock data - in real implementation, this would come from API
+  // Fetch dashboard data from API
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setStats({
-        totalListings: 8,
-        activeListings: 5,
-        totalInspections: isVerifiedAgent ? 23 : 0,
-        inspectionEarnings: isVerifiedAgent ? 345000 : 0,
-        profileViews: isVerifiedAgent ? 156 : 0,
-        completedDeals: 3,
-        rating: 4.7,
-        reviewCount: 12,
-      });
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get("/account/dashboard");
 
-      setRecentActivity([
-        {
-          id: "1",
-          type: "listing",
-          title: "New Property Listed",
-          description: "3 bedroom apartment in Victoria Island",
-          timestamp: "2 hours ago",
-          icon: Building,
-          color: "text-blue-500",
-        },
-        {
-          id: "2",
-          type: "inquiry",
-          title: "Property Inquiry",
-          description: "Client interested in Lekki property",
-          timestamp: "5 hours ago",
-          icon: Users,
-          color: "text-green-500",
-        },
-        {
-          id: "3",
-          type: "profile_view",
-          title: "Profile View",
-          description: isVerifiedAgent ? "Someone viewed your profile" : "Upgrade to track profile views",
-          timestamp: "1 day ago",
-          icon: Eye,
-          color: "text-purple-500",
-        },
-      ]);
+        if (response.data?.success && response.data?.data) {
+          const dashboardData = response.data.data;
+          setStats({
+            totalListings: dashboardData.totalListings || 0,
+            activeListings: dashboardData.activeListings || 0,
+            totalInspections: dashboardData.totalInspections || 0,
+            inspectionEarnings: dashboardData.inspectionEarnings || 0,
+            profileViews: dashboardData.profileViews || 0,
+            completedDeals: dashboardData.completedDeals || 0,
+            rating: dashboardData.rating || 0,
+            reviewCount: dashboardData.reviewCount || 0,
+          });
 
-      setLoading(false);
-    }, 1000);
-  }, [isVerifiedAgent]);
+          if (dashboardData.recentActivity && Array.isArray(dashboardData.recentActivity)) {
+            const activities = dashboardData.recentActivity.map((activity: any) => ({
+              id: activity.id || Math.random().toString(),
+              type: activity.type || "listing",
+              title: activity.title,
+              description: activity.description,
+              timestamp: activity.timestamp,
+              icon: Building,
+              color: "text-blue-500",
+            }));
+            setRecentActivity(activities);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch dashboard data:", error);
+        setStats({
+          totalListings: 0,
+          activeListings: 0,
+          totalInspections: 0,
+          inspectionEarnings: 0,
+          profileViews: 0,
+          completedDeals: 0,
+          rating: 0,
+          reviewCount: 0,
+        });
+        setRecentActivity([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-NG", {

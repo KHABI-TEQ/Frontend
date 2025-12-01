@@ -39,7 +39,11 @@ export default function OverviewPage() {
 
       const res = await GET_REQUEST<any>(`${URLS.BASE}${URLS.fetchDashboardStats}`, token);
       if (res?.success && res.data) {
-        setStats(res.data);
+        setStats({
+          viewsByDay: res.data.viewsByDay || [],
+          totalViews: res.data.totalViews,
+          totalClicks: res.data.totalClicks,
+        });
       }
     } catch (error) {
       console.warn("Failed to fetch analytics:", error);
@@ -213,12 +217,12 @@ export default function OverviewPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard
           title="Total Views"
-          value={stats.totalViews?.toLocaleString() || "0"}
+          value={stats?.totalViews?.toLocaleString() || "0"}
           icon="👁️"
         />
         <StatCard
           title="This Month"
-          value={stats.viewsByDay.length > 0 ? stats.viewsByDay[stats.viewsByDay.length - 1].count : "0"}
+          value={Array.isArray(stats?.viewsByDay) && stats.viewsByDay.length > 0 ? stats.viewsByDay[stats.viewsByDay.length - 1].count : "0"}
           icon="📊"
         />
         <StatCard

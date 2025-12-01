@@ -152,20 +152,6 @@ const AgentMarketplace = () => {
       setIsLoading(true);
       setError(null);
       try {
-        // Check if URLS.BASE is available
-        if (!URLS.BASE || URLS.BASE.includes('undefined') || URLS.BASE === 'undefined') {
-          console.error('NEXT_PUBLIC_API_URL environment variable is not set');
-          // In development mode, show mock data instead of failing
-          if (process.env.NODE_ENV === 'development') {
-            console.warn('Using mock data in development mode');
-            setPreferences([]);
-            setTotalPages(1);
-            setTotalItems(0);
-            return;
-          }
-          throw new Error('API base URL is not configured properly. Please check environment configuration.');
-        }
-
         // Build query params from filters
         const params = new URLSearchParams();
         params.append('page', String(currentPage));
