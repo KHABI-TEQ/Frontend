@@ -69,7 +69,7 @@ const Setup = () => {
       const checkTimeout = setTimeout(async () => {
         try {
           const resp = await POST_REQUEST<any>(
-            `${URLS.BASE}/account/dealSite/slugAvailability`,
+            `${URLS.BASE}${URLS.dealSiteSlugAvailability}`,
             { publicSlug: slug },
             token
           );
@@ -177,7 +177,7 @@ const Setup = () => {
       };
 
       toast.promise(
-        POST_REQUEST(`${URLS.BASE}/account/dealSite/setUp`, payload, token),
+        POST_REQUEST(`${URLS.BASE}${URLS.dealSiteSetup}`, payload, token),
         {
           loading: "Setting up your deal site...",
           success: (res: any) => {

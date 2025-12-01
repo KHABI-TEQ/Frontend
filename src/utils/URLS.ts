@@ -121,4 +121,16 @@ export const URLS = {
    * System Settings Endpoints
    */
   getSystemSettings: "/getSystemSettings",
+
+  /**
+   * Deal Site / Public Access Page Endpoints
+   */
+  dealSiteDetails: "/account/dealSite/details",
+  dealSiteSetup: "/account/dealSite/setUp",
+  dealSiteUpdate: "/account/dealSite/update",
+  dealSitePause: "/account/dealSite/:slug/pause",
+  dealSiteResume: "/account/dealSite/:slug/resume",
+  dealSiteDelete: "/account/dealSite/:slug/delete",
+  dealSiteLogs: "/account/dealSite/:slug/logs",
+  dealSiteSlugAvailability: "/account/dealSite/slugAvailability",
 };
