@@ -53,6 +53,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "marketplace", label: "Marketplace", path: "/public-access-page/marketplace", icon: <ShoppingCart size={18} />, group: "content" },
   { id: "featured", label: "Featured Listings", path: "/public-access-page/featured", icon: <Star size={18} />, group: "content" },
   { id: "listings", label: "All Listings", path: "/public-access-page/listings", icon: <Grid size={18} />, group: "content" },
+  { id: "preferences", label: "Preferences Requests", path: "/public-access-page/preferences", icon: <FileText size={18} />, group: "content" },
 
   // Settings
   { id: "inspection", label: "Inspection Settings", path: "/public-access-page/inspection", icon: <CheckSquare size={18} />, group: "settings" },
