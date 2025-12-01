@@ -27,6 +27,7 @@ import {
   Lock,
   Activity,
   ChevronDown,
+  FileText,
 } from "lucide-react";
 import { useDealSite } from "@/context/deal-site-context";
 
