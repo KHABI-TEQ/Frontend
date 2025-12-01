@@ -324,19 +324,24 @@ export default function ProfileSettingsPage() {
 
     setIsRequestingEmailChange(true);
     try {
-      // Mock API call - replace with actual endpoint
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await api.put("/account/changeEmail", {
+        newEmail: newEmailRequest,
+      });
 
-      setIsEmailChangeRequested(true);
-      setShowEmailChangeModal(false);
-      setNewEmailRequest("");
+      if (response.data.success) {
+        setIsEmailChangeRequested(true);
+        setShowEmailChangeModal(false);
+        setNewEmailRequest("");
 
-      toast.success(
-        `Email change request submitted. Please check ${newEmailRequest} for verification instructions.`,
-      );
+        toast.success(
+          `Email change request submitted. Please check ${newEmailRequest} for verification instructions.`,
+        );
+      } else {
+        throw new Error(response.data.message || "Failed to request email change");
+      }
     } catch (error) {
       console.error("Failed to request email change:", error);
-      toast.error("Failed to request email change");
+      toast.error(error instanceof Error ? error.message : "Failed to request email change");
     } finally {
       setIsRequestingEmailChange(false);
     }
