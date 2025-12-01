@@ -81,6 +81,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUserState] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
+  const initRef = useRef(false);
 
   const pathName = usePathname();
   const router = useRouter();
