@@ -30,7 +30,7 @@ export default function InspectionPage() {
     try {
       const token = Cookies.get("token");
       const payload = {
-        inspectionDesignSettings: formData,
+        inspectionSettings: formData,
       };
 
       const res = await POST_REQUEST(
