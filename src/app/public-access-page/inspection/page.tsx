@@ -34,7 +34,7 @@ export default function InspectionPage() {
       };
 
       const res = await POST_REQUEST(
-        `${URLS.BASE}/account/dealSite/update`,
+        `${URLS.BASE}${URLS.dealSiteUpdate}`,
         payload,
         token
       );

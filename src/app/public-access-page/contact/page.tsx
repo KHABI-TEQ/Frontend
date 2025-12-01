@@ -41,7 +41,7 @@ export default function ContactPage() {
       };
 
       const res = await POST_REQUEST(
-        `${URLS.BASE}/account/dealSite/update`,
+        `${URLS.BASE}${URLS.dealSiteUpdate}`,
         payload,
         token
       );
