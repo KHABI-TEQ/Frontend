@@ -69,7 +69,7 @@ const Setup = () => {
       const checkTimeout = setTimeout(async () => {
         try {
           const resp = await POST_REQUEST<any>(
-            `${URLS.BASE}/account/dealSite/slugAvailability`,
+            `${URLS.BASE}${URLS.dealSiteSlugAvailability}`,
             { publicSlug: slug },
             token
           );
