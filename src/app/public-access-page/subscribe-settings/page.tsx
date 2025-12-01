@@ -13,15 +13,13 @@ export default function SubscribeSettingsPage() {
   const { settings, updateSettings } = useDealSite();
   const [preloader, setPreloader] = useState(false);
   const [formData, setFormData] = useState({
-    enableEmailSubscription: settings.subscriptionSettings?.enableEmailSubscription ?? true,
-    subscriptionTitle: settings.subscriptionSettings?.subscriptionTitle || "Subscribe to Updates",
+    enableEmailSubscription: true,
+    subscriptionTitle: settings.subscribeSettings?.title || "Subscribe to Updates",
     subscriptionDescription:
-      settings.subscriptionSettings?.subscriptionDescription ||
+      settings.subscribeSettings?.subTitle ||
       "Get notified about new listings and exclusive offers",
-    subscriptionPlaceholder:
-      settings.subscriptionSettings?.subscriptionPlaceholder || "Enter your email",
+    subscriptionPlaceholder: "Enter your email",
     confirmationMessage:
-      settings.subscriptionSettings?.confirmationMessage ||
       "Thank you for subscribing! Check your email for confirmation.",
   });
 
