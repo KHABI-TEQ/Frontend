@@ -70,6 +70,7 @@ export default function RootLayout({
                           <WhatsAppChatWidget />
                         </Suspense>
                         <ApiMockInitializer />
+                        <WebVitalsInitializer />
                         <Toaster />
                         <ChunkErrorHandler />
                             </body>
