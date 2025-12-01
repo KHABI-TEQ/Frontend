@@ -31,8 +31,8 @@ export default function HomeSettingsPage() {
     try {
       const token = Cookies.get("token");
       const payload = {
-        publicPageDesign: {
-          ...settings.publicPageDesign,
+        publicPage: {
+          ...settings.publicPage,
           ...formData,
         },
       };
