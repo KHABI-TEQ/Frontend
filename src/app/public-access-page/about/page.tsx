@@ -13,11 +13,11 @@ export default function AboutPage() {
   const { settings, updateSettings } = useDealSite();
   const [preloader, setPreloader] = useState(false);
   const [formData, setFormData] = useState({
-    heroTitle: settings.aboutHero?.title || "",
-    heroSubtitle: settings.aboutHero?.subTitle || "",
-    heroDescription: settings.aboutHero?.description || "",
-    identityHeadline: settings.aboutIdentity?.headline || "",
-    identityContent: settings.aboutIdentity?.content || "",
+    heroTitle: settings.about?.hero?.title || "",
+    heroSubtitle: settings.about?.hero?.subTitle || "",
+    heroDescription: settings.about?.hero?.description || "",
+    identityHeadline: settings.about?.identity?.headline || "",
+    identityContent: settings.about?.identity?.content || "",
   });
 
   const handleInputChange = useCallback((field: string, value: string) => {
