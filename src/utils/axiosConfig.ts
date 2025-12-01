@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { URLS } from './URLS';
+import Cookies from 'js-cookie';
 
 const api = axios.create({
   baseURL: URLS.BASE,
@@ -7,7 +8,7 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   try {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('adminToken') : null;
+    const token = typeof window !== 'undefined' ? Cookies.get('token') : null;
     if (token) {
       config.headers = {
         ...(config.headers || {}),
