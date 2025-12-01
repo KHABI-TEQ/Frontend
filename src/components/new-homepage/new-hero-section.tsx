@@ -241,15 +241,17 @@ const NewHeroSection = () => {
     if (!emblaApi) return;
     const selectedIndex = emblaApi.selectedScrollSnap();
 
+    // If we're navigating to a different slide, pause the currently playing video
+    if (currentVideoIndex !== selectedIndex) {
+      pauseVideoAtIndex(currentVideoIndex);
+    }
+
     // Store previous index before updating
     setPreviousVideoIndex(currentVideoIndex);
     setCurrentVideoIndex(selectedIndex);
 
-    // Keep per-video playback state on slide change; do not auto-pause videos
-    // pauseAllVideos();
-
-    // IMPORTANT: Do NOT auto-play the newly selected slide except for the very first slide (index 0).
-    // Auto-play on slide change is intentionally disabled to ensure videos don't auto-play when navigating.
+    // IMPORTANT: Do NOT auto-play the newly selected slide.
+    // Videos should only play when user explicitly clicks the play button.
   }, [emblaApi, currentVideoIndex]);
 
   // Setup embla carousel event listeners with slider state management
@@ -372,9 +374,12 @@ const NewHeroSection = () => {
     /* playingIndex removed; UI reads actual element state */
   }, [heroVideos.length]);
 
-  // Auto-play functionality - videos auto-play on load and slide change
+  // Auto-play functionality - only auto-play the first video on initial load
   useEffect(() => {
     if (!heroVideos.length || isPlayPending) return;
+
+    // Only auto-play on initial load, not on re-renders
+    if (initialAutoplayDone.current) return;
 
     const firstVideo = videoRefs.current[0];
     if (!firstVideo) return;
@@ -384,7 +389,6 @@ const NewHeroSection = () => {
       if (!videoElement) return;
 
       if (!videoElement.paused) {
-        /* playingIndex removed; UI reads actual element state */
         initialAutoplayDone.current = true;
         return;
       }
@@ -392,22 +396,27 @@ const NewHeroSection = () => {
       try { videoElement.muted = isMuted; } catch (e) {}
       videoElement.play()
         .then(() => {
-          /* playingIndex removed; UI reads actual element state */
-          // independent autoplay: do not auto-pause other videos
           initialAutoplayDone.current = true;
         })
         .catch((error) => {
           // eslint-disable-next-line no-console
           console.error('Initial auto-play failed:', error);
+          initialAutoplayDone.current = true; // Mark as done even on failure to prevent infinite loops
         });
     };
 
+    // If video is already ready, attempt play immediately
     if (firstVideoReady) {
       attemptPlay();
       return;
     }
 
-    const handleReady = () => attemptPlay();
+    // Wait for video to be ready before attempting play
+    const handleReady = () => {
+      if (!initialAutoplayDone.current) {
+        attemptPlay();
+      }
+    };
 
     firstVideo.addEventListener('canplay', handleReady);
     firstVideo.addEventListener('loadeddata', handleReady);
