@@ -1,17 +1,32 @@
 /** @format */
 
 "use client";
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import Image from "next/image";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Autoplay, Navigation, Pagination } from "swiper/modules";
+import dynamic from "next/dynamic";
 import { usePageContext } from "@/context/page-context";
 import randomImage from "@/assets/noImageAvailable.png";
 
-// Import Swiper styles
-import "swiper/css";
-import "swiper/css/pagination";
-import "swiper/css/navigation";
+// Dynamically import Swiper components to optimize bundle
+const Swiper = dynamic(
+  () => import("swiper/react").then(mod => ({ default: mod.Swiper })),
+  { ssr: true }
+);
+
+const SwiperSlide = dynamic(
+  () => import("swiper/react").then(mod => ({ default: mod.SwiperSlide })),
+  { ssr: true }
+);
+
+// Lazy load modules
+let Autoplay: any, Navigation: any, Pagination: any;
+if (typeof window !== 'undefined') {
+  import("swiper/modules").then(mod => {
+    Autoplay = mod.Autoplay;
+    Navigation = mod.Navigation;
+    Pagination = mod.Pagination;
+  });
+}
 
 interface ImageSwiperProps {
   images: any[];
