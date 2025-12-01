@@ -2,6 +2,7 @@
 
 "use client";
 import React, { useState, useCallback, useMemo, memo, Suspense } from "react";
+import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
@@ -13,7 +14,15 @@ import OptimizedLocationSelection from "@/components/preference-form/OptimizedLo
 import OptimizedBudgetSelection from "@/components/preference-form/OptimizedBudgetSelection";
 import FeatureSelection from "@/components/preference-form/FeatureSelection";
 import PropertyDetails from "@/components/preference-form/PropertyDetails";
-import DateSelection from "@/components/preference-form/DateSelection";
+
+// Optimize DateSelection: Dynamic import since it imports react-datepicker and react-select
+const DateSelection = dynamic(
+  () => import("@/components/preference-form/DateSelection"),
+  {
+    loading: () => <div className="w-full h-64 bg-gray-100 animate-pulse rounded-lg" />,
+    ssr: true
+  }
+);
 import OptimizedContactInformation from "@/components/preference-form/OptimizedContactInformation";
 import JointVenturePreferenceForm from "@/components/preference-form/joint-venture/JointVenturePreferenceForm";
 import SubmitButton from "@/components/preference-form/SubmitButton";
