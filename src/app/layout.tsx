@@ -66,10 +66,11 @@ export default function RootLayout({
                               <GlobalPropertyActionsFAB />
                               <SubscriptionFeaturesClient />
                               <Suspense fallback={null}>
-                                <WhatsAppChatWidget />
-                              </Suspense>
-                              <Toaster />
-                              <ChunkErrorHandler />
+                          <WhatsAppChatWidget />
+                        </Suspense>
+                        <ApiMockInitializer />
+                        <Toaster />
+                        <ChunkErrorHandler />
                             </body>
                           </html>
                         </PromoProvider>
