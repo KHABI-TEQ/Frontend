@@ -74,9 +74,8 @@ const Sidebar = () => {
     const newFile = await urlToFile(file, 'profile-pic.jpg');
     const formData = new FormData();
     formData.append('file', newFile);
-    console.log(formData);
     try {
-      setUploading(true); // Show loading state while uploading
+      setUploading(true);
       await toast.promise(
         axios
           .post(url, formData, {
@@ -86,7 +85,6 @@ const Sidebar = () => {
             },
           })
           .then((response) => {
-            console.log(response);
             if (response.status === 200) {
               setImg(response.data.url);
             }
@@ -115,7 +113,6 @@ const Sidebar = () => {
     await toast.promise(
       POST_REQUEST_FILE_UPLOAD(url, fromData).then((response) => {
         if ((response as unknown as { url: string }).url) {
-          console.log((response as unknown as { url: string }).url as string);
           uploadImageToProfileDetails(
             (response as unknown as { url: string }).url as string
           );
@@ -133,32 +130,6 @@ const Sidebar = () => {
     );
   };
 
-  // useEffect(() => {
-  //   const getUserAccount = async () => {
-  //     console.log('Processing...');
-  //     try {
-  //       const response = await axios.get(URLS.BASE + URLS.userAccount, {
-  //         headers: {
-  //           Authorization: `Bearer ${Cookies.get('token')}`,
-  //         },
-  //       });
-  //       console.log(response);
-  //       if (response.status === 200) {
-  //         const userAccount = response.data;
-  //         setUserDetails({
-  //           ...userDetails,
-  //           name: `${userAccount.user.lastName} ${userAccount.user.firstName}`,
-  //           email: userAccount.user.email,
-  //           profile_picture: userAccount.user.profile_picture,
-  //         });
-  //         console.log(userAccount.user);
-  //       }
-  //     } catch (err) {
-  //       console.log(err);
-  //     }
-  //   };
-  //   getUserAccount();
-  // }, []);
   return (
     <motion.div
       initial={{ x: -80, opacity: 0 }}

@@ -28,7 +28,6 @@ const ChangePassword = () => {
     },
     validationSchema,
     onSubmit: async (values) => {
-      console.log(values);
       setFormikStatus('pending');
       try {
         const response = await POST_REQUEST(
@@ -39,7 +38,6 @@ const ChangePassword = () => {
           },
           Cookies.get('token')
         );
-        console.log(response);
         if (response.success) {
           toast.success('Password changed successfully');
           setFormikStatus('success');
@@ -50,7 +48,7 @@ const ChangePassword = () => {
           toast.error(response.message || "Failed to change password");
         }
       } catch (err) {
-        console.log(err);
+        setFormikStatus('failed');
       }
     },
   });

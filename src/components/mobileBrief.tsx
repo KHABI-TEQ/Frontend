@@ -17,9 +17,6 @@ const PublishMobileView: FC<PublishMobileViewProps> = ({
   setDetailsToCheck,
   setShowFullDetails,
 }) => {
-  useEffect(() => {
-    console.log(item);
-  }, [item]);
   return (
     <div className='w-full min-h-[287px] rounded-[24px] gap-[1px] flex flex-col'>
       <UniformStyling
@@ -87,9 +84,6 @@ const Briefs: FC<BriefsProps> = ({
   setShowFullDetails,
   isLoading,
 }) => {
-  useEffect(() => {
-    console.log(briefData);
-  }, [briefData]);
   if (isLoading) return <Loading />;
   return (
     <div className='flex md:hidden w-full'>
