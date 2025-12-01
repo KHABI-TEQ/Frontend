@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { roboto, archivo } from '@/styles/font';
+import { archivo } from '@/styles/font';
 import { motion } from 'framer-motion';
 import { useSocialLinskSettings } from '@/hooks/useSystemSettings';
 import khabiTeqIcon from '@/svgs/white-khabi-teq.svg';
