@@ -21,9 +21,9 @@ const NewHeroSection = () => {
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [previousVideoIndex, setPreviousVideoIndex] = useState(-1);
-  // each video will be read directly from the DOM for its playing state (no shared playingIndex)
   const [isMuted, setIsMuted] = useState(true);
   const [isPlayPending, setIsPlayPending] = useState(false);
+  const [playingVideos, setPlayingVideos] = useState<Set<number>>(new Set());
   const initialAutoplayDone = useRef(false);
 
   // Get hero video URLs from settings with fallbacks
@@ -68,13 +68,20 @@ const NewHeroSection = () => {
     } else {
       videoRefs.current.forEach(video => { if (video && !video.paused) video.pause(); });
     }
-    /* playingIndex removed; UI reads actual element state */
+    // Clear all playing videos
+    setPlayingVideos(new Set());
   };
 
   const pauseVideoAtIndex = (index: number) => {
     const video = videoRefs.current[index];
     if (video && !video.paused) {
       try { video.pause(); } catch (e) {}
+      // Update playing state
+      setPlayingVideos((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(index);
+        return newSet;
+      });
     }
   };
 
@@ -86,8 +93,12 @@ const NewHeroSection = () => {
       setIsPlayPending(true);
       try { currentVideo.muted = isMuted; } catch (e) {}
       await currentVideo.play();
-      /* playingIndex removed; UI reads actual element state */
-      // independent playback: do not auto-pause other videos
+      // Update playing state
+      setPlayingVideos((prev) => {
+        const newSet = new Set(prev);
+        newSet.add(currentVideoIndex);
+        return newSet;
+      });
       initialAutoplayDone.current = true;
       setIsPlayPending(false);
     } catch (error) {
@@ -101,7 +112,12 @@ const NewHeroSection = () => {
     if (!currentVideo) return;
 
     currentVideo.pause();
-    // State will be updated by event listener
+    // Update playing state
+    setPlayingVideos((prev) => {
+      const newSet = new Set(prev);
+      newSet.delete(currentVideoIndex);
+      return newSet;
+    });
   };
 
   const handlePlayPause = async (e: React.MouseEvent, targetIndex?: number, videoElement?: HTMLVideoElement | null) => {
@@ -241,15 +257,17 @@ const NewHeroSection = () => {
     if (!emblaApi) return;
     const selectedIndex = emblaApi.selectedScrollSnap();
 
+    // If we're navigating to a different slide, pause the currently playing video
+    if (currentVideoIndex !== selectedIndex) {
+      pauseVideoAtIndex(currentVideoIndex);
+    }
+
     // Store previous index before updating
     setPreviousVideoIndex(currentVideoIndex);
     setCurrentVideoIndex(selectedIndex);
 
-    // Keep per-video playback state on slide change; do not auto-pause videos
-    // pauseAllVideos();
-
-    // IMPORTANT: Do NOT auto-play the newly selected slide except for the very first slide (index 0).
-    // Auto-play on slide change is intentionally disabled to ensure videos don't auto-play when navigating.
+    // IMPORTANT: Do NOT auto-play the newly selected slide.
+    // Videos should only play when user explicitly clicks the play button.
   }, [emblaApi, currentVideoIndex]);
 
   // Setup embla carousel event listeners with slider state management
@@ -287,26 +305,32 @@ const NewHeroSection = () => {
 
     allVideos.forEach((video) => {
       const playHandler = () => {
-        // independent playback: do not auto-pause other videos
-
-        // Determine logical index
+        // Update playing state when video plays
         const idxAttr = video.getAttribute('data-embla-index');
         const idx = idxAttr ? Number(idxAttr) : null;
-        /* playingIndex removed; UI reads actual element state */
+        if (typeof idx === 'number') {
+          setPlayingVideos((prev) => {
+            const newSet = new Set(prev);
+            newSet.add(idx);
+            return newSet;
+          });
+        }
         setIsMuted(video.muted);
       };
 
       const pauseHandler = () => {
-        // When a video pauses, we don't update any shared playing state.
-        // Keep mute sync for the currently visible video.
-        try {
-          const idxAttr = video.getAttribute('data-embla-index');
-          const idx = idxAttr ? Number(idxAttr) : null;
-          if (typeof idx === 'number' && idx === currentVideoIndex) {
-            setIsMuted(video.muted);
-          }
-        } catch (e) {
-          // ignore
+        // Update playing state when video pauses
+        const idxAttr = video.getAttribute('data-embla-index');
+        const idx = idxAttr ? Number(idxAttr) : null;
+        if (typeof idx === 'number') {
+          setPlayingVideos((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(idx);
+            return newSet;
+          });
+        }
+        if (typeof idx === 'number' && idx === currentVideoIndex) {
+          setIsMuted(video.muted);
         }
       };
 
@@ -353,14 +377,9 @@ const NewHeroSection = () => {
     return best.el;
   };
 
-  // Helper to determine if logical index is currently playing (prefers visible element's state)
+  // Helper to determine if logical index is currently playing
   const isIndexPlaying = (index: number) => {
-    try {
-      const v = getVisibleVideoForIndex(index) ?? videoRefs.current[index];
-      return !!v && !v.paused;
-    } catch (e) {
-      return false;
-    }
+    return playingVideos.has(index);
   };
 
   // Track readiness of each video (can play) to show skeletons until video thumbnails/content are ready
@@ -372,9 +391,12 @@ const NewHeroSection = () => {
     /* playingIndex removed; UI reads actual element state */
   }, [heroVideos.length]);
 
-  // Auto-play functionality - videos auto-play on load and slide change
+  // Auto-play functionality - only auto-play the first video on initial load
   useEffect(() => {
     if (!heroVideos.length || isPlayPending) return;
+
+    // Only auto-play on initial load, not on re-renders
+    if (initialAutoplayDone.current) return;
 
     const firstVideo = videoRefs.current[0];
     if (!firstVideo) return;
@@ -384,7 +406,6 @@ const NewHeroSection = () => {
       if (!videoElement) return;
 
       if (!videoElement.paused) {
-        /* playingIndex removed; UI reads actual element state */
         initialAutoplayDone.current = true;
         return;
       }
@@ -392,22 +413,27 @@ const NewHeroSection = () => {
       try { videoElement.muted = isMuted; } catch (e) {}
       videoElement.play()
         .then(() => {
-          /* playingIndex removed; UI reads actual element state */
-          // independent autoplay: do not auto-pause other videos
           initialAutoplayDone.current = true;
         })
         .catch((error) => {
           // eslint-disable-next-line no-console
           console.error('Initial auto-play failed:', error);
+          initialAutoplayDone.current = true; // Mark as done even on failure to prevent infinite loops
         });
     };
 
+    // If video is already ready, attempt play immediately
     if (firstVideoReady) {
       attemptPlay();
       return;
     }
 
-    const handleReady = () => attemptPlay();
+    // Wait for video to be ready before attempting play
+    const handleReady = () => {
+      if (!initialAutoplayDone.current) {
+        attemptPlay();
+      }
+    };
 
     firstVideo.addEventListener('canplay', handleReady);
     firstVideo.addEventListener('loadeddata', handleReady);
@@ -568,15 +594,15 @@ const NewHeroSection = () => {
                               className='absolute inset-0 flex items-center justify-center cursor-pointer pointer-events-auto'
                               data-embla-action="toggle" data-embla-index={index}>
                               <div className='w-16 h-16 bg-black/50 rounded-full flex items-center justify-center text-white hover:bg-black/70 transition-colors duration-200'>
-                                {isIndexPlaying(index) ? (
-                                  // Pause icon
-                                  <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 002 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                                  </svg>
-                                ) : (
-                                  // Play icon
+                                {!isIndexPlaying(index) ? (
+                                  // Play icon (shown when video is paused)
                                   <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                                  </svg>
+                                ) : (
+                                  // Pause icon (shown when video is playing)
+                                  <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 002 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
                                   </svg>
                                 )}
                               </div>
@@ -589,13 +615,15 @@ const NewHeroSection = () => {
                                 data-embla-action="toggle" data-embla-index={index}
                                 className='w-10 h-10 rounded-full flex items-center justify-center text-white transition-colors duration-200 bg-black/50 hover:bg-black/70'
                                 title={isIndexPlaying(index) ? 'Pause video' : 'Play video'}>
-                                {isIndexPlaying(index) ? (
-                                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 011 1v4a1 1 0 11-2 0V8a1 1 0 011-1zm4-1a1 1 0 00-1 1v4a1 1 0 002 0V7a1 1 0 00-1-1z" clipRule="evenodd" />
-                                  </svg>
-                                ) : (
+                                {!isIndexPlaying(index) ? (
+                                  // Play icon (shown when video is paused)
                                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                                  </svg>
+                                ) : (
+                                  // Pause icon (shown when video is playing)
+                                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 011 1v4a1 1 0 11-2 0V8a1 1 0 011-1zm4-1a1 1 0 00-1 1v4a1 1 0 002 0V7a1 1 0 00-1-1z" clipRule="evenodd" />
                                   </svg>
                                 )}
                               </button>
