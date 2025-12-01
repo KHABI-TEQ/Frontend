@@ -52,9 +52,6 @@ const AgentData = () => {
     null,
   ); // For utility bill upload
 
-  useEffect(() => {
-    console.log("User:", user);
-  }, [user]);
 
   type StepStatus = "completed" | "active" | "pending";
   interface Step {
@@ -695,9 +692,6 @@ const RegionMultipleInput: FC<SelectProps> = ({
   heading,
   options,
 }) => {
-  useEffect(() => {
-    console.log(`options: ${options} \n length: ${options.length}`);
-  }, [options]);
   return (
     <label
       htmlFor="select"
