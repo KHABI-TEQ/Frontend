@@ -217,7 +217,7 @@ export default function OverviewPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard
           title="Total Views"
-          value={stats.totalViews?.toLocaleString() || "0"}
+          value={stats?.totalViews?.toLocaleString() || "0"}
           icon="👁️"
         />
         <StatCard
