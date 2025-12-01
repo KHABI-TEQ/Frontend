@@ -31,10 +31,17 @@ export default function ContactUsPage() {
     try {
       const token = Cookies.get("token");
       const payload = {
-        contactUsPage: {
-          title: formData.contactUsTitle,
-          description: formData.contactUsDescription,
-          responseMessage: formData.responseMessage,
+        contactUs: {
+          ...settings.contactUs,
+          hero: {
+            ...settings.contactUs?.hero,
+            title: formData.contactUsTitle,
+            description: formData.contactUsDescription,
+          },
+          cta: {
+            ...settings.contactUs?.cta,
+            title: formData.responseMessage,
+          },
         },
         contactVisibility: {
           ...settings.contactVisibility,
