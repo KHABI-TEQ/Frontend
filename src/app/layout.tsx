@@ -35,6 +35,7 @@ import SubscriptionInitializer from '@/components/providers/SubscriptionInitiali
 import { PromoProvider } from '@/context/promo-context';
 import PromoMount from '@/components/promo/PromoMount';
 import ApiMockInitializer from '@/components/providers/ApiMockInitializer';
+import WebVitalsInitializer from '@/components/providers/WebVitalsInitializer';
 
 export default function RootLayout({
   children,
