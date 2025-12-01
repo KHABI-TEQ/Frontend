@@ -22,7 +22,13 @@ export default function LogsPage() {
     setLoading(true);
     try {
       const token = Cookies.get("token");
-      let url = `${URLS.BASE}/account/dealSite/${settings.publicSlug}/logs?limit=${limit}&page=${page}`;
+
+      if (!token || !settings.publicSlug) {
+        setLogs([]);
+        return;
+      }
+
+      let url = `${URLS.BASE}${URLS.dealSiteLogs}`.replace(":slug", settings.publicSlug) + `?limit=${limit}&page=${page}`;
 
       if (filter !== "all") {
         url += `&category=${filter}`;
