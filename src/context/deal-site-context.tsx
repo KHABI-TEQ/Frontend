@@ -256,6 +256,14 @@ export interface BankDetails {
   primaryContactPhone?: string;
 }
 
+export interface SecuritySettings {
+  enablePasswordProtection?: boolean;
+  pagePassword?: string;
+  enableRateLimiting?: boolean;
+  enableSpamFilter?: boolean;
+  requireEmailVerification?: boolean;
+}
+
 export interface DealSiteSettings {
   publicSlug: string;
   title: string;
@@ -276,6 +284,7 @@ export interface DealSiteSettings {
   paymentDetails?: BankDetails;
   homeSettings?: HomeSettings;
   subscribeSettings?: SubscribeSettings;
+  securitySettings?: SecuritySettings;
   status?: string;
 }
 
