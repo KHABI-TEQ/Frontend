@@ -92,23 +92,27 @@ export default function ProfileSettingsPage() {
   const fetchUserProfile = async () => {
     try {
       setIsLoading(true);
- 
-      // Mock data - replace with actual API call
-      const mockProfile: UserProfile = {
-        _id: user?._id || "1",
-        firstName: user?.firstName || "John",
-        lastName: user?.lastName || "Doe",
-        email: user?.email || "john.doe@email.com",
-        phoneNumber: user?.phoneNumber || "+234 803 123 4567",
-        address: user?.address?.street || "123 Victoria Island, Lagos State",
-        profileImage: user?.profile_picture,
-        userType: user?.userType || "Agent",
-        accountApproved: user?.accountApproved || true,
-        createdAt: user?.createdAt || "2024-01-01T00:00:00.000Z",
-        accountId: user?.accountId || '2345532',
+
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
+
+      const userProfile: UserProfile = {
+        _id: user._id || "1",
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        email: user.email || "",
+        phoneNumber: user.phoneNumber || "",
+        address: user.address?.street || "",
+        profileImage: user.profile_picture,
+        userType: user.userType || "Agent",
+        accountApproved: user.accountApproved || false,
+        createdAt: user.createdAt || new Date().toISOString(),
+        accountId: user.accountId || "",
       };
 
-      setUserProfile(mockProfile);
+      setUserProfile(userProfile);
     } catch (error) {
       console.error("Failed to fetch user profile:", error);
       toast.error("Failed to load profile");
