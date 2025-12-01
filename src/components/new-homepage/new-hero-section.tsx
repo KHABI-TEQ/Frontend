@@ -93,8 +93,12 @@ const NewHeroSection = () => {
       setIsPlayPending(true);
       try { currentVideo.muted = isMuted; } catch (e) {}
       await currentVideo.play();
-      /* playingIndex removed; UI reads actual element state */
-      // independent playback: do not auto-pause other videos
+      // Update playing state
+      setPlayingVideos((prev) => {
+        const newSet = new Set(prev);
+        newSet.add(currentVideoIndex);
+        return newSet;
+      });
       initialAutoplayDone.current = true;
       setIsPlayPending(false);
     } catch (error) {
