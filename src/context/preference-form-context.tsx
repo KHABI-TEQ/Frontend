@@ -20,9 +20,10 @@ import {
   FeatureConfig,
   FeatureDefinition,
 } from "@/types/preference-form";
+import { FEATURE_CONFIGS, DEFAULT_BUDGET_THRESHOLDS } from "@/data/preference-configs";
 
 // Feature configurations with budget requirements - Memoized static data
-const FEATURE_CONFIGS: Record<string, FeatureConfig> = {
+const FEATURE_CONFIGS_MAP: Record<string, FeatureConfig> = {
   "buy-residential": {
     basic: [
       { name: "Kitchenette", type: "basic" },
