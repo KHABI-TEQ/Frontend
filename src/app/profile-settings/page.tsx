@@ -186,14 +186,20 @@ export default function ProfileSettingsPage() {
     onSubmit: async (values) => {
       setIsChangingPassword(true);
       try {
-        // Mock API call - replace with actual endpoint
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        const response = await api.put("/account/changePassword", {
+          currentPassword: values.currentPassword,
+          newPassword: values.newPassword,
+        });
 
-        toast.success("Password changed successfully");
-        passwordFormik.resetForm();
+        if (response.data.success) {
+          toast.success("Password changed successfully");
+          passwordFormik.resetForm();
+        } else {
+          throw new Error(response.data.message || "Failed to change password");
+        }
       } catch (error) {
         console.error("Failed to change password:", error);
-        toast.error("Failed to change password");
+        toast.error(error instanceof Error ? error.message : "Failed to change password");
       } finally {
         setIsChangingPassword(false);
       }
