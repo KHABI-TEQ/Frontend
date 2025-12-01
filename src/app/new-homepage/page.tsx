@@ -1,7 +1,7 @@
 /** @format */
 
 "use client";
-import React, { Fragment, Suspense, lazy, dynamic } from "react";
+import React, { Fragment, Suspense, lazy } from "react";
 import dynamic from "next/dynamic";
 import Loading from "@/components/loading-component/loading";
 import { useLoading } from "@/hooks/useLoading";
