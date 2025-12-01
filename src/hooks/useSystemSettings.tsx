@@ -38,16 +38,11 @@ export const useHomePageSettings = () => {
   const [settings, setSettings] = useState<SystemSettings>({
     homePageEnabled: true,
     maintenanceMode: false,
-    // Default video URLs - in production, these would come from your CMS/API
-    document_verification_video_url: '/videos/document-verification.mp4',
+    // Default thumbnail URLs - video URLs should come from your CMS/API
     document_verification_thumbnail_url: '/placeholder-property.svg',
-    submit_preference_video_url: '/videos/submit-preference.mp4',
     submit_preference_thumbnail_url: '/placeholder-property.svg',
-    agent_marketplace_video_url: '/videos/agent-marketplace.mp4',
     agent_marketplace_thumbnail_url: '/placeholder-property.svg',
-    subscription_plan_video_url: '/videos/subscription-plan.mp4',
     subscription_plan_thumbnail_url: '/placeholder-property.svg',
-    post_property_video_url: '/videos/post-property.mp4',
     post_property_thumbnail_url: '/placeholder-property.svg',
   });
 
@@ -58,16 +53,11 @@ export const useHomePageSettings = () => {
       setSettings({
         homePageEnabled: true,
         maintenanceMode: false,
-        // Default video URLs
-        document_verification_video_url: '/videos/document-verification.mp4',
+        // Default thumbnail URLs - video URLs should come from your CMS/API
         document_verification_thumbnail_url: '/placeholder-property.svg',
-        submit_preference_video_url: '/videos/submit-preference.mp4',
         submit_preference_thumbnail_url: '/placeholder-property.svg',
-        agent_marketplace_video_url: '/videos/agent-marketplace.mp4',
         agent_marketplace_thumbnail_url: '/placeholder-property.svg',
-        subscription_plan_video_url: '/videos/subscription-plan.mp4',
         subscription_plan_thumbnail_url: '/placeholder-property.svg',
-        post_property_video_url: '/videos/post-property.mp4',
         post_property_thumbnail_url: '/placeholder-property.svg',
       });
       setLoading(false);
