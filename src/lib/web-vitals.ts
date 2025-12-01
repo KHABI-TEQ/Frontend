@@ -91,51 +91,75 @@ export const getWebVitals = () => {
     try {
       // Observe Largest Contentful Paint (LCP)
       const lcpObserver = new PerformanceObserver((list) => {
-        const entries = list.getEntries();
-        const lastEntry = entries[entries.length - 1];
-        reportWebVital({
-          name: 'LCP',
-          value: lastEntry.renderTime || lastEntry.loadTime,
-          id: 'lcp-' + lastEntry.startTime,
-          isFinal: true,
-        });
+        try {
+          const entries = list.getEntries();
+          if (entries.length > 0) {
+            const lastEntry = entries[entries.length - 1] as any;
+            const lcpValue = lastEntry.renderTime || lastEntry.loadTime || 0;
+            if (lcpValue > 0) {
+              reportWebVital({
+                name: 'LCP',
+                value: lcpValue,
+                id: 'lcp-' + lastEntry.startTime,
+                isFinal: true,
+              });
+            }
+          }
+        } catch (error) {
+          // Silently fail
+        }
       });
       lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
 
       // Observe Cumulative Layout Shift (CLS)
       const clsObserver = new PerformanceObserver((list) => {
-        let clsValue = 0;
-        for (const entry of list.getEntries()) {
-          if (!(entry as any).hadRecentInput) {
-            clsValue += (entry as any).value;
+        try {
+          let clsValue = 0;
+          const entries = list.getEntries();
+          for (const entry of entries) {
+            const layoutShiftEntry = entry as any;
+            if (!layoutShiftEntry.hadRecentInput && layoutShiftEntry.value) {
+              clsValue += layoutShiftEntry.value;
+            }
           }
+          if (clsValue > 0) {
+            reportWebVital({
+              name: 'CLS',
+              value: clsValue,
+              id: 'cls',
+              isFinal: true,
+            });
+          }
+        } catch (error) {
+          // Silently fail
         }
-        reportWebVital({
-          name: 'CLS',
-          value: clsValue,
-          id: 'cls',
-          isFinal: true,
-        });
       });
       clsObserver.observe({ entryTypes: ['layout-shift'] });
 
       // Observe First Input Delay (FID)
       const fidObserver = new PerformanceObserver((list) => {
-        const entries = list.getEntries();
-        for (const entry of entries) {
-          reportWebVital({
-            name: 'FID',
-            value: (entry as any).processingDuration,
-            id: 'fid-' + entry.startTime,
-            isFinal: true,
-          });
+        try {
+          const entries = list.getEntries();
+          for (const entry of entries) {
+            const firstInputEntry = entry as any;
+            if (firstInputEntry.processingDuration) {
+              reportWebVital({
+                name: 'FID',
+                value: firstInputEntry.processingDuration,
+                id: 'fid-' + entry.startTime,
+                isFinal: true,
+              });
+            }
+          }
+        } catch (error) {
+          // Silently fail
         }
       });
       fidObserver.observe({ entryTypes: ['first-input'] });
     } catch (error) {
       // PerformanceObserver not supported
       if (process.env.NODE_ENV === 'development') {
-        console.log('PerformanceObserver not supported');
+        console.log('PerformanceObserver not fully supported');
       }
     }
   }
