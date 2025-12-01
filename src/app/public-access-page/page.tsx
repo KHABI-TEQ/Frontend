@@ -35,12 +35,16 @@ export default function OverviewPage() {
   const fetchAnalytics = useCallback(async () => {
     try {
       const token = Cookies.get("token");
+      if (!token) return;
+
       const res = await GET_REQUEST<any>(`${URLS.BASE}${URLS.fetchDashboardStats}`, token);
       if (res?.success && res.data) {
         setStats(res.data);
       }
     } catch (error) {
-      console.error("Failed to fetch analytics:", error);
+      console.warn("Failed to fetch analytics:", error);
+      // Continue with empty stats - don't crash
+      setStats({ viewsByDay: [] });
     }
   }, []);
 
