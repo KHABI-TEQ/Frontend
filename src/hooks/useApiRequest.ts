@@ -1,6 +1,6 @@
 /** @format */
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 type RequestMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -11,11 +11,13 @@ interface UseApiRequestOptions {
   errorMessage?: string;
   onSuccess?: (data: any) => void;
   onError?: (error: any) => void;
+  signal?: AbortSignal;
 }
 
 export const useApiRequest = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const controllerRef = useRef<AbortController | null>(null);
 
   const makeRequest = async (
     url: string,
@@ -30,6 +32,7 @@ export const useApiRequest = () => {
       errorMessage,
       onSuccess,
       onError,
+      signal,
     } = options;
 
     try {
@@ -38,12 +41,15 @@ export const useApiRequest = () => {
       }
       setError(null);
 
+      controllerRef.current = new AbortController();
+
       const requestConfig: RequestInit = {
         method,
         headers: {
           "Content-Type": "application/json",
           ...(token && { Authorization: `Bearer ${token}` }),
         },
+        signal: signal || controllerRef.current.signal,
       };
 
       if (data && ["POST", "PUT", "PATCH"].includes(method)) {
@@ -68,6 +74,10 @@ export const useApiRequest = () => {
 
       return responseData;
     } catch (err: any) {
+      if (err.name === "AbortError") {
+        return;
+      }
+
       const errorMsg = err.message || errorMessage || "An error occurred";
       setError(errorMsg);
 
@@ -87,11 +97,22 @@ export const useApiRequest = () => {
     }
   };
 
+  const cancelRequest = () => {
+    controllerRef.current?.abort();
+  };
+
+  useEffect(() => {
+    return () => {
+      controllerRef.current?.abort();
+    };
+  }, []);
+
   return {
     isLoading,
     error,
     makeRequest,
     setIsLoading,
     setError,
+    cancelRequest,
   };
 };
