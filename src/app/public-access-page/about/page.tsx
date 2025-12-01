@@ -32,16 +32,19 @@ export default function AboutPage() {
     try {
       const token = Cookies.get("token");
       const payload = {
-        aboutHero: {
-          ...settings.aboutHero,
-          title: formData.heroTitle,
-          subTitle: formData.heroSubtitle,
-          description: formData.heroDescription,
-        },
-        aboutIdentity: {
-          ...settings.aboutIdentity,
-          headline: formData.identityHeadline,
-          content: formData.identityContent,
+        about: {
+          ...settings.about,
+          hero: {
+            ...settings.about?.hero,
+            title: formData.heroTitle,
+            subTitle: formData.heroSubtitle,
+            description: formData.heroDescription,
+          },
+          identity: {
+            ...settings.about?.identity,
+            headline: formData.identityHeadline,
+            content: formData.identityContent,
+          },
         },
       };
 
