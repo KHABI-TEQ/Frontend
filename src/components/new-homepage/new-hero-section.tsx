@@ -68,7 +68,8 @@ const NewHeroSection = () => {
     } else {
       videoRefs.current.forEach(video => { if (video && !video.paused) video.pause(); });
     }
-    /* playingIndex removed; UI reads actual element state */
+    // Clear all playing videos
+    setPlayingVideos(new Set());
   };
 
   const pauseVideoAtIndex = (index: number) => {
