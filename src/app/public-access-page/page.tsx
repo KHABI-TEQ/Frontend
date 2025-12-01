@@ -52,15 +52,25 @@ export default function OverviewPage() {
     try {
       setLogsLoading(true);
       const token = Cookies.get("token");
+
+      if (!token || !settings.publicSlug) {
+        setLogs([]);
+        return;
+      }
+
       const res = await GET_REQUEST<any>(
-        `${URLS.BASE}/account/dealSite/${settings.publicSlug}/logs?limit=10`,
+        `${URLS.BASE}${URLS.dealSiteLogs}`.replace(":slug", settings.publicSlug) + "?limit=10",
         token
       );
       if (res?.success && Array.isArray(res.data)) {
         setLogs(res.data as DealSiteLog[]);
+      } else {
+        setLogs([]);
       }
     } catch (error) {
-      console.error("Failed to fetch logs:", error);
+      console.warn("Failed to fetch logs:", error);
+      // Continue with empty logs - don't crash
+      setLogs([]);
     } finally {
       setLogsLoading(false);
     }
