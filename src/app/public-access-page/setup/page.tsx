@@ -177,7 +177,7 @@ const Setup = () => {
       };
 
       toast.promise(
-        POST_REQUEST(`${URLS.BASE}/account/dealSite/setUp`, payload, token),
+        POST_REQUEST(`${URLS.BASE}${URLS.dealSiteSetup}`, payload, token),
         {
           loading: "Setting up your deal site...",
           success: (res: any) => {
