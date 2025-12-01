@@ -46,13 +46,17 @@ export const reportWebVital = (metric: Metric) => {
   // Send to analytics in production (implement your analytics service here)
   if (process.env.NODE_ENV === 'production' && typeof window !== 'undefined') {
     // Example: Send to Google Analytics, Vercel Analytics, or custom service
-    if (window.gtag) {
-      window.gtag('event', metric.name, {
-        value: Math.round(metric.value),
-        event_category: 'Web Vitals',
-        event_label: metric.id,
-        non_interaction: true,
-      });
+    try {
+      if (typeof window !== 'undefined' && window.gtag) {
+        window.gtag('event', metric.name, {
+          value: Math.round(metric.value),
+          event_category: 'Web Vitals',
+          event_label: metric.id,
+          non_interaction: true,
+        });
+      }
+    } catch (error) {
+      // Silently fail if gtag is not available
     }
   }
 
