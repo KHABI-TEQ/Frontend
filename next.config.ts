@@ -45,6 +45,8 @@ const nextConfig: NextConfig = {
     formats: ['image/avif', 'image/webp'],
     loader: 'default',
     domains: ['res.cloudinary.com', 'www.res.cloudinary.com'],
+    quality: 85,
+    disableStaticImages: false,
   },
   headers: async () => {
     return [
