@@ -26,15 +26,12 @@ const Settings = () => {
   const getUserAccount = async () => {
     setIsLoading(true);
     setFormikStatus('pending');
-    //console.log(Cookies.get('token'));
     try {
       const response = await api.get(URLS.accountSettingsBaseUrl);
-      //console.log('response', response);
       if (response.status === 200) {
         setIsLoading(false);
         setFormikStatus('success');
         const userAccount: UserAgentDataProps = response.data.user;
-        // console.log('userAccount', userAccount);
         if (userAccount._id) {
           /**
            * fill the userDetails contextAPI with the values from the backend
@@ -42,12 +39,10 @@ const Settings = () => {
            */
           setUserDetails(userAccount);
         }
-        //console.log(userDetails);
       } else {
         setFormikStatus('failed');
       }
     } catch (err) {
-      console.log(err);
       setIsLoading(false);
       setFormikStatus('failed');
     }
