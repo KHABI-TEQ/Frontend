@@ -13,9 +13,9 @@ export default function InspectionPage() {
   const { settings, updateSettings } = useDealSite();
   const [preloader, setPreloader] = useState(false);
   const [formData, setFormData] = useState({
-    allowPublicBooking: settings.inspectionDesignSettings?.allowPublicBooking ?? true,
-    defaultInspectionFee: settings.inspectionDesignSettings?.defaultInspectionFee || "",
-    negotiationEnabled: settings.inspectionDesignSettings?.negotiationEnabled ?? true,
+    allowPublicBooking: settings.inspectionSettings?.allowPublicBooking ?? true,
+    defaultInspectionFee: settings.inspectionSettings?.defaultInspectionFee || "",
+    negotiationEnabled: settings.inspectionSettings?.negotiationEnabled ?? true,
   });
 
   const handleInputChange = useCallback((field: string, value: any) => {
