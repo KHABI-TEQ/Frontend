@@ -409,6 +409,7 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
           contactUs: data.contactUs || prev.contactUs,
           homeSettings: data.homeSettings || prev.homeSettings,
           subscribeSettings: data.subscribeSettings || prev.subscribeSettings,
+          securitySettings: data.securitySettings || prev.securitySettings,
         }));
         if (data.publicSlug) setSlugLocked(true);
         if (data.paused) setIsPaused(true);
