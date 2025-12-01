@@ -108,7 +108,12 @@ const NewHeroSection = () => {
     if (!currentVideo) return;
 
     currentVideo.pause();
-    // State will be updated by event listener
+    // Update playing state
+    setPlayingVideos((prev) => {
+      const newSet = new Set(prev);
+      newSet.delete(currentVideoIndex);
+      return newSet;
+    });
   };
 
   const handlePlayPause = async (e: React.MouseEvent, targetIndex?: number, videoElement?: HTMLVideoElement | null) => {
