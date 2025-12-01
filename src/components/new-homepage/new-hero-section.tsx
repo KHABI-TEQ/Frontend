@@ -577,15 +577,15 @@ const NewHeroSection = () => {
                               className='absolute inset-0 flex items-center justify-center cursor-pointer pointer-events-auto'
                               data-embla-action="toggle" data-embla-index={index}>
                               <div className='w-16 h-16 bg-black/50 rounded-full flex items-center justify-center text-white hover:bg-black/70 transition-colors duration-200'>
-                                {isIndexPlaying(index) ? (
-                                  // Pause icon
-                                  <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 002 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                                  </svg>
-                                ) : (
-                                  // Play icon
+                                {!isIndexPlaying(index) ? (
+                                  // Play icon (shown when video is paused)
                                   <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                                  </svg>
+                                ) : (
+                                  // Pause icon (shown when video is playing)
+                                  <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 002 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
                                   </svg>
                                 )}
                               </div>
@@ -598,13 +598,15 @@ const NewHeroSection = () => {
                                 data-embla-action="toggle" data-embla-index={index}
                                 className='w-10 h-10 rounded-full flex items-center justify-center text-white transition-colors duration-200 bg-black/50 hover:bg-black/70'
                                 title={isIndexPlaying(index) ? 'Pause video' : 'Play video'}>
-                                {isIndexPlaying(index) ? (
-                                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 011 1v4a1 1 0 11-2 0V8a1 1 0 011-1zm4-1a1 1 0 00-1 1v4a1 1 0 002 0V7a1 1 0 00-1-1z" clipRule="evenodd" />
-                                  </svg>
-                                ) : (
+                                {!isIndexPlaying(index) ? (
+                                  // Play icon (shown when video is paused)
                                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                                  </svg>
+                                ) : (
+                                  // Pause icon (shown when video is playing)
+                                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 011 1v4a1 1 0 11-2 0V8a1 1 0 011-1zm4-1a1 1 0 00-1 1v4a1 1 0 002 0V7a1 1 0 00-1-1z" clipRule="evenodd" />
                                   </svg>
                                 )}
                               </button>
