@@ -14,8 +14,9 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: false,
   },
   experimental: {
-    optimizePackageImports: ["lucide-react", "framer-motion"],
+    optimizePackageImports: ["lucide-react", "framer-motion", "react-icons"],
     optimizeCss: process.env.NODE_ENV === 'production',
+    esmExternals: true,
   },
   serverExternalPackages: ["axios"],
   compress: true,
@@ -45,6 +46,15 @@ const nextConfig: NextConfig = {
   },
   headers: async () => {
     return [
+      {
+        source: '/_next/static/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable'
+          }
+        ]
+      },
       {
         source: '/fonts/:path*',
         headers: [
@@ -77,6 +87,33 @@ const nextConfig: NextConfig = {
           {
             key: 'Content-Type',
             value: 'font/woff'
+          }
+        ]
+      },
+      {
+        source: '/:path*.jpg',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=2592000, must-revalidate'
+          }
+        ]
+      },
+      {
+        source: '/:path*.png',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=2592000, must-revalidate'
+          }
+        ]
+      },
+      {
+        source: '/:path*.svg',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=2592000, must-revalidate'
           }
         ]
       }
