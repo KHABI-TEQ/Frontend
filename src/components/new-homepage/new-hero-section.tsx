@@ -289,26 +289,32 @@ const NewHeroSection = () => {
 
     allVideos.forEach((video) => {
       const playHandler = () => {
-        // independent playback: do not auto-pause other videos
-
-        // Determine logical index
+        // Update playing state when video plays
         const idxAttr = video.getAttribute('data-embla-index');
         const idx = idxAttr ? Number(idxAttr) : null;
-        /* playingIndex removed; UI reads actual element state */
+        if (typeof idx === 'number') {
+          setPlayingVideos((prev) => {
+            const newSet = new Set(prev);
+            newSet.add(idx);
+            return newSet;
+          });
+        }
         setIsMuted(video.muted);
       };
 
       const pauseHandler = () => {
-        // When a video pauses, we don't update any shared playing state.
-        // Keep mute sync for the currently visible video.
-        try {
-          const idxAttr = video.getAttribute('data-embla-index');
-          const idx = idxAttr ? Number(idxAttr) : null;
-          if (typeof idx === 'number' && idx === currentVideoIndex) {
-            setIsMuted(video.muted);
-          }
-        } catch (e) {
-          // ignore
+        // Update playing state when video pauses
+        const idxAttr = video.getAttribute('data-embla-index');
+        const idx = idxAttr ? Number(idxAttr) : null;
+        if (typeof idx === 'number') {
+          setPlayingVideos((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(idx);
+            return newSet;
+          });
+        }
+        if (typeof idx === 'number' && idx === currentVideoIndex) {
+          setIsMuted(video.muted);
         }
       };
 
