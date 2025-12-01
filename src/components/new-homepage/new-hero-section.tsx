@@ -355,14 +355,9 @@ const NewHeroSection = () => {
     return best.el;
   };
 
-  // Helper to determine if logical index is currently playing (prefers visible element's state)
+  // Helper to determine if logical index is currently playing
   const isIndexPlaying = (index: number) => {
-    try {
-      const v = getVisibleVideoForIndex(index) ?? videoRefs.current[index];
-      return !!v && !v.paused;
-    } catch (e) {
-      return false;
-    }
+    return playingVideos.has(index);
   };
 
   // Track readiness of each video (can play) to show skeletons until video thumbnails/content are ready
