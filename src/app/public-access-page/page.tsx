@@ -39,7 +39,11 @@ export default function OverviewPage() {
 
       const res = await GET_REQUEST<any>(`${URLS.BASE}${URLS.fetchDashboardStats}`, token);
       if (res?.success && res.data) {
-        setStats(res.data);
+        setStats({
+          viewsByDay: res.data.viewsByDay || [],
+          totalViews: res.data.totalViews,
+          totalClicks: res.data.totalClicks,
+        });
       }
     } catch (error) {
       console.warn("Failed to fetch analytics:", error);
