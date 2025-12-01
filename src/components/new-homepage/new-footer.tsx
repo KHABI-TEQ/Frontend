@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { roboto, archivo } from '@/styles/font';
 import { motion } from 'framer-motion';
 import { useSocialLinskSettings } from '@/hooks/useSystemSettings';
 import khabiTeqIcon from '@/svgs/white-khabi-teq.svg';
@@ -220,12 +221,12 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
                 alt='Khabiteq Logo'
                 className='mb-6'
               />
-              <p className={`text-[#D6DDEB] text-base leading-relaxed mb-6 max-w-md ${epilogue.className}`}>
+              <p className={`text-[#D6DDEB] text-base leading-relaxed mb-6 max-w-md ${archivo.variable}`}>
                 Simplifying real estate transactions in Nigeria. Buy, sell, rent, and manage properties with ease through Khabi-Teq&apos;s trusted platform. Verified agents, secure transactions, and transparent deals.
               </p>
               {/* Quick Actions */}
               <div className='space-y-3'>
-                <h4 className={`text-white font-semibold text-lg mb-4 ${epilogue.className}`}>
+                <h4 className={`text-white font-semibold text-lg mb-4 ${archivo.variable}`}>
                   Quick Actions
                 </h4>
                 {quickActions.map((action, index) => (
@@ -247,7 +248,7 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
               viewport={{ once: true }}>
-              <h3 className={`text-white font-semibold text-lg mb-6 ${epilogue.className}`}>
+              <h3 className={`text-white font-semibold text-lg mb-6 ${archivo.variable}`}>
                 Explore
               </h3>
               <div className='space-y-4'>
@@ -255,7 +256,7 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
                   <Link
                     key={index}
                     href={link.url}
-                    className={`block text-[#D6DDEB] hover:text-white transition-colors duration-300 text-base ${epilogue.className}`}>
+                    className={`block text-[#D6DDEB] hover:text-white transition-colors duration-300 text-base ${archivo.variable}`}>
                     {link.name}
                   </Link>
                 ))}
@@ -270,7 +271,7 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
               viewport={{ once: true }}>
-              <h3 className={`text-white font-semibold text-lg mb-6 ${epilogue.className}`}>
+              <h3 className={`text-white font-semibold text-lg mb-6 ${archivo.variable}`}>
                 Services
               </h3>
               <div className='space-y-4'>
@@ -278,7 +279,7 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
                   <Link
                     key={index}
                     href={link.url}
-                    className={`block text-[#D6DDEB] hover:text-white transition-colors duration-300 text-base ${epilogue.className}`}>
+                    className={`block text-[#D6DDEB] hover:text-white transition-colors duration-300 text-base ${archivo.variable}`}>
                     {link.name}
                   </Link>
                 ))}
@@ -310,7 +311,7 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
           className='bg-white/5 rounded-2xl p-6 md:p-8 mb-12'>
           <div className='text-center md:text-left md:flex md:items-center md:justify-between'>
             <div className='mb-6 md:mb-0'>
-              <h4 className={`text-white font-bold text-xl mb-2 ${epilogue.className}`}>
+              <h4 className={`text-white font-bold text-xl mb-2 ${archivo.variable}`}>
                 Stay Updated with Property Deals
               </h4>
               <p className="text-[#D6DDEB]">
@@ -345,7 +346,7 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
               whileInView={{ opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.5 }}
               viewport={{ once: true }}>
-              <p className={`text-gray-400 text-center md:text-left ${epilogue.className}`}>
+              <p className={`text-gray-400 text-center md:text-left ${archivo.variable}`}>
                 © {new Date().getFullYear()} Khabiteq Realty Limited. All rights reserved.
               </p>
             </motion.div>
