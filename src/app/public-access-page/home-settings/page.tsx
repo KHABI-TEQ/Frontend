@@ -13,10 +13,10 @@ export default function HomeSettingsPage() {
   const { settings, updateSettings } = useDealSite();
   const [preloader, setPreloader] = useState(false);
   const [formData, setFormData] = useState({
-    heroTitle: settings.publicPageDesign?.heroTitle || "",
-    heroSubtitle: settings.publicPageDesign?.heroSubtitle || "",
-    ctaText: settings.publicPageDesign?.ctaText || "",
-    ctaLink: settings.publicPageDesign?.ctaLink || "",
+    heroTitle: settings.publicPage?.heroTitle || "",
+    heroSubtitle: settings.publicPage?.heroSubtitle || "",
+    ctaText: settings.publicPage?.ctaText || "",
+    ctaLink: settings.publicPage?.ctaLink || "",
   });
 
   const handleInputChange = useCallback((field: string, value: string) => {
