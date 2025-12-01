@@ -35,7 +35,10 @@ export default function SubscribeSettingsPage() {
     try {
       const token = Cookies.get("token");
       const payload = {
-        subscriptionSettings: formData,
+        subscribeSettings: {
+          title: formData.subscriptionTitle,
+          subTitle: formData.subscriptionDescription,
+        },
       };
 
       const res = await POST_REQUEST(
