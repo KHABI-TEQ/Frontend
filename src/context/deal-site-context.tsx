@@ -384,40 +384,54 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       const token = Cookies.get("token");
-      const res = await GET_REQUEST<any>(`${URLS.BASE}/account/dealSite/details`, token);
 
-      if (res?.success && res.data && Array.isArray(res.data) && res.data.length > 0) {
-        const data = res.data[0] as any;
-        setSettings((prev) => ({
-          ...prev,
-          publicSlug: data.publicSlug || prev.publicSlug,
-          title: data.title || prev.title,
-          keywords: data.keywords || prev.keywords,
-          description: data.description || prev.description,
-          logoUrl: data.logoUrl || prev.logoUrl,
-          theme: data.theme || prev.theme,
-          inspectionSettings: data.inspectionSettings || prev.inspectionSettings,
-          listingsLimit: data.listingsLimit || prev.listingsLimit,
-          socialLinks: data.socialLinks || prev.socialLinks,
-          contactVisibility: data.contactVisibility || prev.contactVisibility,
-          featureSelection: data.featureSelection || prev.featureSelection,
-          marketplaceDefaults: data.marketplaceDefaults || prev.marketplaceDefaults,
-          publicPage: data.publicPage || prev.publicPage,
-          footer: data.footer || prev.footer,
-          paymentDetails: data.paymentDetails || prev.paymentDetails,
-          about: data.about || prev.about,
-          contactUs: data.contactUs || prev.contactUs,
-          homeSettings: data.homeSettings || prev.homeSettings,
-          subscribeSettings: data.subscribeSettings || prev.subscribeSettings,
-          securitySettings: data.securitySettings || prev.securitySettings,
-        }));
-        if (data.publicSlug) setSlugLocked(true);
-        if (data.paused) setIsPaused(true);
-        if (data.status === "on-hold") setIsOnHold(true);
-        setIsSetupComplete(!!data.publicSlug);
+      // Guard: only load if token exists
+      if (!token) {
+        setIsLoading(false);
+        return;
+      }
+
+      const res = await GET_REQUEST<any>(`${URLS.BASE}${URLS.dealSiteDetails}`, token);
+
+      if (res?.success && res.data) {
+        // Handle both array and object responses
+        const data = Array.isArray(res.data) ? res.data[0] : res.data;
+
+        if (data) {
+          setSettings((prev) => ({
+            ...prev,
+            publicSlug: data.publicSlug || prev.publicSlug,
+            title: data.title || prev.title,
+            keywords: data.keywords || prev.keywords,
+            description: data.description || prev.description,
+            logoUrl: data.logoUrl || prev.logoUrl,
+            theme: data.theme || prev.theme,
+            inspectionSettings: data.inspectionSettings || prev.inspectionSettings,
+            listingsLimit: data.listingsLimit || prev.listingsLimit,
+            socialLinks: data.socialLinks || prev.socialLinks,
+            contactVisibility: data.contactVisibility || prev.contactVisibility,
+            featureSelection: data.featureSelection || prev.featureSelection,
+            marketplaceDefaults: data.marketplaceDefaults || prev.marketplaceDefaults,
+            publicPage: data.publicPage || prev.publicPage,
+            footer: data.footer || prev.footer,
+            paymentDetails: data.paymentDetails || prev.paymentDetails,
+            about: data.about || prev.about,
+            contactUs: data.contactUs || prev.contactUs,
+            homeSettings: data.homeSettings || prev.homeSettings,
+            subscribeSettings: data.subscribeSettings || prev.subscribeSettings,
+            securitySettings: data.securitySettings || prev.securitySettings,
+          }));
+          if (data.publicSlug) setSlugLocked(true);
+          if (data.paused) setIsPaused(true);
+          if (data.status === "on-hold") setIsOnHold(true);
+          setIsSetupComplete(!!data.publicSlug);
+        }
       }
     } catch (error) {
-      console.error("Failed to load DealSite settings:", error);
+      // Log error but don't crash the app
+      console.warn("Failed to load DealSite settings (this is normal if not yet set up):", error);
+      // Use default settings as fallback
+      setIsSetupComplete(false);
     } finally {
       setIsLoading(false);
     }
