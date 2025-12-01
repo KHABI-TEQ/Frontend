@@ -75,6 +75,12 @@ const NewHeroSection = () => {
     const video = videoRefs.current[index];
     if (video && !video.paused) {
       try { video.pause(); } catch (e) {}
+      // Update playing state
+      setPlayingVideos((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(index);
+        return newSet;
+      });
     }
   };
 
