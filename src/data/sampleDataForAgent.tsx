@@ -1,26 +1,32 @@
 /** @format */
-import { City, State } from 'country-state-city';
 import sampleImg from '@/assets/noImageAvailable.png';
 
-// Define valid states and cities for Nigeria (country code: NG)
-const nigeriaStates = State.getStatesOfCountry('NG');
+// Sample Nigerian states (for demo purposes)
+const nigeriaStates = [
+  { name: 'Lagos', code: 'LA' },
+  { name: 'Abuja', code: 'FC' },
+  { name: 'Ibadan', code: 'OY' },
+  { name: 'Kano', code: 'KN' },
+  { name: 'Port Harcourt', code: 'RV' },
+];
 
-// const lagosCities = City.getCitiesOfState('NG', 'LA'); // Lagos state code: LA
-// const abujaCities = City.getCitiesOfState('NG', 'FC'); // Abuja (Federal Capital Territory) code: FC
-const badagryCity = City.getCitiesOfState('NG', 'LA').find(
-  (city) => city.name === 'Badagry'
-);
-
-//Helper function to get a random state
+// Helper function to get a random state
 const getRandomState = () => {
   const states = nigeriaStates;
   return states[Math.floor(Math.random() * states.length)].name;
 };
 
-// Helper function to get a random city from a state
+// Helper function to get a random city (placeholder)
 const getRandomCity = (stateCode: string) => {
-  const cities = City.getCitiesOfState('NG', stateCode);
-  return cities[Math.floor(Math.random() * cities.length)].name;
+  const cityMap: Record<string, string[]> = {
+    'LA': ['Ikeja', 'Lekki', 'Badagry', 'Ikorodu'],
+    'FC': ['Abuja', 'Gwagwalada', 'Kuje'],
+    'OY': ['Ibadan', 'Eruwa', 'Oyo'],
+    'KN': ['Kano', 'Tarauni', 'Warawa'],
+    'RV': ['Port Harcourt', 'Obio-Akpor', 'Okrika'],
+  };
+  const cities = cityMap[stateCode] || ['Default City'];
+  return cities[Math.floor(Math.random() * cities.length)];
 };
 
 /**
