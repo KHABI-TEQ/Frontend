@@ -5,6 +5,13 @@
  * Sends metrics to console in dev, analytics in production
  */
 
+// Extend window type for gtag
+declare global {
+  interface Window {
+    gtag?: (command: string, eventName: string, eventParams: Record<string, any>) => void;
+  }
+}
+
 interface Metric {
   name: string;
   value: number;
