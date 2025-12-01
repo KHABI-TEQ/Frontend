@@ -45,7 +45,6 @@ const NAV_ITEMS: NavItem[] = [
 
   // Content & Design
   { id: "branding", label: "Branding & SEO", path: "/public-access-page/branding", icon: <Settings size={18} />, group: "content" },
-  { id: "design", label: "Public Page Design", path: "/public-access-page/design", icon: <Palette size={18} />, group: "content" },
   { id: "theme", label: "Theme", path: "/public-access-page/theme", icon: <Palette size={18} />, group: "content" },
   { id: "home-settings", label: "Home Settings", path: "/public-access-page/home-settings", icon: <Home size={18} />, group: "content" },
 
