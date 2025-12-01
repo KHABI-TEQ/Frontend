@@ -349,9 +349,6 @@ export default function ProfileSettingsPage() {
 
   const handleCancelEmailChange = async () => {
     try {
-      // Mock API call - replace with actual endpoint
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
       setIsEmailChangeRequested(false);
       toast.success("Email change request cancelled");
     } catch (error) {
