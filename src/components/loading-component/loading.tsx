@@ -1,14 +1,16 @@
 /** @format */
-
 'use client';
-import React from 'react';
-import 'ldrs/react/Trio.css';
-import { Trio } from 'ldrs/react';
+
+import { motion } from "framer-motion";
 
 const Loading = () => {
   return (
-    <section className='h-screen w-full flex items-center justify-center'>
-      <Trio size={50} speed={1.3} color='#09391C' />
+    <section className="h-screen w-full flex items-center justify-center">
+      <motion.div
+        className="w-12 h-12 rounded-full border-4 border-[#09391C] border-t-transparent"
+        animate={{ rotate: 360 }}
+        transition={{ repeat: Infinity, duration: 0.8, ease: "linear" }}
+      />
     </section>
   );
 };
