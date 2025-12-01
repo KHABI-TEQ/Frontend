@@ -14,13 +14,16 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: false,
   },
   experimental: {
-    optimizePackageImports: ["lucide-react", "framer-motion"],
+    optimizePackageImports: ["lucide-react", "framer-motion", "react-icons"],
     optimizeCss: process.env.NODE_ENV === 'production',
+    esmExternals: true,
+    isrMemoryCacheSize: 52 * 1024 * 1024,
   },
   serverExternalPackages: ["axios"],
   compress: true,
   poweredByHeader: false,
   productionBrowserSourceMaps: false,
+  swcMinify: true,
   images: {
     remotePatterns: [
       {
