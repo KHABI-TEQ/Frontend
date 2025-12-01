@@ -52,37 +52,80 @@ export const reportWebVital = (metric: Metric) => {
   return { metric, status };
 };
 
-export const getWebVitals = async () => {
+export const getWebVitals = () => {
   if (typeof window === 'undefined') return;
 
-  try {
-    // Use Web Vitals library if available
-    const { getCLS, getFID, getFCP, getLCP, getTTFB } = await import('web-vitals');
+  // Use Performance API to measure Core Web Vitals
+  if (window.performance && window.performance.timing) {
+    const perfData = window.performance.timing;
+    const pageLoadTime = perfData.loadEventEnd - perfData.navigationStart;
 
-    getCLS(reportWebVital);
-    getFID(reportWebVital);
-    getFCP(reportWebVital);
-    getLCP(reportWebVital);
-    getTTFB(reportWebVital);
-  } catch (error) {
-    // Web Vitals library not installed, use performance API instead
-    if (typeof window !== 'undefined' && window.performance) {
-      const perfData = window.performance.timing;
-      const pageLoadTime = perfData.loadEventEnd - perfData.navigationStart;
+    reportWebVital({
+      name: 'TTFB',
+      value: perfData.responseStart - perfData.navigationStart,
+      id: 'ttfb',
+      isFinal: true,
+    });
 
-      reportWebVital({
-        name: 'TTFB',
-        value: perfData.responseStart - perfData.navigationStart,
-        id: 'ttfb',
-        isFinal: true,
+    reportWebVital({
+      name: 'PageLoad',
+      value: pageLoadTime,
+      id: 'pageload',
+      isFinal: true,
+    });
+  }
+
+  // Use PerformanceObserver for newer metrics if available
+  if (typeof PerformanceObserver !== 'undefined') {
+    try {
+      // Observe Largest Contentful Paint (LCP)
+      const lcpObserver = new PerformanceObserver((list) => {
+        const entries = list.getEntries();
+        const lastEntry = entries[entries.length - 1];
+        reportWebVital({
+          name: 'LCP',
+          value: lastEntry.renderTime || lastEntry.loadTime,
+          id: 'lcp-' + lastEntry.startTime,
+          isFinal: true,
+        });
       });
+      lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
 
-      reportWebVital({
-        name: 'PageLoad',
-        value: pageLoadTime,
-        id: 'pageload',
-        isFinal: true,
+      // Observe Cumulative Layout Shift (CLS)
+      const clsObserver = new PerformanceObserver((list) => {
+        let clsValue = 0;
+        for (const entry of list.getEntries()) {
+          if (!(entry as any).hadRecentInput) {
+            clsValue += (entry as any).value;
+          }
+        }
+        reportWebVital({
+          name: 'CLS',
+          value: clsValue,
+          id: 'cls',
+          isFinal: true,
+        });
       });
+      clsObserver.observe({ entryTypes: ['layout-shift'] });
+
+      // Observe First Input Delay (FID)
+      const fidObserver = new PerformanceObserver((list) => {
+        const entries = list.getEntries();
+        for (const entry of entries) {
+          reportWebVital({
+            name: 'FID',
+            value: (entry as any).processingDuration,
+            id: 'fid-' + entry.startTime,
+            isFinal: true,
+          });
+        }
+      });
+      fidObserver.observe({ entryTypes: ['first-input'] });
+    } catch (error) {
+      // PerformanceObserver not supported
+      if (process.env.NODE_ENV === 'development') {
+        console.log('PerformanceObserver not supported');
+      }
     }
   }
 };
