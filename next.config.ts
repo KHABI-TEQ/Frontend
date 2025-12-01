@@ -15,7 +15,7 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     optimizePackageImports: ["lucide-react", "framer-motion"],
-    optimizeCss: true,
+    optimizeCss: process.env.NODE_ENV === 'production',
   },
   serverExternalPackages: ["axios"],
   compress: true,
@@ -81,23 +81,6 @@ const nextConfig: NextConfig = {
         ]
       }
     ];
-  },
-  webpack: (config, { isServer }) => {
-    if (!isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-        path: false,
-        os: false,
-      };
-
-      config.resolve.alias = {
-        ...(config.resolve.alias || {}),
-        canvas: require("path").resolve(__dirname, "empty-module.js"),
-      };
-    }
-
-    return config;
   },
 };
 
