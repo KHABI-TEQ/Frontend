@@ -23,6 +23,7 @@ import {
 import Link from "next/link";
 import { useUserContext } from "@/context/user-context";
 import AgentShortProfile from "@/components/dashboard/AgentShortProfile";
+import api from "@/utils/axiosConfig";
 
 interface DashboardStats {
   totalListings: number;
