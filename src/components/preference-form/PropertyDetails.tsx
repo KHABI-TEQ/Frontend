@@ -218,6 +218,11 @@ const customSelectStyles = {
     color: "#9CA3AF",
     fontSize: "15px",
   }),
+  singleValue: (provided: any) => ({
+    ...provided,
+    color: "#374151",
+    fontSize: "15px",
+  }),
   option: (provided: any, state: any) => ({
     ...provided,
     backgroundColor: state.isSelected
