@@ -242,6 +242,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
     const documentTypeOptions = useMemo(() => DOCUMENT_TYPES, []);
     const landConditionOptions = useMemo(() => LAND_CONDITIONS, []);
     const bedroomOptions = useMemo(() => BEDROOM_OPTIONS, []);
+    const bathroomOptions = useMemo(() => BATHROOM_OPTIONS, []);
     const shortletPropertyTypeOptions = useMemo(
       () => SHORTLET_PROPERTY_TYPES,
       [],
