@@ -236,6 +236,17 @@ const customSelectStyles = {
   }),
 };
 
+// Helper functions to ensure labels are displayed in selected values
+const getOptionLabel = (option: Option | null): string => {
+  if (!option) return "";
+  return option.label || option.value;
+};
+
+const getOptionValue = (option: Option | null): string => {
+  if (!option) return "";
+  return option.value;
+};
+
 const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
   ({ preferenceType, className = "" }) => {
     const { state, updateFormData } = usePreferenceForm();
