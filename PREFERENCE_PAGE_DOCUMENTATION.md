@@ -138,11 +138,23 @@ This combined step collects information about the desired property and the budge
    - **Data Path**: `formData.propertyDetails.bedrooms` or `minBedrooms`
    - **Validation**: Required for residential properties
 
-4. **Minimum Bathrooms** (Optional)
-   - **Type**: Numeric Input
+4. **Minimum Bathrooms** (Required for Residential)
+   - **Type**: Dropdown Select
    - **Purpose**: Specify minimum number of bathrooms
-   - **Default**: 0
+   - **Options**:
+     - 1 Bathroom (`value: "1"`)
+     - 2 Bathrooms (`value: "2"`)
+     - 3 Bathrooms (`value: "3"`)
+     - 4 Bathrooms (`value: "4"`)
+     - 5 Bathrooms (`value: "5"`)
+     - 6 Bathrooms (`value: "6"`)
+     - 7 Bathrooms (`value: "7"`)
+     - 8 Bathrooms (`value: "8"`)
+     - 9 Bathrooms (`value: "9"`)
+     - 10 Bathrooms (`value: "10"`)
+     - More than 10 (`value: "more"`)
    - **Data Path**: `formData.propertyDetails.bathrooms` or `minBathrooms`
+   - **Validation**: Required for residential properties; Optional for commercial
 
 5. **Property Condition** (Required)
    - **Type**: Single Select
