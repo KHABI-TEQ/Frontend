@@ -162,6 +162,21 @@ const BEDROOM_OPTIONS = [
   { value: "more", label: "More than 10" },
 ];
 
+// Bathroom options
+const BATHROOM_OPTIONS = [
+  { value: "1", label: "1 Bathroom" },
+  { value: "2", label: "2 Bathrooms" },
+  { value: "3", label: "3 Bathrooms" },
+  { value: "4", label: "4 Bathrooms" },
+  { value: "5", label: "5 Bathrooms" },
+  { value: "6", label: "6 Bathrooms" },
+  { value: "7", label: "7 Bathrooms" },
+  { value: "8", label: "8 Bathrooms" },
+  { value: "9", label: "9 Bathrooms" },
+  { value: "10", label: "10 Bathrooms" },
+  { value: "more", label: "More than 10" },
+];
+
 // Shortlet property types
 const SHORTLET_PROPERTY_TYPES = [
   { value: "studio", label: "Studio" },
