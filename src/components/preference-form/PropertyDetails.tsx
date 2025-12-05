@@ -278,7 +278,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
         setPropertyCondition(null);
         setBuildingType(null);
         setBedrooms(null);
-        setBathrooms("");
+        setBathrooms(null);
         setLandConditions([]);
         setPropertyType(null);
         setMaxGuests("");
