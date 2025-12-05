@@ -434,6 +434,10 @@ Users provide their contact details and any additional preferences.
    - **Format**: Supports +234, 0789, 0801, etc.
    - **Data Path**: `formData.contactInfo.phoneNumber`
 
+##### **Shortlet-Specific Property Fields**
+
+Note: For shortlet preferences, the bathrooms field is also presented as a dropdown, matching the bedrooms field format with the same options (1-10 and "More than 10").
+
 ##### **Shortlet-Specific Contact Fields**
 
 1. **Preferred Check-In Time** (Optional)
