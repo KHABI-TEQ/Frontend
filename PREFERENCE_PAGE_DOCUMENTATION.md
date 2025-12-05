@@ -775,8 +775,8 @@ All preference types send data with this base structure:
   "propertyDetails": {
     "propertyType": "Land|Residential|Commercial",
     "buildingType": "string",
-    "minBedrooms": "number|string",
-    "minBathrooms": number,
+    "minBedrooms": "string",
+    "minBathrooms": "string",
     "propertyCondition": "New|Renovated|Old",
     "purpose": "For living|Resale|Development",
     "landSize": "string",
@@ -795,8 +795,8 @@ All preference types send data with this base structure:
   "propertyDetails": {
     "propertyType": "Self-con|Flat|Mini Flat|Bungalow",
     "buildingType": "string",
-    "minBedrooms": "number|string",
-    "minBathrooms": number,
+    "minBedrooms": "string",
+    "minBathrooms": "string",
     "leaseTerm": "6 Months|1 Year",
     "propertyCondition": "New|Good Condition|Renovation",
     "purpose": "Residential|Office",
