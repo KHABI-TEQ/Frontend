@@ -291,7 +291,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
           if (preferenceType === "shortlet") {
             setPropertyType(propertyDetails.propertyType ? { value: propertyDetails.propertyType, label: propertyDetails.propertyType } : null);
             setBedrooms(propertyDetails.bedrooms ? { value: propertyDetails.bedrooms, label: `${propertyDetails.bedrooms} Bedroom${propertyDetails.bedrooms !== '1' ? 's' : ''}` } : null);
-            setBathrooms(propertyDetails.bathrooms?.toString() || "");
+            setBathrooms(propertyDetails.bathrooms ? { value: propertyDetails.bathrooms, label: `${propertyDetails.bathrooms} Bathroom${propertyDetails.bathrooms !== '1' ? 's' : ''}` } : null);
             setMaxGuests(propertyDetails.maxGuests?.toString() || "");
             setTravelType(propertyDetails.travelType ? { value: propertyDetails.travelType, label: propertyDetails.travelType } : null);
             setNearbyLandmark(propertyDetails.nearbyLandmark || "");
@@ -303,7 +303,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
             setPropertyCondition(propertyDetails.propertyCondition ? { value: propertyDetails.propertyCondition, label: propertyDetails.propertyCondition } : null);
             setBuildingType(propertyDetails.buildingType ? { value: propertyDetails.buildingType, label: propertyDetails.buildingType } : null);
             setBedrooms(propertyDetails.bedrooms ? { value: propertyDetails.bedrooms, label: `${propertyDetails.bedrooms} Bedroom${propertyDetails.bedrooms !== '1' ? 's' : ''}` } : null);
-            setBathrooms(propertyDetails.bathrooms?.toString() || "");
+            setBathrooms(propertyDetails.bathrooms ? { value: propertyDetails.bathrooms, label: `${propertyDetails.bathrooms} Bathroom${propertyDetails.bathrooms !== '1' ? 's' : ''}` } : null);
             setLandConditions(propertyDetails.landConditions ? propertyDetails.landConditions.map((lc: string) => ({ value: lc, label: lc })) : []);
           }
         }
