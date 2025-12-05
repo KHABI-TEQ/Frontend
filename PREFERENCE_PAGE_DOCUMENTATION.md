@@ -829,8 +829,8 @@ All preference types send data with this base structure:
   "bookingDetails": {
     "propertyType": "string",
     "buildingType": "string",
-    "minBedrooms": "number|string",
-    "minBathrooms": number,
+    "minBedrooms": "string",
+    "minBathrooms": "string",
     "numberOfGuests": number,
     "checkInDate": "YYYY-MM-DD",
     "checkOutDate": "YYYY-MM-DD",
