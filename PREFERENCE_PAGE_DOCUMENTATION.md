@@ -869,7 +869,7 @@ All preference types send data with this base structure:
 - **Property Type**: Required
 - **Building Type**: Required (if property is Residential or Commercial)
 - **Bedrooms**: Required (if Residential)
-- **Bathrooms**: Optional
+- **Bathrooms**: Required for Residential; Optional for Commercial
 - **Condition**: Required
 - **Purpose**: Required
 - **Land Size**: Required if property type is Land or for Joint Venture
