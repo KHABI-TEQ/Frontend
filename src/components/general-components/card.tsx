@@ -105,9 +105,11 @@ const Card = ({
                 <Star size={14} className="text-white" />
               </div>
             ) : null}
-            <ImageSwiper
-              images={Array.isArray(images) ? images : [randomImage]}
-            />
+            <Suspense fallback={<div className="w-full h-[148px] bg-gray-200 animate-pulse" />}>
+              <LazyImageSwiper
+                images={Array.isArray(images) ? images : [randomImage]}
+              />
+            </Suspense>
           </div>
           <div className="flex flex-col gap-[2px]">
             <div className="flex gap-[7px]">
