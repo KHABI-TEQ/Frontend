@@ -300,9 +300,16 @@ This combined step collects information about the desired property and the budge
 10. **Land Conditions** (Optional)
     - **Type**: Multi-Select with Checkboxes
     - **Purpose**: Specify conditions/restrictions user is willing to accept
+    - **Options** (with kebab-case stored values):
+      - "fenced" → Fenced
+      - "dry" → Dry
+      - "gated" → Gated
+      - "accessible-road" → Accessible Road
     - **Data Path**: `formData.propertyDetails.landConditions`
     - **Validation**: Optional, no minimum selection required
     - **Shown For**: Buy and Joint Venture preferences with Land property type
+    - **Storage Format**: All values stored in kebab-case (e.g., "accessible-road")
+    - **Component**: `PropertyDetails.tsx` (LAND_CONDITIONS constant, lines 142-148)
 
 11. **Nearby Landmark** (Optional)
     - **Type**: Text Input
