@@ -372,7 +372,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
         const shortletData = {
           propertyType: propertyType?.value || "",
           bedrooms: bedrooms?.value || "",
-          bathrooms: parseInt(bathrooms) || 0,
+          bathrooms: bathrooms?.value || "",
           maxGuests: parseInt(maxGuests) || 0,
           travelType: travelType?.value || "",
           nearbyLandmark,
@@ -387,7 +387,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
           propertyCondition: propertyCondition?.value || "",
           buildingType: buildingType?.value || "",
           bedrooms: bedrooms?.value || "",
-          bathrooms: parseInt(bathrooms) || 0,
+          bathrooms: bathrooms?.value || "",
           landConditions: landConditions.map((lc) => lc.value) || [],
         };
         updateFormData({ propertyDetails: propertyData } as any);
