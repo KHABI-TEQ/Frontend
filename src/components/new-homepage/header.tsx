@@ -461,10 +461,12 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
         />
       )}
 
-      <SideBar
-        isModalOpened={isModalOpened}
-        setIsModalOpened={setIsModalOpened}
-      />
+      <Suspense fallback={null}>
+        <SideBar
+          isModalOpened={isModalOpened}
+          setIsModalOpened={setIsModalOpened}
+        />
+      </Suspense>
     </Fragment>
   );
 };
