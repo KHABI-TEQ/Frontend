@@ -21,9 +21,9 @@ import WebVitalsInitializer from '@/components/providers/WebVitalsInitializer';
 
 // Lazy load non-critical components - these are not needed on initial render
 const GlobalPropertyActionsFAB = dynamic(() => import('@/components/common/GlobalPropertyActionsFAB'), { ssr: true });
-const SubscriptionFeaturesClient = dynamic(() => import('@/components/subscription/SubscriptionFeaturesClient'), { ssr: false });
+const SubscriptionFeaturesClient = dynamic(() => import('@/components/subscription/SubscriptionFeaturesClient'), { ssr: true });
 const PromoMount = dynamic(() => import('@/components/promo/PromoMount'), { ssr: true });
-const ChunkErrorHandler = dynamic(() => import('@/components/ChunkErrorHandler'), { ssr: false });
+const ChunkErrorHandler = dynamic(() => import('@/components/ChunkErrorHandler'), { ssr: true });
 const WhatsAppChatWidget = lazy(() => import('@/components/whatsapp-chat-widget'));
 
 export const metadata = {
