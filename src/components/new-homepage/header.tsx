@@ -275,9 +275,11 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
                   </button>
                   <AnimatePresence>
                     {isNotificationModalOpened && (
-                      <UserNotifications
-                        closeNotificationModal={setIsNotificationModalOpened}
-                      />
+                      <Suspense fallback={null}>
+                        <UserNotifications
+                          closeNotificationModal={setIsNotificationModalOpened}
+                        />
+                      </Suspense>
                     )}
                   </AnimatePresence>
                 </div>
@@ -312,10 +314,12 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
                   </button>
                   <AnimatePresence>
                     {isUserProfileModalOpened && (
-                      <UserProfile
-                        userDetails={user}
-                        closeUserProfileModal={setIsUserProfileModal}
-                      />
+                      <Suspense fallback={null}>
+                        <UserProfile
+                          userDetails={user}
+                          closeUserProfileModal={setIsUserProfileModal}
+                        />
+                      </Suspense>
                     )}
                   </AnimatePresence>
                 </div>
