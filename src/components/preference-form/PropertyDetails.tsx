@@ -299,7 +299,11 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
             );
             setBedrooms(bedroomOption || null);
 
-            setBathrooms(propertyDetails.bathrooms?.toString() || "");
+            const bathroomOption = BATHROOM_OPTIONS.find(
+              (opt) => opt.value === propertyDetails.bathrooms?.toString()
+            );
+            setBathrooms(bathroomOption || null);
+
             setMaxGuests(propertyDetails.maxGuests?.toString() || "");
 
             const travelTypeOption = TRAVEL_TYPES.find(
