@@ -1,6 +1,6 @@
 /** @format */
 "use client";
-import React, { Fragment, useEffect, useRef, useState, useMemo } from "react";
+import React, { Fragment, useEffect, useRef, useState, useMemo, Suspense, lazy } from "react";
 import Image from "next/image";
 import Button from "./button";
 import { usePageContext } from "@/context/page-context";
@@ -12,13 +12,15 @@ import { motion } from "framer-motion";
 import randomImage from "@/assets/noImageAvailable.png";
 import { Star } from "lucide-react";
 import markerSVG from "@/svgs/marker.svg";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Autoplay, Navigation, Pagination } from "swiper/modules";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import "swiper/css";
-import "swiper/css/pagination"; // if using pagination
-import "swiper/css/navigation"; // if using navigation arrows
 import { X } from "lucide-react";
+import dynamic from "next/dynamic";
+
+// Lazy load the image swiper with carousel functionality
+const LazyImageSwiper = dynamic(() => import("./LazyImageSwiper"), {
+  loading: () => <div className="w-full h-[148px] bg-gray-200 animate-pulse" />,
+  ssr: true,
+});
 
 interface CardDataProps {
   isRed?: boolean;
