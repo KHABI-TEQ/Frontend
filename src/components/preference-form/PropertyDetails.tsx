@@ -748,22 +748,12 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
                   <label className="block text-sm font-semibold text-gray-800">
                     Bathrooms <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="number"
+                  <Select
+                    options={BATHROOM_OPTIONS}
                     value={bathrooms}
-                    onChange={(e) => {
-                      const value = Math.max(0, parseInt(e.target.value) || 0);
-                      setBathrooms(value.toString());
-                    }}
-                    onInput={(e) => {
-                      const target = e.target as HTMLInputElement;
-                      if (parseInt(target.value) < 0) {
-                        target.value = "0";
-                      }
-                    }}
-                    placeholder="Number of bathrooms"
-                    min="0"
-                    className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    onChange={setBathrooms}
+                    placeholder="Select bathrooms..."
+                    styles={customSelectStyles}
                   />
                 </div>
               </div>
@@ -775,22 +765,13 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
                 <label className="block text-sm font-semibold text-gray-800">
                   Bathrooms <span className="text-gray-500">(Optional)</span>
                 </label>
-                <input
-                  type="number"
+                <Select
+                  options={BATHROOM_OPTIONS}
                   value={bathrooms}
-                  onChange={(e) => {
-                    const value = Math.max(0, parseInt(e.target.value) || 0);
-                    setBathrooms(value.toString());
-                  }}
-                  onInput={(e) => {
-                    const target = e.target as HTMLInputElement;
-                    if (parseInt(target.value) < 0) {
-                      target.value = "0";
-                    }
-                  }}
-                  placeholder="Number of bathrooms"
-                  min="0"
-                  className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  onChange={setBathrooms}
+                  placeholder="Select bathrooms..."
+                  styles={customSelectStyles}
+                  isClearable
                 />
               </div>
             )}
