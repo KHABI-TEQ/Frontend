@@ -222,17 +222,23 @@ This combined step collects information about the desired property and the budge
 5. **Property Condition** (Required)
    - **Type**: Single Select
    - **Purpose**: Specify the desired condition of the property
-   - **Buy Options**:
-     - New
-     - Renovated
-     - Old
-   - **Rent Options**:
-     - New
-     - Good Condition
-     - Renovation (Ready to Renovate)
+   - **Buy Options** (with kebab-case stored values):
+     - "new" → New
+     - "renovated" → Renovated
+     - "old" → Old
+   - **Rent Options** (with kebab-case stored values):
+     - "new" → New
+     - "good-condition" → Good Condition
+     - "renovation" → Renovation (Ready to Renovate)
+   - **Joint Venture Options** (with kebab-case stored values):
+     - "new" → New
+     - "renovated" → Renovated
+     - "uncompleted" → Uncompleted
    - **Data Path**: `formData.propertyDetails.propertyCondition`
    - **Validation**: Required
-   - **Applies To**: All property types in both Buy and Rent
+   - **Applies To**: All property types in Buy, Rent, and Joint Venture
+   - **Storage Format**: All values stored in kebab-case (e.g., "good-condition")
+   - **Component**: `PropertyDetails.tsx` (PROPERTY_CONDITIONS constant, lines 55-92)
 
 6. **Purpose** (Required)
    - **Type**: Single Select
