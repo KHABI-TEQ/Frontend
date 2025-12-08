@@ -218,6 +218,11 @@ const customSelectStyles = {
     color: "#9CA3AF",
     fontSize: "15px",
   }),
+  singleValue: (provided: any) => ({
+    ...provided,
+    color: "#374151",
+    fontSize: "15px",
+  }),
   option: (provided: any, state: any) => ({
     ...provided,
     backgroundColor: state.isSelected
@@ -229,6 +234,17 @@ const customSelectStyles = {
     padding: "10px 12px",
     fontSize: "15px",
   }),
+};
+
+// Helper functions to ensure labels are displayed in selected values
+const getOptionLabel = (option: Option | null): string => {
+  if (!option) return "";
+  return option.label || option.value;
+};
+
+const getOptionValue = (option: Option | null): string => {
+  if (!option) return "";
+  return option.value;
 };
 
 const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
