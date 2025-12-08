@@ -273,22 +273,72 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
         const propertyDetails = state.formData.propertyDetails as any;
         if (propertyDetails) {
           if (preferenceType === "shortlet") {
-            setPropertyType(propertyDetails.propertyType ? { value: propertyDetails.propertyType, label: propertyDetails.propertyType } : null);
-            setBedrooms(propertyDetails.bedrooms ? { value: propertyDetails.bedrooms, label: `${propertyDetails.bedrooms} Bedroom${propertyDetails.bedrooms !== '1' ? 's' : ''}` } : null);
+            // Find proper label from options instead of using kebab-case value
+            const propertyTypeOption = SHORTLET_PROPERTY_TYPES.find(
+              (opt) => opt.value === propertyDetails.propertyType
+            );
+            setPropertyType(propertyTypeOption || null);
+
+            const bedroomOption = BEDROOM_OPTIONS.find(
+              (opt) => opt.value === propertyDetails.bedrooms
+            );
+            setBedrooms(bedroomOption || null);
+
             setBathrooms(propertyDetails.bathrooms?.toString() || "");
             setMaxGuests(propertyDetails.maxGuests?.toString() || "");
-            setTravelType(propertyDetails.travelType ? { value: propertyDetails.travelType, label: propertyDetails.travelType } : null);
+
+            const travelTypeOption = TRAVEL_TYPES.find(
+              (opt) => opt.value === propertyDetails.travelType
+            );
+            setTravelType(travelTypeOption || null);
+
             setNearbyLandmark(propertyDetails.nearbyLandmark || "");
           } else {
-            setPropertySubtype(propertyDetails.propertySubtype ? { value: propertyDetails.propertySubtype, label: propertyDetails.propertySubtype } : null);
+            // Find proper label from options instead of using kebab-case value
+            const propertySubtypeOption = PROPERTY_SUBTYPES.find(
+              (opt) => opt.value === propertyDetails.propertySubtype
+            );
+            setPropertySubtype(propertySubtypeOption || null);
+
             setLandSize(propertyDetails.landSize || "");
-            setMeasurementUnit(propertyDetails.measurementUnit ? { value: propertyDetails.measurementUnit, label: propertyDetails.measurementUnit } : null);
+
+            const measurementUnitOption = MEASUREMENT_UNITS.find(
+              (opt) => opt.value === propertyDetails.measurementUnit
+            );
+            setMeasurementUnit(measurementUnitOption || null);
+
             setDocumentTypes(propertyDetails.documentTypes || []);
-            setPropertyCondition(propertyDetails.propertyCondition ? { value: propertyDetails.propertyCondition, label: propertyDetails.propertyCondition } : null);
-            setBuildingType(propertyDetails.buildingType ? { value: propertyDetails.buildingType, label: propertyDetails.buildingType } : null);
-            setBedrooms(propertyDetails.bedrooms ? { value: propertyDetails.bedrooms, label: `${propertyDetails.bedrooms} Bedroom${propertyDetails.bedrooms !== '1' ? 's' : ''}` } : null);
+
+            const propertyConditionOption = (
+              PROPERTY_CONDITIONS[preferenceType]?.[
+                propertyDetails.propertySubtype as keyof (typeof PROPERTY_CONDITIONS)[typeof preferenceType]
+              ] || []
+            ).find((opt) => opt.value === propertyDetails.propertyCondition);
+            setPropertyCondition(propertyConditionOption || null);
+
+            const buildingTypeOption = (
+              BUILDING_TYPES[preferenceType]?.[
+                propertyDetails.propertySubtype as keyof (typeof BUILDING_TYPES)[typeof preferenceType]
+              ] || []
+            ).find((opt) => opt.value === propertyDetails.buildingType);
+            setBuildingType(buildingTypeOption || null);
+
+            const bedroomOption = BEDROOM_OPTIONS.find(
+              (opt) => opt.value === propertyDetails.bedrooms
+            );
+            setBedrooms(bedroomOption || null);
+
             setBathrooms(propertyDetails.bathrooms?.toString() || "");
-            setLandConditions(propertyDetails.landConditions ? propertyDetails.landConditions.map((lc: string) => ({ value: lc, label: lc })) : []);
+
+            // Map land conditions to proper labels
+            const landConditionOptions = propertyDetails.landConditions
+              ? propertyDetails.landConditions
+                  .map((lc: string) =>
+                    LAND_CONDITIONS.find((opt) => opt.value === lc)
+                  )
+                  .filter(Boolean) as Option[]
+              : [];
+            setLandConditions(landConditionOptions);
           }
         }
       }
