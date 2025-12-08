@@ -1382,6 +1382,249 @@ All preference types send data with this base structure:
 
 ---
 
+## Kebab-case Documentation
+
+### What is Kebab-case?
+
+Kebab-case is a naming convention where words are separated by hyphens and written in lowercase (e.g., `deed-of-assignment`, `duplex-fully-detached`). This format is used throughout the preference form system for internal storage of option values to ensure consistency, avoid spaces in data values, and improve code maintainability.
+
+### Why Kebab-case is Used
+
+1. **Consistency**: All enum-like values use kebab-case format internally
+2. **Data Integrity**: Avoids issues with spaces, special characters, or case sensitivity in stored values
+3. **Database Storage**: Easier to store, search, and filter in database queries
+4. **API Communication**: Simplifies JSON payload formatting without special characters
+5. **User-Friendly Display**: Uses the `kebabToTitleCase` utility to convert kebab-case values to readable labels when displayed
+
+### kebabToTitleCase Utility Function
+
+**Location**: `/src/utils/helpers.ts` (lines 8-15)
+
+**Purpose**: Converts kebab-case strings to Title Case format for display to users
+
+**Implementation**:
+```typescript
+export const kebabToTitleCase = (str: string): string => {
+  if (!str) return "";
+  return str
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+};
+```
+
+**Usage Examples**:
+- `kebabToTitleCase("deed-of-assignment")` → "Deed Of Assignment"
+- `kebabToTitleCase("duplex-fully-detached")` → "Duplex Fully Detached"
+- `kebabToTitleCase("certificate-of-occupancy")` → "Certificate Of Occupancy"
+- `kebabToTitleCase("good-condition")` → "Good Condition"
+- `kebabToTitleCase("accessible-road")` → "Accessible Road"
+
+**Used In**:
+- Property details display pages
+- Preference summary/confirmation pages
+- Property listing pages for showing document types and building types
+- Agent marketplace pages (for converting stored values to readable labels)
+
+### Kebab-case Values by Category
+
+#### Document Types (Stored in `formData.propertyDetails.documentTypes`)
+| Kebab-case Value | Display Label |
+|------------------|---|
+| deed-of-assignment | Deed of Assignment |
+| deed-of-ownership | Deed of Ownership |
+| deed-of-conveyance | Deed of Conveyance |
+| survey-plan | Survey Plan |
+| governors-consent | Governor's Consent |
+| certificate-of-occupancy | Certificate of Occupancy |
+| family-receipt | Family Receipt |
+| contract-of-sale | Contract of Sale |
+| land-certificate | Land Certificate |
+| gazette | Gazette |
+| excision | Excision |
+
+**Component**: `PropertyDetails.tsx` (DOCUMENT_TYPES constant, lines 32-45)
+**Validation Schema**: `preference-validation.ts` (documentTypes array validation)
+**Used For**: Buy and Joint Venture preferences when land property type is selected
+
+#### Building Types (Stored in `formData.propertyDetails.buildingType`)
+
+**Buy - Residential**:
+| Kebab-case Value | Display Label |
+|------------------|---|
+| bungalow | Bungalow |
+| duplex-fully-detached | Duplex (Fully Detached) |
+| duplex-semi-detached | Duplex (Semi Detached) |
+| duplex-terrace | Duplex (Terrace) |
+| blocks-of-flat | Blocks of Flat |
+
+**Rent - Residential**:
+| Kebab-case Value | Display Label |
+|------------------|---|
+| detached | Detached |
+| semi-detached | Semi-detached |
+| bungalow | Bungalow |
+| duplex | Duplex |
+| blocks-of-flat | Blocks of Flat |
+
+**Buy/Rent - Commercial**:
+| Kebab-case Value | Display Label |
+|------------------|---|
+| office-complex | Office Complex |
+| warehouse | Warehouse |
+| plaza | Plaza |
+| shop | Shop |
+
+**Joint Venture - Residential**:
+| Kebab-case Value | Display Label |
+|------------------|---|
+| block-of-flats | Block of Flats |
+| duplex | Duplex |
+| bungalow | Bungalow |
+| terrace | Terrace |
+
+**Joint Venture - Commercial**:
+| Kebab-case Value | Display Label |
+|------------------|---|
+| plaza | Plaza |
+| office-complex | Office Complex |
+| warehouse | Warehouse |
+| shop-space | Shop Space |
+
+**Component**: `PropertyDetails.tsx` (BUILDING_TYPES constant, lines 95-140)
+**Used For**: Buy, Rent, and Joint Venture preferences for residential and commercial properties
+
+#### Property Conditions (Stored in `formData.propertyDetails.propertyCondition`)
+
+**Buy Property**:
+| Kebab-case Value | Display Label |
+|------------------|---|
+| new | New |
+| renovated | Renovated |
+| old | Old |
+
+**Rent Property**:
+| Kebab-case Value | Display Label |
+|------------------|---|
+| new | New |
+| good-condition | Good Condition |
+| renovation | Renovation (Ready to Renovate) |
+
+**Joint Venture Property**:
+| Kebab-case Value | Display Label |
+|------------------|---|
+| new | New |
+| renovated | Renovated |
+| uncompleted | Uncompleted |
+
+**Component**: `PropertyDetails.tsx` (PROPERTY_CONDITIONS constant, lines 55-92)
+**Used For**: All property types across Buy, Rent, and Joint Venture preferences
+
+#### Land Conditions (Stored in `formData.propertyDetails.landConditions`)
+| Kebab-case Value | Display Label |
+|------------------|---|
+| fenced | Fenced |
+| dry | Dry |
+| gated | Gated |
+| accessible-road | Accessible Road |
+
+**Component**: `PropertyDetails.tsx` (LAND_CONDITIONS constant, lines 142-148)
+**Used For**: Buy and Joint Venture preferences with Land property type
+
+#### Travel Types (Stored in `formData.propertyDetails.travelType` or `formData.bookingDetails.travelType`)
+| Value | Display Label |
+|-------|---|
+| solo | Solo |
+| couple | Couple |
+| family | Family |
+| group | Group |
+| business | Business |
+
+**Component**: `PropertyDetails.tsx` (TRAVEL_TYPES constant, lines 188-195)
+**Storage Format**: Simple lowercase strings (not hyphenated)
+**Used For**: Shortlet preferences only
+
+#### Property Subtypes (Stored in `formData.propertyDetails.propertySubtype`)
+| Kebab-case Value | Display Label |
+|------------------|---|
+| land | Land |
+| residential | Residential |
+| commercial | Commercial |
+
+**Component**: `PropertyDetails.tsx` (PROPERTY_SUBTYPES constant, lines 26-30)
+**Used For**: All preference types
+
+#### Measurement Units (Stored in `formData.propertyDetails.measurementUnit` or `formData.developmentDetails.measurementUnit`)
+| Value | Display Label |
+|-------|---|
+| plot | Plot |
+| sqm | SQM |
+| hectares | Hectares |
+
+**Component**: `PropertyDetails.tsx` (MEASUREMENT_UNITS constant, lines 47-52)
+**Storage Format**: Simple lowercase strings
+**Used For**: Land size specifications in Buy and Joint Venture preferences
+
+#### Shortlet Property Types (Stored in `formData.propertyDetails.propertyType`)
+| Value | Display Label |
+|-------|---|
+| studio | Studio |
+| apartment | Apartment |
+| duplex | Duplex |
+| bungalow | Bungalow |
+
+**Component**: `PropertyDetails.tsx` (SHORTLET_PROPERTY_TYPES constant, lines 180-186)
+**Storage Format**: Simple lowercase strings
+**Used For**: Shortlet preferences only
+
+### Data Flow: From Component to API
+
+1. **User Selection**: User selects a display label in the UI (e.g., "Deed of Assignment")
+2. **Component Storage**: Component stores the kebab-case value (e.g., "deed-of-assignment") in form context
+3. **Form Context**: `formData.propertyDetails.documentTypes` contains array of kebab-case values
+4. **API Payload**: API receives kebab-case values exactly as stored:
+   ```json
+   {
+     "propertyDetails": {
+       "documentTypes": ["deed-of-assignment", "survey-plan", "governors-consent"]
+     }
+   }
+   ```
+5. **Database Storage**: Values stored as-is in kebab-case format
+6. **Display**: When retrieved and displayed, values are converted back to readable labels using `kebabToTitleCase()`
+
+### Validation of Kebab-case Values
+
+Validation schemas in `/src/utils/validation/preference-validation.ts` validate that stored values match allowed kebab-case options:
+
+**Example - Document Types Validation** (Line 125-128):
+```typescript
+documentTypes: Yup.array()
+  .of(Yup.string())
+  .min(1, "Please select at least one document type")
+  .required("Document types are required"),
+```
+
+The validation ensures:
+- Only arrays of strings are accepted
+- At least 1 selection is required for Buy/JV
+- Values must match one of the predefined kebab-case options (enforced in the component itself via Select component options)
+
+**Example - Building Type Validation** (Line 129-133):
+```typescript
+buildingType: Yup.string().when("propertySubtype", {
+  is: (val: string) => val !== "land",
+  then: (schema) => schema.required("Building type is required"),
+  otherwise: (schema) => schema.nullable(),
+}),
+```
+
+The validation ensures:
+- Building type is required only for Residential or Commercial properties
+- Value must be one of the valid kebab-case options from BUILDING_TYPES
+
+---
+
 ## Components Structure
 
 ### Main Components
