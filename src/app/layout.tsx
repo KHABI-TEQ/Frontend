@@ -36,12 +36,6 @@ export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_API_URL || 'https://www.khabiteqrealty.com'),
 };
 
-import ReduxWrapper from '@/components/providers/ReduxWrapper';
-import SubscriptionInitializer from '@/components/providers/SubscriptionInitializer';
-import { PromoProvider } from '@/context/promo-context';
-import PromoMount from '@/components/promo/PromoMount';
-import WebVitalsInitializer from '@/components/providers/WebVitalsInitializer';
-
 export default function RootLayout({
   children,
 }: Readonly<{
