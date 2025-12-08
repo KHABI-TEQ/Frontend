@@ -138,38 +138,43 @@ This combined step collects information about the desired property and the budge
 2. **Building Type** (Required for Non-Land Properties)
    - **Type**: Single Select
    - **Purpose**: Specify the building structure type
-   - **Buy - Residential Options**:
-     - Bungalow
-     - Duplex (Fully Detached)
-     - Duplex (Semi Detached)
-     - Apartment Building
-     - Flat/Apartment
-     - Townhouse
-     - Villa
-     - Terraced
-   - **Rent - Residential Options**:
-     - Self-Contained
-     - Flat
-     - Mini Flat
-     - Bungalow
-     - Penthouse
-     - Studio
-   - **Buy - Commercial Options**:
-     - Standalone Office
-     - Office Space
-     - Warehouse
-     - Retail Space
-     - Mall
-     - Industrial Complex
-   - **Rent - Commercial Options**:
-     - Standalone Office
-     - Office Space
-     - Warehouse
-     - Retail Space
-     - Mall
-     - Industrial Complex
+   - **Buy - Residential Options** (with kebab-case stored values):
+     - "bungalow" → Bungalow
+     - "duplex-fully-detached" → Duplex (Fully Detached)
+     - "duplex-semi-detached" → Duplex (Semi Detached)
+     - "duplex-terrace" → Duplex (Terrace)
+     - "blocks-of-flat" → Blocks of Flat
+   - **Rent - Residential Options** (with kebab-case stored values):
+     - "detached" → Detached
+     - "semi-detached" → Semi-detached
+     - "bungalow" → Bungalow
+     - "duplex" → Duplex
+     - "blocks-of-flat" → Blocks of Flat
+   - **Buy - Commercial Options** (with kebab-case stored values):
+     - "office-complex" → Office Complex
+     - "warehouse" → Warehouse
+     - "plaza" → Plaza
+     - "shop" → Shop
+   - **Rent - Commercial Options** (with kebab-case stored values):
+     - "office-complex" → Office Complex
+     - "plaza" → Plaza
+     - "shop" → Shop
+     - "warehouse" → Warehouse
+   - **Joint Venture - Residential Options** (with kebab-case stored values):
+     - "block-of-flats" → Block of Flats
+     - "duplex" → Duplex
+     - "bungalow" → Bungalow
+     - "terrace" → Terrace
+   - **Joint Venture - Commercial Options** (with kebab-case stored values):
+     - "plaza" → Plaza
+     - "office-complex" → Office Complex
+     - "warehouse" → Warehouse
+     - "shop-space" → Shop Space
    - **Data Path**: `formData.propertyDetails.buildingType`
    - **Conditional**: Only required if propertySubtype is "Residential" or "Commercial"
+   - **Storage Format**: All values stored in kebab-case (e.g., "duplex-fully-detached")
+   - **Component**: `PropertyDetails.tsx` (BUILDING_TYPES constant, lines 95-140)
+   - **Kebab-case Usage**: These values are stored internally in kebab-case and converted to readable labels using the `kebabToTitleCase` utility when displayed
 
 3. **Minimum Bedrooms** (Required for Residential)
    - **Type**: Single Select
