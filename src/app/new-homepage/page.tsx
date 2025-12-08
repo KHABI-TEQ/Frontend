@@ -107,7 +107,7 @@ const NewHomepage = ({
           </Suspense>
 
           {/* 4. FEATURED PROPERTIES SECTION */}
-          <Suspense>
+          <Suspense fallback={<div className="w-full py-16 bg-[#FFFEFB]" />}>
             <ErrorBoundary
               fallback={
                 <div className="w-full py-16 bg-[#FFFEFB]">
@@ -122,7 +122,7 @@ const NewHomepage = ({
           </Suspense>
 
           {/* 5. REVIEWS & COUNTERS (SOCIAL PROOF & TRUST SIGNALS) */}
-          <Suspense>
+          <Suspense fallback={<div className="w-full py-16 bg-[#F5F7F9]" />}>
             <ErrorBoundary
               fallback={
                 <div className="w-full py-16 bg-[#F5F7F9]">
@@ -137,7 +137,7 @@ const NewHomepage = ({
           </Suspense>
 
           {/* 6. FOR REAL ESTATE AGENTS SECTION */}
-          <Suspense>
+          <Suspense fallback={<div className="w-full py-16 bg-[#FFFEFB]" />}>
             <ErrorBoundary
               fallback={
                 <div className="w-full py-16 bg-[#FFFEFB]">
@@ -152,7 +152,7 @@ const NewHomepage = ({
           </Suspense>
 
           {/* 7. SECURITY & TRANSPARENCY SECTION */}
-          <Suspense>
+          <Suspense fallback={<div className="w-full py-16 bg-[#09391C]" />}>
             <ErrorBoundary
               fallback={
                 <div className="w-full py-16 bg-[#09391C]">
@@ -167,7 +167,7 @@ const NewHomepage = ({
           </Suspense>
 
           {/* 8. FINAL CALL TO ACTION (BOTTOM) */}
-          <Suspense>
+          <Suspense fallback={<div className="w-full py-16 bg-[#8DDB90]" />}>
             <ErrorBoundary
               fallback={
                 <div className="w-full py-16 bg-[#8DDB90]">
