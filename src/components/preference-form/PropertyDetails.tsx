@@ -347,7 +347,10 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
             );
             setBedrooms(bedroomOption || null);
 
-            setBathrooms(propertyDetails.bathrooms?.toString() || "");
+            const bathroomOption = BATHROOM_OPTIONS.find(
+              (opt) => opt.value === propertyDetails.bathrooms?.toString()
+            );
+            setBathrooms(bathroomOption || null);
 
             // Map land conditions to proper labels
             const landConditionOptions = propertyDetails.landConditions
