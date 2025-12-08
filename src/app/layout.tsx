@@ -62,15 +62,23 @@ export default function RootLayout({
                               <HeaderFooterWrapper>
                                 <Body>{children}</Body>
                               </HeaderFooterWrapper>
-                              <PromoMount slot="top-header" targetId="promo-top-placeholder" className="mb-2" height="h-20" />
-                              <GlobalPropertyActionsFAB />
-                              <SubscriptionFeaturesClient />
+                              <Suspense fallback={null}>
+                                <PromoMount slot="top-header" targetId="promo-top-placeholder" className="mb-2" height="h-20" />
+                              </Suspense>
+                              <Suspense fallback={null}>
+                                <GlobalPropertyActionsFAB />
+                              </Suspense>
+                              <Suspense fallback={null}>
+                                <SubscriptionFeaturesClient />
+                              </Suspense>
                               <Suspense fallback={null}>
                                 <WhatsAppChatWidget />
                               </Suspense>
                               <WebVitalsInitializer />
                               <Toaster />
-                              <ChunkErrorHandler />
+                              <Suspense fallback={null}>
+                                <ChunkErrorHandler />
+                              </Suspense>
                             </body>
                           </html>
                         </PromoProvider>
