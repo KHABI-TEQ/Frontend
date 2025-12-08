@@ -162,6 +162,21 @@ const BEDROOM_OPTIONS = [
   { value: "more", label: "More than 10" },
 ];
 
+// Bathroom options
+const BATHROOM_OPTIONS = [
+  { value: "1", label: "1 Bathroom" },
+  { value: "2", label: "2 Bathrooms" },
+  { value: "3", label: "3 Bathrooms" },
+  { value: "4", label: "4 Bathrooms" },
+  { value: "5", label: "5 Bathrooms" },
+  { value: "6", label: "6 Bathrooms" },
+  { value: "7", label: "7 Bathrooms" },
+  { value: "8", label: "8 Bathrooms" },
+  { value: "9", label: "9 Bathrooms" },
+  { value: "10", label: "10 Bathrooms" },
+  { value: "more", label: "More than 10" },
+];
+
 // Shortlet property types
 const SHORTLET_PROPERTY_TYPES = [
   { value: "studio", label: "Studio" },
@@ -227,6 +242,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
     const documentTypeOptions = useMemo(() => DOCUMENT_TYPES, []);
     const landConditionOptions = useMemo(() => LAND_CONDITIONS, []);
     const bedroomOptions = useMemo(() => BEDROOM_OPTIONS, []);
+    const bathroomOptions = useMemo(() => BATHROOM_OPTIONS, []);
     const shortletPropertyTypeOptions = useMemo(
       () => SHORTLET_PROPERTY_TYPES,
       [],
@@ -243,7 +259,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
     );
     const [buildingType, setBuildingType] = useState<Option | null>(null);
     const [bedrooms, setBedrooms] = useState<Option | null>(null);
-    const [bathrooms, setBathrooms] = useState<string>("");
+    const [bathrooms, setBathrooms] = useState<Option | null>(null);
     const [landConditions, setLandConditions] = useState<Option[]>([]);
 
     // Shortlet specific fields
@@ -262,7 +278,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
         setPropertyCondition(null);
         setBuildingType(null);
         setBedrooms(null);
-        setBathrooms("");
+        setBathrooms(null);
         setLandConditions([]);
         setPropertyType(null);
         setMaxGuests("");
@@ -273,22 +289,79 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
         const propertyDetails = state.formData.propertyDetails as any;
         if (propertyDetails) {
           if (preferenceType === "shortlet") {
-            setPropertyType(propertyDetails.propertyType ? { value: propertyDetails.propertyType, label: propertyDetails.propertyType } : null);
-            setBedrooms(propertyDetails.bedrooms ? { value: propertyDetails.bedrooms, label: `${propertyDetails.bedrooms} Bedroom${propertyDetails.bedrooms !== '1' ? 's' : ''}` } : null);
-            setBathrooms(propertyDetails.bathrooms?.toString() || "");
+            // Find proper label from options instead of using kebab-case value
+            const propertyTypeOption = SHORTLET_PROPERTY_TYPES.find(
+              (opt) => opt.value === propertyDetails.propertyType
+            );
+            setPropertyType(propertyTypeOption || null);
+
+            const bedroomOption = BEDROOM_OPTIONS.find(
+              (opt) => opt.value === propertyDetails.bedrooms
+            );
+            setBedrooms(bedroomOption || null);
+
+            const bathroomOption = BATHROOM_OPTIONS.find(
+              (opt) => opt.value === propertyDetails.bathrooms?.toString()
+            );
+            setBathrooms(bathroomOption || null);
+
             setMaxGuests(propertyDetails.maxGuests?.toString() || "");
-            setTravelType(propertyDetails.travelType ? { value: propertyDetails.travelType, label: propertyDetails.travelType } : null);
+
+            const travelTypeOption = TRAVEL_TYPES.find(
+              (opt) => opt.value === propertyDetails.travelType
+            );
+            setTravelType(travelTypeOption || null);
+
             setNearbyLandmark(propertyDetails.nearbyLandmark || "");
           } else {
-            setPropertySubtype(propertyDetails.propertySubtype ? { value: propertyDetails.propertySubtype, label: propertyDetails.propertySubtype } : null);
+            // Find proper label from options instead of using kebab-case value
+            const propertySubtypeOption = PROPERTY_SUBTYPES.find(
+              (opt) => opt.value === propertyDetails.propertySubtype
+            );
+            setPropertySubtype(propertySubtypeOption || null);
+
             setLandSize(propertyDetails.landSize || "");
-            setMeasurementUnit(propertyDetails.measurementUnit ? { value: propertyDetails.measurementUnit, label: propertyDetails.measurementUnit } : null);
+
+            const measurementUnitOption = MEASUREMENT_UNITS.find(
+              (opt) => opt.value === propertyDetails.measurementUnit
+            );
+            setMeasurementUnit(measurementUnitOption || null);
+
             setDocumentTypes(propertyDetails.documentTypes || []);
-            setPropertyCondition(propertyDetails.propertyCondition ? { value: propertyDetails.propertyCondition, label: propertyDetails.propertyCondition } : null);
-            setBuildingType(propertyDetails.buildingType ? { value: propertyDetails.buildingType, label: propertyDetails.buildingType } : null);
-            setBedrooms(propertyDetails.bedrooms ? { value: propertyDetails.bedrooms, label: `${propertyDetails.bedrooms} Bedroom${propertyDetails.bedrooms !== '1' ? 's' : ''}` } : null);
-            setBathrooms(propertyDetails.bathrooms?.toString() || "");
-            setLandConditions(propertyDetails.landConditions ? propertyDetails.landConditions.map((lc: string) => ({ value: lc, label: lc })) : []);
+
+            const propertyConditionOption = (
+              PROPERTY_CONDITIONS[preferenceType]?.[
+                propertyDetails.propertySubtype as keyof (typeof PROPERTY_CONDITIONS)[typeof preferenceType]
+              ] || []
+            ).find((opt) => opt.value === propertyDetails.propertyCondition);
+            setPropertyCondition(propertyConditionOption || null);
+
+            const buildingTypeOption = (
+              BUILDING_TYPES[preferenceType]?.[
+                propertyDetails.propertySubtype as keyof (typeof BUILDING_TYPES)[typeof preferenceType]
+              ] || []
+            ).find((opt) => opt.value === propertyDetails.buildingType);
+            setBuildingType(buildingTypeOption || null);
+
+            const bedroomOption = BEDROOM_OPTIONS.find(
+              (opt) => opt.value === propertyDetails.bedrooms
+            );
+            setBedrooms(bedroomOption || null);
+
+            const bathroomOption = BATHROOM_OPTIONS.find(
+              (opt) => opt.value === propertyDetails.bathrooms?.toString()
+            );
+            setBathrooms(bathroomOption || null);
+
+            // Map land conditions to proper labels
+            const landConditionOptions = propertyDetails.landConditions
+              ? propertyDetails.landConditions
+                  .map((lc: string) =>
+                    LAND_CONDITIONS.find((opt) => opt.value === lc)
+                  )
+                  .filter(Boolean) as Option[]
+              : [];
+            setLandConditions(landConditionOptions);
           }
         }
       }
@@ -300,7 +373,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
         const shortletData = {
           propertyType: propertyType?.value || "",
           bedrooms: bedrooms?.value || "",
-          bathrooms: parseInt(bathrooms) || 0,
+          bathrooms: bathrooms?.value || "",
           maxGuests: parseInt(maxGuests) || 0,
           travelType: travelType?.value || "",
           nearbyLandmark,
@@ -315,7 +388,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
           propertyCondition: propertyCondition?.value || "",
           buildingType: buildingType?.value || "",
           bedrooms: bedrooms?.value || "",
-          bathrooms: parseInt(bathrooms) || 0,
+          bathrooms: bathrooms?.value || "",
           landConditions: landConditions.map((lc) => lc.value) || [],
         };
         updateFormData({ propertyDetails: propertyData } as any);
@@ -401,13 +474,12 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
               <label className="block text-sm font-semibold text-gray-800">
                 Bathrooms <span className="text-red-500">*</span>
               </label>
-              <input
-                type="number"
+              <Select
+                options={BATHROOM_OPTIONS}
                 value={bathrooms}
-                onChange={(e) => setBathrooms(e.target.value)}
-                placeholder="Number of bathrooms"
-                min="1"
-                className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                onChange={setBathrooms}
+                placeholder="Select bathrooms..."
+                styles={customSelectStyles}
               />
             </div>
 
@@ -677,22 +749,12 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
                   <label className="block text-sm font-semibold text-gray-800">
                     Bathrooms <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="number"
+                  <Select
+                    options={BATHROOM_OPTIONS}
                     value={bathrooms}
-                    onChange={(e) => {
-                      const value = Math.max(0, parseInt(e.target.value) || 0);
-                      setBathrooms(value.toString());
-                    }}
-                    onInput={(e) => {
-                      const target = e.target as HTMLInputElement;
-                      if (parseInt(target.value) < 0) {
-                        target.value = "0";
-                      }
-                    }}
-                    placeholder="Number of bathrooms"
-                    min="0"
-                    className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    onChange={setBathrooms}
+                    placeholder="Select bathrooms..."
+                    styles={customSelectStyles}
                   />
                 </div>
               </div>
@@ -704,22 +766,13 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
                 <label className="block text-sm font-semibold text-gray-800">
                   Bathrooms <span className="text-gray-500">(Optional)</span>
                 </label>
-                <input
-                  type="number"
+                <Select
+                  options={BATHROOM_OPTIONS}
                   value={bathrooms}
-                  onChange={(e) => {
-                    const value = Math.max(0, parseInt(e.target.value) || 0);
-                    setBathrooms(value.toString());
-                  }}
-                  onInput={(e) => {
-                    const target = e.target as HTMLInputElement;
-                    if (parseInt(target.value) < 0) {
-                      target.value = "0";
-                    }
-                  }}
-                  placeholder="Number of bathrooms"
-                  min="0"
-                  className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  onChange={setBathrooms}
+                  placeholder="Select bathrooms..."
+                  styles={customSelectStyles}
+                  isClearable
                 />
               </div>
             )}
