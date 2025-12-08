@@ -92,7 +92,7 @@ const NewHomepage = ({
           </ErrorBoundary>
 
           {/* 3. VALUE PROPOSITION SECTION (Replacement from Section 2) */}
-          <Suspense>
+          <Suspense fallback={<div className="w-full py-16 bg-[#FFFEFB]" />}>
             <ErrorBoundary
               fallback={
                 <div className="w-full py-16 bg-[#FFFEFB]">
