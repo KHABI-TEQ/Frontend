@@ -1312,20 +1312,30 @@ All preference types send data with this base structure:
 ### Property Details Validation
 - **Property Type**: Required for all
 - **Building Type**: Required if property is Residential or Commercial (not for Land)
-- **Bedrooms**: Required for Residential properties
-- **Bathrooms**: Required for Residential properties
-- **Condition**: Required for all
+- **Bedrooms**:
+  - Required for Residential properties
+  - Valid values: "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "more"
+  - Stored as string values
+- **Bathrooms**:
+  - Required for Residential properties
+  - Valid values: "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "more"
+  - Stored as string values
+  - Cannot be negative
+- **Condition**:
+  - Required for all
+  - Valid values vary by preference type (see Kebab-case Values by Category)
 - **Purpose**: Required for all
-- **Land Size**: 
+- **Land Size**:
   - Required if property type is Land (for Buy/JV only)
   - Must be positive number
-- **Measurement Unit**: 
+- **Measurement Unit**:
   - Required if land size is specified
   - Must match one of: plot, sqm, hectares
-- **Document Types**: 
+- **Document Types**:
   - Required for Buy/Joint Venture
   - Minimum 1 selection required
-- **Land Conditions**: Optional
+  - All values stored in kebab-case format
+- **Land Conditions**: Optional (all values stored in kebab-case format)
 
 ### Budget Validation
 - **Minimum Price**: 
