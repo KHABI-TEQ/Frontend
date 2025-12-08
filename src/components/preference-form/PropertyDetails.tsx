@@ -473,13 +473,12 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
               <label className="block text-sm font-semibold text-gray-800">
                 Bathrooms <span className="text-red-500">*</span>
               </label>
-              <input
-                type="number"
+              <Select
+                options={BATHROOM_OPTIONS}
                 value={bathrooms}
-                onChange={(e) => setBathrooms(e.target.value)}
-                placeholder="Number of bathrooms"
-                min="1"
-                className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                onChange={setBathrooms}
+                placeholder="Select bathrooms..."
+                styles={customSelectStyles}
               />
             </div>
 
