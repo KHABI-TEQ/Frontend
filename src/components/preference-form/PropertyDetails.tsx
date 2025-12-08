@@ -258,7 +258,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
     );
     const [buildingType, setBuildingType] = useState<Option | null>(null);
     const [bedrooms, setBedrooms] = useState<Option | null>(null);
-    const [bathrooms, setBathrooms] = useState<string>("");
+    const [bathrooms, setBathrooms] = useState<Option | null>(null);
     const [landConditions, setLandConditions] = useState<Option[]>([]);
 
     // Shortlet specific fields
