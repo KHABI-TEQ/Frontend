@@ -14,8 +14,6 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   experimental: {
-    optimizePackageImports: ["lucide-react", "framer-motion", "react-icons"],
-    optimizeCss: process.env.NODE_ENV === 'production',
     esmExternals: true,
   },
   serverExternalPackages: ["axios"],
