@@ -1,6 +1,6 @@
 /** @format */
 "use client";
-import React, { Fragment, useEffect, useRef, useState, useMemo } from "react";
+import React, { Fragment, useEffect, useRef, useState, useMemo, Suspense, lazy } from "react";
 import Image from "next/image";
 import Button from "./button";
 import { usePageContext } from "@/context/page-context";
@@ -12,13 +12,15 @@ import { motion } from "framer-motion";
 import randomImage from "@/assets/noImageAvailable.png";
 import { Star } from "lucide-react";
 import markerSVG from "@/svgs/marker.svg";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Autoplay, Navigation, Pagination } from "swiper/modules";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import "swiper/css";
-import "swiper/css/pagination"; // if using pagination
-import "swiper/css/navigation"; // if using navigation arrows
 import { X } from "lucide-react";
+import dynamic from "next/dynamic";
+
+// Lazy load the image swiper with carousel functionality
+const LazyImageSwiper = dynamic(() => import("./LazyImageSwiper"), {
+  loading: () => <div className="w-full h-[148px] bg-gray-200 animate-pulse" />,
+  ssr: true,
+});
 
 interface CardDataProps {
   isRed?: boolean;
@@ -103,9 +105,11 @@ const Card = ({
                 <Star size={14} className="text-white" />
               </div>
             ) : null}
-            <ImageSwiper
-              images={Array.isArray(images) ? images : [randomImage]}
-            />
+            <Suspense fallback={<div className="w-full h-[148px] bg-gray-200 animate-pulse" />}>
+              <LazyImageSwiper
+                images={Array.isArray(images) ? images : [randomImage]}
+              />
+            </Suspense>
           </div>
           <div className="flex flex-col gap-[2px]">
             <div className="flex gap-[7px]">
@@ -374,79 +378,5 @@ const NavigationButton: React.FC<NavigationButtonProps> = ({
   );
 };
 
-const getValidImageUrl = (url: string | StaticImport | undefined) => {
-  if (!url) return randomImage.src; // fallback image
-  if (typeof url === "string") {
-    if (url.startsWith("http://") || url.startsWith("https://")) return url;
-    // If it looks like a cloudinary or external url but missing protocol, add https://
-    if (url.startsWith("www.")) return `https://${url}`;
-    // If it's a local image, ensure it starts with /
-    if (url.startsWith("/")) return url;
-    // fallback
-    return randomImage.src;
-  }
-  // If it's a StaticImport (local import), return as is
-  return url;
-};
-
-const ImageSwiper = ({ images }: { images: StaticImageData[] }) => {
-  const swiperRef = React.useRef<any>(null);
-  const { setViewImage, setImageData } = usePageContext();
-
-  const handleNext = () => {
-    if (swiperRef.current) {
-      swiperRef.current.slideNext();
-    }
-  };
-
-  const handlePrev = () => {
-    if (swiperRef.current) {
-      swiperRef.current.slidePrev();
-    }
-  };
-
-  return (
-    <div className="w-full h-full absolute">
-      <Swiper
-        modules={[Pagination, Navigation, Autoplay]}
-        spaceBetween={3}
-        slidesPerView={1}
-        onSwiper={(swiper) => (swiperRef.current = swiper)}
-        pagination={{ clickable: true }}
-        autoplay={{ delay: 3000 }}
-        loop={true}
-        className="w-full h-[148px] cursor-pointer"
-      >
-        {images.map((src, i) => {
-          const validImageUrl = getValidImageUrl(src);
-          return (
-            <SwiperSlide
-              onClick={() => {
-                setImageData(images);
-                setViewImage(true);
-              }}
-              key={i}
-            >
-              <Image
-                width={1000}
-                height={1000}
-                src={validImageUrl}
-                alt={`Slide ${i + 1}`}
-                className="w-full h-full object-cover cursor-pointer"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = randomImage.src;
-                }}
-                loading="lazy"
-                placeholder="blur"
-                blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
-              />
-            </SwiperSlide>
-          );
-        })}
-      </Swiper>
-    </div>
-  );
-};
 
 export default Card;

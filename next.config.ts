@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 import bundleAnalyzer from "@next/bundle-analyzer";
 
 const withBundleAnalyzer = bundleAnalyzer({
-  enabled: false,
+  enabled: process.env.ANALYZE === "true",
 });
 
 const nextConfig: NextConfig = {
