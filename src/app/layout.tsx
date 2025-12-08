@@ -7,7 +7,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { UserProvider } from '@/context/user-context';
 import { NotificationProvider } from '@/context/notification-context';
 import { ModalProvider } from '@/context/modalContext';
-import { NewMarketplaceProvider } from '@/context/new-marketplace-context';
+// import { NewMarketplaceProvider } from '@/context/new-marketplace-context';
 import { SelectedBriefsProvider } from '@/context/selected-briefs-context';
 import { GlobalPropertyActionsProvider } from '@/context/global-property-actions-context';
 import NegotiationContextWrapper from '@/components/common/NegotiationContextWrapper';
