@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 import bundleAnalyzer from "@next/bundle-analyzer";
 
 const withBundleAnalyzer = bundleAnalyzer({
-  enabled: process.env.ANALYZE === "true",
+  enabled: false,
 });
 
 const nextConfig: NextConfig = {
@@ -14,8 +14,6 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: false,
   },
   experimental: {
-    optimizePackageImports: ["lucide-react", "framer-motion", "react-icons"],
-    optimizeCss: process.env.NODE_ENV === 'production',
     esmExternals: true,
   },
   serverExternalPackages: ["axios"],

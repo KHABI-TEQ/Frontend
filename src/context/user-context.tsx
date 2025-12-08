@@ -1,6 +1,6 @@
+"use client";
 /** @format */
 
-"use client";
 import { GET_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import React, {
@@ -16,6 +16,7 @@ import React, {
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import { usePathname, useRouter } from "next/navigation";
+import type { AgentKycSubmissionPayload } from "@/types/agent-upgrade.types";
   
 export interface User {
   accountApproved: boolean;
@@ -60,7 +61,7 @@ export interface User {
     accountApproved: boolean;
     agentType: string;
     kycStatus?: "none" | "pending" | "in_review" | "approved" | "rejected";
-    kycData?: import("@/types/agent-upgrade.types").AgentKycSubmissionPayload;
+    kycData?: AgentKycSubmissionPayload;
   };
   companyAgent?: {
     companyName: string;

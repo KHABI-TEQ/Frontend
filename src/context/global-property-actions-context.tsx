@@ -1,6 +1,5 @@
-/** @format */
-
 "use client";
+/** @format */
 import React, {
   createContext,
   useContext,
