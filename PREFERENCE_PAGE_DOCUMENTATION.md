@@ -534,15 +534,17 @@ For shortlet preferences only, this section appears alongside features:
 4. **Travel Type** (Optional for Shortlet)
    - **Type**: Single Select
    - **Purpose**: Categorize the type of shortlet stay for better recommendations
-   - **Options**: (May include but not limited to)
-     - Leisure
-     - Business
-     - Relocation
-     - Family Visit
-     - Other
+   - **Options** (with kebab-case/simple stored values):
+     - "solo" → Solo
+     - "couple" → Couple
+     - "family" → Family
+     - "group" → Group
+     - "business" → Business
    - **Data Path**: `formData.bookingDetails.travelType` or `formData.propertyDetails.travelType`
    - **Default**: None (optional)
    - **Use**: Helps match properties suitable for travel purpose
+   - **Storage Format**: Values stored as simple lowercase strings (e.g., "solo", "business")
+   - **Component**: `PropertyDetails.tsx` (TRAVEL_TYPES constant, lines 188-195)
 
 ##### Components: 
 - `FeatureSelection.tsx`
