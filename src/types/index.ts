@@ -1,5 +1,7 @@
 /** @format */
 
+import type { StaticImageData } from "next/image";
+
 // Export all type definitions for easy importing
 export * from "./api.types";
 export * from "./contact.types";
@@ -34,7 +36,7 @@ export interface NavigationItem {
 }
 
 export interface SocialLink {
-  image: import("next/image").StaticImageData;
+  image: StaticImageData;
   url: string;
 }
 
