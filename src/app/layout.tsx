@@ -11,13 +11,19 @@ import { NewMarketplaceProvider } from '@/context/new-marketplace-context';
 import { SelectedBriefsProvider } from '@/context/selected-briefs-context';
 import { GlobalPropertyActionsProvider } from '@/context/global-property-actions-context';
 import NegotiationContextWrapper from '@/components/common/NegotiationContextWrapper';
-import GlobalPropertyActionsFAB from '@/components/common/GlobalPropertyActionsFAB';
-import SubscriptionFeaturesClient from '@/components/subscription/SubscriptionFeaturesClient';
-import ChunkErrorHandler from '@/components/ChunkErrorHandler';
 import { lazy, Suspense } from 'react';
 import { PageContextProvider } from '@/context/page-context';
+import dynamic from 'next/dynamic';
+import ReduxWrapper from '@/components/providers/ReduxWrapper';
+import SubscriptionInitializer from '@/components/providers/SubscriptionInitializer';
+import { PromoProvider } from '@/context/promo-context';
+import WebVitalsInitializer from '@/components/providers/WebVitalsInitializer';
 
-// Lazy load WhatsApp widget - non-critical for initial render
+// Lazy load non-critical components - these are not needed on initial render
+const GlobalPropertyActionsFAB = dynamic(() => import('@/components/common/GlobalPropertyActionsFAB'), { ssr: true });
+const SubscriptionFeaturesClient = dynamic(() => import('@/components/subscription/SubscriptionFeaturesClient'), { ssr: false });
+const PromoMount = dynamic(() => import('@/components/promo/PromoMount'), { ssr: true });
+const ChunkErrorHandler = dynamic(() => import('@/components/ChunkErrorHandler'), { ssr: false });
 const WhatsAppChatWidget = lazy(() => import('@/components/whatsapp-chat-widget'));
 
 export const metadata = {
