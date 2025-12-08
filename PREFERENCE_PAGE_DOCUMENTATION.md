@@ -267,21 +267,24 @@ This combined step collects information about the desired property and the budge
    - **Type**: Multi-Select with Checkboxes
    - **Purpose**: Specify acceptable property documentation types
    - **Required For**: Buy and Joint Venture property types
-   - **Options**:
-     - Deed of Assignment
-     - Deed of Ownership
-     - Deed of Conveyance
-     - Survey Plan
-     - Governor's Consent
-     - Certificate of Occupancy
-     - Family Receipt
-     - Contract of Sale
-     - Land Certificate
-     - Gazette
-     - Excision
+   - **Options** (with kebab-case stored values):
+     - "deed-of-assignment" → Deed of Assignment
+     - "deed-of-ownership" → Deed of Ownership
+     - "deed-of-conveyance" → Deed of Conveyance
+     - "survey-plan" → Survey Plan
+     - "governors-consent" → Governor's Consent
+     - "certificate-of-occupancy" → Certificate of Occupancy
+     - "family-receipt" → Family Receipt
+     - "contract-of-sale" → Contract of Sale
+     - "land-certificate" → Land Certificate
+     - "gazette" → Gazette
+     - "excision" → Excision
    - **Data Path**: `formData.propertyDetails.documentTypes`
    - **Validation**: Minimum 1 document type required for Buy/JV preferences
    - **Max Selections**: No limit
+   - **Storage Format**: All values stored in kebab-case (e.g., "deed-of-assignment")
+   - **Component**: `PropertyDetails.tsx` (DOCUMENT_TYPES constant, lines 32-45)
+   - **Kebab-case Usage**: These values are stored internally in kebab-case for consistency and later converted to readable labels using the `kebabToTitleCase` utility when displayed to users
 
 10. **Land Conditions** (Optional)
     - **Type**: Multi-Select with Checkboxes
