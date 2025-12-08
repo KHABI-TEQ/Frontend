@@ -174,30 +174,45 @@ This combined step collects information about the desired property and the budge
 3. **Minimum Bedrooms** (Required for Residential)
    - **Type**: Single Select
    - **Purpose**: Specify minimum number of bedrooms needed
-   - **Options**: 1, 2, 3, 4, 5, More
+   - **Options** (with stored values):
+     - "1" → 1 Bedroom
+     - "2" → 2 Bedrooms
+     - "3" → 3 Bedrooms
+     - "4" → 4 Bedrooms
+     - "5" → 5 Bedrooms
+     - "6" → 6 Bedrooms
+     - "7" → 7 Bedrooms
+     - "8" → 8 Bedrooms
+     - "9" → 9 Bedrooms
+     - "10" → 10 Bedrooms
+     - "more" → More than 10
    - **Default**: None (user must select)
    - **Data Path**: `formData.propertyDetails.bedrooms` or `propertyDetails.minBedrooms`
    - **Validation**: Required for residential properties
    - **Conditional**: Only shown if propertySubtype is "Residential"
+   - **Storage Format**: Values "1"-"10" are strings, "more" for >10
+   - **Component**: `PropertyDetails.tsx` (BEDROOM_OPTIONS constant, lines 151-163)
 
 4. **Minimum Bathrooms** (Required for Residential)
    - **Type**: Dropdown Select
    - **Purpose**: Specify minimum number of bathrooms
-   - **Options**:
-     - 1 Bathroom
-     - 2 Bathrooms
-     - 3 Bathrooms
-     - 4 Bathrooms
-     - 5 Bathrooms
-     - 6 Bathrooms
-     - 7 Bathrooms
-     - 8 Bathrooms
-     - 9 Bathrooms
-     - 10 Bathrooms
-     - More than 10
+   - **Options** (with stored values):
+     - "1" → 1 Bathroom
+     - "2" → 2 Bathrooms
+     - "3" → 3 Bathrooms
+     - "4" → 4 Bathrooms
+     - "5" → 5 Bathrooms
+     - "6" → 6 Bathrooms
+     - "7" → 7 Bathrooms
+     - "8" → 8 Bathrooms
+     - "9" → 9 Bathrooms
+     - "10" → 10 Bathrooms
+     - "more" → More than 10
    - **Data Path**: `formData.propertyDetails.bathrooms` or `propertyDetails.minBathrooms`
    - **Validation**: Required for residential properties
    - **Conditional**: Only shown if propertySubtype is "Residential"
+   - **Storage Format**: Values "1"-"10" are strings, "more" for >10
+   - **Component**: `PropertyDetails.tsx` (BATHROOM_OPTIONS constant, lines 166-178)
 
 5. **Property Condition** (Required)
    - **Type**: Single Select
