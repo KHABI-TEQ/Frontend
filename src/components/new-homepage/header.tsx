@@ -13,15 +13,19 @@ import Link from "next/link";
 import barIcon from "@/svgs/bars.svg";
 import { usePageContext } from "@/context/page-context";
 import { usePathname, useRouter } from "next/navigation";
-import SideBar from "../general-components/sideBar";
 import { ChevronDown } from "lucide-react";
 import useClickOutside from "@/hooks/clickOutside";
 import { motion, AnimatePresence } from "framer-motion";
 import { useUserContext } from "@/context/user-context";
 import { useNotifications } from "@/context/notification-context";
 import notificationBellIcon from "@/svgs/bell.svg";
-import UserNotifications from "./user-notifications";
-import UserProfile from "./my-profile";
+import dynamic from "next/dynamic";
+import { Suspense } from "react";
+
+// Lazy load heavy components that are only shown on interaction
+const SideBar = dynamic(() => import("../general-components/sideBar"), { ssr: false });
+const UserNotifications = dynamic(() => import("./user-notifications"), { ssr: false });
+const UserProfile = dynamic(() => import("./my-profile"), { ssr: false });
 
 const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
   const {
