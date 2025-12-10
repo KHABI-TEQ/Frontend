@@ -720,6 +720,25 @@ const Step1BasicDetails: React.FC<StepProps> = () => {
               />
             </div>
           </div>
+
+          {/* Street Address - Available for all property types */}
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-[#707281] mb-2">
+              Street Address (Optional)
+            </label>
+            <input
+              type="text"
+              placeholder="Enter street address, building name, or landmarks"
+              value={propertyData.streetAddress || ""}
+              onChange={(e) =>
+                handleFieldChange("streetAddress", e.target.value)
+              }
+              className={`w-full p-[12px] border rounded-md focus:ring-2 focus:ring-[#8DDB90] focus:border-[#8DDB90] text-[14px] leading-[22.4px] ${getFieldBorderClass("streetAddress")}`}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Provide additional details like street name, building number, or nearby landmarks
+            </p>
+          </div>
         </div>
 
         {/* Property Details (for non-Land properties) */}
