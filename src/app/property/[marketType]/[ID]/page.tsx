@@ -45,6 +45,7 @@ import Loading from "@/components/loading-component/loading";
 import { kebabToTitleCase } from "@/utils/helpers";
 import ShortletBookingModal from "@/components/shortlet/ShortletBookingModal";
 import LOIUploadModal from "@/components/new-marketplace/modals/LOIUploadModal";
+import PropertyLocationMap from "@/components/property/PropertyLocationMap";
 
 interface PropertyDetails {
   _id: string;
