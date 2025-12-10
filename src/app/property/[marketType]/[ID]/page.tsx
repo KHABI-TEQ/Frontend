@@ -59,7 +59,9 @@ interface PropertyDetails {
     state: string;
     localGovernment: string;
     area: string;
+    streetAddress?: string;
   };
+  streetAddress?: string;
   landSize: {
     measurementType: string;
     size: number | null;
