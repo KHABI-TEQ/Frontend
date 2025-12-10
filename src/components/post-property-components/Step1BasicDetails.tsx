@@ -720,6 +720,25 @@ const Step1BasicDetails: React.FC<StepProps> = () => {
               />
             </div>
           </div>
+
+          {/* Street Address - Available for all property types */}
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-[#707281] mb-2">
+              Street Address (Optional)
+            </label>
+            <input
+              type="text"
+              placeholder="Enter street address, building name, or landmarks"
+              value={propertyData.streetAddress || ""}
+              onChange={(e) =>
+                handleFieldChange("streetAddress", e.target.value)
+              }
+              className={`w-full p-[12px] border rounded-md focus:ring-2 focus:ring-[#8DDB90] focus:border-[#8DDB90] text-[14px] leading-[22.4px] ${getFieldBorderClass("streetAddress")}`}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Provide additional details like street name, building number, or nearby landmarks
+            </p>
+          </div>
         </div>
 
         {/* Property Details (for non-Land properties) */}
@@ -909,20 +928,6 @@ const Step1BasicDetails: React.FC<StepProps> = () => {
               Shortlet Details <span className="text-red-500">*</span>
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
-              <div>
-                <label className="block text-sm font-medium text-[#707281] mb-2">
-                  Street Address <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="Enter full street address"
-                  value={propertyData.streetAddress || ""}
-                  onChange={(e) =>
-                    handleFieldChange("streetAddress", e.target.value)
-                  }
-                  className={`w-full p-[12px] border rounded-md focus:ring-2 focus:ring-[#8DDB90] focus:border-[#8DDB90] text-[14px] leading-[22.4px] ${getFieldBorderClass("streetAddress", true)}`}
-                />
-              </div>
               <div>
                 <label className="block text-sm font-medium text-[#707281] mb-2">
                   Max Number of Guests <span className="text-red-500">*</span>

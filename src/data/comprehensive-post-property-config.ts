@@ -479,8 +479,10 @@ export const shouldShowField = (
 
     // Shortlet specific fields
     shortletDuration: briefType === BRIEF_TYPES.SHORTLET,
-    streetAddress: briefType === BRIEF_TYPES.SHORTLET,
     maxGuests: briefType === BRIEF_TYPES.SHORTLET,
+
+    // Available for all property types
+    streetAddress: true,
     minStay: briefType === BRIEF_TYPES.SHORTLET,
     maxStay: briefType === BRIEF_TYPES.SHORTLET,
     nightly: briefType === BRIEF_TYPES.SHORTLET,

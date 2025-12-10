@@ -45,6 +45,7 @@ import Loading from "@/components/loading-component/loading";
 import { kebabToTitleCase } from "@/utils/helpers";
 import ShortletBookingModal from "@/components/shortlet/ShortletBookingModal";
 import LOIUploadModal from "@/components/new-marketplace/modals/LOIUploadModal";
+import PropertyLocationMap from "@/components/property/PropertyLocationMap";
 
 interface PropertyDetails {
   _id: string;
@@ -58,7 +59,9 @@ interface PropertyDetails {
     state: string;
     localGovernment: string;
     area: string;
+    streetAddress?: string;
   };
+  streetAddress?: string;
   landSize: {
     measurementType: string;
     size: number | null;
@@ -1033,6 +1036,23 @@ const ProductDetailsPage = () => {
               transition={{ duration: 0.6, delay: 0.1 }}
             >
               <PropertyStats details={details} />
+            </motion.div>
+
+            {/* Property Location Map */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.15 }}
+            >
+              <PropertyLocationMap
+                location={{
+                  state: details.location?.state,
+                  localGovernment: details.location?.localGovernment,
+                  area: details.location?.area,
+                  streetAddress: (details as any).streetAddress,
+                }}
+                propertyTitle={`${details.propertyType} in ${details.location?.state}`}
+              />
             </motion.div>
 
             {/* Property Features */}

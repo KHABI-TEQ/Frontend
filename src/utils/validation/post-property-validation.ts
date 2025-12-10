@@ -171,6 +171,7 @@ const shortletPropertySchema = Yup.object({
   bedrooms: Yup.number()
     .min(1, messages.min("Number of bedrooms", 1))
     .required(messages.required("Number of bedrooms")),
+  streetAddress: Yup.string().required(messages.required("Street address")),
   availability: Yup.object({
     minStay: Yup.number()
       .min(1, messages.min("Minimum stay", 1))
