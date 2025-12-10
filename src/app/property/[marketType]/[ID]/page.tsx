@@ -1036,6 +1036,23 @@ const ProductDetailsPage = () => {
               <PropertyStats details={details} />
             </motion.div>
 
+            {/* Property Location Map */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.15 }}
+            >
+              <PropertyLocationMap
+                location={{
+                  state: details.location?.state,
+                  localGovernment: details.location?.localGovernment,
+                  area: details.location?.area,
+                  streetAddress: (details as any).streetAddress,
+                }}
+                propertyTitle={`${details.propertyType} in ${details.location?.state}`}
+              />
+            </motion.div>
+
             {/* Property Features */}
             {details.features.length > 0 && (
               <FeatureList
