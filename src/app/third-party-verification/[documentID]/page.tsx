@@ -928,6 +928,152 @@ const ThirdPartyVerificationPage: React.FC = () => {
                   </div>)
                   }
 
+                  {/* Additional Documents Section - Inside verification report */}
+                  <div className="mt-8 pt-8 border-t border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      Additional Supporting Documents
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-6">
+                      Add any additional documents to support your verification report
+                    </p>
+
+                    {dynamicDocuments.length === 0 ? (
+                      <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
+                        <FileText className="mx-auto h-12 w-12 text-gray-300 mb-3" />
+                        <p className="text-gray-500 mb-4">No additional documents added yet</p>
+                        <button
+                          onClick={addDynamicDocument}
+                          className="inline-flex items-center px-6 py-2 bg-gradient-to-r from-[#0B423D] to-[#8DDB90] text-white font-semibold rounded-xl hover:shadow-lg transform transition-all duration-200 hover:scale-[1.02]"
+                        >
+                          <Upload className="w-4 h-4 mr-2" />
+                          Add Document
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        {dynamicDocuments.map((doc) => (
+                          <div key={doc.id} className="border border-gray-200 rounded-lg p-6 bg-gray-50">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                              {/* Document Name */}
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  Document Name *
+                                </label>
+                                <input
+                                  type="text"
+                                  value={doc.name}
+                                  onChange={(e) => updateDynamicDocument(doc.id, 'name', e.target.value)}
+                                  placeholder="e.g., Police Report, Land Inspection"
+                                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8DDB90] focus:border-transparent"
+                                />
+                              </div>
+
+                              {/* File Upload */}
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  Document File {doc.documentFile ? '✓' : ''}
+                                </label>
+                                {!doc.documentFile ? (
+                                  <div
+                                    className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-[#8DDB90] hover:bg-white transition-all"
+                                    onClick={() => dynamicFileInputRefs.current[doc.id]?.click()}
+                                  >
+                                    <input
+                                      ref={(ref) => {
+                                        if (ref) dynamicFileInputRefs.current[doc.id] = ref;
+                                      }}
+                                      type="file"
+                                      onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) handleDynamicFileUpload(file, doc.id);
+                                      }}
+                                      className="hidden"
+                                      accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx"
+                                    />
+                                    {doc.uploadProgress !== undefined ? (
+                                      <div className="space-y-2">
+                                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#8DDB90] mx-auto"></div>
+                                        <p className="text-sm text-gray-600">Uploading... {doc.uploadProgress}%</p>
+                                      </div>
+                                    ) : (
+                                      <>
+                                        <Upload className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+                                        <p className="text-sm font-medium text-gray-700">Click to upload</p>
+                                        <p className="text-xs text-gray-500">PDF, Images, or Documents</p>
+                                      </>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div className="border border-gray-200 rounded-lg p-4 bg-white">
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center space-x-3">
+                                        {getFileTypeIcon(doc.documentFile)}
+                                        <div>
+                                          <p className="text-sm font-medium text-gray-900">File uploaded</p>
+                                          <p className="text-xs text-gray-500">Ready to submit</p>
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center space-x-2">
+                                        <button
+                                          onClick={() => window.open(doc.documentFile, '_blank')}
+                                          className="p-2 text-gray-400 hover:text-[#0B423D] transition-colors"
+                                          title="Preview document"
+                                        >
+                                          <Eye className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                          onClick={() => removeDynamicDocumentFile(doc.id)}
+                                          className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                                          title="Remove document"
+                                        >
+                                          <Trash2 className="w-4 h-4" />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Comment */}
+                              <div className="lg:col-span-2">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  Comment
+                                </label>
+                                <textarea
+                                  rows={3}
+                                  value={doc.comment}
+                                  onChange={(e) => updateDynamicDocument(doc.id, 'comment', e.target.value)}
+                                  placeholder="Add any comments or notes about this document..."
+                                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8DDB90] focus:border-transparent"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Remove Document Button */}
+                            <div className="flex justify-end mt-4">
+                              <button
+                                onClick={() => removeDynamicDocument(doc.id)}
+                                className="inline-flex items-center px-4 py-2 text-red-600 font-medium rounded-lg hover:bg-red-50 transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Remove Record
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+
+                        {/* Add More Documents Button */}
+                        <button
+                          onClick={addDynamicDocument}
+                          className="w-full py-3 px-4 border-2 border-dashed border-[#8DDB90] text-[#0B423D] font-semibold rounded-xl hover:bg-[#8DDB90]/10 transition-all duration-200"
+                        >
+                          <Upload className="w-4 h-4 mr-2 inline" />
+                          Add Another Document
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="flex items-center justify-end space-x-3 mt-8">
                     <button
                       onClick={submitReport}
