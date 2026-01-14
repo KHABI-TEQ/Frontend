@@ -48,6 +48,14 @@ type TokenValidationResponse = {
   message?: string;
 };
 
+type DynamicDocumentRecord = {
+  id: string;
+  name: string;
+  documentFile: string;
+  comment: string;
+  uploadProgress?: number;
+};
+
 const ThirdPartyVerificationPage: React.FC = () => {
   const params = useParams();
   const documentID = params.documentID as string;
