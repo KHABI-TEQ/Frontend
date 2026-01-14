@@ -79,6 +79,10 @@ const ThirdPartyVerificationPage: React.FC = () => {
   const [dragged, setDragged] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  // Dynamic document records state
+  const [dynamicDocuments, setDynamicDocuments] = useState<DynamicDocumentRecord[]>([]);
+  const dynamicFileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
 
   if (!isValidDocumentID) {
     return (
