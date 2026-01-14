@@ -338,6 +338,104 @@ const ThirdPartyVerificationPage: React.FC = () => {
     }
   };
 
+  // Dynamic document handlers
+  const addDynamicDocument = () => {
+    const newDocument: DynamicDocumentRecord = {
+      id: Date.now().toString(),
+      name: '',
+      documentFile: '',
+      comment: ''
+    };
+    setDynamicDocuments([...dynamicDocuments, newDocument]);
+  };
+
+  const removeDynamicDocument = (id: string) => {
+    setDynamicDocuments(dynamicDocuments.filter(doc => doc.id !== id));
+    delete dynamicFileInputRefs.current[id];
+    toast.success('Document record removed');
+  };
+
+  const updateDynamicDocument = (id: string, field: keyof Omit<DynamicDocumentRecord, 'id' | 'uploadProgress'>, value: string) => {
+    setDynamicDocuments(dynamicDocuments.map(doc =>
+      doc.id === id ? { ...doc, [field]: value } : doc
+    ));
+  };
+
+  const handleDynamicFileUpload = async (file: File, recordId: string) => {
+    if (!file) return;
+
+    const allowedTypes = [
+      "application/pdf",
+      "image/jpeg",
+      "image/png",
+      "image/jpg",
+      "image/webp",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "application/vnd.ms-powerpoint",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "text/plain",
+      "text/csv",
+      "application/zip",
+      "application/x-zip-compressed",
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Unsupported file type. Please upload a valid document or image.");
+      return;
+    }
+
+    const maxSize = 50 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast.error("File size must be less than 50MB");
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("for", "default");
+
+      setDynamicDocuments(dynamicDocuments.map(doc =>
+        doc.id === recordId ? { ...doc, uploadProgress: 0 } : doc
+      ));
+
+      const uploadResponse = await POST_REQUEST_FILE_UPLOAD(
+        `${URLS.BASE}${URLS.uploadSingleImg}`,
+        formData
+      );
+
+      if (uploadResponse.success) {
+        updateDynamicDocument(recordId, 'documentFile', uploadResponse.data.url);
+        setDynamicDocuments(dynamicDocuments.map(doc =>
+          doc.id === recordId ? { ...doc, uploadProgress: 100 } : doc
+        ));
+        toast.success("Document uploaded successfully");
+
+        setTimeout(() => {
+          setDynamicDocuments(dynamicDocuments.map(doc =>
+            doc.id === recordId ? { ...doc, uploadProgress: undefined } : doc
+          ));
+        }, 2000);
+      } else {
+        throw new Error(uploadResponse.message || "Upload failed");
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Failed to upload document");
+      setDynamicDocuments(dynamicDocuments.map(doc =>
+        doc.id === recordId ? { ...doc, uploadProgress: undefined } : doc
+      ));
+    }
+  };
+
+  const removeDynamicDocumentFile = (id: string) => {
+    updateDynamicDocument(id, 'documentFile', '');
+    toast.success('File removed successfully');
+  };
+
   const handleDocumentPreview = (documentUrl: string) => {
     if (!documentUrl) {
       toast.error("Document URL not available");
