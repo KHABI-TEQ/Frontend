@@ -314,12 +314,37 @@ const ThirdPartyVerificationPage: React.FC = () => {
       return;
     }
 
+    // Validate dynamic documents if any are added
+    if (dynamicDocuments.length > 0) {
+      for (const doc of dynamicDocuments) {
+        if (!doc.name.trim()) {
+          toast.error('Please provide a name for all additional documents');
+          return;
+        }
+        if (!doc.documentFile.trim()) {
+          toast.error('Please upload a file for all additional documents');
+          return;
+        }
+      }
+    }
+
     setIsSubmittingReport(true);
     try {
+      const payload = {
+        report,
+        ...(dynamicDocuments.length > 0 && {
+          additionalDocuments: dynamicDocuments.map(doc => ({
+            name: doc.name,
+            documentFile: doc.documentFile,
+            comment: doc.comment
+          }))
+        })
+      };
+
+      console.log('Submission Payload:', JSON.stringify(payload, null, 2));
+
       const response = await toast.promise(
-        POST_REQUEST(`${URLS.BASE}${URLS.submitReport}/${documentID}`, {
-          report
-        }),
+        POST_REQUEST(`${URLS.BASE}${URLS.submitReport}/${documentID}`, payload),
         {
           loading: 'Submitting verification report...',
           success: 'Report submitted successfully!',
