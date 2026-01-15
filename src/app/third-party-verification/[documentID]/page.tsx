@@ -653,7 +653,7 @@ const ThirdPartyVerificationPage: React.FC = () => {
             Review and verify the documents submitted for third-party verification.
           </p>
           <div className="mt-4 p-3 bg-white rounded-lg shadow-sm inline-block">
-            <span className="text-xs sm:text-sm text-gray-500">Document ID: </span>
+            <span className="text-xs sm:text-sm text-gray-500">Document ID 1234: </span>
             <span className="font-mono font-medium text-[#0B423D] text-sm sm:text-base">{documentID}</span>
           </div>
         </div>
