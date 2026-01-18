@@ -233,8 +233,8 @@ export default function PreferencesRequestsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {preferences.map((pref) => (
-                    <tr key={pref._id} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
+                  {preferences.map((pref, index) => (
+                    <tr key={pref._id || `pref-${index}`} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4">
                         <span className="font-medium text-gray-900">
                           {`${pref.firstName || ""} ${pref.lastName || ""}`.trim() || "—"}
