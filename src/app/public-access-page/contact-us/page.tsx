@@ -31,6 +31,11 @@ export default function ContactUsPage() {
   }, []);
 
   const handleSave = useCallback(async () => {
+    if (formData.showWhatsAppButton && !formData.whatsappNumber) {
+      toast.error("WhatsApp number is required when enabled");
+      return;
+    }
+
     setPreloader(true);
     try {
       const token = Cookies.get("token");
@@ -48,8 +53,11 @@ export default function ContactUsPage() {
           },
         },
         contactVisibility: {
-          ...settings.contactVisibility,
+          showEmail: formData.showEmail,
+          showPhone: formData.showPhone,
           enableContactForm: formData.enableContactForm,
+          showWhatsAppButton: formData.showWhatsAppButton,
+          whatsappNumber: formData.whatsappNumber,
         },
       };
 
@@ -61,12 +69,12 @@ export default function ContactUsPage() {
 
       if (res?.success) {
         updateSettings(payload as any);
-        toast.success("Contact Us page updated");
+        toast.success("Contact settings saved");
       } else {
         toast.error(res?.message || "Failed to save settings");
       }
     } catch (error) {
-      toast.error("Failed to save contact us page");
+      toast.error("Failed to save contact settings");
     } finally {
       setPreloader(false);
     }
