@@ -1,10 +1,24 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import { BookOpen, Save, Trash2, Plus, ImageIcon } from "lucide-react";
 import { useDealSite } from "@/context/deal-site-context";
+import {
+  AboutSection,
+  AboutWhoWeAre,
+  AboutOurMission,
+  AboutOurExperience,
+  AboutWhatWeStandFor,
+  AboutWhatWeDo,
+  AboutWhereWeOperate,
+  AboutProfile,
+  AboutValueItem,
+  AboutWhatWeDoItem,
+  AboutLocationSection,
+  AboutTeamMember,
+} from "@/context/deal-site-context";
 import { POST_REQUEST, POST_REQUEST_FILE_UPLOAD } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import OverlayPreloader from "@/components/general-components/OverlayPreloader";
@@ -15,7 +29,11 @@ export default function AboutPage() {
   const [saving, setSaving] = useState(false);
   const [preloader, setPreloader] = useState({ visible: false, message: "" });
 
-  const aboutData = settings.about || {};
+  // Properly typed aboutData with default empty object
+  const aboutData: AboutSection = useMemo(
+    () => settings.about || {},
+    [settings.about]
+  );
 
   const showPreloader = (message: string) =>
     setPreloader({ visible: true, message });
@@ -23,7 +41,10 @@ export default function AboutPage() {
     setPreloader({ visible: false, message: "" });
 
   const updateAboutSection = useCallback(
-    (section: string, data: any) => {
+    <K extends keyof AboutSection>(
+      section: K,
+      data: AboutSection[K]
+    ) => {
       updateSettings({
         about: {
           ...aboutData,
@@ -50,10 +71,13 @@ export default function AboutPage() {
         );
         hidePreloader();
         if (res?.success && res.data?.url) {
-          updateAboutSection(section, {
-            ...aboutData[section as keyof typeof aboutData],
-            image: res.data.url,
-          });
+          const currentData = aboutData[section as keyof AboutSection];
+          if (currentData && typeof currentData === "object") {
+            updateAboutSection(section as keyof AboutSection, {
+              ...currentData,
+              image: res.data.url,
+            });
+          }
           toast.success("Image uploaded successfully");
         } else {
           toast.error(res?.message || "Upload failed");
@@ -79,7 +103,7 @@ export default function AboutPage() {
       );
 
       if (res?.success) {
-        updateSettings(payload as any);
+        updateSettings(payload);
         toast.success("About page updated successfully");
       } else {
         toast.error(res?.message || "Failed to save changes");
@@ -120,9 +144,7 @@ export default function AboutPage() {
           </label>
           <input
             type="text"
-            value={
-              (aboutData.whoWeAre as any)?.title || ""
-            }
+            value={aboutData.whoWeAre?.title || ""}
             onChange={(e) =>
               updateAboutSection("whoWeAre", {
                 ...aboutData.whoWeAre,
@@ -139,9 +161,7 @@ export default function AboutPage() {
             Description (with WYSIWYG Editor)
           </label>
           <WYSIWYGEditor
-            value={
-              (aboutData.whoWeAre as any)?.description || ""
-            }
+            value={aboutData.whoWeAre?.description || ""}
             onChange={(value) =>
               updateAboutSection("whoWeAre", {
                 ...aboutData.whoWeAre,
@@ -166,9 +186,7 @@ export default function AboutPage() {
           </label>
           <input
             type="text"
-            value={
-              (aboutData.ourMission as any)?.title || ""
-            }
+            value={aboutData.ourMission?.title || ""}
             onChange={(e) =>
               updateAboutSection("ourMission", {
                 ...aboutData.ourMission,
@@ -185,9 +203,7 @@ export default function AboutPage() {
             Description (with WYSIWYG Editor)
           </label>
           <WYSIWYGEditor
-            value={
-              (aboutData.ourMission as any)?.description || ""
-            }
+            value={aboutData.ourMission?.description || ""}
             onChange={(value) =>
               updateAboutSection("ourMission", {
                 ...aboutData.ourMission,
@@ -212,9 +228,7 @@ export default function AboutPage() {
           </label>
           <input
             type="text"
-            value={
-              (aboutData.ourExperience as any)?.title || ""
-            }
+            value={aboutData.ourExperience?.title || ""}
             onChange={(e) =>
               updateAboutSection("ourExperience", {
                 ...aboutData.ourExperience,
@@ -231,9 +245,7 @@ export default function AboutPage() {
             Description (with WYSIWYG Editor)
           </label>
           <WYSIWYGEditor
-            value={
-              (aboutData.ourExperience as any)?.description || ""
-            }
+            value={aboutData.ourExperience?.description || ""}
             onChange={(value) =>
               updateAboutSection("ourExperience", {
                 ...aboutData.ourExperience,
@@ -258,9 +270,7 @@ export default function AboutPage() {
           </label>
           <input
             type="text"
-            value={
-              (aboutData.whatWeStandFor as any)?.title || ""
-            }
+            value={aboutData.whatWeStandFor?.title || ""}
             onChange={(e) =>
               updateAboutSection("whatWeStandFor", {
                 ...aboutData.whatWeStandFor,
@@ -277,9 +287,7 @@ export default function AboutPage() {
             Description (with WYSIWYG Editor)
           </label>
           <WYSIWYGEditor
-            value={
-              (aboutData.whatWeStandFor as any)?.description || ""
-            }
+            value={aboutData.whatWeStandFor?.description || ""}
             onChange={(value) =>
               updateAboutSection("whatWeStandFor", {
                 ...aboutData.whatWeStandFor,
@@ -298,8 +306,7 @@ export default function AboutPage() {
             <button
               type="button"
               onClick={() => {
-                const items =
-                  (aboutData.whatWeStandFor as any)?.items || [];
+                const items = aboutData.whatWeStandFor?.items || [];
                 updateAboutSection("whatWeStandFor", {
                   ...aboutData.whatWeStandFor,
                   items: [...items, { title: "", shortText: "" }],
@@ -313,8 +320,8 @@ export default function AboutPage() {
           </div>
 
           <div className="space-y-4">
-            {((aboutData.whatWeStandFor as any)?.items || []).map(
-              (item: any, idx: number) => (
+            {(aboutData.whatWeStandFor?.items || []).map(
+              (item: AboutValueItem, idx: number) => (
                 <div
                   key={idx}
                   className="border border-gray-200 rounded-lg p-4 space-y-3"
@@ -326,11 +333,10 @@ export default function AboutPage() {
                     <button
                       type="button"
                       onClick={() => {
-                        const items =
-                          (aboutData.whatWeStandFor as any)?.items || [];
+                        const items = aboutData.whatWeStandFor?.items || [];
                         updateAboutSection("whatWeStandFor", {
                           ...aboutData.whatWeStandFor,
-                          items: items.filter((_: any, i: number) => i !== idx),
+                          items: items.filter((_: AboutValueItem, i: number) => i !== idx),
                         });
                       }}
                       className="text-red-600 hover:text-red-700"
@@ -347,10 +353,11 @@ export default function AboutPage() {
                       type="text"
                       value={item.title || ""}
                       onChange={(e) => {
-                        const items =
-                          (aboutData.whatWeStandFor as any)?.items || [];
+                        const items = aboutData.whatWeStandFor?.items || [];
                         const updated = [...items];
-                        updated[idx] = { ...updated[idx], title: e.target.value };
+                        if (updated[idx]) {
+                          updated[idx] = { ...updated[idx], title: e.target.value };
+                        }
                         updateAboutSection("whatWeStandFor", {
                           ...aboutData.whatWeStandFor,
                           items: updated,
@@ -368,13 +375,14 @@ export default function AboutPage() {
                     <textarea
                       value={item.shortText || ""}
                       onChange={(e) => {
-                        const items =
-                          (aboutData.whatWeStandFor as any)?.items || [];
+                        const items = aboutData.whatWeStandFor?.items || [];
                         const updated = [...items];
-                        updated[idx] = {
-                          ...updated[idx],
-                          shortText: e.target.value,
-                        };
+                        if (updated[idx]) {
+                          updated[idx] = {
+                            ...updated[idx],
+                            shortText: e.target.value,
+                          };
+                        }
                         updateAboutSection("whatWeStandFor", {
                           ...aboutData.whatWeStandFor,
                           items: updated,
@@ -404,9 +412,7 @@ export default function AboutPage() {
           </label>
           <input
             type="text"
-            value={
-              (aboutData.whatWeDo as any)?.title || ""
-            }
+            value={aboutData.whatWeDo?.title || ""}
             onChange={(e) =>
               updateAboutSection("whatWeDo", {
                 ...aboutData.whatWeDo,
@@ -425,8 +431,7 @@ export default function AboutPage() {
             <button
               type="button"
               onClick={() => {
-                const items =
-                  (aboutData.whatWeDo as any)?.items || [];
+                const items = aboutData.whatWeDo?.items || [];
                 updateAboutSection("whatWeDo", {
                   ...aboutData.whatWeDo,
                   items: [...items, { title: "" }],
@@ -440,8 +445,8 @@ export default function AboutPage() {
           </div>
 
           <div className="space-y-3">
-            {((aboutData.whatWeDo as any)?.items || []).map(
-              (item: any, idx: number) => (
+            {(aboutData.whatWeDo?.items || []).map(
+              (item: AboutWhatWeDoItem, idx: number) => (
                 <div
                   key={idx}
                   className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg"
@@ -450,10 +455,11 @@ export default function AboutPage() {
                     type="text"
                     value={item.title || ""}
                     onChange={(e) => {
-                      const items =
-                        (aboutData.whatWeDo as any)?.items || [];
+                      const items = aboutData.whatWeDo?.items || [];
                       const updated = [...items];
-                      updated[idx] = { title: e.target.value };
+                      if (updated[idx]) {
+                        updated[idx] = { title: e.target.value };
+                      }
                       updateAboutSection("whatWeDo", {
                         ...aboutData.whatWeDo,
                         items: updated,
@@ -465,12 +471,11 @@ export default function AboutPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      const items =
-                        (aboutData.whatWeDo as any)?.items || [];
+                      const items = aboutData.whatWeDo?.items || [];
                       updateAboutSection("whatWeDo", {
                         ...aboutData.whatWeDo,
                         items: items.filter(
-                          (_: any, i: number) => i !== idx
+                          (_: AboutWhatWeDoItem, i: number) => i !== idx
                         ),
                       });
                     }}
@@ -497,9 +502,7 @@ export default function AboutPage() {
           </label>
           <input
             type="text"
-            value={
-              (aboutData.whereWeOperate as any)?.title || ""
-            }
+            value={aboutData.whereWeOperate?.title || ""}
             onChange={(e) =>
               updateAboutSection("whereWeOperate", {
                 ...aboutData.whereWeOperate,
@@ -518,8 +521,7 @@ export default function AboutPage() {
             <button
               type="button"
               onClick={() => {
-                const locations =
-                  (aboutData.whereWeOperate as any)?.locations || [];
+                const locations = aboutData.whereWeOperate?.locations || [];
                 updateAboutSection("whereWeOperate", {
                   ...aboutData.whereWeOperate,
                   locations: [
@@ -536,8 +538,8 @@ export default function AboutPage() {
           </div>
 
           <div className="space-y-4">
-            {((aboutData.whereWeOperate as any)?.locations || []).map(
-              (location: any, idx: number) => (
+            {(aboutData.whereWeOperate?.locations || []).map(
+              (location: AboutLocationSection, idx: number) => (
                 <div
                   key={idx}
                   className="border border-gray-200 rounded-lg p-4 space-y-3"
@@ -549,12 +551,11 @@ export default function AboutPage() {
                     <button
                       type="button"
                       onClick={() => {
-                        const locations =
-                          (aboutData.whereWeOperate as any)?.locations || [];
+                        const locations = aboutData.whereWeOperate?.locations || [];
                         updateAboutSection("whereWeOperate", {
                           ...aboutData.whereWeOperate,
                           locations: locations.filter(
-                            (_: any, i: number) => i !== idx
+                            (_: AboutLocationSection, i: number) => i !== idx
                           ),
                         });
                       }}
@@ -572,13 +573,14 @@ export default function AboutPage() {
                       type="text"
                       value={location.name || ""}
                       onChange={(e) => {
-                        const locations =
-                          (aboutData.whereWeOperate as any)?.locations || [];
+                        const locations = aboutData.whereWeOperate?.locations || [];
                         const updated = [...locations];
-                        updated[idx] = {
-                          ...updated[idx],
-                          name: e.target.value,
-                        };
+                        if (updated[idx]) {
+                          updated[idx] = {
+                            ...updated[idx],
+                            name: e.target.value,
+                          };
+                        }
                         updateAboutSection("whereWeOperate", {
                           ...aboutData.whereWeOperate,
                           locations: updated,
@@ -597,13 +599,14 @@ export default function AboutPage() {
                       type="text"
                       value={location.address || ""}
                       onChange={(e) => {
-                        const locations =
-                          (aboutData.whereWeOperate as any)?.locations || [];
+                        const locations = aboutData.whereWeOperate?.locations || [];
                         const updated = [...locations];
-                        updated[idx] = {
-                          ...updated[idx],
-                          address: e.target.value,
-                        };
+                        if (updated[idx]) {
+                          updated[idx] = {
+                            ...updated[idx],
+                            address: e.target.value,
+                          };
+                        }
                         updateAboutSection("whereWeOperate", {
                           ...aboutData.whereWeOperate,
                           locations: updated,
@@ -624,16 +627,17 @@ export default function AboutPage() {
                         step="0.0001"
                         value={location.coordinates?.[0] || ""}
                         onChange={(e) => {
-                          const locations =
-                            (aboutData.whereWeOperate as any)?.locations || [];
+                          const locations = aboutData.whereWeOperate?.locations || [];
                           const updated = [...locations];
-                          updated[idx] = {
-                            ...updated[idx],
-                            coordinates: [
-                              parseFloat(e.target.value),
-                              location.coordinates?.[1] || 0,
-                            ],
-                          };
+                          if (updated[idx]) {
+                            updated[idx] = {
+                              ...updated[idx],
+                              coordinates: [
+                                parseFloat(e.target.value),
+                                location.coordinates?.[1] || 0,
+                              ],
+                            };
+                          }
                           updateAboutSection("whereWeOperate", {
                             ...aboutData.whereWeOperate,
                             locations: updated,
@@ -652,16 +656,17 @@ export default function AboutPage() {
                         step="0.0001"
                         value={location.coordinates?.[1] || ""}
                         onChange={(e) => {
-                          const locations =
-                            (aboutData.whereWeOperate as any)?.locations || [];
+                          const locations = aboutData.whereWeOperate?.locations || [];
                           const updated = [...locations];
-                          updated[idx] = {
-                            ...updated[idx],
-                            coordinates: [
-                              location.coordinates?.[0] || 0,
-                              parseFloat(e.target.value),
-                            ],
-                          };
+                          if (updated[idx]) {
+                            updated[idx] = {
+                              ...updated[idx],
+                              coordinates: [
+                                location.coordinates?.[0] || 0,
+                                parseFloat(e.target.value),
+                              ],
+                            };
+                          }
                           updateAboutSection("whereWeOperate", {
                             ...aboutData.whereWeOperate,
                             locations: updated,
@@ -692,8 +697,7 @@ export default function AboutPage() {
             <button
               type="button"
               onClick={() => {
-                const members =
-                  (aboutData.profile as any)?.members || [];
+                const members = aboutData.profile?.members || [];
                 updateAboutSection("profile", {
                   ...aboutData.profile,
                   members: [
@@ -715,8 +719,8 @@ export default function AboutPage() {
           </div>
 
           <div className="space-y-6">
-            {((aboutData.profile as any)?.members || []).map(
-              (member: any, idx: number) => (
+            {(aboutData.profile?.members || []).map(
+              (member: AboutTeamMember, idx: number) => (
                 <div
                   key={idx}
                   className="border border-gray-200 rounded-lg p-4 space-y-4"
@@ -728,12 +732,11 @@ export default function AboutPage() {
                     <button
                       type="button"
                       onClick={() => {
-                        const members =
-                          (aboutData.profile as any)?.members || [];
+                        const members = aboutData.profile?.members || [];
                         updateAboutSection("profile", {
                           ...aboutData.profile,
                           members: members.filter(
-                            (_: any, i: number) => i !== idx
+                            (_: AboutTeamMember, i: number) => i !== idx
                           ),
                         });
                       }}
@@ -759,13 +762,14 @@ export default function AboutPage() {
                           <button
                             type="button"
                             onClick={() => {
-                              const members =
-                                (aboutData.profile as any)?.members || [];
+                              const members = aboutData.profile?.members || [];
                               const updated = [...members];
-                              updated[idx] = {
-                                ...updated[idx],
-                                image: "",
-                              };
+                              if (updated[idx]) {
+                                updated[idx] = {
+                                  ...updated[idx],
+                                  image: "",
+                                };
+                              }
                               updateAboutSection("profile", {
                                 ...aboutData.profile,
                                 members: updated,
@@ -823,10 +827,11 @@ export default function AboutPage() {
                       type="text"
                       value={member.name || ""}
                       onChange={(e) => {
-                        const members =
-                          (aboutData.profile as any)?.members || [];
+                        const members = aboutData.profile?.members || [];
                         const updated = [...members];
-                        updated[idx] = { ...updated[idx], name: e.target.value };
+                        if (updated[idx]) {
+                          updated[idx] = { ...updated[idx], name: e.target.value };
+                        }
                         updateAboutSection("profile", {
                           ...aboutData.profile,
                           members: updated,
@@ -845,10 +850,11 @@ export default function AboutPage() {
                       type="text"
                       value={member.role || ""}
                       onChange={(e) => {
-                        const members =
-                          (aboutData.profile as any)?.members || [];
+                        const members = aboutData.profile?.members || [];
                         const updated = [...members];
-                        updated[idx] = { ...updated[idx], role: e.target.value };
+                        if (updated[idx]) {
+                          updated[idx] = { ...updated[idx], role: e.target.value };
+                        }
                         updateAboutSection("profile", {
                           ...aboutData.profile,
                           members: updated,
@@ -866,10 +872,11 @@ export default function AboutPage() {
                     <WYSIWYGEditor
                       value={member.bio || ""}
                       onChange={(value) => {
-                        const members =
-                          (aboutData.profile as any)?.members || [];
+                        const members = aboutData.profile?.members || [];
                         const updated = [...members];
-                        updated[idx] = { ...updated[idx], bio: value };
+                        if (updated[idx]) {
+                          updated[idx] = { ...updated[idx], bio: value };
+                        }
                         updateAboutSection("profile", {
                           ...aboutData.profile,
                           members: updated,
