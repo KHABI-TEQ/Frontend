@@ -46,12 +46,8 @@ const NAV_ITEMS: NavItem[] = [
   // Content & Design
   { id: "branding", label: "Branding & SEO", path: "/public-access-page/branding", icon: <Settings size={18} />, group: "content" },
   { id: "theme", label: "Theme", path: "/public-access-page/theme", icon: <Palette size={18} />, group: "content" },
-  { id: "home-settings", label: "Home Settings", path: "/public-access-page/home-settings", icon: <Home size={18} />, group: "content" },
-
-  // Marketplace & Listings
-  { id: "marketplace", label: "Marketplace", path: "/public-access-page/marketplace", icon: <ShoppingCart size={18} />, group: "content" },
+  { id: "home-page", label: "Home Page", path: "/public-access-page/home-page", icon: <Home size={18} />, group: "content" },
   { id: "featured", label: "Featured Listings", path: "/public-access-page/featured", icon: <Star size={18} />, group: "content" },
-  { id: "listings", label: "All Listings", path: "/public-access-page/listings", icon: <Grid size={18} />, group: "content" },
   { id: "preferences", label: "Preferences Requests", path: "/public-access-page/preferences", icon: <FileText size={18} />, group: "content" },
 
   // Settings

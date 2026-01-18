@@ -233,8 +233,10 @@ export default function PreferencesRequestsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {preferences.map((pref) => (
-                    <tr key={pref._id} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
+                  {preferences.map((pref, index) => {
+                    const uniqueKey = pref._id ? `pref-${pref._id}` : `pref-${index}-${pref.email || pref.phoneNumber || 'unknown'}`;
+                    return (
+                    <tr key={uniqueKey} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4">
                         <span className="font-medium text-gray-900">
                           {`${pref.firstName || ""} ${pref.lastName || ""}`.trim() || "—"}
@@ -269,7 +271,8 @@ export default function PreferencesRequestsPage() {
                         <span className="text-gray-600 text-xs">{formatDate(pref.createdAt)}</span>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
