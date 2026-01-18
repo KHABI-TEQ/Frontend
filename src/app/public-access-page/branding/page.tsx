@@ -5,11 +5,11 @@
 
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import { Save, Trash2, ImageIcon, Settings } from "lucide-react";
-import { useDealSite } from "@/context/deal-site-context";
+import { useDealSite, FooterDetails } from "@/context/deal-site-context";
 import { POST_REQUEST_FILE_UPLOAD } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import OverlayPreloader from "@/components/general-components/OverlayPreloader";
@@ -198,6 +198,63 @@ export default function BrandingPage() {
             </span>
           </label>
         )}
+      </div>
+
+      {/* Footer Details */}
+      <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <h2 className="text-lg font-semibold text-[#09391C] mb-6 flex items-center gap-2">
+          Footer Details
+        </h2>
+
+        <div className="space-y-6">
+          {/* Short Description */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">
+              Short Description
+            </label>
+            <p className="text-sm text-gray-600 mb-3">
+              A brief description that appears in the footer
+            </p>
+            <textarea
+              value={settings.footer?.shortDescription || ""}
+              onChange={(e) =>
+                updateSettings({
+                  footer: {
+                    ...settings.footer,
+                    shortDescription: e.target.value,
+                  },
+                })
+              }
+              rows={3}
+              className={`${inputBase} resize-none`}
+              placeholder="Share a brief overview of your business or mission..."
+            />
+          </div>
+
+          {/* Copyright Text */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">
+              Copyright Text
+            </label>
+            <p className="text-sm text-gray-600 mb-3">
+              Display in the footer (e.g., "© 2024 My Real Estate Business. All rights reserved.")
+            </p>
+            <input
+              type="text"
+              value={settings.footer?.copyrightText || ""}
+              onChange={(e) =>
+                updateSettings({
+                  footer: {
+                    ...settings.footer,
+                    copyrightText: e.target.value,
+                  },
+                })
+              }
+              className={inputBase}
+              placeholder="© 2024 Your Company Name. All rights reserved."
+            />
+          </div>
+        </div>
       </div>
 
       {/* Save Button */}

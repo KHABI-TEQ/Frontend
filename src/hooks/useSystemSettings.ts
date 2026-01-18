@@ -77,7 +77,14 @@ export const useSystemSettings = <T>(
   };
 
   useEffect(() => {
-    fetchSettings();
+    // Only fetch settings in browser environment (not during SSR)
+    if (typeof window !== 'undefined') {
+      fetchSettings();
+    } else {
+      // During SSR, immediately return empty settings
+      setSettings({} as T);
+      setLoading(false);
+    }
   }, [category]);
 
   return {
