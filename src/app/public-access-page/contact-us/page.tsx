@@ -92,7 +92,12 @@ export default function ContactUsPage() {
         <p className="text-gray-600 mt-2">Customize your contact page appearance and settings</p>
       </div>
 
+      {/* Page Content Section */}
       <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
+        <div>
+          <h2 className="text-lg font-semibold text-[#09391C] mb-4">Page Content</h2>
+        </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Page Title
@@ -119,19 +124,6 @@ export default function ContactUsPage() {
           />
         </div>
 
-        <div className="flex items-center gap-3">
-          <input
-            type="checkbox"
-            id="enable-contact-form"
-            checked={formData.enableContactForm}
-            onChange={(e) => handleInputChange("enableContactForm", e.target.checked)}
-            className="w-4 h-4 text-emerald-600 rounded"
-          />
-          <label htmlFor="enable-contact-form" className="text-sm font-medium text-gray-700">
-            Enable contact form
-          </label>
-        </div>
-
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Response Message
@@ -145,10 +137,104 @@ export default function ContactUsPage() {
           />
           <p className="text-xs text-gray-500 mt-1">This message is shown after form submission</p>
         </div>
+      </div>
+
+      {/* Contact Form Settings Section */}
+      <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
+        <div>
+          <h2 className="text-lg font-semibold text-[#09391C] mb-4">Contact Form</h2>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            id="enable-contact-form"
+            checked={formData.enableContactForm}
+            onChange={(e) => handleInputChange("enableContactForm", e.target.checked)}
+            className="w-4 h-4 text-emerald-600 rounded"
+          />
+          <label htmlFor="enable-contact-form" className="text-sm font-medium text-gray-700">
+            Enable contact form on public page
+          </label>
+        </div>
 
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <p className="text-sm text-blue-800">
             <strong>Note:</strong> Contact form submissions are sent to your email and available in your dashboard.
+          </p>
+        </div>
+      </div>
+
+      {/* Contact Display Options Section */}
+      <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
+        <div>
+          <h2 className="text-lg font-semibold text-[#09391C] mb-4">Display Options</h2>
+          <p className="text-sm text-gray-600 mb-4">Control how visitors can contact you</p>
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id="show-email"
+              checked={formData.showEmail}
+              onChange={(e) => handleInputChange("showEmail", e.target.checked)}
+              className="w-4 h-4 text-emerald-600 rounded"
+            />
+            <label htmlFor="show-email" className="text-sm font-medium text-gray-700">
+              Display email address on public page
+            </label>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id="show-phone"
+              checked={formData.showPhone}
+              onChange={(e) => handleInputChange("showPhone", e.target.checked)}
+              className="w-4 h-4 text-emerald-600 rounded"
+            />
+            <label htmlFor="show-phone" className="text-sm font-medium text-gray-700">
+              Display phone number on public page
+            </label>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id="show-whatsapp"
+              checked={formData.showWhatsAppButton}
+              onChange={(e) => handleInputChange("showWhatsAppButton", e.target.checked)}
+              className="w-4 h-4 text-emerald-600 rounded"
+            />
+            <label htmlFor="show-whatsapp" className="text-sm font-medium text-gray-700">
+              Display WhatsApp button
+            </label>
+          </div>
+        </div>
+
+        {formData.showWhatsAppButton && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              WhatsApp Number
+            </label>
+            <div className="flex items-center gap-2">
+              <span className="text-gray-600 font-medium">+234</span>
+              <input
+                type="text"
+                value={formData.whatsappNumber}
+                onChange={(e) => handleInputChange("whatsappNumber", e.target.value)}
+                placeholder="8012345678"
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-1">Enter number without country code</p>
+          </div>
+        )}
+
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <p className="text-sm text-blue-800">
+            <strong>Privacy:</strong> Your contact information is only displayed to site visitors.
           </p>
         </div>
 
