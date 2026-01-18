@@ -17,6 +17,10 @@ export default function ContactUsPage() {
     contactUsDescription: settings.contactUs?.hero?.description || "Have a question? We'd love to hear from you.",
     enableContactForm: settings.contactVisibility?.enableContactForm ?? true,
     responseMessage: settings.contactUs?.cta?.title || "Thank you for reaching out. We'll get back to you soon.",
+    showEmail: settings.contactVisibility?.showEmail ?? true,
+    showPhone: settings.contactVisibility?.showPhone ?? true,
+    showWhatsAppButton: settings.contactVisibility?.showWhatsAppButton ?? true,
+    whatsappNumber: settings.contactVisibility?.whatsappNumber || "",
   });
 
   const handleInputChange = useCallback((field: string, value: string | boolean) => {
