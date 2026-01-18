@@ -52,7 +52,6 @@ const NAV_ITEMS: NavItem[] = [
 
   // Settings
   { id: "inspection", label: "Inspection Settings", path: "/public-access-page/inspection", icon: <CheckSquare size={18} />, group: "settings" },
-  { id: "contact", label: "Contact Settings", path: "/public-access-page/contact", icon: <MessageCircle size={18} />, group: "settings" },
   { id: "social", label: "Social Links", path: "/public-access-page/social", icon: <Share2 size={18} />, group: "settings" },
   { id: "about", label: "About Us", path: "/public-access-page/about", icon: <BookOpen size={18} />, group: "settings" },
   { id: "contact-us", label: "Contact Us Page", path: "/public-access-page/contact-us", icon: <Mail size={18} />, group: "settings" },
