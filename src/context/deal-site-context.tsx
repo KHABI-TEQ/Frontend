@@ -72,6 +72,63 @@ export interface AboutHero {
   cta?: AboutHeroCta;
 }
 
+export interface AboutWhoWeAre {
+  title?: string;
+  description?: string;
+}
+
+export interface AboutOurMission {
+  title?: string;
+  description?: string;
+}
+
+export interface AboutOurExperience {
+  title?: string;
+  description?: string;
+}
+
+export interface AboutValueItem {
+  title?: string;
+  shortText?: string;
+}
+
+export interface AboutWhatWeStandFor {
+  title?: string;
+  description?: string;
+  items?: AboutValueItem[];
+}
+
+export interface AboutWhatWeDoItem {
+  title?: string;
+}
+
+export interface AboutWhatWeDo {
+  title?: string;
+  items?: AboutWhatWeDoItem[];
+}
+
+export interface AboutLocationSection {
+  name?: string;
+  address?: string;
+  coordinates?: [number | string, number | string];
+}
+
+export interface AboutWhereWeOperate {
+  title?: string;
+  locations?: AboutLocationSection[];
+}
+
+export interface AboutTeamMember {
+  name?: string;
+  role?: string;
+  image?: string;
+  bio?: string;
+}
+
+export interface AboutProfile {
+  members?: AboutTeamMember[];
+}
+
 export interface AboutIdentity {
   headline?: string;
   content?: string;
@@ -161,6 +218,13 @@ export interface AboutCtaSection {
 export interface AboutSection {
   hero?: AboutHero;
   identity?: AboutIdentity;
+  whoWeAre?: AboutWhoWeAre;
+  ourMission?: AboutOurMission;
+  ourExperience?: AboutOurExperience;
+  whatWeStandFor?: AboutWhatWeStandFor;
+  whatWeDo?: AboutWhatWeDo;
+  whereWeOperate?: AboutWhereWeOperate;
+  profile?: AboutProfile;
   missionVision?: AboutMissionVision;
   values?: AboutValues;
   journey?: AboutJourney;
