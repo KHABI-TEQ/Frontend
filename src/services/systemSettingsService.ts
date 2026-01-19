@@ -54,15 +54,15 @@ export const getSystemSettings = async (
 /**
  * Convert system settings array to a key-value object
  */
-export const convertSettingsToObject = <T>(settings: SystemSetting[]): T => {
-  const result = {} as any;
-  
+export const convertSettingsToObject = <T extends Record<string, unknown>>(settings: SystemSetting[]): T => {
+  const result: Record<string, unknown> = {};
+
   settings.forEach(setting => {
     // Convert key from subscription_fee_monthly to monthly_fee format
     const key = setting.key.replace(`${setting.category}_`, '').replace('subscription_fee_', '');
     result[key] = setting.value;
   });
-  
+
   return result as T;
 };
 
