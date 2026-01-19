@@ -88,7 +88,7 @@ const slice = createSlice({
   name: 'subscription',
   initialState,
   reducers: {
-    initializeFromProfile: (state, action: PayloadAction<any | null>) => {
+    initializeFromProfile: (state, action: PayloadAction<UserWithSubscription | null>) => {
       const user = action.payload;
       if (!user || !user.activeSubscription) {
         state.active = null;
