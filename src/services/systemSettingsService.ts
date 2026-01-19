@@ -176,7 +176,7 @@ export const getInspectionSettings = async (): Promise<InspectionSettings> => {
 /**
  * Helper function to get a specific setting value by key
  */
-export const getSettingValue = (settings: SystemSetting[], key: string, defaultValue?: any) => {
+export const getSettingValue = (settings: SystemSetting[], key: string, defaultValue?: unknown) => {
   const setting = settings.find(s => s.key === key);
   return setting ? setting.value : defaultValue;
 };
