@@ -6,6 +6,19 @@ interface NetworkStatus {
   connectionType: string;
 }
 
+interface NetworkConnection {
+  effectiveType?: string;
+  downlink?: number;
+  addEventListener?: (event: string, callback: () => void) => void;
+  removeEventListener?: (event: string, callback: () => void) => void;
+}
+
+interface NavigatorWithConnection extends Navigator {
+  connection?: NetworkConnection;
+  mozConnection?: NetworkConnection;
+  webkitConnection?: NetworkConnection;
+}
+
 export const useNetworkStatus = (): NetworkStatus => {
   const [networkStatus, setNetworkStatus] = useState<NetworkStatus>({
     isOnline: typeof navigator !== "undefined" ? navigator.onLine : true,
@@ -25,10 +38,11 @@ export const useNetworkStatus = (): NetworkStatus => {
 
     const updateConnectionType = () => {
       if ("connection" in navigator) {
+        const navWithConnection = navigator as NavigatorWithConnection;
         const connection =
-          (navigator as any).connection ||
-          (navigator as any).mozConnection ||
-          (navigator as any).webkitConnection;
+          navWithConnection.connection ||
+          navWithConnection.mozConnection ||
+          navWithConnection.webkitConnection;
 
         if (connection) {
           const isSlowConnection =
@@ -53,11 +67,12 @@ export const useNetworkStatus = (): NetworkStatus => {
     window.addEventListener("offline", updateOnlineStatus);
 
     if ("connection" in navigator) {
+      const navWithConnection = navigator as NavigatorWithConnection;
       const connection =
-        (navigator as any).connection ||
-        (navigator as any).mozConnection ||
-        (navigator as any).webkitConnection;
-      if (connection) {
+        navWithConnection.connection ||
+        navWithConnection.mozConnection ||
+        navWithConnection.webkitConnection;
+      if (connection?.addEventListener) {
         connection.addEventListener("change", updateConnectionType);
       }
     }
@@ -67,11 +82,12 @@ export const useNetworkStatus = (): NetworkStatus => {
       window.removeEventListener("offline", updateOnlineStatus);
 
       if ("connection" in navigator) {
+        const navWithConnection = navigator as NavigatorWithConnection;
         const connection =
-          (navigator as any).connection ||
-          (navigator as any).mozConnection ||
-          (navigator as any).webkitConnection;
-        if (connection) {
+          navWithConnection.connection ||
+          navWithConnection.mozConnection ||
+          navWithConnection.webkitConnection;
+        if (connection?.removeEventListener) {
           connection.removeEventListener("change", updateConnectionType);
         }
       }

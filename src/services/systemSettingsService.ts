@@ -54,15 +54,15 @@ export const getSystemSettings = async (
 /**
  * Convert system settings array to a key-value object
  */
-export const convertSettingsToObject = <T>(settings: SystemSetting[]): T => {
-  const result = {} as any;
-  
+export const convertSettingsToObject = <T extends Record<string, unknown>>(settings: SystemSetting[]): T => {
+  const result: Record<string, unknown> = {};
+
   settings.forEach(setting => {
     // Convert key from subscription_fee_monthly to monthly_fee format
     const key = setting.key.replace(`${setting.category}_`, '').replace('subscription_fee_', '');
     result[key] = setting.value;
   });
-  
+
   return result as T;
 };
 
@@ -176,7 +176,7 @@ export const getInspectionSettings = async (): Promise<InspectionSettings> => {
 /**
  * Helper function to get a specific setting value by key
  */
-export const getSettingValue = (settings: SystemSetting[], key: string, defaultValue?: any) => {
+export const getSettingValue = (settings: SystemSetting[], key: string, defaultValue?: unknown) => {
   const setting = settings.find(s => s.key === key);
   return setting ? setting.value : defaultValue;
 };

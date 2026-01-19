@@ -9,8 +9,8 @@ interface UseApiRequestOptions {
   showPreloader?: boolean;
   successMessage?: string;
   errorMessage?: string;
-  onSuccess?: (data: any) => void;
-  onError?: (error: any) => void;
+  onSuccess?: (data: unknown) => void;
+  onError?: (error: Error) => void;
   signal?: AbortSignal;
 }
 
@@ -19,13 +19,13 @@ export const useApiRequest = () => {
   const [error, setError] = useState<string | null>(null);
   const controllerRef = useRef<AbortController | null>(null);
 
-  const makeRequest = async (
+  const makeRequest = async <T = unknown>(
     url: string,
     method: RequestMethod = "GET",
-    data?: any,
+    data?: unknown,
     token?: string,
     options: UseApiRequestOptions = {},
-  ) => {
+  ): Promise<T> => {
     const {
       showPreloader = true,
       successMessage,
@@ -73,12 +73,13 @@ export const useApiRequest = () => {
       }
 
       return responseData;
-    } catch (err: any) {
-      if (err.name === "AbortError") {
-        return;
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      if (error.name === "AbortError") {
+        return undefined as unknown as T;
       }
 
-      const errorMsg = err.message || errorMessage || "An error occurred";
+      const errorMsg = error.message || errorMessage || "An error occurred";
       setError(errorMsg);
 
       if (errorMessage || !options.errorMessage) {
@@ -86,10 +87,10 @@ export const useApiRequest = () => {
       }
 
       if (onError) {
-        onError(err);
+        onError(error);
       }
 
-      throw err;
+      throw error;
     } finally {
       if (showPreloader) {
         setIsLoading(false);

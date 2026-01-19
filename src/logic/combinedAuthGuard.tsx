@@ -37,13 +37,9 @@ export const CombinedAuthGuard: React.FC<CombinedAuthGuardProps> = ({
   const { user, isLoading, isInitialized } = useUserContext();
 
   const isAgent = user?.userType === "Agent";
-  const kycStatus = (user as any)?.agentData?.kycStatus as
-    | "none"
-    | "pending"
-    | "in_review"
-    | "approved"
-    | "rejected"
-    | undefined;
+  const kycStatus = user && isAgent
+    ? ((user as any)?.agentData?.kycStatus as "none" | "pending" | "in_review" | "approved" | "rejected" | undefined)
+    : undefined;
   const kycApproved = kycStatus === "approved";
   const hasActiveSubscription = !!(
     user?.activeSubscription && user.activeSubscription.status === "active"
@@ -71,7 +67,7 @@ export const CombinedAuthGuard: React.FC<CombinedAuthGuardProps> = ({
     requireAuth &&
     user &&
     allowedUserTypes.length > 0 &&
-    !allowedUserTypes.includes((user.userType || "Agent") as any)
+    !allowedUserTypes.includes(user.userType as "Agent" | "Landowners" | "FieldAgent" || "Agent")
   ) {
     return (
       <Block

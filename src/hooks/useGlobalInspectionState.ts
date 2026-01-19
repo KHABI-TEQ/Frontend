@@ -3,10 +3,11 @@
 "use client";
 import { useCallback } from "react";
 import { useGlobalPropertyActions } from "@/context/global-property-actions-context";
+import type { IProperty } from "@/models/Property";
 
 export interface InspectionProperty {
   propertyId: string;
-  property: any;
+  property: IProperty | Record<string, unknown>;
   sourceTab?: "buy" | "jv" | "rent" | "shortlet";
   sourcePage?: string;
   sourceMeta?: {
@@ -49,7 +50,7 @@ export const useGlobalInspectionState = () => {
 
   // Add property to inspection (wrapper around global context)
   const addProperty = useCallback((
-    property: any,
+    property: IProperty | Record<string, unknown>,
     sourceTab?: "buy" | "jv" | "rent" | "shortlet",
     sourcePage?: string,
     sourceMeta?: { matchedId?: string; preferenceId?: string }
@@ -64,7 +65,7 @@ export const useGlobalInspectionState = () => {
 
   // Toggle property selection (wrapper around global context)
   const toggleProperty = useCallback((
-    property: any,
+    property: IProperty | Record<string, unknown>,
     sourceTab?: "buy" | "jv" | "rent" | "shortlet",
     sourcePage?: string,
     sourceMeta?: { matchedId?: string; preferenceId?: string }
@@ -93,14 +94,14 @@ export const useGlobalInspectionState = () => {
   }, [clearInspectionSelection]);
 
   // Get property type for display
-  const getPropertyType = useCallback((property: any) => {
+  const getPropertyType = useCallback((property: IProperty | Record<string, unknown>) => {
     // Prefer explicit briefType from backend
-    if (property?.briefType) {
-      return property.briefType;
+    if ((property as IProperty)?.briefType) {
+      return (property as IProperty).briefType;
     }
 
     // Fallbacks: detect JV only when explicitly labeled as such
-    const category = String(property?.category || property?.propertyCategory || "").toLowerCase();
+    const category = String((property as Record<string, unknown>)?.category || (property as Record<string, unknown>)?.propertyCategory || "").toLowerCase();
     if (category === "joint-venture" || category === "jv" || category === "joint venture") {
       return "Joint Venture";
     }
