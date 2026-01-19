@@ -26,6 +26,26 @@ export interface SubscriptionMeta {
   appliedPlanName?: string;
 }
 
+export interface UserWithSubscription {
+  activeSubscription?: {
+    _id?: string;
+    id?: string;
+    status?: string;
+    startedAt?: string;
+    startDate?: string;
+    expiresAt?: string;
+    endDate?: string;
+    autoRenew?: boolean;
+    meta?: SubscriptionMeta;
+    features?: Array<{
+      feature: string | { _id?: string; id?: string; key?: string };
+      type: FeatureType;
+      value?: number;
+      remaining?: number;
+    }>;
+  };
+}
+
 export interface SubscriptionState {
   initialized: boolean;
   catalog: {
