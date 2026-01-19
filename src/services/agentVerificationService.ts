@@ -97,15 +97,15 @@ export class AgentVerificationService {
   /**
    * Update agent profile information
    */
-  static async updateAgentProfile(profileData: any): Promise<SubscriptionApiResponse> {
+  static async updateAgentProfile(profileData: Record<string, unknown>): Promise<SubscriptionApiResponse> {
     try {
-      const response = await PUT_REQUEST(
+      const response = await PUT_REQUEST<unknown>(
         `${URLS.BASE}${URLS.updateAgentProfile}`,
         profileData,
         this.getAuthToken()
       );
 
-      return response.data;
+      return response.data as SubscriptionApiResponse;
     } catch (error) {
       console.error("Failed to update agent profile:", error);
       throw error;
