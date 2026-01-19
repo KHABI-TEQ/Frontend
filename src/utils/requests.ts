@@ -30,7 +30,7 @@ const handleAuthExpirySideEffects = () => {
   } catch {}
 };
 
-export const GET_REQUEST = async <T = any, P = any>(
+export const GET_REQUEST = async <T = unknown, P = unknown>(
   url: string,
   token?: string,
   retryCount = 0,
