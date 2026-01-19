@@ -128,7 +128,7 @@ export const GET_REQUEST = async <T = unknown, P = unknown>(
   }
 };
 
-export const DELETE_REQUEST = async <T = any>(url: string, data?: unknown, token?: string): Promise<ApiResponse<T, any>> => {
+export const DELETE_REQUEST = async <T = unknown>(url: string, data?: unknown, token?: string): Promise<ApiResponse<T, unknown>> => {
   try {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -161,7 +161,7 @@ export const DELETE_REQUEST = async <T = any>(url: string, data?: unknown, token
   }
 };
 
-export const POST_REQUEST = async <T = any>(
+export const POST_REQUEST = async <T = unknown>(
   url: string,
   data: unknown,
   token?: string,
@@ -214,11 +214,11 @@ export const POST_REQUEST = async <T = any>(
   }
 };
 
-export const POST_REQUEST_FILE_UPLOAD = async <T = any>(
+export const POST_REQUEST_FILE_UPLOAD = async <T = unknown>(
   url: string,
   data: FormData,
   token?: string,
-): Promise<ApiResponse<T, any>> => {
+): Promise<ApiResponse<T, unknown>> => {
   try {
     const request = await fetch(url, {
       method: "POST",
@@ -245,12 +245,12 @@ export const POST_REQUEST_FILE_UPLOAD = async <T = any>(
   }
 };
 
-export const PUT_REQUEST = async <T = any>(
+export const PUT_REQUEST = async <T = unknown>(
   url: string,
   data: unknown,
   token?: string,
   customHeaders?: Record<string, string>,
-): Promise<ApiResponse<T, any>> => {
+): Promise<ApiResponse<T, unknown>> => {
   try {
     const headers: Record<string, string> = customHeaders || {
       "Content-Type": "application/json",
@@ -284,12 +284,12 @@ export const PUT_REQUEST = async <T = any>(
 };
 
 
-export const PATCH_REQUEST = async <T = any>(
+export const PATCH_REQUEST = async <T = unknown>(
   url: string,
   data: unknown,
   token?: string,
   customHeaders?: Record<string, string>,
-): Promise<ApiResponse<T, any>> => {
+): Promise<ApiResponse<T, unknown>> => {
   try {
     const headers: Record<string, string> = customHeaders || {
       "Content-Type": "application/json",
