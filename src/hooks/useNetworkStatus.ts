@@ -67,11 +67,12 @@ export const useNetworkStatus = (): NetworkStatus => {
     window.addEventListener("offline", updateOnlineStatus);
 
     if ("connection" in navigator) {
+      const navWithConnection = navigator as NavigatorWithConnection;
       const connection =
-        (navigator as any).connection ||
-        (navigator as any).mozConnection ||
-        (navigator as any).webkitConnection;
-      if (connection) {
+        navWithConnection.connection ||
+        navWithConnection.mozConnection ||
+        navWithConnection.webkitConnection;
+      if (connection?.addEventListener) {
         connection.addEventListener("change", updateConnectionType);
       }
     }
@@ -81,11 +82,12 @@ export const useNetworkStatus = (): NetworkStatus => {
       window.removeEventListener("offline", updateOnlineStatus);
 
       if ("connection" in navigator) {
+        const navWithConnection = navigator as NavigatorWithConnection;
         const connection =
-          (navigator as any).connection ||
-          (navigator as any).mozConnection ||
-          (navigator as any).webkitConnection;
-        if (connection) {
+          navWithConnection.connection ||
+          navWithConnection.mozConnection ||
+          navWithConnection.webkitConnection;
+        if (connection?.removeEventListener) {
           connection.removeEventListener("change", updateConnectionType);
         }
       }
