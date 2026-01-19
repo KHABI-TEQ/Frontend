@@ -18,7 +18,7 @@ interface InputFieldProps<T extends Record<string, unknown> = Record<string, unk
   className?: string;
 }
 
-const InputField: FC<InputFieldProps> = <T extends Record<string, unknown> = Record<string, unknown>>({
+const InputField: FC<InputFieldProps> = ({
   label,
   name,
   type = 'text', // Default to 'text'
