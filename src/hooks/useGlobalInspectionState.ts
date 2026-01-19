@@ -3,10 +3,11 @@
 "use client";
 import { useCallback } from "react";
 import { useGlobalPropertyActions } from "@/context/global-property-actions-context";
+import type { IProperty } from "@/models/Property";
 
 export interface InspectionProperty {
   propertyId: string;
-  property: any;
+  property: IProperty | Record<string, unknown>;
   sourceTab?: "buy" | "jv" | "rent" | "shortlet";
   sourcePage?: string;
   sourceMeta?: {
