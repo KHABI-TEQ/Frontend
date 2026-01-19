@@ -94,8 +94,8 @@ export const getWebVitals = () => {
         try {
           const entries = list.getEntries();
           if (entries.length > 0) {
-            const lastEntry = entries[entries.length - 1] as any;
-            const lcpValue = lastEntry.renderTime || lastEntry.loadTime || 0;
+            const lastEntry = entries[entries.length - 1] as PerformanceEntry & { renderTime?: number; loadTime?: number; startTime: number };
+            const lcpValue = (lastEntry as any).renderTime || (lastEntry as any).loadTime || 0;
             if (lcpValue > 0) {
               reportWebVital({
                 name: 'LCP',
@@ -117,9 +117,9 @@ export const getWebVitals = () => {
           let clsValue = 0;
           const entries = list.getEntries();
           for (const entry of entries) {
-            const layoutShiftEntry = entry as any;
-            if (!layoutShiftEntry.hadRecentInput && layoutShiftEntry.value) {
-              clsValue += layoutShiftEntry.value;
+            const layoutShiftEntry = entry as PerformanceEntry & { hadRecentInput?: boolean; value?: number };
+            if (!(layoutShiftEntry as any).hadRecentInput && (layoutShiftEntry as any).value) {
+              clsValue += (layoutShiftEntry as any).value;
             }
           }
           if (clsValue > 0) {
@@ -141,11 +141,11 @@ export const getWebVitals = () => {
         try {
           const entries = list.getEntries();
           for (const entry of entries) {
-            const firstInputEntry = entry as any;
-            if (firstInputEntry.processingDuration) {
+            const firstInputEntry = entry as PerformanceEntry & { processingDuration?: number };
+            if ((firstInputEntry as any).processingDuration) {
               reportWebVital({
                 name: 'FID',
-                value: firstInputEntry.processingDuration,
+                value: (firstInputEntry as any).processingDuration,
                 id: 'fid-' + entry.startTime,
                 isFinal: true,
               });
