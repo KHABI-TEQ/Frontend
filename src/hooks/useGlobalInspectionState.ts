@@ -94,14 +94,14 @@ export const useGlobalInspectionState = () => {
   }, [clearInspectionSelection]);
 
   // Get property type for display
-  const getPropertyType = useCallback((property: any) => {
+  const getPropertyType = useCallback((property: IProperty | Record<string, unknown>) => {
     // Prefer explicit briefType from backend
-    if (property?.briefType) {
-      return property.briefType;
+    if ((property as IProperty)?.briefType) {
+      return (property as IProperty).briefType;
     }
 
     // Fallbacks: detect JV only when explicitly labeled as such
-    const category = String(property?.category || property?.propertyCategory || "").toLowerCase();
+    const category = String((property as Record<string, unknown>)?.category || (property as Record<string, unknown>)?.propertyCategory || "").toLowerCase();
     if (category === "joint-venture" || category === "jv" || category === "joint venture") {
       return "Joint Venture";
     }
