@@ -145,7 +145,6 @@ const EnhancedAgentDashboard: React.FC = () => {
           <div className="mb-4">
             {/** Imported dynamically to avoid hydration issues */}
             <React.Suspense fallback={null}>
-              {/* @ts-ignore */}
               <AgentShortProfile />
             </React.Suspense>
           </div>
