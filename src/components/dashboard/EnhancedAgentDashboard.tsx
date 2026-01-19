@@ -76,12 +76,12 @@ const EnhancedAgentDashboard: React.FC = () => {
           });
 
           if (dashboardData.recentActivity && Array.isArray(dashboardData.recentActivity)) {
-            const activities = dashboardData.recentActivity.map((activity: any) => ({
-              id: activity.id || Math.random().toString(),
-              type: activity.type || "listing",
-              title: activity.title,
-              description: activity.description,
-              timestamp: activity.timestamp,
+            const activities = dashboardData.recentActivity.map((activity: Record<string, unknown>) => ({
+              id: (activity.id as string) || Math.random().toString(),
+              type: (activity.type as "listing" | "inspection" | "profile_view" | "inquiry") || "listing",
+              title: (activity.title as string) || "",
+              description: (activity.description as string) || "",
+              timestamp: (activity.timestamp as string) || "",
               icon: Building,
               color: "text-blue-500",
             }));
