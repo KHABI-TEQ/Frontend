@@ -67,7 +67,7 @@ export const CombinedAuthGuard: React.FC<CombinedAuthGuardProps> = ({
     requireAuth &&
     user &&
     allowedUserTypes.length > 0 &&
-    !allowedUserTypes.includes((user.userType || "Agent") as any)
+    !allowedUserTypes.includes(user.userType as "Agent" | "Landowners" | "FieldAgent" || "Agent")
   ) {
     return (
       <Block
