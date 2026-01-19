@@ -5,13 +5,13 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import { FormikProps } from 'formik';
 
-interface InputFieldProps {
+interface InputFieldProps<T extends Record<string, unknown> = Record<string, unknown>> {
   label: string;
   name: string;
   type?: React.HTMLInputTypeAttribute;
   placeholder?: string;
-  icon?: StaticImageData; 
-  formik: FormikProps<any>;
+  icon?: StaticImageData;
+  formik: FormikProps<T>;
   showPasswordToggle?: boolean;
   isPasswordVisible?: boolean;
   togglePasswordVisibility?: () => void;
