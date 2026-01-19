@@ -2,7 +2,7 @@
 
 import Cookies from 'js-cookie';
 
-interface ApiResponse<T = any, P = any> {
+interface ApiResponse<T = unknown, P = unknown> {
   success: boolean;
   message?: string;
   data?: T | null;
