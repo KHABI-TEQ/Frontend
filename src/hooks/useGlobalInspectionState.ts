@@ -50,7 +50,7 @@ export const useGlobalInspectionState = () => {
 
   // Add property to inspection (wrapper around global context)
   const addProperty = useCallback((
-    property: any,
+    property: IProperty | Record<string, unknown>,
     sourceTab?: "buy" | "jv" | "rent" | "shortlet",
     sourcePage?: string,
     sourceMeta?: { matchedId?: string; preferenceId?: string }
@@ -65,7 +65,7 @@ export const useGlobalInspectionState = () => {
 
   // Toggle property selection (wrapper around global context)
   const toggleProperty = useCallback((
-    property: any,
+    property: IProperty | Record<string, unknown>,
     sourceTab?: "buy" | "jv" | "rent" | "shortlet",
     sourcePage?: string,
     sourceMeta?: { matchedId?: string; preferenceId?: string }
