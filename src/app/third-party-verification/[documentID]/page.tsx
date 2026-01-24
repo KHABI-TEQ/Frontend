@@ -567,6 +567,10 @@ const ThirdPartyVerificationPage: React.FC = () => {
 
   const removeDynamicDocumentFile = (id: string) => {
     updateDynamicDocument(id, 'documentFile', '');
+    // Reset file input ref when removing file
+    if (dynamicFileInputRefs.current[id]) {
+      dynamicFileInputRefs.current[id].value = '';
+    }
     toast.success('File removed successfully');
   };
 
