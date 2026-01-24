@@ -11,6 +11,7 @@ import { useDealSite } from "@/context/deal-site-context";
 import OverlayPreloader from "@/components/general-components/OverlayPreloader";
 
 const LUCIDE_ICONS = [
+  // Popular and relevant icons
   "Award", "Briefcase", "CheckCircle", "Clock", "Cog", "DollarSign", "Eye", "Feather",
   "Flame", "Gauge", "Gift", "Globe", "Heart", "Home", "Key", "Landmark", "Lightbulb",
   "Lock", "MapPin", "Maximize2", "Mic", "Monitor", "Mountain", "Network", "Package",
@@ -20,26 +21,25 @@ const LUCIDE_ICONS = [
   "Palette", "Play", "Settings", "Music", "Coffee", "Anchor", "AlertCircle", "Bookmark",
   "Database", "Headphones", "Hexagon", "Inbox", "Infinity", "Layers", "Minimize2",
   "Moon", "Move", "Pocket", "Power", "Printer", "RefreshCw", "Repeat", "RotateCw",
-  "Save", "Server", "Slack", "Square", "Sun", "Trello", "Unlock", "Watch", "Wifi",
-  "Wind", "Verified", "Building", "Handshake", "TrendingDown", "BarChart3", "PieChartIcon",
-  "LineChart", "ActivitySquare", "ArchiveIcon", "ArrowDownIcon", "ArrowUpIcon", "BatteryCharging",
-  "Bell", "BellOff", "Blend", "Bluetooth", "Bold", "BonusIcon", "BookOpen", "Bot",
-  "BottlesIcon", "Box", "BoxSelect", "Braces", "Brain", "Brush", "Bug", "Building3",
-  "Cake", "Calendar", "CalendarDays", "CameraIcon", "CandlestickChart", "CanistersIcon",
-  "Carrot", "Cast", "ChartColumnIcon", "ChartLine", "ChartNetwork", "ChartPie",
-  "ChartScatter", "Chat", "ChatCircle", "ChatSquare", "Cheapskate", "ChevronDown",
-  "ChevronFirst", "ChevronLast", "ChevronLeft", "ChevronRight", "ChevronUp", "ChevronsDown",
-  "ChevronsLeft", "ChevronsRight", "ChevronsUp", "Chrome", "Circle", "CircleDollarSign",
-  "CircleOff", "CircleSlash2", "CircleX", "Citrus", "Clamp", "Clipboard", "ClipboardCheck",
-  "ClipboardList", "ClipboardX", "Clock1", "Clock10", "Clock11", "Clock12", "Clock2",
-  "Clock3", "Clock4", "Clock5", "Clock6", "Clock7", "Clock8", "Clock9", "Clamshell",
-  "Cloudy", "Clover", "Club", "Code", "Code2", "Codepen", "Codesandbox", "Coins",
-  "Columns", "Combine", "Command", "Combine2", "Contact", "ContactIndex", "ContentLink",
-  "Copy", "Copyleft", "Copyright", "CornerDownLeft", "CornerDownRight", "CornerLeftDown",
-  "CornerLeftUp", "CornerRightDown", "CornerRightUp", "CornerUpLeft", "CornerUpRight",
-  "Cpu", "CreditCard", "Crisper", "Crop", "Cross", "Crosshair", "Croissant", "Crown2",
-  "Cruise", "Crunchyroll", "Cube", "Cuboid", "CupSoda", "Cups", "CurlyBraces", "Currency",
-  "Curry", "CursorIcon", "Curtains", "Curve", "CurveIcon", "Curves", "Custom"
+  "Save", "Server", "Square", "Sun", "Unlock", "Watch", "Wifi", "Wind", "Building",
+  "Handshake", "Bell", "BookOpen", "Bot", "Box", "Brain", "Brush", "Bug",
+  "Calendar", "Camera", "Cast", "Chat", "ChevronDown", "ChevronLeft", "ChevronRight",
+  "ChevronUp", "Circle", "Code", "Clipboard", "Coins", "Columns", "Command", "Copy",
+  "CreditCard", "Crop", "Cpu", "Crosshair", "Cube", "Cut", "DivideSquare", "Download",
+  "DownloadCloud", "Droplet", "Edit", "Edit2", "Edit3", "ExternalLink", "FileText",
+  "Filter", "Flag", "Folder", "FolderOpen", "Grid", "HardDrive", "Headphones", "Help",
+  "Home2", "Image", "Info", "LayoutGrid", "LayoutList", "Link", "List", "Lock2",
+  "LogOut", "Mail", "MailOpen", "MapPin2", "Maximize", "Menu", "MessageCircle", "Minus",
+  "Mobile", "MoreHorizontal", "MoreVertical", "Navigation", "Navigation2", "Paperclip",
+  "PauseCircle", "Percent", "PercentCircle", "Phone", "PhoneCall", "PhoneOff", "PieChart2",
+  "Plus", "PlusCircle", "PlusSquare", "Pocket2", "Printer2", "Radio", "RefreshCcw", "Reload",
+  "Rewind", "Save2", "Search2", "Send", "Settings2", "Share", "Share2", "Shield2",
+  "ShoppingBag", "ShoppingCart2", "Slash", "Sliders", "Smartphone2", "Speaker", "Square2",
+  "Squares", "Star2", "StopCircle", "Strikethrough", "Subscript", "Superscript", "Tag",
+  "Tags", "Trash", "Trash2", "Triangle", "TrendingDown", "TrendingUp2", "Type", "Underline",
+  "Undo", "Undo2", "Upload", "UploadCloud", "User", "UserCheck", "UserMinus", "UserPlus",
+  "UserX", "Volume", "Volume1", "Volume2", "VolumeX", "Watch2", "Wifi2", "WifiOff",
+  "Wind2", "X", "XCircle", "XSquare", "Zap2", "ZoomIn", "ZoomOut"
 ];
 
 type Testimonial = {
