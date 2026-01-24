@@ -65,15 +65,22 @@ export default function PreferencesRequestsPage() {
 
       if (response?.success && response?.data) {
         const prefsArray = Array.isArray(response.data) ? response.data : [];
-        setPreferences(prefsArray);
+
+        // Validate and sanitize preferences data
+        const validPreferences = prefsArray.map((pref: any) => ({
+          ...pref,
+          location: pref.location && typeof pref.location === 'object' ? pref.location : undefined
+        }));
+
+        setPreferences(validPreferences);
 
         // Set pagination info
         if (response.pagination) {
           setTotalPages(response.pagination.pages || 1);
-          setTotalItems(response.pagination.total || prefsArray.length);
+          setTotalItems(response.pagination.total || validPreferences.length);
         } else {
           setTotalPages(1);
-          setTotalItems(prefsArray.length);
+          setTotalItems(validPreferences.length);
         }
       } else {
         setPreferences([]);
