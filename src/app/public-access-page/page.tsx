@@ -15,6 +15,7 @@ import { URLS } from "@/utils/URLS";
 import { useDealSite } from "@/context/deal-site-context";
 import type { DealSiteLog } from "@/types/api-responses";
 import OverlayPreloader from "@/components/general-components/OverlayPreloader";
+import ConfirmationModal from "@/components/public-access-page/ConfirmationModal";
 
 interface DashboardStats {
   viewsByDay: Array<{ date: string; count: number }>;
