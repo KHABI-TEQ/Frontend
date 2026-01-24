@@ -206,13 +206,15 @@ const ThirdPartyVerificationPage: React.FC = () => {
 
       if (response.success && response.data) {
         setDocumentStatusDetails(response.data);
-
+        return response.data;
       } else {
         toast.error('Failed to fetch document status details');
+        return null;
       }
     } catch (error) {
       console.error('Error fetching document status details:', error);
       toast.error('Failed to fetch document status details');
+      return null;
     } finally {
       setIsLoadingData(false);
     }
