@@ -71,6 +71,8 @@ export default function HomePageSettings() {
     heroImage: settings.publicPage?.heroImage || "",
     ctaText: settings.publicPage?.ctaText || "",
     ctaLink: settings.publicPage?.ctaLink || "",
+    ctaText2: settings.publicPage?.ctaText2 || "",
+    ctaLink2: settings.publicPage?.ctaLink2 || "",
   });
 
   // Testimonials state
