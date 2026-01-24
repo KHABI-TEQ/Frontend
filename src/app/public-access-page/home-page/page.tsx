@@ -11,13 +11,35 @@ import { useDealSite } from "@/context/deal-site-context";
 import OverlayPreloader from "@/components/general-components/OverlayPreloader";
 
 const LUCIDE_ICONS = [
+  // Popular and relevant icons
   "Award", "Briefcase", "CheckCircle", "Clock", "Cog", "DollarSign", "Eye", "Feather",
   "Flame", "Gauge", "Gift", "Globe", "Heart", "Home", "Key", "Landmark", "Lightbulb",
   "Lock", "MapPin", "Maximize2", "Mic", "Monitor", "Mountain", "Network", "Package",
   "PieChart", "Rocket", "Shield", "ShoppingCart", "Smartphone", "Sparkles", "Star",
-  "Target", "Thumbs Up", "Trending Up", "Truck", "Users", "Zap", "Building2", "Hammer",
-  "Leaf", "Magnifying Glass", "MessageSquare", "PalmTree", "Smile", "Compass", "Crown",
-  "Palette", "Play", "Settings", "Music", "Coffee"
+  "Target", "ThumbsUp", "TrendingUp", "Truck", "Users", "Zap", "Building2", "Hammer",
+  "Leaf", "Search", "MessageSquare", "PalmTree", "Smile", "Compass", "Crown",
+  "Palette", "Play", "Settings", "Music", "Coffee", "Anchor", "AlertCircle", "Bookmark",
+  "Database", "Headphones", "Hexagon", "Inbox", "Infinity", "Layers", "Minimize2",
+  "Moon", "Move", "Pocket", "Power", "Printer", "RefreshCw", "Repeat", "RotateCw",
+  "Save", "Server", "Square", "Sun", "Unlock", "Watch", "Wifi", "Wind", "Building",
+  "Handshake", "Bell", "BookOpen", "Bot", "Box", "Brain", "Brush", "Bug",
+  "Calendar", "Camera", "Cast", "Chat", "ChevronDown", "ChevronLeft", "ChevronRight",
+  "ChevronUp", "Circle", "Code", "Clipboard", "Coins", "Columns", "Command", "Copy",
+  "CreditCard", "Crop", "Cpu", "Crosshair", "Cube", "Cut", "DivideSquare", "Download",
+  "DownloadCloud", "Droplet", "Edit", "Edit2", "Edit3", "ExternalLink", "FileText",
+  "Filter", "Flag", "Folder", "FolderOpen", "Grid", "HardDrive", "Headphones", "Help",
+  "Home2", "Image", "Info", "LayoutGrid", "LayoutList", "Link", "List", "Lock2",
+  "LogOut", "Mail", "MailOpen", "MapPin2", "Maximize", "Menu", "MessageCircle", "Minus",
+  "Mobile", "MoreHorizontal", "MoreVertical", "Navigation", "Navigation2", "Paperclip",
+  "PauseCircle", "Percent", "PercentCircle", "Phone", "PhoneCall", "PhoneOff", "PieChart2",
+  "Plus", "PlusCircle", "PlusSquare", "Pocket2", "Printer2", "Radio", "RefreshCcw", "Reload",
+  "Rewind", "Save2", "Search2", "Send", "Settings2", "Share", "Share2", "Shield2",
+  "ShoppingBag", "ShoppingCart2", "Slash", "Sliders", "Smartphone2", "Speaker", "Square2",
+  "Squares", "Star2", "StopCircle", "Strikethrough", "Subscript", "Superscript", "Tag",
+  "Tags", "Trash", "Trash2", "Triangle", "TrendingDown", "TrendingUp2", "Type", "Underline",
+  "Undo", "Undo2", "Upload", "UploadCloud", "User", "UserCheck", "UserMinus", "UserPlus",
+  "UserX", "Volume", "Volume1", "Volume2", "VolumeX", "Watch2", "Wifi2", "WifiOff",
+  "Wind2", "X", "XCircle", "XSquare", "Zap2", "ZoomIn", "ZoomOut"
 ];
 
 type Testimonial = {
@@ -49,6 +71,8 @@ export default function HomePageSettings() {
     heroImage: settings.publicPage?.heroImage || "",
     ctaText: settings.publicPage?.ctaText || "",
     ctaLink: settings.publicPage?.ctaLink || "",
+    ctaText2: settings.publicPage?.ctaText2 || "",
+    ctaLink2: settings.publicPage?.ctaLink2 || "",
   });
 
   // Testimonials state
@@ -71,6 +95,7 @@ export default function HomePageSettings() {
 
   const [uploadingTestimonialId, setUploadingTestimonialId] = useState<string>("");
   const [showIconPicker, setShowIconPicker] = useState<string>("");
+  const [iconSearchTerm, setIconSearchTerm] = useState<string>("");
 
   const handleInputChange = useCallback((field: string, value: string) => {
     setFormData((prev) => ({
@@ -198,7 +223,13 @@ export default function HomePageSettings() {
       const payload = {
         publicPage: {
           ...settings.publicPage,
-          ...formData,
+          heroTitle: formData.heroTitle,
+          heroSubtitle: formData.heroSubtitle,
+          heroImage: formData.heroImage,
+          ctaText: formData.ctaText,
+          ctaLink: formData.ctaLink,
+          ctaText2: formData.ctaText2,
+          ctaLink2: formData.ctaLink2,
         },
         homeSettings: {
           testimonials: {
@@ -354,31 +385,72 @@ export default function HomePageSettings() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    CTA Button Text
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.ctaText}
-                    onChange={(e) => handleInputChange("ctaText", e.target.value)}
-                    placeholder="Browse Listings"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
-                  />
-                </div>
+              <div>
+                <h3 className="text-base font-semibold text-[#09391C] mb-4">Call-to-Action Buttons</h3>
+              </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    CTA Link
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.ctaLink}
-                    onChange={(e) => handleInputChange("ctaLink", e.target.value)}
-                    placeholder="/market-place"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
-                  />
+              {/* Primary CTA Button */}
+              <div className="bg-gray-50 rounded-lg p-4 space-y-4 border border-gray-200">
+                <h4 className="font-medium text-gray-900">Primary CTA Button</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Button Text
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.ctaText}
+                      onChange={(e) => handleInputChange("ctaText", e.target.value)}
+                      placeholder="Browse Listings"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Button Link
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.ctaLink}
+                      onChange={(e) => handleInputChange("ctaLink", e.target.value)}
+                      placeholder="/market-place"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Secondary CTA Button */}
+              <div className="bg-gray-50 rounded-lg p-4 space-y-4 border border-gray-200">
+                <h4 className="font-medium text-gray-900">Secondary CTA Button (Optional)</h4>
+                <p className="text-sm text-gray-600">Add a second call-to-action button for additional engagement</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Button Text
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.ctaText2}
+                      onChange={(e) => handleInputChange("ctaText2", e.target.value)}
+                      placeholder="Learn More"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Button Link
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.ctaLink2}
+                      onChange={(e) => handleInputChange("ctaLink2", e.target.value)}
+                      placeholder="/about-us"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -593,34 +665,56 @@ export default function HomePageSettings() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Icon</label>
                   <div className="relative">
                     <button
-                      onClick={() => setShowIconPicker(showIconPicker === item.id ? "" : item.id)}
+                      onClick={() => {
+                        setShowIconPicker(showIconPicker === item.id ? "" : item.id);
+                        if (showIconPicker !== item.id) {
+                          setIconSearchTerm("");
+                        }
+                      }}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200 flex items-center gap-2 justify-between"
                     >
                       <span className="flex items-center gap-2">
                         {React.createElement(getLucideIcon(item.icon), { size: 20 })}
                         {item.icon}
                       </span>
-                      <span className="text-gray-500">▼</span>
+                      <span className={`text-gray-500 transition-transform ${showIconPicker === item.id ? "rotate-180" : ""}`}>▼</span>
                     </button>
 
                     {showIconPicker === item.id && (
-                      <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
-                        <div className="grid grid-cols-4 gap-2 p-3">
-                          {LUCIDE_ICONS.map((iconName) => (
+                      <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg z-50 min-w-96">
+                        {/* Search Input */}
+                        <div className="border-b border-gray-200 p-3">
+                          <input
+                            type="text"
+                            placeholder="Search icons..."
+                            value={iconSearchTerm}
+                            onChange={(e) => setIconSearchTerm(e.target.value)}
+                            autoFocus
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-200"
+                          />
+                        </div>
+
+                        {/* Icon Grid */}
+                        <div className="grid grid-cols-6 gap-2 p-3 max-h-72 overflow-y-auto">
+                          {LUCIDE_ICONS.filter(icon =>
+                            icon.toLowerCase().includes(iconSearchTerm.toLowerCase())
+                          ).map((iconName) => (
                             <button
                               key={iconName}
                               onClick={() => {
                                 updateWhyChooseUsItem(item.id, "icon", iconName);
                                 setShowIconPicker("");
+                                setIconSearchTerm("");
                               }}
                               className={`p-2 rounded-lg flex flex-col items-center gap-1 text-xs transition-colors ${
                                 item.icon === iconName
-                                  ? "bg-emerald-100 text-emerald-700"
-                                  : "hover:bg-gray-100 text-gray-700"
+                                  ? "bg-emerald-100 border border-emerald-500"
+                                  : "hover:bg-gray-100 border border-transparent"
                               }`}
+                              title={iconName}
                             >
                               {React.createElement(getLucideIcon(iconName), { size: 20 })}
-                              <span className="text-xs line-clamp-1">{iconName}</span>
+                              <span className="text-xs line-clamp-2 text-center">{iconName}</span>
                             </button>
                           ))}
                         </div>

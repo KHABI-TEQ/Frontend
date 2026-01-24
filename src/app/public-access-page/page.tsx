@@ -15,6 +15,7 @@ import { URLS } from "@/utils/URLS";
 import { useDealSite } from "@/context/deal-site-context";
 import type { DealSiteLog } from "@/types/api-responses";
 import OverlayPreloader from "@/components/general-components/OverlayPreloader";
+import ConfirmationModal from "@/components/public-access-page/ConfirmationModal";
 
 interface DashboardStats {
   viewsByDay: Array<{ date: string; count: number }>;
@@ -31,6 +32,13 @@ export default function OverviewPage() {
   const [logs, setLogs] = useState<DealSiteLog[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
   const [preloader, setPreloader] = useState(false);
+
+  // Confirmation modal state
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    action?: "pause" | "resume";
+    isLoading?: boolean;
+  }>({ isOpen: false });
 
   const fetchAnalytics = useCallback(async () => {
     try {
@@ -87,29 +95,34 @@ export default function OverviewPage() {
     }
   }, [fetchAnalytics, fetchLogs, settings.publicSlug]);
 
-  const handlePause = useCallback(async () => {
-    setPreloader(true);
-    try {
-      await pauseDealSite();
-      toast.success("Public Access Page paused");
-    } catch (error) {
-      toast.error("Failed to pause page");
-    } finally {
-      setPreloader(false);
-    }
-  }, [pauseDealSite]);
+  const openPauseConfirmation = useCallback(() => {
+    setConfirmModal({ isOpen: true, action: "pause", isLoading: false });
+  }, []);
 
-  const handleResume = useCallback(async () => {
-    setPreloader(true);
+  const openResumeConfirmation = useCallback(() => {
+    setConfirmModal({ isOpen: true, action: "resume", isLoading: false });
+  }, []);
+
+  const handleConfirmAction = useCallback(async () => {
+    setConfirmModal((prev) => ({ ...prev, isLoading: true }));
     try {
-      await resumeDealSite();
-      toast.success("Public Access Page resumed");
+      if (confirmModal.action === "pause") {
+        await pauseDealSite();
+        toast.success("Public Access Page paused successfully");
+      } else if (confirmModal.action === "resume") {
+        await resumeDealSite();
+        toast.success("Public Access Page resumed successfully");
+      }
+      setConfirmModal({ isOpen: false });
     } catch (error) {
-      toast.error("Failed to resume page");
-    } finally {
-      setPreloader(false);
+      toast.error(`Failed to ${confirmModal.action} page`);
+      setConfirmModal((prev) => ({ ...prev, isLoading: false }));
     }
-  }, [resumeDealSite]);
+  }, [confirmModal.action, pauseDealSite, resumeDealSite]);
+
+  const handleCancelAction = useCallback(() => {
+    setConfirmModal({ isOpen: false });
+  }, []);
 
   const copyLink = useCallback(async () => {
     if (!previewUrl) return;
@@ -184,7 +197,7 @@ export default function OverviewPage() {
           <div className="flex items-center gap-2 flex-wrap">
             {!isPaused ? (
               <button
-                onClick={handlePause}
+                onClick={openPauseConfirmation}
                 disabled={isOnHold}
                 className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
@@ -193,7 +206,7 @@ export default function OverviewPage() {
               </button>
             ) : (
               <button
-                onClick={handleResume}
+                onClick={openResumeConfirmation}
                 disabled={isOnHold}
                 className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
@@ -298,6 +311,29 @@ export default function OverviewPage() {
           onClick={() => router.push("/public-access-page/payment")}
         />
       </div>
+
+      {/* Confirmation Modal for Pause/Resume */}
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.action === "pause" ? "Pause Public Access Page?" : "Resume Public Access Page?"}
+        description={
+          confirmModal.action === "pause"
+            ? "Your public access page will no longer be visible to visitors."
+            : "Your public access page will be live again for all visitors."
+        }
+        message={
+          confirmModal.action === "pause"
+            ? "Visitors will see a 'page unavailable' message. You can resume at any time."
+            : "All your listings and settings will be visible immediately."
+        }
+        confirmText={confirmModal.action === "pause" ? "Yes, Pause" : "Yes, Resume"}
+        cancelText="Cancel"
+        isDangerous={confirmModal.action === "pause"}
+        isLoading={confirmModal.isLoading}
+        onConfirm={handleConfirmAction}
+        onCancel={handleCancelAction}
+        icon={confirmModal.action === "pause" ? "alert" : "check"}
+      />
     </div>
   );
 }

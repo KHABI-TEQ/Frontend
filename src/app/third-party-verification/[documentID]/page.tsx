@@ -339,6 +339,12 @@ const ThirdPartyVerificationPage: React.FC = () => {
       if (uploadResponse.success) {
         handleReportChange("newDocumentUrl", uploadResponse.data.url);
         setUploadProgress(100);
+
+        // Reset file input ref so same file can be selected again
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+
         toast.success("Document uploaded successfully");
 
         setTimeout(() => setUploadProgress(undefined), 2000);
@@ -349,6 +355,11 @@ const ThirdPartyVerificationPage: React.FC = () => {
       console.error("Upload error:", error);
       toast.error("Failed to upload document");
       setUploadProgress(undefined);
+
+      // Reset file input ref on error as well
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -520,6 +531,12 @@ const ThirdPartyVerificationPage: React.FC = () => {
               : doc
           )
         );
+
+        // Reset file input ref so same file can be selected again
+        if (dynamicFileInputRefs.current[recordId]) {
+          dynamicFileInputRefs.current[recordId].value = '';
+        }
+
         toast.success("Document uploaded successfully");
 
         setTimeout(() => {
@@ -540,11 +557,20 @@ const ThirdPartyVerificationPage: React.FC = () => {
           doc.id === recordId ? { ...doc, uploadProgress: undefined } : doc
         )
       );
+
+      // Reset file input ref on error as well
+      if (dynamicFileInputRefs.current[recordId]) {
+        dynamicFileInputRefs.current[recordId].value = '';
+      }
     }
   };
 
   const removeDynamicDocumentFile = (id: string) => {
     updateDynamicDocument(id, 'documentFile', '');
+    // Reset file input ref when removing file
+    if (dynamicFileInputRefs.current[id]) {
+      dynamicFileInputRefs.current[id].value = '';
+    }
     toast.success('File removed successfully');
   };
 
@@ -966,18 +992,18 @@ const ThirdPartyVerificationPage: React.FC = () => {
                         
                         {!report.newDocumentUrl ? (
                           <div
-                            className={`relative border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all duration-200 ${
+                            className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 ${
                               dragged
-                                ? "border-[#8DDB90] bg-[#8DDB90]/10"
-                                : "border-gray-300 hover:border-[#8DDB90] hover:bg-gray-50"
+                                ? "border-[#8DDB90] bg-[#8DDB90]/15 shadow-lg"
+                                : "border-gray-300 hover:border-[#8DDB90] hover:bg-[#8DDB90]/5"
                             }`}
                             onDrop={handleFileDrop}
                             onDragOver={handleDragOver}
                             onDragLeave={handleDragLeave}
-                            onClick={() => fileInputRef.current?.click()} // ✅ simpler
+                            onClick={() => fileInputRef.current?.click()}
                           >
                             <input
-                              ref={fileInputRef} // ✅ direct ref
+                              ref={fileInputRef}
                               type="file"
                               onChange={(e) => {
                                 const file = e.target.files?.[0];
@@ -992,26 +1018,30 @@ const ThirdPartyVerificationPage: React.FC = () => {
                                 <div className="flex items-center justify-center">
                                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8DDB90]"></div>
                                 </div>
-                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div className="w-full bg-gray-200 rounded-full h-2.5">
                                   <div
-                                    className="bg-[#8DDB90] h-2 rounded-full transition-all duration-300"
+                                    className="bg-gradient-to-r from-[#0B423D] to-[#8DDB90] h-2.5 rounded-full transition-all duration-300"
                                     style={{ width: `${uploadProgress}%` }}
                                   ></div>
                                 </div>
-                                <p className="text-sm text-gray-600">
+                                <p className="text-sm font-medium text-gray-600">
                                   Uploading... {uploadProgress}%
                                 </p>
                               </div>
                             ) : (
                               <>
-                                <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                                <p className="text-lg font-medium text-gray-700 mb-2">
+                                <div className="flex justify-center mb-4">
+                                  <div className="p-3 bg-gradient-to-br from-[#0B423D] to-[#8DDB90] rounded-xl">
+                                    <Upload className="h-8 w-8 text-white" />
+                                  </div>
+                                </div>
+                                <p className="text-lg font-semibold text-gray-800 mb-2">
                                   Drop your file here or click to browse
                                 </p>
-                                <p className="text-sm text-gray-500 mb-4">
-                                  Supports PDF, JPEG, PNG, WebP up to 10MB
+                                <p className="text-sm text-gray-600 mb-4">
+                                  Supports PDF, JPEG, PNG, WebP up to 50MB
                                 </p>
-                                <div className="inline-flex items-center px-4 py-2 bg-[#0B423D] text-white rounded-lg text-sm font-medium hover:bg-[#0B423D]/90 transition-colors">
+                                <div className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-[#0B423D] to-[#8DDB90] text-white rounded-lg text-sm font-semibold hover:shadow-lg transition-all">
                                   <Upload className="w-4 h-4 mr-2" />
                                   Choose File
                                 </div>
@@ -1019,30 +1049,34 @@ const ThirdPartyVerificationPage: React.FC = () => {
                             )}
                           </div>
                         ) : (
-                          <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                          <div className="border-2 border-green-400 rounded-lg p-4 bg-green-50">
                             <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-3">
-                                {getFileTypeIcon(report.newDocumentUrl)}
-                                <div>
-                                  <p className="text-sm font-medium text-gray-900">
-                                    Verified Document Uploaded
+                              <div className="flex items-center space-x-3 flex-1">
+                                <div className="flex-shrink-0">
+                                  <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-green-100">
+                                    <CheckCircle className="w-6 h-6 text-green-600" />
+                                  </div>
+                                </div>
+                                <div className="flex-1">
+                                  <p className="text-sm font-semibold text-green-900">
+                                    Verification Report Uploaded Successfully
                                   </p>
-                                  <p className="text-xs text-gray-500">
+                                  <p className="text-xs text-green-700 mt-1">
                                     Ready for submission
                                   </p>
                                 </div>
                               </div>
                               <div className="flex items-center space-x-2">
                                 <button
-                                  onClick={() => window.open(report.newDocumentUrl, '_blank')}
-                                  className="p-2 text-gray-400 hover:text-[#0B423D] transition-colors"
+                                  onClick={() => handleDocumentPreview(report.newDocumentUrl)}
+                                  className="p-2.5 text-green-600 bg-white border border-green-200 rounded-lg hover:bg-green-50 transition-colors"
                                   title="Preview uploaded document"
                                 >
                                   <Eye className="w-4 h-4" />
                                 </button>
                                 <button
                                   onClick={() => removeUploadedFile()}
-                                  className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                                  className="p-2.5 text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
                                   title="Remove uploaded document"
                                 >
                                   <Trash2 className="w-4 h-4" />
@@ -1121,7 +1155,7 @@ const ThirdPartyVerificationPage: React.FC = () => {
                                 </label>
                                 {!doc.documentFile ? (
                                   <div
-                                    className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-[#8DDB90] hover:bg-white transition-all"
+                                    className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer hover:border-[#8DDB90] hover:bg-[#8DDB90]/5 transition-all"
                                     onClick={() => dynamicFileInputRefs.current[doc.id]?.click()}
                                   >
                                     <input
@@ -1138,38 +1172,48 @@ const ThirdPartyVerificationPage: React.FC = () => {
                                     />
                                     {doc.uploadProgress !== undefined ? (
                                       <div className="space-y-2">
-                                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#8DDB90] mx-auto"></div>
-                                        <p className="text-sm text-gray-600">Uploading... {doc.uploadProgress}%</p>
+                                        <div className="flex justify-center">
+                                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#8DDB90]"></div>
+                                        </div>
+                                        <p className="text-sm font-medium text-gray-600">Uploading... {doc.uploadProgress}%</p>
                                       </div>
                                     ) : (
                                       <>
-                                        <Upload className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-                                        <p className="text-sm font-medium text-gray-700">Click to upload</p>
-                                        <p className="text-xs text-gray-500">PDF, Images, or Documents</p>
+                                        <div className="flex justify-center mb-2">
+                                          <Upload className="h-6 w-6 text-gray-400" />
+                                        </div>
+                                        <p className="text-sm font-semibold text-gray-700">Click to upload</p>
+                                        <p className="text-xs text-gray-500 mt-1">PDF, Images, or Documents (up to 50MB)</p>
                                       </>
                                     )}
                                   </div>
                                 ) : (
-                                  <div className="border border-gray-200 rounded-lg p-4 bg-white">
+                                  <div className="border-2 border-green-400 rounded-lg p-4 bg-green-50">
                                     <div className="flex items-center justify-between">
-                                      <div className="flex items-center space-x-3">
-                                        {getFileTypeIcon(doc.documentFile)}
-                                        <div>
-                                          <p className="text-sm font-medium text-gray-900">File uploaded</p>
-                                          <p className="text-xs text-gray-500">Ready to submit</p>
+                                      <div className="flex items-center space-x-3 flex-1">
+                                        <div className="flex-shrink-0">
+                                          <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-green-100">
+                                            <CheckCircle className="w-6 h-6 text-green-600" />
+                                          </div>
+                                        </div>
+                                        <div className="flex-1">
+                                          <p className="text-sm font-semibold text-green-900">File Uploaded Successfully</p>
+                                          <p className="text-xs text-green-700 mt-1">
+                                            Ready for submission
+                                          </p>
                                         </div>
                                       </div>
                                       <div className="flex items-center space-x-2">
                                         <button
-                                          onClick={() => window.open(doc.documentFile, '_blank')}
-                                          className="p-2 text-gray-400 hover:text-[#0B423D] transition-colors"
+                                          onClick={() => handleDocumentPreview(doc.documentFile)}
+                                          className="p-2.5 text-green-600 bg-white border border-green-200 rounded-lg hover:bg-green-50 transition-colors"
                                           title="Preview document"
                                         >
                                           <Eye className="w-4 h-4" />
                                         </button>
                                         <button
                                           onClick={() => removeDynamicDocumentFile(doc.id)}
-                                          className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                                          className="p-2.5 text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
                                           title="Remove document"
                                         >
                                           <Trash2 className="w-4 h-4" />

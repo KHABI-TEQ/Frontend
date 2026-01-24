@@ -65,15 +65,22 @@ export default function PreferencesRequestsPage() {
 
       if (response?.success && response?.data) {
         const prefsArray = Array.isArray(response.data) ? response.data : [];
-        setPreferences(prefsArray);
+
+        // Validate and sanitize preferences data
+        const validPreferences = prefsArray.map((pref: any) => ({
+          ...pref,
+          location: pref.location && typeof pref.location === 'object' ? pref.location : undefined
+        }));
+
+        setPreferences(validPreferences);
 
         // Set pagination info
         if (response.pagination) {
           setTotalPages(response.pagination.pages || 1);
-          setTotalItems(response.pagination.total || prefsArray.length);
+          setTotalItems(response.pagination.total || validPreferences.length);
         } else {
           setTotalPages(1);
-          setTotalItems(prefsArray.length);
+          setTotalItems(validPreferences.length);
         }
       } else {
         setPreferences([]);
@@ -112,32 +119,48 @@ export default function PreferencesRequestsPage() {
     }).format(amount);
   };
 
-  const formatLocation = (location?: {
-    state?: string;
-    localGovernmentAreas?: string[];
-    lgasWithAreas?: Array<{ lgaName: string; areas: string[] }>;
-    customLocation?: string;
-  }): string => {
+  const formatLocation = (location?: any): string => {
     if (!location) return "—";
 
-    const parts: string[] = [];
+    try {
+      // Defensive check: ensure location is an object
+      if (typeof location !== 'object') {
+        return String(location);
+      }
 
-    if (location.state) {
-      parts.push(location.state);
+      const parts: string[] = [];
+
+      // Add state
+      if (location.state && typeof location.state === 'string') {
+        parts.push(location.state.trim());
+      }
+
+      // Add local government areas
+      if (location.lgasWithAreas && Array.isArray(location.lgasWithAreas) && location.lgasWithAreas.length > 0) {
+        const lgaNames = location.lgasWithAreas
+          .filter((lga: any) => lga && typeof lga === 'object' && lga.lgaName)
+          .map((lga: any) => String(lga.lgaName).trim())
+          .filter((name: string) => name.length > 0)
+          .join(", ");
+        if (lgaNames) parts.push(lgaNames);
+      } else if (location.localGovernmentAreas && Array.isArray(location.localGovernmentAreas) && location.localGovernmentAreas.length > 0) {
+        const lgaNames = location.localGovernmentAreas
+          .map((lga: any) => String(lga).trim())
+          .filter((name: string) => name.length > 0)
+          .join(", ");
+        if (lgaNames) parts.push(lgaNames);
+      }
+
+      // Add custom location
+      if (location.customLocation && typeof location.customLocation === 'string') {
+        parts.push(location.customLocation.trim());
+      }
+
+      return parts.length > 0 ? parts.join(", ") : "—";
+    } catch (error) {
+      console.error("Error formatting location:", location, error);
+      return "—";
     }
-
-    if (location.lgasWithAreas && location.lgasWithAreas.length > 0) {
-      const lgaNames = location.lgasWithAreas.map((lga) => lga.lgaName).join(", ");
-      parts.push(lgaNames);
-    } else if (location.localGovernmentAreas && location.localGovernmentAreas.length > 0) {
-      parts.push(location.localGovernmentAreas.join(", "));
-    }
-
-    if (location.customLocation) {
-      parts.push(location.customLocation);
-    }
-
-    return parts.length > 0 ? parts.join(", ") : "—";
   };
 
   const formatDate = (dateString?: string) => {
@@ -303,7 +326,7 @@ export default function PreferencesRequestsPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-gray-600">{formatLocation(pref.location)}</span>
+                        <span className="text-gray-600">{String(formatLocation(pref.location))}</span>
                       </td>
                       <td className="px-6 py-4">
                         <span className="text-gray-600 text-xs">{formatDate(pref.createdAt)}</span>
