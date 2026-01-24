@@ -33,6 +33,13 @@ export default function OverviewPage() {
   const [logsLoading, setLogsLoading] = useState(false);
   const [preloader, setPreloader] = useState(false);
 
+  // Confirmation modal state
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    action?: "pause" | "resume";
+    isLoading?: boolean;
+  }>({ isOpen: false });
+
   const fetchAnalytics = useCallback(async () => {
     try {
       const token = Cookies.get("token");
