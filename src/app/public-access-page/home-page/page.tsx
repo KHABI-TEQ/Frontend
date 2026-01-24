@@ -616,34 +616,56 @@ export default function HomePageSettings() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Icon</label>
                   <div className="relative">
                     <button
-                      onClick={() => setShowIconPicker(showIconPicker === item.id ? "" : item.id)}
+                      onClick={() => {
+                        setShowIconPicker(showIconPicker === item.id ? "" : item.id);
+                        if (showIconPicker !== item.id) {
+                          setIconSearchTerm("");
+                        }
+                      }}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200 flex items-center gap-2 justify-between"
                     >
                       <span className="flex items-center gap-2">
                         {React.createElement(getLucideIcon(item.icon), { size: 20 })}
                         {item.icon}
                       </span>
-                      <span className="text-gray-500">▼</span>
+                      <span className={`text-gray-500 transition-transform ${showIconPicker === item.id ? "rotate-180" : ""}`}>▼</span>
                     </button>
 
                     {showIconPicker === item.id && (
-                      <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
-                        <div className="grid grid-cols-4 gap-2 p-3">
-                          {LUCIDE_ICONS.map((iconName) => (
+                      <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg z-50 min-w-96">
+                        {/* Search Input */}
+                        <div className="border-b border-gray-200 p-3">
+                          <input
+                            type="text"
+                            placeholder="Search icons..."
+                            value={iconSearchTerm}
+                            onChange={(e) => setIconSearchTerm(e.target.value)}
+                            autoFocus
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-200"
+                          />
+                        </div>
+
+                        {/* Icon Grid */}
+                        <div className="grid grid-cols-6 gap-2 p-3 max-h-72 overflow-y-auto">
+                          {LUCIDE_ICONS.filter(icon =>
+                            icon.toLowerCase().includes(iconSearchTerm.toLowerCase())
+                          ).map((iconName) => (
                             <button
                               key={iconName}
                               onClick={() => {
                                 updateWhyChooseUsItem(item.id, "icon", iconName);
                                 setShowIconPicker("");
+                                setIconSearchTerm("");
                               }}
                               className={`p-2 rounded-lg flex flex-col items-center gap-1 text-xs transition-colors ${
                                 item.icon === iconName
-                                  ? "bg-emerald-100 text-emerald-700"
-                                  : "hover:bg-gray-100 text-gray-700"
+                                  ? "bg-emerald-100 border border-emerald-500"
+                                  : "hover:bg-gray-100 border border-transparent"
                               }`}
+                              title={iconName}
                             >
                               {React.createElement(getLucideIcon(iconName), { size: 20 })}
-                              <span className="text-xs line-clamp-1">{iconName}</span>
+                              <span className="text-xs line-clamp-2 text-center">{iconName}</span>
                             </button>
                           ))}
                         </div>
