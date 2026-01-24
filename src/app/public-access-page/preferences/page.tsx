@@ -293,9 +293,9 @@ export default function PreferencesRequestsPage() {
                       </td>
                       <td className="px-6 py-4">
                         <span className="text-gray-600">
-                          {pref.budget?.min || pref.budget?.max ? (
+                          {pref.budget?.min || pref.budget?.minPrice || pref.budget?.max || pref.budget?.maxPrice ? (
                             <>
-                              {formatCurrency(pref.budget?.min)} - {formatCurrency(pref.budget?.max)}
+                              {formatCurrency(pref.budget?.min || pref.budget?.minPrice)} - {formatCurrency(pref.budget?.max || pref.budget?.maxPrice)}
                             </>
                           ) : (
                             "—"
@@ -303,7 +303,7 @@ export default function PreferencesRequestsPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-gray-600">{pref.location || "—"}</span>
+                        <span className="text-gray-600">{formatLocation(pref.location)}</span>
                       </td>
                       <td className="px-6 py-4">
                         <span className="text-gray-600 text-xs">{formatDate(pref.createdAt)}</span>
