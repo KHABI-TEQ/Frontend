@@ -60,6 +60,8 @@ export interface HomepagePayload {
     heroImage?: string;
     ctaText: string;
     ctaLink: string;
+    ctaText2?: string;
+    ctaLink2?: string;
   };
   homeSettings?: {
     testimonials?: {
