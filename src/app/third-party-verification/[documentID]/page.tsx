@@ -1155,7 +1155,7 @@ const ThirdPartyVerificationPage: React.FC = () => {
                                 </label>
                                 {!doc.documentFile ? (
                                   <div
-                                    className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-[#8DDB90] hover:bg-white transition-all"
+                                    className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer hover:border-[#8DDB90] hover:bg-[#8DDB90]/5 transition-all"
                                     onClick={() => dynamicFileInputRefs.current[doc.id]?.click()}
                                   >
                                     <input
@@ -1172,14 +1172,18 @@ const ThirdPartyVerificationPage: React.FC = () => {
                                     />
                                     {doc.uploadProgress !== undefined ? (
                                       <div className="space-y-2">
-                                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#8DDB90] mx-auto"></div>
-                                        <p className="text-sm text-gray-600">Uploading... {doc.uploadProgress}%</p>
+                                        <div className="flex justify-center">
+                                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#8DDB90]"></div>
+                                        </div>
+                                        <p className="text-sm font-medium text-gray-600">Uploading... {doc.uploadProgress}%</p>
                                       </div>
                                     ) : (
                                       <>
-                                        <Upload className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-                                        <p className="text-sm font-medium text-gray-700">Click to upload</p>
-                                        <p className="text-xs text-gray-500">PDF, Images, or Documents</p>
+                                        <div className="flex justify-center mb-2">
+                                          <Upload className="h-6 w-6 text-gray-400" />
+                                        </div>
+                                        <p className="text-sm font-semibold text-gray-700">Click to upload</p>
+                                        <p className="text-xs text-gray-500 mt-1">PDF, Images, or Documents (up to 50MB)</p>
                                       </>
                                     )}
                                   </div>
