@@ -319,7 +319,7 @@ export default function PreferencesRequestsPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-gray-600">{formatLocation(pref.location)}</span>
+                        <span className="text-gray-600">{String(formatLocation(pref.location))}</span>
                       </td>
                       <td className="px-6 py-4">
                         <span className="text-gray-600 text-xs">{formatDate(pref.createdAt)}</span>
