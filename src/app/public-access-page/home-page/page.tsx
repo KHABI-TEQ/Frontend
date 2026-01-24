@@ -93,6 +93,7 @@ export default function HomePageSettings() {
 
   const [uploadingTestimonialId, setUploadingTestimonialId] = useState<string>("");
   const [showIconPicker, setShowIconPicker] = useState<string>("");
+  const [iconSearchTerm, setIconSearchTerm] = useState<string>("");
 
   const handleInputChange = useCallback((field: string, value: string) => {
     setFormData((prev) => ({
