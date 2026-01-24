@@ -95,29 +95,34 @@ export default function OverviewPage() {
     }
   }, [fetchAnalytics, fetchLogs, settings.publicSlug]);
 
-  const handlePause = useCallback(async () => {
-    setPreloader(true);
-    try {
-      await pauseDealSite();
-      toast.success("Public Access Page paused");
-    } catch (error) {
-      toast.error("Failed to pause page");
-    } finally {
-      setPreloader(false);
-    }
-  }, [pauseDealSite]);
+  const openPauseConfirmation = useCallback(() => {
+    setConfirmModal({ isOpen: true, action: "pause", isLoading: false });
+  }, []);
 
-  const handleResume = useCallback(async () => {
-    setPreloader(true);
+  const openResumeConfirmation = useCallback(() => {
+    setConfirmModal({ isOpen: true, action: "resume", isLoading: false });
+  }, []);
+
+  const handleConfirmAction = useCallback(async () => {
+    setConfirmModal((prev) => ({ ...prev, isLoading: true }));
     try {
-      await resumeDealSite();
-      toast.success("Public Access Page resumed");
+      if (confirmModal.action === "pause") {
+        await pauseDealSite();
+        toast.success("Public Access Page paused successfully");
+      } else if (confirmModal.action === "resume") {
+        await resumeDealSite();
+        toast.success("Public Access Page resumed successfully");
+      }
+      setConfirmModal({ isOpen: false });
     } catch (error) {
-      toast.error("Failed to resume page");
-    } finally {
-      setPreloader(false);
+      toast.error(`Failed to ${confirmModal.action} page`);
+      setConfirmModal((prev) => ({ ...prev, isLoading: false }));
     }
-  }, [resumeDealSite]);
+  }, [confirmModal.action, pauseDealSite, resumeDealSite]);
+
+  const handleCancelAction = useCallback(() => {
+    setConfirmModal({ isOpen: false });
+  }, []);
 
   const copyLink = useCallback(async () => {
     if (!previewUrl) return;
