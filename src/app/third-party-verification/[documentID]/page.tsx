@@ -520,6 +520,12 @@ const ThirdPartyVerificationPage: React.FC = () => {
               : doc
           )
         );
+
+        // Reset file input ref so same file can be selected again
+        if (dynamicFileInputRefs.current[recordId]) {
+          dynamicFileInputRefs.current[recordId].value = '';
+        }
+
         toast.success("Document uploaded successfully");
 
         setTimeout(() => {
@@ -540,6 +546,11 @@ const ThirdPartyVerificationPage: React.FC = () => {
           doc.id === recordId ? { ...doc, uploadProgress: undefined } : doc
         )
       );
+
+      // Reset file input ref on error as well
+      if (dynamicFileInputRefs.current[recordId]) {
+        dynamicFileInputRefs.current[recordId].value = '';
+      }
     }
   };
 
