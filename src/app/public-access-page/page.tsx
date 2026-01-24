@@ -311,6 +311,29 @@ export default function OverviewPage() {
           onClick={() => router.push("/public-access-page/payment")}
         />
       </div>
+
+      {/* Confirmation Modal for Pause/Resume */}
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.action === "pause" ? "Pause Public Access Page?" : "Resume Public Access Page?"}
+        description={
+          confirmModal.action === "pause"
+            ? "Your public access page will no longer be visible to visitors."
+            : "Your public access page will be live again for all visitors."
+        }
+        message={
+          confirmModal.action === "pause"
+            ? "Visitors will see a 'page unavailable' message. You can resume at any time."
+            : "All your listings and settings will be visible immediately."
+        }
+        confirmText={confirmModal.action === "pause" ? "Yes, Pause" : "Yes, Resume"}
+        cancelText="Cancel"
+        isDangerous={confirmModal.action === "pause"}
+        isLoading={confirmModal.isLoading}
+        onConfirm={handleConfirmAction}
+        onCancel={handleCancelAction}
+        icon={confirmModal.action === "pause" ? "alert" : "check"}
+      />
     </div>
   );
 }
