@@ -158,7 +158,7 @@ export default function AboutPage() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Description (with WYSIWYG Editor)
+            Description
           </label>
           <WYSIWYGEditor
             value={aboutData.whoWeAre?.description || ""}
@@ -200,7 +200,7 @@ export default function AboutPage() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Description (with WYSIWYG Editor)
+            Description
           </label>
           <WYSIWYGEditor
             value={aboutData.ourMission?.description || ""}
@@ -242,7 +242,7 @@ export default function AboutPage() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Description (with WYSIWYG Editor)
+            Description
           </label>
           <WYSIWYGEditor
             value={aboutData.ourExperience?.description || ""}
@@ -284,7 +284,7 @@ export default function AboutPage() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Description (with WYSIWYG Editor)
+            Description
           </label>
           <WYSIWYGEditor
             value={aboutData.whatWeStandFor?.description || ""}
@@ -867,7 +867,7 @@ export default function AboutPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Bio (with WYSIWYG Editor)
+                      Bio
                     </label>
                     <WYSIWYGEditor
                       value={member.bio || ""}
