@@ -18,22 +18,35 @@ export default function WYSIWYGEditor({
 }: WYSIWYGEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const [isFocused, setIsFocused] = useState(false);
+  const [isEmpty, setIsEmpty] = useState(!value);
 
   useEffect(() => {
-    if (editorRef.current && editorRef.current.innerHTML !== value) {
-      editorRef.current.innerHTML = value || "";
+    if (editorRef.current) {
+      // Only update innerHTML if it's different from current value
+      const currentHTML = editorRef.current.innerHTML;
+      if (currentHTML !== value) {
+        editorRef.current.innerHTML = value;
+      }
+      setIsEmpty(!value || value.trim() === "");
     }
   }, [value]);
 
   const executeCommand = (command: string, value?: string) => {
-    document.execCommand(command, false, value);
+    try {
+      document.execCommand(command, false, value);
+    } catch (error) {
+      console.error("Command failed:", command, error);
+    }
     editorRef.current?.focus();
     handleChange();
   };
 
   const handleChange = () => {
     if (editorRef.current) {
-      onChange(editorRef.current.innerHTML);
+      const htmlContent = editorRef.current.innerHTML;
+      const isEmpty = !htmlContent || htmlContent.trim() === "" || htmlContent === "<br>";
+      setIsEmpty(isEmpty);
+      onChange(htmlContent);
     }
   };
 
@@ -48,8 +61,30 @@ export default function WYSIWYGEditor({
     handleChange();
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Handle Tab key to insert spaces instead of changing focus
+    if (e.key === "Tab") {
+      e.preventDefault();
+      document.execCommand("insertText", false, "  ");
+      handleChange();
+    }
+  };
+
+  const handleFocus = () => {
+    setIsFocused(true);
+    // Clear placeholder text if it exists
+    if (editorRef.current && isEmpty) {
+      editorRef.current.innerHTML = "";
+    }
+  };
+
+  const handleBlur = () => {
+    setIsFocused(false);
+    handleChange();
+  };
+
   const buttonClass =
-    "p-2 rounded border border-gray-300 hover:bg-gray-100 transition-colors text-gray-700 hover:text-gray-900 active:bg-gray-200";
+    "p-2 rounded border border-gray-300 hover:bg-gray-100 transition-colors text-gray-700 hover:text-gray-900 active:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed";
 
   return (
     <div className="border border-gray-300 rounded-lg overflow-hidden">
@@ -57,7 +92,10 @@ export default function WYSIWYGEditor({
       <div className="bg-gray-50 border-b border-gray-300 p-2 flex flex-wrap gap-1">
         <button
           type="button"
-          onClick={() => executeCommand("bold")}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            executeCommand("bold");
+          }}
           className={buttonClass}
           title="Bold (Ctrl+B)"
         >
@@ -65,7 +103,10 @@ export default function WYSIWYGEditor({
         </button>
         <button
           type="button"
-          onClick={() => executeCommand("italic")}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            executeCommand("italic");
+          }}
           className={buttonClass}
           title="Italic (Ctrl+I)"
         >
@@ -73,7 +114,10 @@ export default function WYSIWYGEditor({
         </button>
         <button
           type="button"
-          onClick={() => executeCommand("underline")}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            executeCommand("underline");
+          }}
           className={buttonClass}
           title="Underline (Ctrl+U)"
         >
@@ -84,7 +128,10 @@ export default function WYSIWYGEditor({
 
         <button
           type="button"
-          onClick={() => executeCommand("insertUnorderedList")}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            executeCommand("insertUnorderedList");
+          }}
           className={buttonClass}
           title="Bullet List"
         >
@@ -92,7 +139,10 @@ export default function WYSIWYGEditor({
         </button>
         <button
           type="button"
-          onClick={() => executeCommand("insertOrderedList")}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            executeCommand("insertOrderedList");
+          }}
           className={buttonClass}
           title="Numbered List"
         >
@@ -102,6 +152,9 @@ export default function WYSIWYGEditor({
         <div className="w-px bg-gray-300 mx-1" />
 
         <select
+          onMouseDown={(e) => {
+            e.preventDefault();
+          }}
           onChange={(e) => {
             if (e.target.value) {
               executeCommand("formatBlock", `<${e.target.value}>`);
@@ -122,7 +175,10 @@ export default function WYSIWYGEditor({
 
         <button
           type="button"
-          onClick={() => executeCommand("removeFormat")}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            executeCommand("removeFormat");
+          }}
           className={buttonClass}
           title="Clear Formatting"
         >
@@ -137,19 +193,29 @@ export default function WYSIWYGEditor({
         suppressContentEditableWarning
         onInput={handleInput}
         onPaste={handlePaste}
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
+        onKeyDown={handleKeyDown}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         style={{
           minHeight,
           outline: isFocused ? "2px solid #10b981" : "none",
-          outlineOffset: isFocused ? "0px" : "0px",
+          outlineOffset: "0px",
         }}
-        className="px-4 py-3 bg-white text-gray-900 text-sm leading-relaxed focus:outline-none"
+        className="px-4 py-3 bg-white text-gray-900 text-sm leading-relaxed focus:outline-none relative"
+        data-placeholder={isEmpty && !isFocused ? placeholder : ""}
       >
-        {!value && placeholder && (
-          <span className="text-gray-400">{placeholder}</span>
-        )}
       </div>
+      
+      {/* Placeholder fallback for when empty */}
+      {isEmpty && !isFocused && (
+        <style>{`
+          [data-placeholder]:empty:before {
+            content: attr(data-placeholder);
+            color: #9ca3af;
+            pointer-events: none;
+          }
+        `}</style>
+      )}
     </div>
   );
 }

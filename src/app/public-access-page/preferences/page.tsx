@@ -18,8 +18,18 @@ interface Preference {
   budget?: {
     min?: number;
     max?: number;
+    minPrice?: number;
+    maxPrice?: number;
   };
-  location?: string;
+  location?: {
+    state?: string;
+    localGovernmentAreas?: string[];
+    lgasWithAreas?: Array<{
+      lgaName: string;
+      areas: string[];
+    }>;
+    customLocation?: string;
+  };
   status?: string;
   createdAt?: string;
 }
@@ -102,6 +112,34 @@ export default function PreferencesRequestsPage() {
     }).format(amount);
   };
 
+  const formatLocation = (location?: {
+    state?: string;
+    localGovernmentAreas?: string[];
+    lgasWithAreas?: Array<{ lgaName: string; areas: string[] }>;
+    customLocation?: string;
+  }): string => {
+    if (!location) return "—";
+
+    const parts: string[] = [];
+
+    if (location.state) {
+      parts.push(location.state);
+    }
+
+    if (location.lgasWithAreas && location.lgasWithAreas.length > 0) {
+      const lgaNames = location.lgasWithAreas.map((lga) => lga.lgaName).join(", ");
+      parts.push(lgaNames);
+    } else if (location.localGovernmentAreas && location.localGovernmentAreas.length > 0) {
+      parts.push(location.localGovernmentAreas.join(", "));
+    }
+
+    if (location.customLocation) {
+      parts.push(location.customLocation);
+    }
+
+    return parts.length > 0 ? parts.join(", ") : "—";
+  };
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return "—";
     return new Date(dateString).toLocaleDateString("en-NG", {
@@ -123,9 +161,9 @@ export default function PreferencesRequestsPage() {
       pref.email || "",
       pref.phoneNumber || "",
       pref.propertyType || "",
-      pref.budget?.min || "",
-      pref.budget?.max || "",
-      pref.location || "",
+      pref.budget?.min || pref.budget?.minPrice || "",
+      pref.budget?.max || pref.budget?.maxPrice || "",
+      formatLocation(pref.location),
       formatDate(pref.createdAt),
     ]);
 
@@ -255,9 +293,9 @@ export default function PreferencesRequestsPage() {
                       </td>
                       <td className="px-6 py-4">
                         <span className="text-gray-600">
-                          {pref.budget?.min || pref.budget?.max ? (
+                          {pref.budget?.min || pref.budget?.minPrice || pref.budget?.max || pref.budget?.maxPrice ? (
                             <>
-                              {formatCurrency(pref.budget?.min)} - {formatCurrency(pref.budget?.max)}
+                              {formatCurrency(pref.budget?.min || pref.budget?.minPrice)} - {formatCurrency(pref.budget?.max || pref.budget?.maxPrice)}
                             </>
                           ) : (
                             "—"
@@ -265,7 +303,7 @@ export default function PreferencesRequestsPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-gray-600">{pref.location || "—"}</span>
+                        <span className="text-gray-600">{formatLocation(pref.location)}</span>
                       </td>
                       <td className="px-6 py-4">
                         <span className="text-gray-600 text-xs">{formatDate(pref.createdAt)}</span>
