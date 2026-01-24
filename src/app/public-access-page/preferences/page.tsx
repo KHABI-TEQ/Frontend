@@ -18,8 +18,18 @@ interface Preference {
   budget?: {
     min?: number;
     max?: number;
+    minPrice?: number;
+    maxPrice?: number;
   };
-  location?: string;
+  location?: {
+    state?: string;
+    localGovernmentAreas?: string[];
+    lgasWithAreas?: Array<{
+      lgaName: string;
+      areas: string[];
+    }>;
+    customLocation?: string;
+  };
   status?: string;
   createdAt?: string;
 }
