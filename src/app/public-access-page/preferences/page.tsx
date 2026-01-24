@@ -161,9 +161,9 @@ export default function PreferencesRequestsPage() {
       pref.email || "",
       pref.phoneNumber || "",
       pref.propertyType || "",
-      pref.budget?.min || "",
-      pref.budget?.max || "",
-      pref.location || "",
+      pref.budget?.min || pref.budget?.minPrice || "",
+      pref.budget?.max || pref.budget?.maxPrice || "",
+      formatLocation(pref.location),
       formatDate(pref.createdAt),
     ]);
 
