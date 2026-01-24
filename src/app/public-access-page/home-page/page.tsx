@@ -223,7 +223,13 @@ export default function HomePageSettings() {
       const payload = {
         publicPage: {
           ...settings.publicPage,
-          ...formData,
+          heroTitle: formData.heroTitle,
+          heroSubtitle: formData.heroSubtitle,
+          heroImage: formData.heroImage,
+          ctaText: formData.ctaText,
+          ctaLink: formData.ctaLink,
+          ctaText2: formData.ctaText2,
+          ctaLink2: formData.ctaLink2,
         },
         homeSettings: {
           testimonials: {
