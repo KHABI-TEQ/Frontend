@@ -339,6 +339,12 @@ const ThirdPartyVerificationPage: React.FC = () => {
       if (uploadResponse.success) {
         handleReportChange("newDocumentUrl", uploadResponse.data.url);
         setUploadProgress(100);
+
+        // Reset file input ref so same file can be selected again
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+
         toast.success("Document uploaded successfully");
 
         setTimeout(() => setUploadProgress(undefined), 2000);
@@ -349,6 +355,11 @@ const ThirdPartyVerificationPage: React.FC = () => {
       console.error("Upload error:", error);
       toast.error("Failed to upload document");
       setUploadProgress(undefined);
+
+      // Reset file input ref on error as well
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
