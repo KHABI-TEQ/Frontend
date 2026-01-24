@@ -112,6 +112,34 @@ export default function PreferencesRequestsPage() {
     }).format(amount);
   };
 
+  const formatLocation = (location?: {
+    state?: string;
+    localGovernmentAreas?: string[];
+    lgasWithAreas?: Array<{ lgaName: string; areas: string[] }>;
+    customLocation?: string;
+  }): string => {
+    if (!location) return "—";
+
+    const parts: string[] = [];
+
+    if (location.state) {
+      parts.push(location.state);
+    }
+
+    if (location.lgasWithAreas && location.lgasWithAreas.length > 0) {
+      const lgaNames = location.lgasWithAreas.map((lga) => lga.lgaName).join(", ");
+      parts.push(lgaNames);
+    } else if (location.localGovernmentAreas && location.localGovernmentAreas.length > 0) {
+      parts.push(location.localGovernmentAreas.join(", "));
+    }
+
+    if (location.customLocation) {
+      parts.push(location.customLocation);
+    }
+
+    return parts.length > 0 ? parts.join(", ") : "—";
+  };
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return "—";
     return new Date(dateString).toLocaleDateString("en-NG", {
