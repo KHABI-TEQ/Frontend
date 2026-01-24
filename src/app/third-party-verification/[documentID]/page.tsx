@@ -1041,30 +1041,34 @@ const ThirdPartyVerificationPage: React.FC = () => {
                             )}
                           </div>
                         ) : (
-                          <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                          <div className="border-2 border-green-400 rounded-lg p-4 bg-green-50">
                             <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-3">
-                                {getFileTypeIcon(report.newDocumentUrl)}
-                                <div>
-                                  <p className="text-sm font-medium text-gray-900">
-                                    Verified Document Uploaded
+                              <div className="flex items-center space-x-3 flex-1">
+                                <div className="flex-shrink-0">
+                                  <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-green-100">
+                                    <CheckCircle className="w-6 h-6 text-green-600" />
+                                  </div>
+                                </div>
+                                <div className="flex-1">
+                                  <p className="text-sm font-semibold text-green-900">
+                                    Verification Report Uploaded Successfully
                                   </p>
-                                  <p className="text-xs text-gray-500">
+                                  <p className="text-xs text-green-700 mt-1">
                                     Ready for submission
                                   </p>
                                 </div>
                               </div>
                               <div className="flex items-center space-x-2">
                                 <button
-                                  onClick={() => window.open(report.newDocumentUrl, '_blank')}
-                                  className="p-2 text-gray-400 hover:text-[#0B423D] transition-colors"
+                                  onClick={() => handleDocumentPreview(report.newDocumentUrl)}
+                                  className="p-2.5 text-green-600 bg-white border border-green-200 rounded-lg hover:bg-green-50 transition-colors"
                                   title="Preview uploaded document"
                                 >
                                   <Eye className="w-4 h-4" />
                                 </button>
                                 <button
                                   onClick={() => removeUploadedFile()}
-                                  className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                                  className="p-2.5 text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
                                   title="Remove uploaded document"
                                 >
                                   <Trash2 className="w-4 h-4" />
