@@ -379,31 +379,72 @@ export default function HomePageSettings() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    CTA Button Text
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.ctaText}
-                    onChange={(e) => handleInputChange("ctaText", e.target.value)}
-                    placeholder="Browse Listings"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
-                  />
-                </div>
+              <div>
+                <h3 className="text-base font-semibold text-[#09391C] mb-4">Call-to-Action Buttons</h3>
+              </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    CTA Link
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.ctaLink}
-                    onChange={(e) => handleInputChange("ctaLink", e.target.value)}
-                    placeholder="/market-place"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
-                  />
+              {/* Primary CTA Button */}
+              <div className="bg-gray-50 rounded-lg p-4 space-y-4 border border-gray-200">
+                <h4 className="font-medium text-gray-900">Primary CTA Button</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Button Text
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.ctaText}
+                      onChange={(e) => handleInputChange("ctaText", e.target.value)}
+                      placeholder="Browse Listings"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Button Link
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.ctaLink}
+                      onChange={(e) => handleInputChange("ctaLink", e.target.value)}
+                      placeholder="/market-place"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Secondary CTA Button */}
+              <div className="bg-gray-50 rounded-lg p-4 space-y-4 border border-gray-200">
+                <h4 className="font-medium text-gray-900">Secondary CTA Button (Optional)</h4>
+                <p className="text-sm text-gray-600">Add a second call-to-action button for additional engagement</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Button Text
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.ctaText2}
+                      onChange={(e) => handleInputChange("ctaText2", e.target.value)}
+                      placeholder="Learn More"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Button Link
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.ctaLink2}
+                      onChange={(e) => handleInputChange("ctaLink2", e.target.value)}
+                      placeholder="/about-us"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
