@@ -94,7 +94,10 @@ const ThirdPartyVerificationPage: React.FC = () => {
 
   useEffect(() => {
     if (documentID) {
-      checkDocuemntStatus();
+      // Check status first, then fetch document details
+      checkDocuemntStatus().then(() => {
+        fetchDocumentDetails();
+      });
     }
   }, [documentID]);
 
