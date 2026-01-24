@@ -495,9 +495,11 @@ const ThirdPartyVerificationPage: React.FC = () => {
       formData.append("file", file);
       formData.append("for", "default");
 
-      setDynamicDocuments(dynamicDocuments.map(doc =>
-        doc.id === recordId ? { ...doc, uploadProgress: 0 } : doc
-      ));
+      setDynamicDocuments(prevDocs =>
+        prevDocs.map(doc =>
+          doc.id === recordId ? { ...doc, uploadProgress: 0 } : doc
+        )
+      );
 
       const uploadResponse = await POST_REQUEST_FILE_UPLOAD(
         `${URLS.BASE}${URLS.uploadSingleImg}`,
@@ -505,16 +507,22 @@ const ThirdPartyVerificationPage: React.FC = () => {
       );
 
       if (uploadResponse.success) {
-        updateDynamicDocument(recordId, 'documentFile', uploadResponse.data.url);
-        setDynamicDocuments(dynamicDocuments.map(doc =>
-          doc.id === recordId ? { ...doc, uploadProgress: 100 } : doc
-        ));
+        // Update all at once with both documentFile and uploadProgress
+        setDynamicDocuments(prevDocs =>
+          prevDocs.map(doc =>
+            doc.id === recordId
+              ? { ...doc, documentFile: uploadResponse.data.url, uploadProgress: 100 }
+              : doc
+          )
+        );
         toast.success("Document uploaded successfully");
 
         setTimeout(() => {
-          setDynamicDocuments(dynamicDocuments.map(doc =>
-            doc.id === recordId ? { ...doc, uploadProgress: undefined } : doc
-          ));
+          setDynamicDocuments(prevDocs =>
+            prevDocs.map(doc =>
+              doc.id === recordId ? { ...doc, uploadProgress: undefined } : doc
+            )
+          );
         }, 2000);
       } else {
         throw new Error(uploadResponse.message || "Upload failed");
@@ -522,9 +530,11 @@ const ThirdPartyVerificationPage: React.FC = () => {
     } catch (error) {
       console.error("Upload error:", error);
       toast.error("Failed to upload document");
-      setDynamicDocuments(dynamicDocuments.map(doc =>
-        doc.id === recordId ? { ...doc, uploadProgress: undefined } : doc
-      ));
+      setDynamicDocuments(prevDocs =>
+        prevDocs.map(doc =>
+          doc.id === recordId ? { ...doc, uploadProgress: undefined } : doc
+        )
+      );
     }
   };
 
