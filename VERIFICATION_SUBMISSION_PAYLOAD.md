@@ -1,6 +1,7 @@
 # Verification Report Submission Payload Documentation
 
 ## Updated Endpoint
+
 **POST** `/api/verifyAccessCode/submitReport/{documentID}`
 
 ---
@@ -107,12 +108,14 @@ When the third-party verification officer submits a report with optional additio
 ## Field Descriptions
 
 ### report object
+
 - **originalDocumentType** (string, required): The type of document being verified (e.g., "survey-plan", "Certificate of Occupancy", "Deed of Assignment")
 - **newDocumentUrl** (string, optional): URL of the verified/scanned document uploaded by the officer
 - **description** (string, required): Verification findings and notes
 - **status** (string, required): Verification outcome - either "registered" (verified) or "unregistered" (rejected)
 
 ### additionalDocuments array (optional)
+
 Only included when the officer adds supporting documents. Each document contains:
 
 - **name** (string, required): Name/title of the additional document
@@ -124,6 +127,7 @@ Only included when the officer adds supporting documents. Each document contains
 ## Validation Rules (Frontend)
 
 The frontend will validate:
+
 1. ✅ `report.description` is not empty
 2. ✅ If `additionalDocuments` array exists:
    - Each document must have a `name` (non-empty)
@@ -135,11 +139,13 @@ The frontend will validate:
 ## Backend Implementation Notes
 
 ### What Changed
+
 1. **New optional field**: `additionalDocuments` array in payload
 2. **Conditional inclusion**: Field only appears when documents are added (checked via `dynamicDocuments.length > 0`)
 3. **No breaking changes**: Old submissions without additional documents will still work (backward compatible)
 
 ### Migration Steps
+
 1. Update your API endpoint to accept the optional `additionalDocuments` field
 2. Store additional documents in your database with relationship to the verification report
 3. Handle the new field gracefully (check if it exists before processing)
@@ -191,6 +197,7 @@ You can monitor the network tab in DevTools to see the actual request being sent
 ## Testing the Payload
 
 ### cURL Example (Testing with Additional Documents)
+
 ```bash
 curl -X POST https://your-api.com/api/verifyAccessCode/submitReport/696756605ea5ee45855442e5 \
   -H "Content-Type: application/json" \
@@ -218,6 +225,7 @@ curl -X POST https://your-api.com/api/verifyAccessCode/submitReport/696756605ea5
 ✅ **Fully backward compatible** - your API will receive submissions in two formats:
 
 **Old Format** (no additional documents):
+
 ```json
 {
   "report": { ... }
@@ -225,6 +233,7 @@ curl -X POST https://your-api.com/api/verifyAccessCode/submitReport/696756605ea5
 ```
 
 **New Format** (with additional documents):
+
 ```json
 {
   "report": { ... },
@@ -233,6 +242,7 @@ curl -X POST https://your-api.com/api/verifyAccessCode/submitReport/696756605ea5
 ```
 
 Simply check if `additionalDocuments` exists in your payload handling logic:
+
 ```javascript
 if (payload.additionalDocuments && payload.additionalDocuments.length > 0) {
   // Handle additional documents
@@ -244,6 +254,7 @@ if (payload.additionalDocuments && payload.additionalDocuments.length > 0) {
 ## Summary
 
 The submission now includes an optional `additionalDocuments` array that contains supporting documents with the following structure:
+
 - **name**: Document identifier/title
 - **documentFile**: Cloudinary URL of uploaded file
 - **comment**: Notes about the document

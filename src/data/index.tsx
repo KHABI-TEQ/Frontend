@@ -411,7 +411,7 @@ export const clientData: { name: string; text: string; starsRated: number }[] =
 //Contact Us data
 export const contactUsData: ContactInfo[] = [
   {
-    value: 'info@Khabireqrealty.com',
+    value: 'info@khabiteqrealty.com',
     icon: envelopeIcon,
     type: 'mail',
   },

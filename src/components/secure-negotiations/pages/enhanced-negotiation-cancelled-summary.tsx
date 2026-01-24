@@ -319,7 +319,7 @@ const EnhancedNegotiationCancelledSummary: React.FC<
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex items-center justify-center space-x-2 p-3 bg-white rounded-lg border border-[#C7CAD0]">
             <FiMail className="w-5 h-5 text-blue-600" />
-            <span className="text-gray-700">support@khabiteq.com</span>
+            <span className="text-gray-700">support@@khabiteqrealty.com</span>
           </div>
 
           <div className="flex items-center justify-center space-x-2 p-3 bg-white rounded-lg border border-[#C7CAD0]">

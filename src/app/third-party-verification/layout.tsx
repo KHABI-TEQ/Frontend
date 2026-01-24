@@ -129,8 +129,8 @@ const VerificationFooter = () => {
 
               <div className="space-y-1 sm:space-y-2">
                 <p className="font-medium text-white">Email Support</p>
-                <a href="mailto:verification@khabi-teq.com" className="text-[#8DDB90] hover:underline block">
-                  verification@khabiteqrealty.com
+                <a href="mailto:info@khabiteqrealty.com" className="text-[#8DDB90] hover:underline block">
+                  info@khabiteqrealty.com
                 </a>
               </div>
 

@@ -203,21 +203,21 @@ export default function DocumentVerificationLandingPage() {
             <div className="space-y-2">
               <p className="font-medium">Email Support</p>
               <a
-                href="mailto:verification@khabi-teq.com"
+                href="mailto:info@khabiteqrealty.com"
                 className="text-[#8DDB90] hover:underline font-medium block"
               >
-                verification@khabi-teq.com
+                info@khabiteqrealty.com
               </a>
             </div>
           </div>
 
           <div className="mt-6 pt-6 border-t border-[#8DDB90]/30">
             <a
-              href="https://khabi-teq.com"
+              href="https://khabiteqrealty.com"
               className="inline-flex items-center space-x-2 text-[#8DDB90] hover:text-white transition-colors"
             >
               <ExternalLink className="h-4 w-4" />
-              <span>Return to Khabi-Teq Main Site</span>
+              <span>Return to Khabiteq Realty Main Site</span>
             </a>
           </div>
         </div>
