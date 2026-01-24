@@ -992,18 +992,18 @@ const ThirdPartyVerificationPage: React.FC = () => {
                         
                         {!report.newDocumentUrl ? (
                           <div
-                            className={`relative border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all duration-200 ${
+                            className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 ${
                               dragged
-                                ? "border-[#8DDB90] bg-[#8DDB90]/10"
-                                : "border-gray-300 hover:border-[#8DDB90] hover:bg-gray-50"
+                                ? "border-[#8DDB90] bg-[#8DDB90]/15 shadow-lg"
+                                : "border-gray-300 hover:border-[#8DDB90] hover:bg-[#8DDB90]/5"
                             }`}
                             onDrop={handleFileDrop}
                             onDragOver={handleDragOver}
                             onDragLeave={handleDragLeave}
-                            onClick={() => fileInputRef.current?.click()} // ✅ simpler
+                            onClick={() => fileInputRef.current?.click()}
                           >
                             <input
-                              ref={fileInputRef} // ✅ direct ref
+                              ref={fileInputRef}
                               type="file"
                               onChange={(e) => {
                                 const file = e.target.files?.[0];
@@ -1018,26 +1018,30 @@ const ThirdPartyVerificationPage: React.FC = () => {
                                 <div className="flex items-center justify-center">
                                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8DDB90]"></div>
                                 </div>
-                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div className="w-full bg-gray-200 rounded-full h-2.5">
                                   <div
-                                    className="bg-[#8DDB90] h-2 rounded-full transition-all duration-300"
+                                    className="bg-gradient-to-r from-[#0B423D] to-[#8DDB90] h-2.5 rounded-full transition-all duration-300"
                                     style={{ width: `${uploadProgress}%` }}
                                   ></div>
                                 </div>
-                                <p className="text-sm text-gray-600">
+                                <p className="text-sm font-medium text-gray-600">
                                   Uploading... {uploadProgress}%
                                 </p>
                               </div>
                             ) : (
                               <>
-                                <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                                <p className="text-lg font-medium text-gray-700 mb-2">
+                                <div className="flex justify-center mb-4">
+                                  <div className="p-3 bg-gradient-to-br from-[#0B423D] to-[#8DDB90] rounded-xl">
+                                    <Upload className="h-8 w-8 text-white" />
+                                  </div>
+                                </div>
+                                <p className="text-lg font-semibold text-gray-800 mb-2">
                                   Drop your file here or click to browse
                                 </p>
-                                <p className="text-sm text-gray-500 mb-4">
-                                  Supports PDF, JPEG, PNG, WebP up to 10MB
+                                <p className="text-sm text-gray-600 mb-4">
+                                  Supports PDF, JPEG, PNG, WebP up to 50MB
                                 </p>
-                                <div className="inline-flex items-center px-4 py-2 bg-[#0B423D] text-white rounded-lg text-sm font-medium hover:bg-[#0B423D]/90 transition-colors">
+                                <div className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-[#0B423D] to-[#8DDB90] text-white rounded-lg text-sm font-semibold hover:shadow-lg transition-all">
                                   <Upload className="w-4 h-4 mr-2" />
                                   Choose File
                                 </div>
