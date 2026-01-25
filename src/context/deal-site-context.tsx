@@ -152,6 +152,7 @@ export interface HomeSettings {
     subTitle?: string;
     items: Array<{ icon?: string; title: string; content: string }>;
   };
+  support?: SupportSection;
 }
 
 export interface SubscribeSettings {
@@ -181,10 +182,17 @@ export interface BankDetails {
   primaryContactPhone?: string;
 }
 
-export interface MarketplaceDefaults {
-  defaultTab: "buy" | "rent" | "shortlet" | "jv";
-  showVerifiedOnly?: boolean;
-  enablePriceNegotiationButton?: boolean;
+export interface SupportSection {
+  title: string;
+  description: string;
+  showHeroCtaButtons: boolean;
+  supportCards: Array<{
+    cardTitle: string;
+    cardIcon: string;
+    description: string;
+    ctaText: string;
+    ctaLink: string;
+  }>;
 }
 
 export interface DealSiteSettings {
@@ -219,6 +227,7 @@ interface DealSiteContextType {
   isPaused: boolean;
   isOnHold: boolean;
   slugLocked: boolean;
+  dealSiteStatus: "pending" | "running" | "paused" | "on-hold" | "deleted" | null;
 
   // Loading state
   isLoading: boolean;
@@ -281,6 +290,7 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
   const [isPaused, setIsPaused] = useState(false);
   const [isOnHold, setIsOnHold] = useState(false);
   const [slugLocked, setSlugLocked] = useState(false);
+  const [dealSiteStatus, setDealSiteStatus] = useState<"pending" | "running" | "paused" | "on-hold" | "deleted" | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -328,8 +338,12 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
             status: data.status || prev.status,
           }));
           if (data.publicSlug) setSlugLocked(true);
-          if (data.paused) setIsPaused(true);
-          if (data.status === "on-hold") setIsOnHold(true);
+          if (data.status) {
+            setDealSiteStatus(data.status);
+            if (data.status === "on-hold") setIsOnHold(true);
+            if (data.status === "paused") setIsPaused(true);
+            if (data.status === "running") setIsPaused(false);
+          }
           setIsSetupComplete(!!data.publicSlug);
         }
       }
@@ -421,6 +435,7 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
     isPaused,
     isOnHold,
     slugLocked,
+    dealSiteStatus,
     isLoading,
     isSaving,
     previewUrl,

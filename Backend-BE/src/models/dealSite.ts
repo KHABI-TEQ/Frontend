@@ -53,6 +53,18 @@ export interface IDealSite {
     propertyIds?: string;
     featuredListings?: string[];
   };
+  support?: {
+    title: string;
+    description: string;
+    showHeroCtaButtons: boolean;
+    supportCards: {
+      cardTitle: string;
+      cardIcon: string;
+      description: string;
+      ctaText: string;
+      ctaLink: string;
+    }[];
+  };
   socialLinks?: {
     website?: string;
     twitter?: string;
@@ -214,6 +226,20 @@ export class DealSite {
           mode: { type: String, enum: ["auto", "manual"], default: "auto" },
           propertyIds: { type: String, default: "" },
           featuredListings: [{ type: String }],
+        },
+        support: {
+          title: { type: String, default: "" },
+          description: { type: String, default: "" },
+          showHeroCtaButtons: { type: Boolean, default: false },
+          supportCards: [
+            {
+              cardTitle: { type: String },
+              cardIcon: { type: String },
+              description: { type: String },
+              ctaText: { type: String },
+              ctaLink: { type: String },
+            },
+          ],
         },
         socialLinks: {
           website: String,

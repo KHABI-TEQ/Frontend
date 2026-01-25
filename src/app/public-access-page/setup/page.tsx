@@ -28,8 +28,6 @@ const Setup = () => {
   // Form state - track changes locally during setup
   const [formData, setFormData] = useState<DealSiteSettings>({
     ...settings,
-    marketplaceDefaults: settings.marketplaceDefaults || { defaultTab: "buy", showVerifiedOnly: false, enablePriceNegotiationButton: true },
-    listingsLimit: settings.listingsLimit || 6,
   });
 
   const handleInputChange = useCallback(
@@ -125,11 +123,6 @@ const Setup = () => {
     }
 
     if (step === 2) {
-      // Marketplace validation
-      return true;
-    }
-
-    if (step === 3) {
       // Payment validation
       if (
         !formData.paymentDetails?.businessName ||
@@ -147,7 +140,7 @@ const Setup = () => {
 
   const handleNextStep = useCallback(() => {
     if (validateStep()) {
-      if (step < 4) {
+      if (step < 3) {
         setStep(step + 1);
       }
     }
@@ -204,9 +197,8 @@ const Setup = () => {
   const steps = [
     { label: "Public Link", status: step > 0 ? "completed" : "active" },
     { label: "Design", status: step > 1 ? "completed" : step === 1 ? "active" : "pending" },
-    { label: "Marketplace", status: step > 2 ? "completed" : step === 2 ? "active" : "pending" },
-    { label: "Payment", status: step > 3 ? "completed" : step === 3 ? "active" : "pending" },
-    { label: "Review", status: step === 4 ? "active" : "pending" },
+    { label: "Payment", status: step > 2 ? "completed" : step === 2 ? "active" : "pending" },
+    { label: "Review", status: step === 3 ? "active" : "pending" },
   ] as const;
 
   return (
@@ -215,10 +207,10 @@ const Setup = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-[#09391C] mb-2">
-            Setup Your Public Access Page
+            Launch Your Public Access Page
           </h1>
           <p className="text-gray-600">
-            Follow the steps to get your public agent page live in minutes
+            Complete these 3 steps to go live. You can customize everything else later.
           </p>
         </div>
 
@@ -231,9 +223,8 @@ const Setup = () => {
         <div className="bg-white rounded-lg border border-gray-200 p-8">
           {step === 0 && <Step0PublicLink formData={formData} onSlugChange={handleSlugChange} slugStatus={slugStatus} slugMessage={slugMessage} />}
           {step === 1 && <Step1Design formData={formData} onChange={handleInputChange} />}
-          {step === 2 && <Step2Marketplace formData={formData} onChange={handleInputChange} />}
-          {step === 3 && <Step3Payment formData={formData} onChange={handleInputChange} />}
-          {step === 4 && <Step4Review formData={formData} />}
+          {step === 2 && <Step2Payment formData={formData} onChange={handleInputChange} />}
+          {step === 3 && <Step3Review formData={formData} />}
 
           {/* Navigation Buttons */}
           <div className="flex items-center justify-between gap-4 mt-8 pt-6 border-t border-gray-200">
@@ -245,7 +236,7 @@ const Setup = () => {
               Back
             </button>
 
-            {step < 4 ? (
+            {step < 3 ? (
               <button
                 onClick={handleNextStep}
                 className="px-6 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-all"
@@ -268,9 +259,9 @@ const Setup = () => {
         <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4 flex gap-3">
           <AlertCircle size={20} className="text-blue-600 flex-shrink-0" />
           <div>
-            <h3 className="font-semibold text-blue-900">Setup is one-time only</h3>
+            <h3 className="font-semibold text-blue-900">Quick Setup</h3>
             <p className="text-sm text-blue-800 mt-1">
-              Once you complete the setup, you'll be able to manage and edit your public page settings from the dashboard.
+              We only need the basics to get your page live. Once complete, you can customize everything else from your dashboard including branding, hero image, testimonials, featured properties, and much more.
             </p>
           </div>
         </div>
@@ -359,14 +350,14 @@ function Step1Design({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-[#09391C] mb-4">Page Branding</h2>
+        <h2 className="text-2xl font-bold text-[#09391C] mb-4">Basic Information</h2>
         <p className="text-gray-600">
-          Set your page title and description for SEO and visitor preview.
+          Tell visitors about your business. You can customize more details later from your dashboard.
         </p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Page Title</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Page Title *</label>
         <input
           type="text"
           value={formData.title}
@@ -374,10 +365,11 @@ function Step1Design({
           placeholder="My Real Estate Business"
           className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
         />
+        <p className="text-xs text-gray-500 mt-1">This is how your page appears to search engines and visitors</p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Description *</label>
         <textarea
           value={formData.description}
           onChange={(e) => onChange("description", e.target.value)}
@@ -385,115 +377,19 @@ function Step1Design({
           rows={4}
           className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
         />
+        <p className="text-xs text-gray-500 mt-1">Keep it concise and engaging</p>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Keywords (comma separated)</label>
-        <input
-          type="text"
-          value={formData.keywords.join(", ")}
-          onChange={(e) =>
-            onChange(
-              "keywords",
-              e.target.value.split(",").map((k) => k.trim()).filter(Boolean)
-            )
-          }
-          placeholder="real estate, agent, properties, listings"
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
-        />
-      </div>
-    </div>
-  );
-}
-
-function Step2Marketplace({
-  formData,
-  onChange,
-}: {
-  formData: DealSiteSettings;
-  onChange: (field: keyof DealSiteSettings, value: any) => void;
-}) {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-[#09391C] mb-4">Marketplace Settings</h2>
-        <p className="text-gray-600">
-          Configure how your listings are displayed to visitors.
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <p className="text-sm text-blue-800">
+          <strong>Later:</strong> You'll be able to add keywords, logo, custom colors, hero image, and more from your dashboard settings.
         </p>
       </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Default Listing Category</label>
-        <select
-          value={formData.marketplaceDefaults.defaultTab}
-          onChange={(e) =>
-            onChange("marketplaceDefaults", {
-              ...formData.marketplaceDefaults,
-              defaultTab: e.target.value as any,
-            })
-          }
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
-        >
-          <option value="buy">Buy</option>
-          <option value="rent">Rent</option>
-          <option value="shortlet">Shortlet</option>
-          <option value="jv">Joint Venture</option>
-        </select>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Featured Listings Limit</label>
-        <input
-          type="number"
-          value={formData.listingsLimit}
-          onChange={(e) => onChange("listingsLimit", parseInt(e.target.value))}
-          min="1"
-          max="50"
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
-        />
-        <p className="text-xs text-gray-500 mt-1">Maximum number of featured listings to display</p>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <input
-          type="checkbox"
-          id="verified-only"
-          checked={formData.marketplaceDefaults.showVerifiedOnly}
-          onChange={(e) =>
-            onChange("marketplaceDefaults", {
-              ...formData.marketplaceDefaults,
-              showVerifiedOnly: e.target.checked,
-            })
-          }
-          className="w-4 h-4 text-emerald-600 rounded"
-        />
-        <label htmlFor="verified-only" className="text-sm font-medium text-gray-700">
-          Show verified listings only
-        </label>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <input
-          type="checkbox"
-          id="enable-negotiation"
-          checked={formData.marketplaceDefaults.enablePriceNegotiationButton}
-          onChange={(e) =>
-            onChange("marketplaceDefaults", {
-              ...formData.marketplaceDefaults,
-              enablePriceNegotiationButton: e.target.checked,
-            })
-          }
-          className="w-4 h-4 text-emerald-600 rounded"
-        />
-        <label htmlFor="enable-negotiation" className="text-sm font-medium text-gray-700">
-          Enable price negotiation button
-        </label>
-      </div>
     </div>
   );
 }
 
-function Step3Payment({
+function Step2Payment({
   formData,
   onChange,
 }: {
@@ -563,59 +459,59 @@ function Step3Payment({
   );
 }
 
-function Step4Review({ formData }: { formData: DealSiteSettings }) {
+function Step3Review({ formData }: { formData: DealSiteSettings }) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-[#09391C] mb-4">Review Your Setup</h2>
+        <h2 className="text-2xl font-bold text-[#09391C] mb-4">Confirm and Launch</h2>
         <p className="text-gray-600">
-          Please review the information below before completing your setup.
+          Review your information below, then click "Complete Setup" to go live.
         </p>
       </div>
 
       {/* Public Link Summary */}
-      <div className="bg-gray-50 rounded-lg p-4">
-        <h3 className="font-semibold text-gray-900 mb-2">Public Link</h3>
-        <p className="text-emerald-600 font-medium">
+      <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-200">
+        <h3 className="font-semibold text-emerald-900 mb-2">Your Public Page</h3>
+        <p className="text-emerald-700 font-medium break-all">
           https://{formData.publicSlug}.khabiteq.com
         </p>
       </div>
 
       {/* Branding Summary */}
-      <div className="bg-gray-50 rounded-lg p-4">
-        <h3 className="font-semibold text-gray-900 mb-2">Branding</h3>
-        <div className="space-y-2 text-sm">
-          <p><span className="text-gray-600">Title:</span> {formData.title}</p>
-          <p><span className="text-gray-600">Description:</span> {formData.description.substring(0, 100)}...</p>
-        </div>
-      </div>
-
-      {/* Marketplace Summary */}
-      <div className="bg-gray-50 rounded-lg p-4">
-        <h3 className="font-semibold text-gray-900 mb-2">Marketplace</h3>
-        <div className="space-y-2 text-sm">
-          <p><span className="text-gray-600">Default Category:</span> {formData.marketplaceDefaults.defaultTab}</p>
-          <p><span className="text-gray-600">Featured Listings:</span> {formData.listingsLimit}</p>
+      <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+        <h3 className="font-semibold text-gray-900 mb-3">Basic Information</h3>
+        <div className="space-y-3 text-sm">
+          <div>
+            <p className="text-gray-600 font-medium">Title</p>
+            <p className="text-gray-900">{formData.title}</p>
+          </div>
+          <div>
+            <p className="text-gray-600 font-medium">Description</p>
+            <p className="text-gray-900">{formData.description}</p>
+          </div>
         </div>
       </div>
 
       {/* Payment Summary */}
-      <div className="bg-gray-50 rounded-lg p-4">
-        <h3 className="font-semibold text-gray-900 mb-2">Payment Details</h3>
-        <div className="space-y-2 text-sm">
-          <p><span className="text-gray-600">Business:</span> {formData.paymentDetails?.businessName}</p>
-          <p><span className="text-gray-600">Account:</span> ****{formData.paymentDetails?.accountNumber?.slice(-4)}</p>
+      <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+        <h3 className="font-semibold text-gray-900 mb-3">Payment Details</h3>
+        <div className="space-y-3 text-sm">
+          <div>
+            <p className="text-gray-600 font-medium">Business Name</p>
+            <p className="text-gray-900">{formData.paymentDetails?.businessName}</p>
+          </div>
+          <div>
+            <p className="text-gray-600 font-medium">Account</p>
+            <p className="text-gray-900">****{formData.paymentDetails?.accountNumber?.slice(-4)}</p>
+          </div>
         </div>
       </div>
 
-      <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 flex gap-3">
-        <CheckCircle size={20} className="text-emerald-600 flex-shrink-0" />
-        <div>
-          <h3 className="font-semibold text-emerald-900">Ready to launch!</h3>
-          <p className="text-sm text-emerald-800 mt-1">
-            Click "Complete Setup" to finalize and take your page live.
-          </p>
-        </div>
+      <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+        <h3 className="font-semibold text-emerald-900 mb-2">You're almost there! 🎉</h3>
+        <p className="text-sm text-emerald-800">
+          After launching, you'll have access to your dashboard where you can add a logo, customize colors, add featured properties, testimonials, and much more.
+        </p>
       </div>
     </div>
   );
