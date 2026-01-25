@@ -206,6 +206,8 @@ export interface DealSiteSettings {
   contactUs?: ContactUsSection;
   subscribeSettings?: SubscribeSettings;
   paymentDetails?: BankDetails;
+  marketplaceDefaults: MarketplaceDefaults;
+  listingsLimit: number;
   status?: string;
 }
 
