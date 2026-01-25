@@ -14,10 +14,11 @@ export interface IDealSite {
     primaryColor: string;
     secondaryColor: string;
   };
- 
+
   inspectionSettings?: {
     allowPublicBooking: boolean;
     defaultInspectionFee: number;
+    inspectionStatus?: string;
     negotiationEnabled: boolean;
   };
 
@@ -40,11 +41,14 @@ export interface IDealSite {
   };
 
   featureSelection?: {
+    mode?: "auto" | "manual";
+    propertyIds?: string;
     featuredListings?: string[];
   };
 
   marketplaceDefaults?: {
     defaultTab: DefaultTab;
+    defaultSort?: "newest" | "price-asc" | "price-desc";
     showVerifiedOnly: boolean;
     enablePriceNegotiationButton: boolean;
   };
