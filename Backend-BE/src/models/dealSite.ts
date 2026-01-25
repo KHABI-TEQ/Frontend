@@ -660,6 +660,8 @@ export class DealSite {
             subTitle: { type: String, default: "" },
             testimonials: [
               {
+                _id: { type: String },
+                id: { type: String },
                 rating: { type: Number },
                 description: { type: String },
                 image: { type: String },
@@ -673,6 +675,8 @@ export class DealSite {
             subTitle: { type: String, default: "" },
             items: [
               {
+                _id: { type: String },
+                id: { type: String },
                 icon: { type: String },
                 title: { type: String },
                 content: { type: String },
