@@ -52,7 +52,7 @@ type Testimonial = {
 };
 
 type WhyChooseUsItem = {
-  _id: string;
+  _id?: string; // Client-side ID for tracking; not persisted to backend
   icon: string;
   title: string;
   content: string;
