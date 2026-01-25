@@ -274,6 +274,12 @@ const DEFAULT_SETTINGS: DealSiteSettings = {
   about: {},
   contactUs: {},
   subscribeSettings: {},
+  marketplaceDefaults: {
+    defaultTab: "buy",
+    showVerifiedOnly: false,
+    enablePriceNegotiationButton: true,
+  },
+  listingsLimit: 6,
 };
 
 export function DealSiteProvider({ children }: { children: ReactNode }) {
