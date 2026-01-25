@@ -666,9 +666,15 @@ export default function HomePageSettings() {
                   <div className="relative">
                     <button
                       onClick={() => {
-                        setShowIconPicker(showIconPicker === item.id ? "" : item.id);
-                        if (showIconPicker !== item.id) {
-                          setIconSearchTerm("");
+                        setShowIconPicker((prev) => ({
+                          ...prev,
+                          [item.id]: !prev[item.id],
+                        }));
+                        if (!showIconPicker[item.id]) {
+                          setIconSearchTerms((prev) => ({
+                            ...prev,
+                            [item.id]: "",
+                          }));
                         }
                       }}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200 flex items-center gap-2 justify-between"
@@ -677,18 +683,23 @@ export default function HomePageSettings() {
                         {React.createElement(getLucideIcon(item.icon), { size: 20 })}
                         {item.icon}
                       </span>
-                      <span className={`text-gray-500 transition-transform ${showIconPicker === item.id ? "rotate-180" : ""}`}>▼</span>
+                      <span className={`text-gray-500 transition-transform ${showIconPicker[item.id] ? "rotate-180" : ""}`}>▼</span>
                     </button>
 
-                    {showIconPicker === item.id && (
+                    {showIconPicker[item.id] && (
                       <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg z-50 min-w-96">
                         {/* Search Input */}
                         <div className="border-b border-gray-200 p-3">
                           <input
                             type="text"
                             placeholder="Search icons..."
-                            value={iconSearchTerm}
-                            onChange={(e) => setIconSearchTerm(e.target.value)}
+                            value={iconSearchTerms[item.id] || ""}
+                            onChange={(e) =>
+                              setIconSearchTerms((prev) => ({
+                                ...prev,
+                                [item.id]: e.target.value,
+                              }))
+                            }
                             autoFocus
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-200"
                           />
@@ -697,14 +708,20 @@ export default function HomePageSettings() {
                         {/* Icon Grid */}
                         <div className="grid grid-cols-6 gap-2 p-3 max-h-72 overflow-y-auto">
                           {LUCIDE_ICONS.filter(icon =>
-                            icon.toLowerCase().includes(iconSearchTerm.toLowerCase())
+                            icon.toLowerCase().includes((iconSearchTerms[item.id] || "").toLowerCase())
                           ).map((iconName) => (
                             <button
                               key={iconName}
                               onClick={() => {
                                 updateWhyChooseUsItem(item.id, "icon", iconName);
-                                setShowIconPicker("");
-                                setIconSearchTerm("");
+                                setShowIconPicker((prev) => ({
+                                  ...prev,
+                                  [item.id]: false,
+                                }));
+                                setIconSearchTerms((prev) => ({
+                                  ...prev,
+                                  [item.id]: "",
+                                }));
                               }}
                               className={`p-2 rounded-lg flex flex-col items-center gap-1 text-xs transition-colors ${
                                 item.icon === iconName
