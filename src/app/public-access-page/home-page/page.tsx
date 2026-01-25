@@ -704,12 +704,13 @@ export default function HomePageSettings() {
           {/* Why Choose Us Items */}
           <div className="space-y-4">
             {whyChooseUs.map((item, index) => {
+              const itemId = getItemId(item, index);
               return (
-              <div key={item._id} className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
+              <div key={itemId} className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-[#09391C]">Item {index + 1}</h3>
                   <button
-                    onClick={() => removeWhyChooseUsItem(item._id)}
+                    onClick={() => removeWhyChooseUsItem(itemId)}
                     className="text-red-600 hover:text-red-700 p-2"
                   >
                     <Trash2 size={18} />
