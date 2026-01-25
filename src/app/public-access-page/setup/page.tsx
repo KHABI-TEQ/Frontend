@@ -412,6 +412,7 @@ function Step2Payment({
   const [bankSearch, setBankSearch] = useState("");
   const [showBankDropdown, setShowBankDropdown] = useState(false);
   const [loadingBanks, setLoadingBanks] = useState(false);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
 
   // Load banks on mount
   useEffect(() => {
@@ -435,6 +436,20 @@ function Step2Payment({
 
     loadBanks();
   }, []);
+
+  // Handle click outside dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowBankDropdown(false);
+      }
+    };
+
+    if (showBankDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showBankDropdown]);
 
   // Handle bank search
   const handleBankSearch = (query: string) => {
