@@ -73,7 +73,10 @@ export interface IDealSite {
     heroSubtitle: string;
     ctaText: string;
     ctaLink: string;
-    heroImageUrl: string;
+    ctaText2?: string;
+    ctaLink2?: string;
+    heroImageUrl?: string;
+    heroImage?: string;
   };
 
   about?: {
