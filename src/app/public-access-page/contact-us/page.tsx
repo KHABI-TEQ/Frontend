@@ -279,6 +279,80 @@ export default function ContactUsPage() {
             <strong>Privacy:</strong> Your contact information is only displayed to site visitors.
           </p>
         </div>
+      </div>
+
+      {/* Location Details Section */}
+      <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
+        <div>
+          <h2 className="text-lg font-semibold text-[#09391C] mb-4">Location Details</h2>
+          <p className="text-sm text-gray-600 mb-4">Add your business location information</p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Location Name
+          </label>
+          <input
+            type="text"
+            value={formData.locationName}
+            onChange={(e) => handleInputChange("locationName", e.target.value)}
+            placeholder="e.g., Main Office, Lagos Branch"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+          />
+          <p className="text-xs text-gray-500 mt-1">Name of your business location</p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Address
+          </label>
+          <textarea
+            value={formData.locationAddress}
+            onChange={(e) => handleInputChange("locationAddress", e.target.value)}
+            placeholder="e.g., 123 Main Street, Lagos, Nigeria"
+            rows={2}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+          />
+          <p className="text-xs text-gray-500 mt-1">Full address of your business location</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Latitude
+            </label>
+            <input
+              type="number"
+              step="0.000001"
+              value={formData.locationLatitude}
+              onChange={(e) => handleInputChange("locationLatitude", e.target.value)}
+              placeholder="e.g., 6.5244"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+            />
+            <p className="text-xs text-gray-500 mt-1">Geographic latitude coordinate</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Longitude
+            </label>
+            <input
+              type="number"
+              step="0.000001"
+              value={formData.locationLongitude}
+              onChange={(e) => handleInputChange("locationLongitude", e.target.value)}
+              placeholder="e.g., 3.3792"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+            />
+            <p className="text-xs text-gray-500 mt-1">Geographic longitude coordinate</p>
+          </div>
+        </div>
+
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <p className="text-sm text-blue-800">
+            <strong>Tip:</strong> Use Google Maps to find your location's coordinates. Right-click on the map and select "What's here" to see the coordinates.
+          </p>
+        </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
           <button
