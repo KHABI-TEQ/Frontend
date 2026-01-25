@@ -97,6 +97,28 @@ export default function HomePageSettings() {
   const [showIconPicker, setShowIconPicker] = useState<Record<string, boolean>>({});
   const [iconSearchTerms, setIconSearchTerms] = useState<Record<string, string>>({});
 
+  // Ensure icon picker state is initialized for all items
+  React.useEffect(() => {
+    setShowIconPicker((prev) => {
+      const updated = { ...prev };
+      whyChooseUs.forEach((item) => {
+        if (!(item.id in updated)) {
+          updated[item.id] = false;
+        }
+      });
+      return updated;
+    });
+    setIconSearchTerms((prev) => {
+      const updated = { ...prev };
+      whyChooseUs.forEach((item) => {
+        if (!(item.id in updated)) {
+          updated[item.id] = "";
+        }
+      });
+      return updated;
+    });
+  }, [whyChooseUs]);
+
   const handleInputChange = useCallback((field: string, value: string) => {
     setFormData((prev) => ({
       ...prev,

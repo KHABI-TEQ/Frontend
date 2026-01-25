@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
-import { Eye, Download, Filter, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Eye, Download, Filter, Search, ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { GET_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 
@@ -35,6 +36,7 @@ interface Preference {
 }
 
 export default function PreferencesRequestsPage() {
+  const router = useRouter();
   const [preferences, setPreferences] = useState<Preference[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -58,9 +60,9 @@ export default function PreferencesRequestsPage() {
       params.append("page", String(currentPage));
       params.append("limit", String(itemsPerPage));
       if (searchTerm) params.append("search", searchTerm);
-      if (filterPropertyType) params.append("preferenceMode", filterPropertyType);
+      if (filterPropertyType) params.append("propertyType", filterPropertyType);
 
-      const url = `${URLS.BASE}${URLS.preferenceBaseUrl}/getApprovedForAgent?${params.toString()}`;
+      const url = `${URLS.BASE}/account/dealsite-preferences/fetchAll?${params.toString()}`;
       const response = await GET_REQUEST<any>(url, token);
 
       if (response?.success && response?.data) {
@@ -291,6 +293,7 @@ export default function PreferencesRequestsPage() {
                     <th className="text-left px-6 py-3 font-semibold text-gray-700">Budget Range</th>
                     <th className="text-left px-6 py-3 font-semibold text-gray-700">Location</th>
                     <th className="text-left px-6 py-3 font-semibold text-gray-700">Submitted</th>
+                    <th className="text-left px-6 py-3 font-semibold text-gray-700">Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -330,6 +333,15 @@ export default function PreferencesRequestsPage() {
                       </td>
                       <td className="px-6 py-4">
                         <span className="text-gray-600 text-xs">{formatDate(pref.createdAt)}</span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <button
+                          onClick={() => router.push(`/agent-marketplace/${pref._id}`)}
+                          className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
+                        >
+                          I have this
+                          <ArrowRight size={16} />
+                        </button>
                       </td>
                     </tr>
                     );
