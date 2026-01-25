@@ -94,20 +94,30 @@ export default function HomePageSettings() {
   });
 
   const [uploadingTestimonialId, setUploadingTestimonialId] = useState<string>("");
-  const [showIconPicker, setShowIconPicker] = useState<Record<string, boolean>>(() => {
-    const initial: Record<string, boolean> = {};
-    whyChooseUs.forEach(item => {
-      initial[item.id] = false;
+  const [showIconPicker, setShowIconPicker] = useState<Record<string, boolean>>({});
+  const [iconSearchTerms, setIconSearchTerms] = useState<Record<string, string>>({});
+
+  // Ensure icon picker state is initialized for all items
+  useMemo(() => {
+    setShowIconPicker((prev) => {
+      const updated = { ...prev };
+      whyChooseUs.forEach((item) => {
+        if (!(item.id in updated)) {
+          updated[item.id] = false;
+        }
+      });
+      return updated;
     });
-    return initial;
-  });
-  const [iconSearchTerms, setIconSearchTerms] = useState<Record<string, string>>(() => {
-    const initial: Record<string, string> = {};
-    whyChooseUs.forEach(item => {
-      initial[item.id] = "";
+    setIconSearchTerms((prev) => {
+      const updated = { ...prev };
+      whyChooseUs.forEach((item) => {
+        if (!(item.id in updated)) {
+          updated[item.id] = "";
+        }
+      });
+      return updated;
     });
-    return initial;
-  });
+  }, [whyChooseUs.map((item) => item.id).join(",")]);
 
   const handleInputChange = useCallback((field: string, value: string) => {
     setFormData((prev) => ({
