@@ -435,6 +435,73 @@ export class DealSite {
             keyHighlights: [{ type: String }],
           },
 
+          // Who We Are
+          whoWeAre: {
+            title: { type: String, default: "" },
+            description: { type: String, default: "" },
+            image: { type: String, default: "" },
+          },
+
+          // Our Mission
+          ourMission: {
+            title: { type: String, default: "" },
+            description: { type: String, default: "" },
+            image: { type: String, default: "" },
+          },
+
+          // Our Experience
+          ourExperience: {
+            title: { type: String, default: "" },
+            description: { type: String, default: "" },
+            image: { type: String, default: "" },
+          },
+
+          // What We Stand For
+          whatWeStandFor: {
+            title: { type: String, default: "" },
+            description: { type: String, default: "" },
+            items: [
+              {
+                title: { type: String },
+                shortText: { type: String },
+              },
+            ],
+          },
+
+          // What We Do
+          whatWeDo: {
+            title: { type: String, default: "" },
+            items: [
+              {
+                title: { type: String },
+              },
+            ],
+          },
+
+          // Where We Operate
+          whereWeOperate: {
+            title: { type: String, default: "" },
+            locations: [
+              {
+                name: { type: String },
+                address: { type: String },
+                coordinates: [{ type: Number }],
+              },
+            ],
+          },
+
+          // Profile / Team Members
+          profile: {
+            members: [
+              {
+                name: { type: String },
+                role: { type: String },
+                image: { type: String },
+                bio: { type: String },
+              },
+            ],
+          },
+
           // Mission & Vision
           missionVision: {
             title: { type: String, default: "" },
