@@ -105,18 +105,20 @@ export default function HomePageSettings() {
   React.useEffect(() => {
     setShowIconPicker((prev) => {
       const updated = { ...prev };
-      whyChooseUs.forEach((item) => {
-        if (!(item._id in updated)) {
-          updated[item._id] = false;
+      whyChooseUs.forEach((item, index) => {
+        const id = item._id || `index-${index}`;
+        if (!(id in updated)) {
+          updated[id] = false;
         }
       });
       return updated;
     });
     setIconSearchTerms((prev) => {
       const updated = { ...prev };
-      whyChooseUs.forEach((item) => {
-        if (!(item._id in updated)) {
-          updated[item._id] = "";
+      whyChooseUs.forEach((item, index) => {
+        const id = item._id || `index-${index}`;
+        if (!(id in updated)) {
+          updated[id] = "";
         }
       });
       return updated;
