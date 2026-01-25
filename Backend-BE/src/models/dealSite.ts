@@ -149,6 +149,12 @@ export interface IDealSite {
     isVerified?: boolean;
     active?: boolean;
   };
+  marketplaceDefaults?: {
+    defaultTab?: DefaultTab;
+    showVerifiedOnly?: boolean;
+    enablePriceNegotiationButton?: boolean;
+  };
+  listingsLimit?: number;
 
   status: DealSiteStatus;
   createdBy: Types.ObjectId;
