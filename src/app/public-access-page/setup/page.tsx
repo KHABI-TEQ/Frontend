@@ -467,7 +467,7 @@ function Step2Payment({
   );
 }
 
-function Step4Review({ formData }: { formData: DealSiteSettings }) {
+function Step3Review({ formData }: { formData: DealSiteSettings }) {
   return (
     <div className="space-y-6">
       <div>
