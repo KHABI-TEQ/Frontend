@@ -701,6 +701,15 @@ const ThirdPartyVerificationPage: React.FC = () => {
                 </p>
               </div>
 
+              {isLoadingData && (
+                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                    <span className="text-sm text-blue-700">Checking document status...</span>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -714,19 +723,25 @@ const ThirdPartyVerificationPage: React.FC = () => {
                       placeholder="Enter your access code"
                       className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#8DDB90] focus:border-[#8DDB90] pl-12 text-lg font-mono tracking-wider"
                       onKeyPress={(e) => e.key === 'Enter' && validateToken()}
+                      disabled={isLoadingData}
                     />
                   </div>
                 </div>
 
                 <button
                   onClick={validateToken}
-                  disabled={isValidatingToken || !accessCode.trim()}
+                  disabled={isValidatingToken || !accessCode.trim() || isLoadingData}
                   className="w-full bg-gradient-to-r from-[#0B423D] to-[#8DDB90] text-white py-4 px-6 rounded-xl font-semibold text-lg hover:shadow-lg transform transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
                   {isValidatingToken ? (
                     <div className="flex items-center justify-center">
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-3"></div>
                       Verifying Access Code...
+                    </div>
+                  ) : isLoadingData ? (
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-3"></div>
+                      Checking Document Status...
                     </div>
                   ) : (
                     'Verify Access Code'
