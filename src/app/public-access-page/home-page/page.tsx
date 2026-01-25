@@ -896,6 +896,210 @@ export default function HomePageSettings() {
         </div>
       )}
 
+      {/* Support Section Tab */}
+      {activeTab === "support" && (
+        <div className="space-y-6">
+          {/* Support Section Header */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
+            <h2 className="text-lg font-semibold text-[#09391C] mb-4">Support Section</h2>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Section Title
+              </label>
+              <input
+                type="text"
+                value={supportSection.title}
+                onChange={(e) => setSupportSection((prev) => ({ ...prev, title: e.target.value }))}
+                placeholder="Support"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Section Description
+              </label>
+              <textarea
+                value={supportSection.description}
+                onChange={(e) => setSupportSection((prev) => ({ ...prev, description: e.target.value }))}
+                placeholder="How we support your journey"
+                rows={3}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+              />
+            </div>
+
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="show-hero-cta"
+                checked={supportSection.showHeroCtaButtons}
+                onChange={(e) =>
+                  setSupportSection((prev) => ({ ...prev, showHeroCtaButtons: e.target.checked }))
+                }
+                className="w-4 h-4 text-emerald-600 rounded"
+              />
+              <label htmlFor="show-hero-cta" className="text-sm font-medium text-gray-700">
+                Show Hero CTA Buttons
+              </label>
+            </div>
+          </div>
+
+          {/* Support Cards */}
+          <div className="space-y-4">
+            {supportCards.map((card, index) => (
+              <div key={card.id} className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-[#09391C]">Support Card {index + 1}</h3>
+                  <button
+                    onClick={() => removeSupportCard(card.id)}
+                    className="text-red-600 hover:text-red-700 p-2"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+
+                {/* Card Icon Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Icon</label>
+                  <div className="relative">
+                    <button
+                      onClick={() => {
+                        setShowIconPicker((prev) => ({
+                          ...prev,
+                          [card.id]: !prev[card.id],
+                        }));
+                        if (!showIconPicker[card.id]) {
+                          setIconSearchTerms((prev) => ({
+                            ...prev,
+                            [card.id]: "",
+                          }));
+                        }
+                      }}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200 flex items-center gap-2 justify-between"
+                    >
+                      <span className="flex items-center gap-2">
+                        {React.createElement(getLucideIcon(card.cardIcon), { size: 20 })}
+                        {card.cardIcon}
+                      </span>
+                      <span className={`text-gray-500 transition-transform ${showIconPicker[card.id] ? "rotate-180" : ""}`}>▼</span>
+                    </button>
+
+                    {showIconPicker[card.id] && (
+                      <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg z-50 min-w-96">
+                        {/* Search Input */}
+                        <div className="border-b border-gray-200 p-3">
+                          <input
+                            type="text"
+                            placeholder="Search icons..."
+                            value={iconSearchTerms[card.id] || ""}
+                            onChange={(e) =>
+                              setIconSearchTerms((prev) => ({
+                                ...prev,
+                                [card.id]: e.target.value,
+                              }))
+                            }
+                            autoFocus
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-200"
+                          />
+                        </div>
+
+                        {/* Icon Grid */}
+                        <div className="grid grid-cols-6 gap-2 p-3 max-h-72 overflow-y-auto">
+                          {LUCIDE_ICONS.filter(icon =>
+                            icon.toLowerCase().includes((iconSearchTerms[card.id] || "").toLowerCase())
+                          ).map((iconName, index) => (
+                            <button
+                              key={index}
+                              onClick={() => {
+                                updateSupportCard(card.id, "cardIcon", iconName);
+                                setShowIconPicker((prev) => ({
+                                  ...prev,
+                                  [card.id]: false,
+                                }));
+                                setIconSearchTerms((prev) => ({
+                                  ...prev,
+                                  [card.id]: "",
+                                }));
+                              }}
+                              className={`p-2 rounded-lg flex flex-col items-center gap-1 text-xs transition-colors ${
+                                card.cardIcon === iconName
+                                  ? "bg-emerald-100 border border-emerald-500"
+                                  : "hover:bg-gray-100 border border-transparent"
+                              }`}
+                              title={iconName}
+                            >
+                              {React.createElement(getLucideIcon(iconName), { size: 20 })}
+                              <span className="text-xs line-clamp-2 text-center">{iconName}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Card Title */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Card Title</label>
+                  <input
+                    type="text"
+                    value={card.cardTitle}
+                    onChange={(e) => updateSupportCard(card.id, "cardTitle", e.target.value)}
+                    placeholder="Support Title"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+                  />
+                </div>
+
+                {/* Card Description */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                  <textarea
+                    value={card.description}
+                    onChange={(e) => updateSupportCard(card.id, "description", e.target.value)}
+                    placeholder="Describe this support offering..."
+                    rows={3}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+                  />
+                </div>
+
+                {/* CTA Button Text */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">CTA Button Text</label>
+                  <input
+                    type="text"
+                    value={card.ctaText}
+                    onChange={(e) => updateSupportCard(card.id, "ctaText", e.target.value)}
+                    placeholder="Learn More"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+                  />
+                </div>
+
+                {/* CTA Button Link */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">CTA Button Link</label>
+                  <input
+                    type="text"
+                    value={card.ctaLink}
+                    onChange={(e) => updateSupportCard(card.id, "ctaLink", e.target.value)}
+                    placeholder="/contact-us"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <button
+            onClick={addSupportCard}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-all"
+          >
+            <Plus size={18} />
+            Add Support Card
+          </button>
+        </div>
+      )}
+
       {/* Save Button */}
       <div className="flex justify-end gap-3 pt-4">
         <button
