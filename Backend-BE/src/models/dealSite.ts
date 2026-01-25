@@ -53,6 +53,18 @@ export interface IDealSite {
     propertyIds?: string;
     featuredListings?: string[];
   };
+  support?: {
+    title: string;
+    description: string;
+    showHeroCtaButtons: boolean;
+    supportCards: {
+      cardTitle: string;
+      cardIcon: string;
+      description: string;
+      ctaText: string;
+      ctaLink: string;
+    }[];
+  };
   socialLinks?: {
     website?: string;
     twitter?: string;
