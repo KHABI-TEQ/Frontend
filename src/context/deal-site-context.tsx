@@ -426,7 +426,13 @@ const DEFAULT_SETTINGS: DealSiteSettings = {
   about: {},
   contactUs: {},
   homeSettings: {},
-  subscribeSettings: {},
+  subscribeSettings: {
+    title: "",
+    subTitle: "",
+    enableEmailSubscription: true,
+    subscriptionPlaceholder: "Enter your email",
+    confirmationMessage: "Thank you for subscribing! Check your email for confirmation.",
+  },
   securitySettings: {
     enablePasswordProtection: false,
     enableRateLimiting: true,
