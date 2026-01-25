@@ -10,7 +10,7 @@ import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import { Save, Trash2, ImageIcon, Settings } from "lucide-react";
 import { useDealSite, FooterDetails } from "@/context/deal-site-context";
-import { POST_REQUEST_FILE_UPLOAD } from "@/utils/requests";
+import { POST_REQUEST, POST_REQUEST_FILE_UPLOAD } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import OverlayPreloader from "@/components/general-components/OverlayPreloader";
 
