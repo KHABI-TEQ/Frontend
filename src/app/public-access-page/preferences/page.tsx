@@ -293,6 +293,7 @@ export default function PreferencesRequestsPage() {
                     <th className="text-left px-6 py-3 font-semibold text-gray-700">Budget Range</th>
                     <th className="text-left px-6 py-3 font-semibold text-gray-700">Location</th>
                     <th className="text-left px-6 py-3 font-semibold text-gray-700">Submitted</th>
+                    <th className="text-left px-6 py-3 font-semibold text-gray-700">Action</th>
                   </tr>
                 </thead>
                 <tbody>
