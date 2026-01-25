@@ -58,9 +58,9 @@ export default function PreferencesRequestsPage() {
       params.append("page", String(currentPage));
       params.append("limit", String(itemsPerPage));
       if (searchTerm) params.append("search", searchTerm);
-      if (filterPropertyType) params.append("preferenceMode", filterPropertyType);
+      if (filterPropertyType) params.append("propertyType", filterPropertyType);
 
-      const url = `${URLS.BASE}${URLS.preferenceBaseUrl}/getApprovedForAgent?${params.toString()}`;
+      const url = `${URLS.BASE}/account/dealsite-preferences/fetchAll?${params.toString()}`;
       const response = await GET_REQUEST<any>(url, token);
 
       if (response?.success && response?.data) {
