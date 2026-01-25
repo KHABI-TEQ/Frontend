@@ -266,29 +266,6 @@ export class DealSite {
 
         // 🟢 About Section
         about: {
-          // Hero Section
-          hero: {
-            title: { type: String, default: "" },
-            subTitle: { type: String, default: "" },
-            description: { type: String, default: "" },
-            backgroundImage: { type: String, default: "" },
-            backgroundVideo: { type: String, default: "" },
-            mobileFallbackImage: { type: String, default: "" },
-            overlayColor: { type: String, default: "rgba(0, 0, 0, 0.55)" },
-            cta: {
-              text: { type: String, default: "" },
-              link: { type: String, default: "" },
-              style: { type: String, default: "light" },
-            },
-          },
-
-          // Identity Section
-          identity: {
-            headline: { type: String, default: "" },
-            content: { type: String, default: "" },
-            keyHighlights: [{ type: String }],
-          },
-
           // Who We Are
           whoWeAre: {
             title: { type: String, default: "" },
@@ -354,94 +331,6 @@ export class DealSite {
                 bio: { type: String },
               },
             ],
-          },
-
-          // Mission & Vision
-          missionVision: {
-            title: { type: String, default: "" },
-            items: [
-              {
-                title: { type: String },
-                description: { type: String },
-              },
-            ],
-            backgroundImage: { type: String, default: "" },
-          },
-
-          // Values
-          values: {
-            title: { type: String, default: "" },
-            description: { type: String, default: "" },
-            items: [
-              {
-                icon: { type: String },
-                title: { type: String },
-                description: { type: String },
-              },
-            ],
-          },
-
-          // Journey/Timeline
-          journey: {
-            title: { type: String, default: "" },
-            timeline: [
-              {
-                year: { type: String },
-                title: { type: String },
-                description: { type: String },
-              },
-            ],
-          },
-
-          // Leadership Team
-          leadership: {
-            title: { type: String, default: "" },
-            subTitle: { type: String, default: "" },
-            members: [
-              {
-                name: { type: String },
-                role: { type: String },
-                image: { type: String },
-                quote: { type: String },
-              },
-            ],
-          },
-
-          // Statistics
-          stats: {
-            title: { type: String, default: "" },
-            subTitle: { type: String, default: "" },
-            backgroundColor: { type: String, default: "#0B3B2E" },
-            items: [
-              {
-                label: { type: String },
-                value: { type: String },
-              },
-            ],
-          },
-
-          // Partners
-          partners: {
-            title: { type: String, default: "" },
-            subTitle: { type: String, default: "" },
-            logos: [{ type: String }],
-          },
-
-          // Testimonials Configuration
-          testimonials: {
-            showFromHome: { type: Boolean, default: true },
-            limit: { type: Number, default: 3 },
-            title: { type: String, default: "" },
-            layout: { type: String, enum: ["carousel", "grid"], default: "carousel" },
-          },
-
-          // Call to Action
-          cta: {
-            title: { type: String, default: "" },
-            subTitle: { type: String, default: "" },
-            buttonText: { type: String, default: "" },
-            link: { type: String, default: "" },
-            backgroundGradient: { type: String, default: "" },
           },
         },
 
