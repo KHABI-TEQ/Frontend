@@ -35,7 +35,7 @@ export interface FeatureSelection {
 
 export interface MarketplaceDefaults {
   defaultTab: "buy" | "rent" | "shortlet" | "jv";
-  defaultSort: "newest" | "price-asc" | "price-desc";
+  defaultSort?: "newest" | "price-asc" | "price-desc";
   showVerifiedOnly: boolean;
   enablePriceNegotiationButton: boolean;
 }
