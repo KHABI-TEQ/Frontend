@@ -333,6 +333,8 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
             contactUs: data.contactUs || prev.contactUs,
             homeSettings: data.homeSettings || prev.homeSettings,
             subscribeSettings: data.subscribeSettings || prev.subscribeSettings,
+            marketplaceDefaults: data.marketplaceDefaults || prev.marketplaceDefaults,
+            listingsLimit: data.listingsLimit || prev.listingsLimit,
             status: data.status || prev.status,
           }));
           if (data.publicSlug) setSlugLocked(true);
