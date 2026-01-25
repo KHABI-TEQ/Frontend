@@ -329,6 +329,7 @@ export interface SecuritySettings {
 }
 
 export interface DealSiteSettings {
+  _id?: string;
   publicSlug: string;
   title: string;
   keywords: string[];
