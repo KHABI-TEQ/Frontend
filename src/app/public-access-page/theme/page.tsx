@@ -6,8 +6,12 @@
 "use client";
 
 import React from "react";
-import { Palette } from "lucide-react";
+import Cookies from "js-cookie";
+import toast from "react-hot-toast";
+import { Palette, Save } from "lucide-react";
 import { useDealSite } from "@/context/deal-site-context";
+import { PUT_REQUEST } from "@/utils/requests";
+import { URLS } from "@/utils/URLS";
 
 export default function ThemePage() {
   const { settings, updateSettings } = useDealSite();
