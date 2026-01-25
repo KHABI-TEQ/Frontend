@@ -52,7 +52,7 @@ type Testimonial = {
 };
 
 type WhyChooseUsItem = {
-  id: string;
+  _id: string;
   icon: string;
   title: string;
   content: string;
@@ -88,6 +88,7 @@ export default function HomePageSettings() {
   const [whyChooseUs, setWhyChooseUs] = useState<WhyChooseUsItem[]>(
     settings.homeSettings?.whyChooseUs?.items || []
   );
+
   const [whyChooseUsSection, setWhyChooseUsSection] = useState({
     title: settings.homeSettings?.whyChooseUs?.title || "Why Choose Us",
     subTitle: settings.homeSettings?.whyChooseUs?.subTitle || "Here's what sets us apart",
@@ -102,8 +103,8 @@ export default function HomePageSettings() {
     setShowIconPicker((prev) => {
       const updated = { ...prev };
       whyChooseUs.forEach((item) => {
-        if (!(item.id in updated)) {
-          updated[item.id] = false;
+        if (!(item._id in updated)) {
+          updated[item._id] = false;
         }
       });
       return updated;
@@ -111,8 +112,8 @@ export default function HomePageSettings() {
     setIconSearchTerms((prev) => {
       const updated = { ...prev };
       whyChooseUs.forEach((item) => {
-        if (!(item.id in updated)) {
-          updated[item.id] = "";
+        if (!(item._id in updated)) {
+          updated[item._id] = "";
         }
       });
       return updated;
@@ -220,7 +221,7 @@ export default function HomePageSettings() {
   // Why Choose Us handlers
   const addWhyChooseUsItem = useCallback(() => {
     const newItem: WhyChooseUsItem = {
-      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      _id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       icon: "Award",
       title: "",
       content: "",
@@ -230,12 +231,12 @@ export default function HomePageSettings() {
 
   const updateWhyChooseUsItem = useCallback((id: string, field: string, value: any) => {
     setWhyChooseUs((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item))
+      prev.map((item) => (item._id === id ? { ...item, [field]: value } : item))
     );
   }, []);
 
   const removeWhyChooseUsItem = useCallback((id: string) => {
-    setWhyChooseUs((prev) => prev.filter((item) => item.id !== id));
+    setWhyChooseUs((prev) => prev.filter((item) => item._id !== id));
   }, []);
 
   const handleSave = useCallback(async () => {
@@ -670,12 +671,13 @@ export default function HomePageSettings() {
 
           {/* Why Choose Us Items */}
           <div className="space-y-4">
-            {whyChooseUs.map((item, index) => (
-              <div key={item.id} className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
+            {whyChooseUs.map((item, index) => {
+              return (
+              <div key={item._id} className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-[#09391C]">Item {index + 1}</h3>
                   <button
-                    onClick={() => removeWhyChooseUsItem(item.id)}
+                    onClick={() => removeWhyChooseUsItem(item._id)}
                     className="text-red-600 hover:text-red-700 p-2"
                   >
                     <Trash2 size={18} />
@@ -690,12 +692,12 @@ export default function HomePageSettings() {
                       onClick={() => {
                         setShowIconPicker((prev) => ({
                           ...prev,
-                          [item.id]: !prev[item.id],
+                          [item._id]: !prev[item._id],
                         }));
-                        if (!showIconPicker[item.id]) {
+                        if (!showIconPicker[item._id]) {
                           setIconSearchTerms((prev) => ({
                             ...prev,
-                            [item.id]: "",
+                            [item._id]: "",
                           }));
                         }
                       }}
@@ -705,21 +707,21 @@ export default function HomePageSettings() {
                         {React.createElement(getLucideIcon(item.icon), { size: 20 })}
                         {item.icon}
                       </span>
-                      <span className={`text-gray-500 transition-transform ${showIconPicker[item.id] ? "rotate-180" : ""}`}>▼</span>
+                      <span className={`text-gray-500 transition-transform ${showIconPicker[item._id] ? "rotate-180" : ""}`}>▼</span>
                     </button>
 
-                    {showIconPicker[item.id] && (
+                    {showIconPicker[item._id] && (
                       <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg z-50 min-w-96">
                         {/* Search Input */}
                         <div className="border-b border-gray-200 p-3">
                           <input
                             type="text"
                             placeholder="Search icons..."
-                            value={iconSearchTerms[item.id] || ""}
+                            value={iconSearchTerms[item._id] || ""}
                             onChange={(e) =>
                               setIconSearchTerms((prev) => ({
                                 ...prev,
-                                [item.id]: e.target.value,
+                                [item._id]: e.target.value,
                               }))
                             }
                             autoFocus
@@ -730,19 +732,19 @@ export default function HomePageSettings() {
                         {/* Icon Grid */}
                         <div className="grid grid-cols-6 gap-2 p-3 max-h-72 overflow-y-auto">
                           {LUCIDE_ICONS.filter(icon =>
-                            icon.toLowerCase().includes((iconSearchTerms[item.id] || "").toLowerCase())
-                          ).map((iconName) => (
+                            icon.toLowerCase().includes((iconSearchTerms[item._id] || "").toLowerCase())
+                          ).map((iconName, index) => (
                             <button
-                              key={iconName}
+                              key={index}
                               onClick={() => {
-                                updateWhyChooseUsItem(item.id, "icon", iconName);
+                                updateWhyChooseUsItem(item._id, "icon", iconName);
                                 setShowIconPicker((prev) => ({
                                   ...prev,
-                                  [item.id]: false,
+                                  [item._id]: false,
                                 }));
                                 setIconSearchTerms((prev) => ({
                                   ...prev,
-                                  [item.id]: "",
+                                  [item._id]: "",
                                 }));
                               }}
                               className={`p-2 rounded-lg flex flex-col items-center gap-1 text-xs transition-colors ${
@@ -768,7 +770,7 @@ export default function HomePageSettings() {
                   <input
                     type="text"
                     value={item.title}
-                    onChange={(e) => updateWhyChooseUsItem(item.id, "title", e.target.value)}
+                    onChange={(e) => updateWhyChooseUsItem(item._id, "title", e.target.value)}
                     placeholder="Feature Title"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
                   />
@@ -779,14 +781,14 @@ export default function HomePageSettings() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Content</label>
                   <textarea
                     value={item.content}
-                    onChange={(e) => updateWhyChooseUsItem(item.id, "content", e.target.value)}
+                    onChange={(e) => updateWhyChooseUsItem(item._id, "content", e.target.value)}
                     placeholder="Describe this feature..."
                     rows={3}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
                   />
                 </div>
-              </div>
-            ))}
+              </div>)
+            })}
           </div>
 
           <button
