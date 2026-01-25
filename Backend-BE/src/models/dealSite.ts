@@ -403,7 +403,10 @@ export class DealSite {
           heroSubtitle: { type: String, default: "" },
           ctaText: { type: String, default: "" },
           ctaLink: { type: String, default: "" },
+          ctaText2: { type: String, default: "" },
+          ctaLink2: { type: String, default: "" },
           heroImageUrl: { type: String, default: "" },
+          heroImage: { type: String, default: "" },
         },
 
         // 🟢 About Section
