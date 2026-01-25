@@ -52,7 +52,7 @@ type Testimonial = {
 };
 
 type WhyChooseUsItem = {
-  _id: string;
+  _id?: string; // Client-side ID for tracking; not persisted to backend
   icon: string;
   title: string;
   content: string;
@@ -84,9 +84,12 @@ export default function HomePageSettings() {
     subTitle: settings.homeSettings?.testimonials?.subTitle || "What our clients say about us",
   });
 
-  // Why Choose Us state
+  // Why Choose Us state - ensure all items have client-side _id for state management
   const [whyChooseUs, setWhyChooseUs] = useState<WhyChooseUsItem[]>(
-    settings.homeSettings?.whyChooseUs?.items || []
+    (settings.homeSettings?.whyChooseUs?.items || []).map((item, index) => ({
+      ...item,
+      _id: item._id || `${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`,
+    }))
   );
 
   const [whyChooseUsSection, setWhyChooseUsSection] = useState({
@@ -102,18 +105,20 @@ export default function HomePageSettings() {
   React.useEffect(() => {
     setShowIconPicker((prev) => {
       const updated = { ...prev };
-      whyChooseUs.forEach((item) => {
-        if (!(item._id in updated)) {
-          updated[item._id] = false;
+      whyChooseUs.forEach((item, index) => {
+        const id = item._id || `index-${index}`;
+        if (!(id in updated)) {
+          updated[id] = false;
         }
       });
       return updated;
     });
     setIconSearchTerms((prev) => {
       const updated = { ...prev };
-      whyChooseUs.forEach((item) => {
-        if (!(item._id in updated)) {
-          updated[item._id] = "";
+      whyChooseUs.forEach((item, index) => {
+        const id = item._id || `index-${index}`;
+        if (!(id in updated)) {
+          updated[id] = "";
         }
       });
       return updated;
@@ -243,6 +248,13 @@ export default function HomePageSettings() {
     setPreloader(true);
     try {
       const token = Cookies.get("token");
+
+      // Remove client-side _id from testimonials before sending to backend
+      const testimonialsForBackend = testimonials.map(({ id, ...rest }) => rest);
+
+      // Remove client-side _id from why choose us items before sending to backend
+      const whyChooseUsForBackend = whyChooseUs.map(({ _id, ...rest }) => rest);
+
       const payload = {
         publicPage: {
           ...settings.publicPage,
@@ -258,12 +270,12 @@ export default function HomePageSettings() {
           testimonials: {
             title: testimonialsSection.title,
             subTitle: testimonialsSection.subTitle,
-            testimonials: testimonials,
+            testimonials: testimonialsForBackend,
           },
           whyChooseUs: {
             title: whyChooseUsSection.title,
             subTitle: whyChooseUsSection.subTitle,
-            items: whyChooseUs,
+            items: whyChooseUsForBackend,
           },
         },
       };
@@ -275,7 +287,22 @@ export default function HomePageSettings() {
       );
 
       if (res?.success) {
-        updateSettings(payload as any);
+        // Update context with the full payload structure (backend won't have _id/id, but frontend state has them)
+        updateSettings({
+          publicPage: payload.publicPage,
+          homeSettings: {
+            testimonials: {
+              title: testimonialsSection.title,
+              subTitle: testimonialsSection.subTitle,
+              testimonials: testimonials, // Use frontend state with id fields
+            },
+            whyChooseUs: {
+              title: whyChooseUsSection.title,
+              subTitle: whyChooseUsSection.subTitle,
+              items: whyChooseUs, // Use frontend state with _id fields
+            },
+          },
+        } as any);
         toast.success("Home page settings saved successfully");
       } else {
         toast.error(res?.message || "Failed to save settings");
@@ -290,6 +317,11 @@ export default function HomePageSettings() {
   const getLucideIcon = (iconName: string) => {
     const Icon = (LucideIcons as any)[iconName];
     return Icon || (LucideIcons as any)["Award"];
+  };
+
+  // Helper to get item ID - uses _id if available, falls back to finding index
+  const getItemId = (item: WhyChooseUsItem, index: number): string => {
+    return item._id || `index-${index}`;
   };
 
   return (
@@ -672,12 +704,13 @@ export default function HomePageSettings() {
           {/* Why Choose Us Items */}
           <div className="space-y-4">
             {whyChooseUs.map((item, index) => {
+              const itemId = getItemId(item, index);
               return (
-              <div key={item._id} className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
+              <div key={itemId} className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-[#09391C]">Item {index + 1}</h3>
                   <button
-                    onClick={() => removeWhyChooseUsItem(item._id)}
+                    onClick={() => removeWhyChooseUsItem(itemId)}
                     className="text-red-600 hover:text-red-700 p-2"
                   >
                     <Trash2 size={18} />
@@ -692,12 +725,12 @@ export default function HomePageSettings() {
                       onClick={() => {
                         setShowIconPicker((prev) => ({
                           ...prev,
-                          [item._id]: !prev[item._id],
+                          [itemId]: !prev[itemId],
                         }));
-                        if (!showIconPicker[item._id]) {
+                        if (!showIconPicker[itemId]) {
                           setIconSearchTerms((prev) => ({
                             ...prev,
-                            [item._id]: "",
+                            [itemId]: "",
                           }));
                         }
                       }}
@@ -707,21 +740,21 @@ export default function HomePageSettings() {
                         {React.createElement(getLucideIcon(item.icon), { size: 20 })}
                         {item.icon}
                       </span>
-                      <span className={`text-gray-500 transition-transform ${showIconPicker[item._id] ? "rotate-180" : ""}`}>▼</span>
+                      <span className={`text-gray-500 transition-transform ${showIconPicker[itemId] ? "rotate-180" : ""}`}>▼</span>
                     </button>
 
-                    {showIconPicker[item._id] && (
+                    {showIconPicker[itemId] && (
                       <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg z-50 min-w-96">
                         {/* Search Input */}
                         <div className="border-b border-gray-200 p-3">
                           <input
                             type="text"
                             placeholder="Search icons..."
-                            value={iconSearchTerms[item._id] || ""}
+                            value={iconSearchTerms[itemId] || ""}
                             onChange={(e) =>
                               setIconSearchTerms((prev) => ({
                                 ...prev,
-                                [item._id]: e.target.value,
+                                [itemId]: e.target.value,
                               }))
                             }
                             autoFocus
@@ -732,19 +765,19 @@ export default function HomePageSettings() {
                         {/* Icon Grid */}
                         <div className="grid grid-cols-6 gap-2 p-3 max-h-72 overflow-y-auto">
                           {LUCIDE_ICONS.filter(icon =>
-                            icon.toLowerCase().includes((iconSearchTerms[item._id] || "").toLowerCase())
+                            icon.toLowerCase().includes((iconSearchTerms[itemId] || "").toLowerCase())
                           ).map((iconName, index) => (
                             <button
                               key={index}
                               onClick={() => {
-                                updateWhyChooseUsItem(item._id, "icon", iconName);
+                                updateWhyChooseUsItem(itemId, "icon", iconName);
                                 setShowIconPicker((prev) => ({
                                   ...prev,
-                                  [item._id]: false,
+                                  [itemId]: false,
                                 }));
                                 setIconSearchTerms((prev) => ({
                                   ...prev,
-                                  [item._id]: "",
+                                  [itemId]: "",
                                 }));
                               }}
                               className={`p-2 rounded-lg flex flex-col items-center gap-1 text-xs transition-colors ${
@@ -770,7 +803,7 @@ export default function HomePageSettings() {
                   <input
                     type="text"
                     value={item.title}
-                    onChange={(e) => updateWhyChooseUsItem(item._id, "title", e.target.value)}
+                    onChange={(e) => updateWhyChooseUsItem(itemId, "title", e.target.value)}
                     placeholder="Feature Title"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
                   />
@@ -781,7 +814,7 @@ export default function HomePageSettings() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Content</label>
                   <textarea
                     value={item.content}
-                    onChange={(e) => updateWhyChooseUsItem(item._id, "content", e.target.value)}
+                    onChange={(e) => updateWhyChooseUsItem(itemId, "content", e.target.value)}
                     placeholder="Describe this feature..."
                     rows={3}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"

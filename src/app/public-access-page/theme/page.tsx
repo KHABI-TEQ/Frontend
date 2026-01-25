@@ -6,8 +6,12 @@
 "use client";
 
 import React from "react";
-import { Palette } from "lucide-react";
+import Cookies from "js-cookie";
+import toast from "react-hot-toast";
+import { Palette, Save } from "lucide-react";
 import { useDealSite } from "@/context/deal-site-context";
+import { PUT_REQUEST } from "@/utils/requests";
+import { URLS } from "@/utils/URLS";
 
 export default function ThemePage() {
   const { settings, updateSettings } = useDealSite();
@@ -151,12 +155,37 @@ export default function ThemePage() {
       {/* Save Button */}
       <div className="flex justify-end">
         <button
-          onClick={() => {
+          onClick={async () => {
             setSaving(true);
-            setTimeout(() => setSaving(false), 1000);
+            try {
+              const token = Cookies.get("token");
+              const payload = {
+                primaryColor: settings.theme.primaryColor,
+                secondaryColor: settings.theme.secondaryColor,
+              };
+
+              const res = await PUT_REQUEST(
+                `${URLS.BASE}/account/dealSite/${settings.publicSlug}/theme/update`,
+                payload,
+                token
+              );
+
+              if (res?.success) {
+                toast.success("Theme saved successfully");
+              } else {
+                toast.error(res?.message || "Failed to save theme");
+              }
+            } catch (error) {
+              console.error("Failed to save theme:", error);
+              toast.error("Failed to save theme");
+            } finally {
+              setSaving(false);
+            }
           }}
-          className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all"
+          disabled={saving}
+          className="inline-flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         >
+          <Save size={18} />
           {saving ? "Saving..." : "Save Theme"}
         </button>
       </div>
