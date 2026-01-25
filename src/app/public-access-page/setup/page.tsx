@@ -662,8 +662,31 @@ function Step3Review({ formData }: { formData: DealSiteSettings }) {
             <p className="text-gray-900">{formData.paymentDetails?.businessName}</p>
           </div>
           <div>
-            <p className="text-gray-600 font-medium">Account</p>
+            <p className="text-gray-600 font-medium">Account Number</p>
             <p className="text-gray-900">****{formData.paymentDetails?.accountNumber?.slice(-4)}</p>
+          </div>
+          <div>
+            <p className="text-gray-600 font-medium">Settlement Bank</p>
+            <p className="text-gray-900">{formData.paymentDetails?.sortCode || "Not specified"}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Contact Information Summary */}
+      <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+        <h3 className="font-semibold text-gray-900 mb-3">Primary Contact Information</h3>
+        <div className="space-y-3 text-sm">
+          <div>
+            <p className="text-gray-600 font-medium">Contact Name</p>
+            <p className="text-gray-900">{formData.paymentDetails?.primaryContactName}</p>
+          </div>
+          <div>
+            <p className="text-gray-600 font-medium">Email</p>
+            <p className="text-gray-900">{formData.paymentDetails?.primaryContactEmail}</p>
+          </div>
+          <div>
+            <p className="text-gray-600 font-medium">Phone</p>
+            <p className="text-gray-900">{formData.paymentDetails?.primaryContactPhone}</p>
           </div>
         </div>
       </div>
