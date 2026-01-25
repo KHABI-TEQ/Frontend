@@ -178,6 +178,9 @@ export interface IDealSite {
       text?: string;
       color?: string;
     };
+    enableEmailSubscription?: boolean;
+    subscriptionPlaceholder?: string;
+    confirmationMessage?: string;
   };
 
   paymentDetails?: {
