@@ -314,13 +314,16 @@ export const getDealSiteSection = async (
 
     // ✅ Handle grouped flat fields
     if (sectionName === "brandingSeo") {
-      return {
-        title: dealSite.title,
-        keywords: dealSite.keywords,
-        description: dealSite.description,
-        logoUrl: dealSite.logoUrl,
-        listingsLimit: dealSite.listingsLimit,
-      };
+      return res.status(HttpStatusCodes.OK).json({
+        success: true,
+        message: `Public access page section '${sectionName}' fetched successfully`,
+        data: {
+          title: dealSite.title,
+          keywords: dealSite.keywords,
+          description: dealSite.description,
+          logoUrl: dealSite.logoUrl,
+        },
+      });
     }
 
     // Type-safe access
