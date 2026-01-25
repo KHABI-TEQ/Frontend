@@ -147,7 +147,7 @@ export default function HomePageSettings() {
   // Testimonial handlers
   const addTestimonial = useCallback(() => {
     const newTestimonial: Testimonial = {
-      id: Date.now().toString(),
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       rating: 5,
       description: "",
       image: "",
@@ -198,7 +198,7 @@ export default function HomePageSettings() {
   // Why Choose Us handlers
   const addWhyChooseUsItem = useCallback(() => {
     const newItem: WhyChooseUsItem = {
-      id: Date.now().toString(),
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       icon: "Award",
       title: "",
       content: "",
