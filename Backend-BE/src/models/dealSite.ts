@@ -383,12 +383,6 @@ export class DealSite {
         subscribeSettings: {
           title: { type: String, default: "" },
           subTitle: { type: String, default: "" },
-          miniTitle: { type: String, default: "" },
-          backgroundColor: { type: String, default: "#8DDB90" },
-          cta: {
-            text: { type: String, default: "" },
-            color: { type: String, default: "#09391C" },
-          },
         },
 
         footer: {
