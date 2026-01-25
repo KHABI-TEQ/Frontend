@@ -100,6 +100,51 @@ export interface IDealSite {
       content: string;
       keyHighlights: string[];
     };
+    whoWeAre?: {
+      title: string;
+      description: string;
+      image?: string;
+    };
+    ourMission?: {
+      title: string;
+      description: string;
+      image?: string;
+    };
+    ourExperience?: {
+      title: string;
+      description: string;
+      image?: string;
+    };
+    whatWeStandFor?: {
+      title: string;
+      description: string;
+      items?: {
+        title: string;
+        shortText: string;
+      }[];
+    };
+    whatWeDo?: {
+      title: string;
+      items?: {
+        title: string;
+      }[];
+    };
+    whereWeOperate?: {
+      title: string;
+      locations?: {
+        name: string;
+        address: string;
+        coordinates?: [number, number];
+      }[];
+    };
+    profile?: {
+      members?: {
+        name: string;
+        role: string;
+        image: string;
+        bio: string;
+      }[];
+    };
     missionVision?: {
       title: string;
       items: {
