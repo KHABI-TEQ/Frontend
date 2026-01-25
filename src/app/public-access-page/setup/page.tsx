@@ -223,9 +223,8 @@ const Setup = () => {
         <div className="bg-white rounded-lg border border-gray-200 p-8">
           {step === 0 && <Step0PublicLink formData={formData} onSlugChange={handleSlugChange} slugStatus={slugStatus} slugMessage={slugMessage} />}
           {step === 1 && <Step1Design formData={formData} onChange={handleInputChange} />}
-          {step === 2 && <Step2Marketplace formData={formData} onChange={handleInputChange} />}
-          {step === 3 && <Step3Payment formData={formData} onChange={handleInputChange} />}
-          {step === 4 && <Step4Review formData={formData} />}
+          {step === 2 && <Step2Payment formData={formData} onChange={handleInputChange} />}
+          {step === 3 && <Step3Review formData={formData} />}
 
           {/* Navigation Buttons */}
           <div className="flex items-center justify-between gap-4 mt-8 pt-6 border-t border-gray-200">
