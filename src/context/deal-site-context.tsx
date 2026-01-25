@@ -206,8 +206,6 @@ export interface DealSiteSettings {
   contactUs?: ContactUsSection;
   subscribeSettings?: SubscribeSettings;
   paymentDetails?: BankDetails;
-  marketplaceDefaults: MarketplaceDefaults;
-  listingsLimit: number;
   status?: string;
 }
 
@@ -274,12 +272,6 @@ const DEFAULT_SETTINGS: DealSiteSettings = {
   about: {},
   contactUs: {},
   subscribeSettings: {},
-  marketplaceDefaults: {
-    defaultTab: "buy",
-    showVerifiedOnly: false,
-    enablePriceNegotiationButton: true,
-  },
-  listingsLimit: 6,
 };
 
 export function DealSiteProvider({ children }: { children: ReactNode }) {
@@ -333,8 +325,6 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
             contactUs: data.contactUs || prev.contactUs,
             homeSettings: data.homeSettings || prev.homeSettings,
             subscribeSettings: data.subscribeSettings || prev.subscribeSettings,
-            marketplaceDefaults: data.marketplaceDefaults || prev.marketplaceDefaults,
-            listingsLimit: data.listingsLimit || prev.listingsLimit,
             status: data.status || prev.status,
           }));
           if (data.publicSlug) setSlugLocked(true);

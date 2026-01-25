@@ -117,7 +117,7 @@ export interface IDealSite {
   contactUs?: {
     title: string;
     description: string;
-    cta?: {
+    location?: {
       name: string;
       address?: string;
       coordinates?: [number, number];
@@ -149,13 +149,6 @@ export interface IDealSite {
     isVerified?: boolean;
     active?: boolean;
   };
-  marketplaceDefaults?: {
-    defaultTab?: DefaultTab;
-    showVerifiedOnly?: boolean;
-    enablePriceNegotiationButton?: boolean;
-  };
-  listingsLimit?: number;
-
   status: DealSiteStatus;
   createdBy: Types.ObjectId;
 }
@@ -341,13 +334,6 @@ export class DealSite {
           isVerified: { type: Boolean, default: false },
           active: { type: Boolean, default: false },
         },
-        marketplaceDefaults: {
-          defaultTab: { type: String, enum: ["buy", "rent", "shortlet", "jv"], default: "buy" },
-          showVerifiedOnly: { type: Boolean, default: false },
-          enablePriceNegotiationButton: { type: Boolean, default: true },
-        },
-        listingsLimit: { type: Number, default: 6 },
-
         status: {
           type: String,
           enum: ["pending", "on-hold", "deleted", "running", "paused"],
