@@ -802,7 +802,7 @@ const ThirdPartyVerificationPage: React.FC = () => {
             Review and verify the documents submitted for third-party verification.
           </p>
           <div className="mt-4 p-3 bg-white rounded-lg shadow-sm inline-block">
-            <span className="text-xs sm:text-sm text-gray-500">Document ID 1234: </span>
+            <span className="text-xs sm:text-sm text-gray-500">Document ID: </span>
             <span className="font-mono font-medium text-[#0B423D] text-sm sm:text-base">{documentID}</span>
           </div>
         </div>
@@ -813,62 +813,7 @@ const ThirdPartyVerificationPage: React.FC = () => {
           </div>
         ) : (
           <>
-            {/* Status Check Result */}
-            {documentStatusDetails && (
-              <div className="mb-6 p-4 rounded-lg border-l-4" style={{
-                borderColor:
-                  documentStatusDetails.status === 'pending' ? '#FBBF24' :
-                  documentStatusDetails.status === 'payment-approved' ? '#3B82F6' :
-                  documentStatusDetails.status === 'registered' ? '#34D399' :
-                  documentStatusDetails.status === 'unregistered' ? '#EF4444' :
-                  '#EF4444',
-                backgroundColor:
-                  documentStatusDetails.status === 'pending' ? '#FEF3C7' :
-                  documentStatusDetails.status === 'payment-approved' ? '#EFF6FF' :
-                  documentStatusDetails.status === 'registered' ? '#ECFDF5' :
-                  documentStatusDetails.status === 'unregistered' ? '#FEE2E2' :
-                  '#FEE2E2'
-              }}>
-                <div className="flex items-start gap-3">
-                  {documentStatusDetails.status === 'pending' ? (
-                    <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5" />
-                  ) : documentStatusDetails.status === 'payment-approved' ? (
-                    <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5" />
-                  ) : documentStatusDetails.status === 'registered' ? (
-                    <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
-                  ) : (
-                    <XCircle className="w-5 h-5 text-red-600 mt-0.5" />
-                  )}
-                  <div>
-                    <h3 className="font-semibold" style={{
-                      color:
-                        documentStatusDetails.status === 'pending' ? '#92400E' :
-                        documentStatusDetails.status === 'payment-approved' ? '#1E40AF' :
-                        documentStatusDetails.status === 'registered' ? '#065F46' :
-                        '#7F1D1D'
-                    }}>
-                      Document Status: <span className="uppercase">{documentStatusDetails.status}</span>
-                    </h3>
-                    <p className="text-sm mt-1" style={{
-                      color:
-                        documentStatusDetails.status === 'pending' ? '#78350F' :
-                        documentStatusDetails.status === 'payment-approved' ? '#1E3A8A' :
-                        documentStatusDetails.status === 'registered' ? '#047857' :
-                        '#991B1B'
-                    }}>
-                      {documentStatusDetails.status === 'pending'
-                        ? 'This document is awaiting verification. Please review and submit your report below.'
-                        : documentStatusDetails.status === 'payment-approved'
-                        ? 'Payment has been approved. This document is now ready for verification. Please review and submit your report below.'
-                        : documentStatusDetails.status === 'registered'
-                        ? 'This document has been verified and registered.'
-                        : 'This document has been marked as not registered or unverified.'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
+            
             {/* Documents List */}
             <div className="bg-white shadow-xl rounded-2xl border border-gray-100 mb-6">
               <div className="px-4 sm:px-6 py-4 sm:py-6 border-b border-gray-200">
