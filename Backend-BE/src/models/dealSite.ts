@@ -131,48 +131,11 @@ export interface IDealSite {
   contactUs?: {
     hero?: {
       title: string;
-      subTitle: string;
       description: string;
-      backgroundImage: string;
-      backgroundVideo?: string;
-      overlayColor: string;
-      cta: {
-        text: string;
-        link: string;
-        style: string;
-      };
-    };
-    contactInfo?: {
-      title: string;
-      subTitle: string;
-      items: {
-        icon: string;
-        label: string;
-        value: string;
-      }[];
-    };
-    mapSection?: {
-      title: string;
-      subTitle: string;
-      locations: {
-        city: string;
-        address: string;
-        coordinates: number[];
-      }[];
     };
     cta?: {
       title: string;
-      subTitle: string;
-      buttonText: string;
-      link: string;
-      backgroundGradient: string;
     };
-    // Legacy fields
-    officeHours?: string;
-    faqs?: {
-      question: string;
-      answer: string;
-    }[];
   };
 
   homeSettings?: {
