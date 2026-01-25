@@ -181,6 +181,12 @@ export interface BankDetails {
   primaryContactPhone?: string;
 }
 
+export interface MarketplaceDefaults {
+  defaultTab: "buy" | "rent" | "shortlet" | "jv";
+  showVerifiedOnly?: boolean;
+  enablePriceNegotiationButton?: boolean;
+}
+
 export interface DealSiteSettings {
   _id?: string;
   publicSlug: string;
