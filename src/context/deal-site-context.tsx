@@ -152,6 +152,7 @@ export interface HomeSettings {
     subTitle?: string;
     items: Array<{ icon?: string; title: string; content: string }>;
   };
+  support?: SupportSection;
 }
 
 export interface SubscribeSettings {
