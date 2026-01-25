@@ -25,7 +25,7 @@ interface DashboardStats {
 
 export default function OverviewPage() {
   const router = useRouter();
-  const { settings, previewUrl, isPaused, isOnHold, pauseDealSite, resumeDealSite } = useDealSite();
+  const { settings, previewUrl, isPaused, isOnHold, dealSiteStatus, pauseDealSite, resumeDealSite } = useDealSite();
 
   // Analytics state
   const [stats, setStats] = useState<DashboardStats>({ viewsByDay: [] });
