@@ -294,7 +294,6 @@ export const getDealSiteSection = async (
       "socialLinks",
       "contactVisibility",
       "featureSelection",
-      "marketplaceDefaults",
       "publicPage",
       "footer",
       "securitySettings",
@@ -302,6 +301,8 @@ export const getDealSiteSection = async (
       "about",
       "contactUs",
       "brandingSeo",
+      "homeSettings",
+      "support",
     ];
 
     if (!myAllowedSections.includes(sectionName)) {
