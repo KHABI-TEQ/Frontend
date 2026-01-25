@@ -94,12 +94,9 @@ const ThirdPartyVerificationPage: React.FC = () => {
 
   useEffect(() => {
     if (documentID) {
-      // Check status first, then fetch document details only if status is pending
-      checkDocuemntStatus().then((statusData) => {
-        // Only fetch document details if status is pending
-        if (statusData && statusData.status === 'pending') {
-          fetchDocumentDetails();
-        }
+      // Check status first, then fetch document details
+      checkDocuemntStatus().then(() => {
+        fetchDocumentDetails();
       });
     }
   }, [documentID]);
