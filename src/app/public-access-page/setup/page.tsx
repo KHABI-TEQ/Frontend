@@ -207,10 +207,10 @@ const Setup = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-[#09391C] mb-2">
-            Setup Your Public Access Page
+            Launch Your Public Access Page
           </h1>
           <p className="text-gray-600">
-            Follow the steps to get your public agent page live in minutes
+            Complete these 3 steps to go live. You can customize everything else later.
           </p>
         </div>
 
