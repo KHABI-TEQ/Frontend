@@ -519,7 +519,7 @@ function Step2Payment({
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Settlement Bank *</label>
-        <div className="relative">
+        <div className="relative" ref={dropdownRef}>
           <div
             className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200 cursor-pointer bg-white flex items-center justify-between"
             onClick={() => setShowBankDropdown(!showBankDropdown)}
