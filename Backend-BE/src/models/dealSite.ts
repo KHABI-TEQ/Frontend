@@ -378,25 +378,6 @@ export class DealSite {
               },
             ],
           },
-          readyToFind: {
-            title: { type: String, default: "" },
-            subTitle: { type: String, default: "" },
-            ctas: [
-              {
-                bgColor: { type: String },
-                text: { type: String },
-                actionLink: { type: String },
-              },
-            ],
-            items: [
-              {
-                icon: { type: String },
-                title: { type: String },
-                subTitle: { type: String },
-                content: { type: String },
-              },
-            ],
-          },
         },
  
         subscribeSettings: {
