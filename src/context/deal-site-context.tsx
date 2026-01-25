@@ -181,10 +181,17 @@ export interface BankDetails {
   primaryContactPhone?: string;
 }
 
-export interface MarketplaceDefaults {
-  defaultTab: "buy" | "rent" | "shortlet" | "jv";
-  showVerifiedOnly?: boolean;
-  enablePriceNegotiationButton?: boolean;
+export interface SupportSection {
+  title: string;
+  description: string;
+  showHeroCtaButtons: boolean;
+  supportCards: Array<{
+    cardTitle: string;
+    cardIcon: string;
+    description: string;
+    ctaText: string;
+    ctaLink: string;
+  }>;
 }
 
 export interface DealSiteSettings {
