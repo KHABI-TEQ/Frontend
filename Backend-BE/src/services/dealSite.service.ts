@@ -310,7 +310,7 @@ export class DealSiteService {
       "featureSelection",
       "marketplaceDefaults",
       "publicPage",
-      "footerSection",
+      "footer",
       "paymentDetails",
       "about",
       "contactUs",

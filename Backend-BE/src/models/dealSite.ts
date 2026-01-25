@@ -1,10 +1,7 @@
 import { Schema, model, Document, Model, Types } from "mongoose";
 
 export type DealSiteStatus = "pending" | "on-hold" | "deleted" | "running" | "paused";
-export type InspectionStatus = "required" | "optional" | "disabled";
-export type FeatureSelectionMode = "auto" | "manual";
 export type DefaultTab = "buy" | "rent" | "shortlet" | "jv";
-export type DefaultSort = "newest" | "price-asc" | "price-desc";
 
 export interface IDealSite {
   publicSlug: string;
@@ -21,7 +18,6 @@ export interface IDealSite {
   inspectionSettings?: {
     allowPublicBooking: boolean;
     defaultInspectionFee: number;
-    inspectionStatus: InspectionStatus;
     negotiationEnabled: boolean;
   };
 
@@ -44,20 +40,26 @@ export interface IDealSite {
   };
 
   featureSelection?: {
-    mode: FeatureSelectionMode;
-    propertyIds: string;
+    featuredListings?: string[];
   };
 
   marketplaceDefaults?: {
     defaultTab: DefaultTab;
-    defaultSort: DefaultSort;
     showVerifiedOnly: boolean;
     enablePriceNegotiationButton: boolean;
   };
 
-  footerSection?: {
+  footer?: {
     shortDescription: string;
     copyrightText: string;
+  };
+
+  securitySettings?: {
+    enablePasswordProtection?: boolean;
+    pagePassword?: string;
+    enableRateLimiting?: boolean;
+    enableSpamFilter?: boolean;
+    requireEmailVerification?: boolean;
   };
 
   publicPage?: {
@@ -65,138 +67,68 @@ export interface IDealSite {
     heroSubtitle: string;
     ctaText: string;
     ctaLink: string;
-    heroImageUrl: string;
+    ctaText2?: string;
+    ctaLink2?: string;
+    heroImageUrl?: string;
+    heroImage?: string;
   };
 
   about?: {
-    hero?: {
-      title: string;
-      subTitle: string;
-      description: string;
-      backgroundImage: string;
-      backgroundVideo?: string;
-      mobileFallbackImage: string;
-      overlayColor: string;
-      cta: {
-        text: string;
-        link: string;
-        style: string;
-      };
-    };
-    identity?: {
-      headline: string;
-      content: string;
-      keyHighlights: string[];
-    };
-    missionVision?: {
-      title: string;
-      items: {
-        title: string;
-        description: string;
-      }[];
-      backgroundImage: string;
-    };
-    values?: {
+    whoWeAre?: {
       title: string;
       description: string;
-      items: {
-        icon: string;
+      image?: string;
+    };
+    ourMission?: {
+      title: string;
+      description: string;
+      image?: string;
+    };
+    ourExperience?: {
+      title: string;
+      description: string;
+      image?: string;
+    };
+    whatWeStandFor?: {
+      title: string;
+      description: string;
+      items?: {
         title: string;
-        description: string;
+        shortText: string;
       }[];
     };
-    journey?: {
+    whatWeDo?: {
       title: string;
-      timeline: {
-        year: string;
+      items?: {
         title: string;
-        description: string;
       }[];
     };
-    leadership?: {
+    whereWeOperate?: {
       title: string;
-      subTitle: string;
-      members: {
+      locations?: {
+        name: string;
+        address: string;
+        coordinates?: [number, number];
+      }[];
+    };
+    profile?: {
+      members?: {
         name: string;
         role: string;
         image: string;
-        quote: string;
+        bio: string;
       }[];
-    };
-    stats?: {
-      title: string;
-      subTitle: string;
-      backgroundColor: string;
-      items: {
-        label: string;
-        value: string;
-      }[];
-    };
-    partners?: {
-      title: string;
-      subTitle: string;
-      logos: string[];
-    };
-    testimonials?: {
-      showFromHome: boolean;
-      limit: number;
-      title: string;
-      layout: "carousel" | "grid";
-    };
-    cta?: {
-      title: string;
-      subTitle: string;
-      buttonText: string;
-      link: string;
-      backgroundGradient: string;
     };
   };
 
   contactUs?: {
     hero?: {
       title: string;
-      subTitle: string;
       description: string;
-      backgroundImage: string;
-      backgroundVideo?: string;
-      overlayColor: string;
-      cta: {
-        text: string;
-        link: string;
-        style: string;
-      };
-    };
-    contactInfo?: {
-      title: string;
-      subTitle: string;
-      items: {
-        icon: string;
-        label: string;
-        value: string;
-      }[];
-    };
-    mapSection?: {
-      title: string;
-      subTitle: string;
-      locations: {
-        city: string;
-        address: string;
-        coordinates: number[];
-      }[];
     };
     cta?: {
       title: string;
-      subTitle: string;
-      buttonText: string;
-      link: string;
-      backgroundGradient: string;
     };
-    // Legacy fields
-    officeHours?: string;
-    faqs?: {
-      question: string;
-      answer: string;
-    }[];
   };
 
   homeSettings?: {
@@ -204,6 +136,8 @@ export interface IDealSite {
       title: string;
       subTitle: string;
       testimonials: {
+        _id?: string;
+        id?: string;
         rating: number;
         description: string;
         image: string;
@@ -215,23 +149,10 @@ export interface IDealSite {
       title: string;
       subTitle: string;
       items: {
+        _id?: string;
+        id?: string;
         icon: string;
         title: string;
-        content: string;
-      }[];
-    };
-    readyToFind?: {
-      title: string;
-      subTitle: string;
-      ctas: {
-        bgColor: string;
-        text: string;
-        actionLink: string;
-      }[];
-      items: {
-        icon: string;
-        title: string;
-        subTitle: string;
         content: string;
       }[];
     };
@@ -241,12 +162,6 @@ export interface IDealSite {
   subscribeSettings?: {
     title: string;
     subTitle: string;
-    miniTitle: string;
-    backgroundColor: string;
-    cta: {
-      text: string;
-      color: string;
-    };
   };
 
   paymentDetails?: {
@@ -318,8 +233,7 @@ export class DealSite {
         },
 
         featureSelection: {
-          mode: { type: String, enum: ["auto", "manual"], default: "auto" },
-          propertyIds: { type: String, default: "" },
+          featuredListings: [{ type: String }],
         },
 
         marketplaceDefaults: {
@@ -327,11 +241,6 @@ export class DealSite {
             type: String,
             enum: ["buy", "rent", "shortlet", "jv"],
             default: "buy",
-          },
-          defaultSort: {
-            type: String,
-            enum: ["newest", "price-asc", "price-desc"],
-            default: "newest",
           },
           showVerifiedOnly: { type: Boolean, default: false },
           enablePriceNegotiationButton: { type: Boolean, default: true },
@@ -342,120 +251,79 @@ export class DealSite {
           heroSubtitle: { type: String, default: "" },
           ctaText: { type: String, default: "" },
           ctaLink: { type: String, default: "" },
+          ctaText2: { type: String, default: "" },
+          ctaLink2: { type: String, default: "" },
           heroImageUrl: { type: String, default: "" },
+          heroImage: { type: String, default: "" },
         },
 
         // 🟢 About Section
         about: {
-          // Hero Section
-          hero: {
+          // Who We Are
+          whoWeAre: {
             title: { type: String, default: "" },
-            subTitle: { type: String, default: "" },
             description: { type: String, default: "" },
-            backgroundImage: { type: String, default: "" },
-            backgroundVideo: { type: String, default: "" },
-            mobileFallbackImage: { type: String, default: "" },
-            overlayColor: { type: String, default: "rgba(0, 0, 0, 0.55)" },
-            cta: {
-              text: { type: String, default: "" },
-              link: { type: String, default: "" },
-              style: { type: String, default: "light" },
-            },
+            image: { type: String, default: "" },
           },
 
-          // Identity Section
-          identity: {
-            headline: { type: String, default: "" },
-            content: { type: String, default: "" },
-            keyHighlights: [{ type: String }],
-          },
-
-          // Mission & Vision
-          missionVision: {
+          // Our Mission
+          ourMission: {
             title: { type: String, default: "" },
-            items: [
-              {
-                title: { type: String },
-                description: { type: String },
-              },
-            ],
-            backgroundImage: { type: String, default: "" },
+            description: { type: String, default: "" },
+            image: { type: String, default: "" },
           },
 
-          // Values
-          values: {
+          // Our Experience
+          ourExperience: {
+            title: { type: String, default: "" },
+            description: { type: String, default: "" },
+            image: { type: String, default: "" },
+          },
+
+          // What We Stand For
+          whatWeStandFor: {
             title: { type: String, default: "" },
             description: { type: String, default: "" },
             items: [
               {
-                icon: { type: String },
                 title: { type: String },
-                description: { type: String },
+                shortText: { type: String },
               },
             ],
           },
 
-          // Journey/Timeline
-          journey: {
+          // What We Do
+          whatWeDo: {
             title: { type: String, default: "" },
-            timeline: [
+            items: [
               {
-                year: { type: String },
                 title: { type: String },
-                description: { type: String },
               },
             ],
           },
 
-          // Leadership Team
-          leadership: {
+          // Where We Operate
+          whereWeOperate: {
             title: { type: String, default: "" },
-            subTitle: { type: String, default: "" },
+            locations: [
+              {
+                name: { type: String },
+                address: { type: String },
+                coordinates: [{ type: Number }],
+              },
+            ],
+          },
+
+          // Profile / Team Members
+          profile: {
             members: [
               {
                 name: { type: String },
                 role: { type: String },
                 image: { type: String },
-                quote: { type: String },
+                bio: { type: String },
               },
             ],
-          },
-
-          // Statistics
-          stats: {
-            title: { type: String, default: "" },
-            subTitle: { type: String, default: "" },
-            backgroundColor: { type: String, default: "#0B3B2E" },
-            items: [
-              {
-                label: { type: String },
-                value: { type: String },
-              },
-            ],
-          },
-
-          // Partners
-          partners: {
-            title: { type: String, default: "" },
-            subTitle: { type: String, default: "" },
-            logos: [{ type: String }],
-          },
-
-          // Testimonials Configuration
-          testimonials: {
-            showFromHome: { type: Boolean, default: true },
-            limit: { type: Number, default: 3 },
-            title: { type: String, default: "" },
-            layout: { type: String, enum: ["carousel", "grid"], default: "carousel" },
-          },
-
-          // Call to Action
-          cta: {
-            title: { type: String, default: "" },
-            subTitle: { type: String, default: "" },
-            buttonText: { type: String, default: "" },
-            link: { type: String, default: "" },
-            backgroundGradient: { type: String, default: "" },
           },
         },
 
@@ -464,61 +332,13 @@ export class DealSite {
           // Hero Section
           hero: {
             title: { type: String, default: "" },
-            subTitle: { type: String, default: "" },
             description: { type: String, default: "" },
-            backgroundImage: { type: String, default: "" },
-            backgroundVideo: { type: String, default: "" },
-            overlayColor: { type: String, default: "rgba(0, 0, 0, 0.45)" },
-            cta: {
-              text: { type: String, default: "" },
-              link: { type: String, default: "" },
-              style: { type: String, default: "light" },
-            },
-          },
-
-          // Contact Information
-          contactInfo: {
-            title: { type: String, default: "" },
-            subTitle: { type: String, default: "" },
-            items: [
-              {
-                icon: { type: String },
-                label: { type: String },
-                value: { type: String },
-              },
-            ],
-          },
-
-          // Map Section
-          mapSection: {
-            title: { type: String, default: "" },
-            subTitle: { type: String, default: "" },
-            locations: [
-              {
-                city: { type: String },
-                address: { type: String },
-                coordinates: [{ type: Number }],
-              },
-            ],
           },
 
           // Call to Action
           cta: {
             title: { type: String, default: "" },
-            subTitle: { type: String, default: "" },
-            buttonText: { type: String, default: "" },
-            link: { type: String, default: "" },
-            backgroundGradient: { type: String, default: "" },
           },
-
-          // Legacy fields (keeping for backward compatibility)
-          officeHours: { type: String, default: "" },
-          faqs: [
-            {
-              question: { type: String },
-              answer: { type: String },
-            },
-          ],
         },
 
 
@@ -528,6 +348,8 @@ export class DealSite {
             subTitle: { type: String, default: "" },
             testimonials: [
               {
+                _id: { type: String },
+                id: { type: String },
                 rating: { type: Number },
                 description: { type: String },
                 image: { type: String },
@@ -541,27 +363,10 @@ export class DealSite {
             subTitle: { type: String, default: "" },
             items: [
               {
+                _id: { type: String },
+                id: { type: String },
                 icon: { type: String },
                 title: { type: String },
-                content: { type: String },
-              },
-            ],
-          },
-          readyToFind: {
-            title: { type: String, default: "" },
-            subTitle: { type: String, default: "" },
-            ctas: [
-              {
-                bgColor: { type: String },
-                text: { type: String },
-                actionLink: { type: String },
-              },
-            ],
-            items: [
-              {
-                icon: { type: String },
-                title: { type: String },
-                subTitle: { type: String },
                 content: { type: String },
               },
             ],
@@ -571,17 +376,19 @@ export class DealSite {
         subscribeSettings: {
           title: { type: String, default: "" },
           subTitle: { type: String, default: "" },
-          miniTitle: { type: String, default: "" },
-          backgroundColor: { type: String, default: "#8DDB90" },
-          cta: {
-            text: { type: String, default: "" },
-            color: { type: String, default: "#09391C" },
-          },
         },
 
-        footerSection: {
+        footer: {
           shortDescription: { type: String, default: "" },
           copyrightText: { type: String, default: "" },
+        },
+
+        securitySettings: {
+          enablePasswordProtection: { type: Boolean, default: false },
+          pagePassword: { type: String, default: "" },
+          enableRateLimiting: { type: Boolean, default: true },
+          enableSpamFilter: { type: Boolean, default: true },
+          requireEmailVerification: { type: Boolean, default: false },
         },
 
         paymentDetails: {

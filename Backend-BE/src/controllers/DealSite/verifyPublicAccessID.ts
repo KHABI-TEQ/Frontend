@@ -14,7 +14,8 @@ const allowedSections = [
   "contactVisibility",
   "featureSelection",
   "marketplaceDefaults",
-  "footerSection",
+  "footer",
+  "securitySettings",
   "publicPage",
   "paymentDetails",
 ] as const;
@@ -296,7 +297,8 @@ export const getDealSiteSection = async (
       "featureSelection",
       "marketplaceDefaults",
       "publicPage",
-      "footerSection",
+      "footer",
+      "securitySettings",
       "paymentDetails",
       "about",
       "contactUs",
@@ -385,4 +387,3 @@ export const getFeaturedProperties = async (
     next(err);
   }
 };
-
