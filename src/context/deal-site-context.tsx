@@ -304,6 +304,9 @@ export interface SubscribeSettings {
     text?: string;
     color?: string;
   };
+  enableEmailSubscription?: boolean;
+  subscriptionPlaceholder?: string;
+  confirmationMessage?: string;
 }
 
 export interface FooterDetails {
