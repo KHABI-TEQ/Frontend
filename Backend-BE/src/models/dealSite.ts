@@ -46,6 +46,7 @@ export interface IDealSite {
   featureSelection?: {
     mode: FeatureSelectionMode;
     propertyIds: string;
+    featuredListings?: string[];
   };
 
   marketplaceDefaults?: {
