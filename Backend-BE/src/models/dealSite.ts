@@ -158,21 +158,6 @@ export interface IDealSite {
         content: string;
       }[];
     };
-    readyToFind?: {
-      title: string;
-      subTitle: string;
-      ctas: {
-        bgColor: string;
-        text: string;
-        actionLink: string;
-      }[];
-      items: {
-        icon: string;
-        title: string;
-        subTitle: string;
-        content: string;
-      }[];
-    };
   };
 
 
