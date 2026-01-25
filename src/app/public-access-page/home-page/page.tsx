@@ -246,6 +246,13 @@ export default function HomePageSettings() {
     setPreloader(true);
     try {
       const token = Cookies.get("token");
+
+      // Remove client-side _id from testimonials before sending to backend
+      const testimonialsForBackend = testimonials.map(({ id, ...rest }) => rest);
+
+      // Remove client-side _id from why choose us items before sending to backend
+      const whyChooseUsForBackend = whyChooseUs.map(({ _id, ...rest }) => rest);
+
       const payload = {
         publicPage: {
           ...settings.publicPage,
@@ -261,12 +268,12 @@ export default function HomePageSettings() {
           testimonials: {
             title: testimonialsSection.title,
             subTitle: testimonialsSection.subTitle,
-            testimonials: testimonials,
+            testimonials: testimonialsForBackend,
           },
           whyChooseUs: {
             title: whyChooseUsSection.title,
             subTitle: whyChooseUsSection.subTitle,
-            items: whyChooseUs,
+            items: whyChooseUsForBackend,
           },
         },
       };
