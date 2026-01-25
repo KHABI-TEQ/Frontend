@@ -260,6 +260,11 @@ export class DealSite {
             enum: ["buy", "rent", "shortlet", "jv"],
             default: "buy",
           },
+          defaultSort: {
+            type: String,
+            enum: ["newest", "price-asc", "price-desc"],
+            default: "newest",
+          },
           showVerifiedOnly: { type: Boolean, default: false },
           enablePriceNegotiationButton: { type: Boolean, default: true },
         },
