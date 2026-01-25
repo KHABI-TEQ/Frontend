@@ -33,7 +33,7 @@ const statusColors: Record<string, { badge: string; text: string }> = {
   unsubscribed: { badge: "badge-gray", text: "Unsubscribed" },
 };
 
-const SubscribersTab: React.FC<{ publicSlug: string }> = ({ publicSlug }) => {
+const SubscribersTab: React.FC = () => {
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -52,7 +52,7 @@ const SubscribersTab: React.FC<{ publicSlug: string }> = ({ publicSlug }) => {
       setIsLoading(true);
       const token = Cookies.get("token");
 
-      let url = `${URLS.BASE}/account/dealSite/${publicSlug}/email-subscribers?page=${page}&limit=${pagination.limit}`;
+      let url = `${URLS.BASE}/account/dealSite/email-subscribers?page=${page}&limit=${pagination.limit}`;
 
       if (selectedStatus !== "all") {
         url += `&status=${selectedStatus}`;
@@ -82,7 +82,7 @@ const SubscribersTab: React.FC<{ publicSlug: string }> = ({ publicSlug }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [publicSlug, page, selectedStatus, searchTerm, pagination.limit]);
+  }, [page, selectedStatus, searchTerm, pagination.limit]);
 
   useEffect(() => {
     loadSubscribers();
@@ -97,7 +97,7 @@ const SubscribersTab: React.FC<{ publicSlug: string }> = ({ publicSlug }) => {
       setIsDeleting(true);
       const token = Cookies.get("token");
       const res = await DELETE_REQUEST(
-        `${URLS.BASE}/account/dealSite/${publicSlug}/email-subscribers/${subscriberId}`,
+        `${URLS.BASE}/account/dealSite/email-subscribers/${subscriberId}`,
         undefined,
         token
       );
@@ -121,7 +121,7 @@ const SubscribersTab: React.FC<{ publicSlug: string }> = ({ publicSlug }) => {
       setIsExporting(true);
       const token = Cookies.get("token");
 
-      let url = `${URLS.BASE}/account/dealSite/${publicSlug}/email-subscribers/export/csv`;
+      let url = `${URLS.BASE}/account/dealSite/email-subscribers/export/csv`;
       if (selectedStatus !== "all") {
         url += `?status=${selectedStatus}`;
       }
@@ -140,7 +140,7 @@ const SubscribersTab: React.FC<{ publicSlug: string }> = ({ publicSlug }) => {
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = downloadUrl;
-      link.download = `subscribers_${publicSlug}_${new Date().toISOString().split("T")[0]}.csv`;
+      link.download = `subscribers_${new Date().toISOString().split("T")[0]}.csv`;
       document.body.appendChild(link);
       link.click();
       window.URL.revokeObjectURL(downloadUrl);
