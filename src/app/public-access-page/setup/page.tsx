@@ -407,47 +407,145 @@ function Step2Payment({
   formData: DealSiteSettings;
   onChange: (field: keyof DealSiteSettings, value: any) => void;
 }) {
+  const [banks, setBanks] = useState<Bank[]>([]);
+  const [filteredBanks, setFilteredBanks] = useState<Bank[]>([]);
+  const [bankSearch, setBankSearch] = useState("");
+  const [showBankDropdown, setShowBankDropdown] = useState(false);
+  const [loadingBanks, setLoadingBanks] = useState(false);
+
+  // Load banks on mount
+  useEffect(() => {
+    const loadBanks = async () => {
+      try {
+        setLoadingBanks(true);
+        const token = Cookies.get("token");
+        const res = await GET_REQUEST<any>(`${URLS.BASE}/account/dealSite/bankList`, token);
+
+        if (res?.data && Array.isArray(res.data)) {
+          setBanks(res.data);
+          setFilteredBanks(res.data);
+        }
+      } catch (error) {
+        console.warn("Failed to load banks:", error);
+        // Continue without banks - user can enter sort code manually
+      } finally {
+        setLoadingBanks(false);
+      }
+    };
+
+    loadBanks();
+  }, []);
+
+  // Handle bank search
+  const handleBankSearch = (query: string) => {
+    setBankSearch(query);
+    if (query.trim()) {
+      const filtered = banks.filter(
+        (bank) =>
+          bank.name.toLowerCase().includes(query.toLowerCase()) ||
+          bank.code.toLowerCase().includes(query.toLowerCase())
+      );
+      setFilteredBanks(filtered);
+    } else {
+      setFilteredBanks(banks);
+    }
+  };
+
+  // Handle bank selection
+  const selectBank = (bank: Bank) => {
+    onChange("paymentDetails", {
+      ...formData.paymentDetails,
+      sortCode: bank.code,
+    });
+    setBankSearch(bank.name);
+    setShowBankDropdown(false);
+  };
+
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-[#09391C] mb-4">Payment Details</h2>
         <p className="text-gray-600">
-          Provide your bank details for commission payments.
+          Provide your bank details and contact information for commission payments.
         </p>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Business Name *</label>
-        <input
-          type="text"
-          value={formData.paymentDetails?.businessName || ""}
-          onChange={(e) =>
-            onChange("paymentDetails", {
-              ...formData.paymentDetails,
-              businessName: e.target.value,
-            })
-          }
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
-        />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Business Name *</label>
+          <input
+            type="text"
+            value={formData.paymentDetails?.businessName || ""}
+            onChange={(e) =>
+              onChange("paymentDetails", {
+                ...formData.paymentDetails,
+                businessName: e.target.value,
+              })
+            }
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Account Number *</label>
+          <input
+            type="text"
+            value={formData.paymentDetails?.accountNumber || ""}
+            onChange={(e) =>
+              onChange("paymentDetails", {
+                ...formData.paymentDetails,
+                accountNumber: e.target.value,
+              })
+            }
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+          />
+        </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Account Number *</label>
-        <input
-          type="text"
-          value={formData.paymentDetails?.accountNumber || ""}
-          onChange={(e) =>
-            onChange("paymentDetails", {
-              ...formData.paymentDetails,
-              accountNumber: e.target.value,
-            })
-          }
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
-        />
+        <label className="block text-sm font-medium text-gray-700 mb-2">Settlement Bank *</label>
+        <div className="relative">
+          <div
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200 cursor-pointer bg-white flex items-center justify-between"
+            onClick={() => setShowBankDropdown(!showBankDropdown)}
+          >
+            <input
+              type="text"
+              placeholder="Search banks..."
+              value={bankSearch}
+              onChange={(e) => handleBankSearch(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              className="flex-1 outline-none bg-transparent"
+            />
+            <ChevronDown size={20} className={`text-gray-400 transition-transform ${showBankDropdown ? "rotate-180" : ""}`} />
+          </div>
+
+          {showBankDropdown && (
+            <div className="absolute top-full left-0 right-0 mt-1 border border-gray-300 rounded-lg bg-white shadow-lg z-10 max-h-60 overflow-y-auto">
+              {loadingBanks ? (
+                <div className="p-4 text-center text-gray-500">Loading banks...</div>
+              ) : filteredBanks.length > 0 ? (
+                filteredBanks.map((bank) => (
+                  <div
+                    key={bank.code}
+                    onClick={() => selectBank(bank)}
+                    className="px-4 py-2 hover:bg-emerald-50 cursor-pointer border-b last:border-b-0"
+                  >
+                    <div className="font-medium text-gray-900">{bank.name}</div>
+                    <div className="text-xs text-gray-500">{bank.code}</div>
+                  </div>
+                ))
+              ) : (
+                <div className="p-4 text-center text-gray-500">No banks found</div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Bank Code / Sort Code *</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Sort Code / Bank Code *</label>
+        <p className="text-xs text-gray-500 mb-2">Auto-filled when you select a bank</p>
         <input
           type="text"
           value={formData.paymentDetails?.sortCode || ""}
@@ -457,8 +555,60 @@ function Step2Payment({
               sortCode: e.target.value,
             })
           }
+          placeholder="e.g., 058"
           className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
         />
+      </div>
+
+      <div className="border-t pt-6">
+        <h3 className="text-lg font-semibold text-[#09391C] mb-4">Primary Contact Information</h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Contact Name *</label>
+            <input
+              type="text"
+              value={formData.paymentDetails?.primaryContactName || ""}
+              onChange={(e) =>
+                onChange("paymentDetails", {
+                  ...formData.paymentDetails,
+                  primaryContactName: e.target.value,
+                })
+              }
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+            <input
+              type="email"
+              value={formData.paymentDetails?.primaryContactEmail || ""}
+              onChange={(e) =>
+                onChange("paymentDetails", {
+                  ...formData.paymentDetails,
+                  primaryContactEmail: e.target.value,
+                })
+              }
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Phone *</label>
+          <input
+            type="tel"
+            value={formData.paymentDetails?.primaryContactPhone || ""}
+            onChange={(e) =>
+              onChange("paymentDetails", {
+                ...formData.paymentDetails,
+                primaryContactPhone: e.target.value,
+              })
+            }
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+          />
+        </div>
       </div>
 
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
