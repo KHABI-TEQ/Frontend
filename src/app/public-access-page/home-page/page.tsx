@@ -98,7 +98,7 @@ export default function HomePageSettings() {
   const [iconSearchTerms, setIconSearchTerms] = useState<Record<string, string>>({});
 
   // Ensure icon picker state is initialized for all items
-  useMemo(() => {
+  React.useEffect(() => {
     setShowIconPicker((prev) => {
       const updated = { ...prev };
       whyChooseUs.forEach((item) => {
@@ -117,7 +117,7 @@ export default function HomePageSettings() {
       });
       return updated;
     });
-  }, [whyChooseUs.map((item) => item.id).join(",")]);
+  }, [whyChooseUs]);
 
   const handleInputChange = useCallback((field: string, value: string) => {
     setFormData((prev) => ({
