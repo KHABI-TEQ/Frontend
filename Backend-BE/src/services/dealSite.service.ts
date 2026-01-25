@@ -332,7 +332,6 @@ export class DealSiteService {
       "keywords",
       "description",
       "logoUrl",
-      "listingsLimit",
     ];
 
     for (const key of Object.keys(updates)) {
