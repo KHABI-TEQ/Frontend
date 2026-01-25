@@ -463,46 +463,55 @@ function Step3Review({ formData }: { formData: DealSiteSettings }) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-[#09391C] mb-4">Review Your Setup</h2>
+        <h2 className="text-2xl font-bold text-[#09391C] mb-4">Confirm and Launch</h2>
         <p className="text-gray-600">
-          Please review the information below before completing your setup.
+          Review your information below, then click "Complete Setup" to go live.
         </p>
       </div>
 
       {/* Public Link Summary */}
-      <div className="bg-gray-50 rounded-lg p-4">
-        <h3 className="font-semibold text-gray-900 mb-2">Public Link</h3>
-        <p className="text-emerald-600 font-medium">
+      <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-200">
+        <h3 className="font-semibold text-emerald-900 mb-2">Your Public Page</h3>
+        <p className="text-emerald-700 font-medium break-all">
           https://{formData.publicSlug}.khabiteq.com
         </p>
       </div>
 
       {/* Branding Summary */}
-      <div className="bg-gray-50 rounded-lg p-4">
-        <h3 className="font-semibold text-gray-900 mb-2">Branding</h3>
-        <div className="space-y-2 text-sm">
-          <p><span className="text-gray-600">Title:</span> {formData.title}</p>
-          <p><span className="text-gray-600">Description:</span> {formData.description.substring(0, 100)}...</p>
+      <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+        <h3 className="font-semibold text-gray-900 mb-3">Basic Information</h3>
+        <div className="space-y-3 text-sm">
+          <div>
+            <p className="text-gray-600 font-medium">Title</p>
+            <p className="text-gray-900">{formData.title}</p>
+          </div>
+          <div>
+            <p className="text-gray-600 font-medium">Description</p>
+            <p className="text-gray-900">{formData.description}</p>
+          </div>
         </div>
       </div>
 
       {/* Payment Summary */}
-      <div className="bg-gray-50 rounded-lg p-4">
-        <h3 className="font-semibold text-gray-900 mb-2">Payment Details</h3>
-        <div className="space-y-2 text-sm">
-          <p><span className="text-gray-600">Business:</span> {formData.paymentDetails?.businessName}</p>
-          <p><span className="text-gray-600">Account:</span> ****{formData.paymentDetails?.accountNumber?.slice(-4)}</p>
+      <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+        <h3 className="font-semibold text-gray-900 mb-3">Payment Details</h3>
+        <div className="space-y-3 text-sm">
+          <div>
+            <p className="text-gray-600 font-medium">Business Name</p>
+            <p className="text-gray-900">{formData.paymentDetails?.businessName}</p>
+          </div>
+          <div>
+            <p className="text-gray-600 font-medium">Account</p>
+            <p className="text-gray-900">****{formData.paymentDetails?.accountNumber?.slice(-4)}</p>
+          </div>
         </div>
       </div>
 
-      <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 flex gap-3">
-        <CheckCircle size={20} className="text-emerald-600 flex-shrink-0" />
-        <div>
-          <h3 className="font-semibold text-emerald-900">Ready to launch!</h3>
-          <p className="text-sm text-emerald-800 mt-1">
-            Click "Complete Setup" to finalize and take your page live.
-          </p>
-        </div>
+      <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+        <h3 className="font-semibold text-emerald-900 mb-2">You're almost there! 🎉</h3>
+        <p className="text-sm text-emerald-800">
+          After launching, you'll have access to your dashboard where you can add a logo, customize colors, add featured properties, testimonials, and much more.
+        </p>
       </div>
     </div>
   );
