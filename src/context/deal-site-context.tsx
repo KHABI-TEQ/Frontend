@@ -227,6 +227,7 @@ interface DealSiteContextType {
   isPaused: boolean;
   isOnHold: boolean;
   slugLocked: boolean;
+  dealSiteStatus: "pending" | "running" | "paused" | "on-hold" | "deleted" | null;
 
   // Loading state
   isLoading: boolean;
