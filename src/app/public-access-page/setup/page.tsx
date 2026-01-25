@@ -140,7 +140,7 @@ const Setup = () => {
 
   const handleNextStep = useCallback(() => {
     if (validateStep()) {
-      if (step < 4) {
+      if (step < 3) {
         setStep(step + 1);
       }
     }
