@@ -308,14 +308,14 @@ export class DealSiteService {
       "socialLinks",
       "contactVisibility",
       "featureSelection",
-      "marketplaceDefaults",
       "publicPage",
       "footer",
       "paymentDetails",
       "about",
       "contactUs",
       'homeSettings',
-      'subscribeSettings'
+      'subscribeSettings',
+      'support'
     ];
 
     if (!allowedSections.includes(sectionName)) {
