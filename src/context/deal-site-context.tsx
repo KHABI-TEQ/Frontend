@@ -290,6 +290,7 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
   const [isPaused, setIsPaused] = useState(false);
   const [isOnHold, setIsOnHold] = useState(false);
   const [slugLocked, setSlugLocked] = useState(false);
+  const [dealSiteStatus, setDealSiteStatus] = useState<"pending" | "running" | "paused" | "on-hold" | "deleted" | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
