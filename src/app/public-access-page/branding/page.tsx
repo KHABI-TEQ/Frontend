@@ -55,14 +55,33 @@ export default function BrandingPage() {
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
-      // Save logic will be implemented in the context
-      toast.success("Settings saved successfully");
+      const token = Cookies.get("token");
+      const payload = {
+        title: settings.title,
+        keywords: settings.keywords,
+        description: settings.description,
+        logoUrl: settings.logoUrl,
+        footer: settings.footer,
+      };
+
+      const res = await POST_REQUEST(
+        `${URLS.BASE}${URLS.dealSiteUpdate}`,
+        payload,
+        token
+      );
+
+      if (res?.success) {
+        toast.success("Settings saved successfully");
+      } else {
+        toast.error(res?.message || "Failed to save settings");
+      }
     } catch (error) {
+      console.error("Failed to save settings:", error);
       toast.error("Failed to save settings");
     } finally {
       setSaving(false);
     }
-  }, []);
+  }, [settings]);
 
   const inputBase =
     "w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400 text-gray-900";
