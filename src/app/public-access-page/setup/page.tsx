@@ -135,7 +135,10 @@ const Setup = () => {
       if (
         !formData.paymentDetails?.businessName ||
         !formData.paymentDetails?.accountNumber ||
-        !formData.paymentDetails?.sortCode
+        !formData.paymentDetails?.sortCode ||
+        !formData.paymentDetails?.primaryContactEmail ||
+        !formData.paymentDetails?.primaryContactName ||
+        !formData.paymentDetails?.primaryContactPhone
       ) {
         toast.error("Please complete all payment details");
         return false;
