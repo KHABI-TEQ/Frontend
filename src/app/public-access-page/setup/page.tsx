@@ -28,6 +28,8 @@ const Setup = () => {
   // Form state - track changes locally during setup
   const [formData, setFormData] = useState<DealSiteSettings>({
     ...settings,
+    marketplaceDefaults: settings.marketplaceDefaults || { defaultTab: "buy", showVerifiedOnly: false, enablePriceNegotiationButton: true },
+    listingsLimit: settings.listingsLimit || 6,
   });
 
   const handleInputChange = useCallback(
