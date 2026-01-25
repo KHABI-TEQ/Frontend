@@ -82,6 +82,20 @@ export interface HomepagePayload {
         content: string;
       }>;
     };
+    support?: {
+      title: string;
+      description: string;
+      showHeroCtaButtons: boolean;
+      supportCards: Array<{
+        _id?: string;
+        id?: string;
+        cardTitle: string;
+        cardIcon: string;
+        description: string;
+        ctaText: string;
+        ctaLink: string;
+      }>;
+    };
   };
 }
 
