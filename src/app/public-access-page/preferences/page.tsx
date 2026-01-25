@@ -334,6 +334,15 @@ export default function PreferencesRequestsPage() {
                       <td className="px-6 py-4">
                         <span className="text-gray-600 text-xs">{formatDate(pref.createdAt)}</span>
                       </td>
+                      <td className="px-6 py-4">
+                        <button
+                          onClick={() => router.push(`/agent-marketplace/${pref._id}`)}
+                          className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
+                        >
+                          I have this
+                          <ArrowRight size={16} />
+                        </button>
+                      </td>
                     </tr>
                     );
                   })}
