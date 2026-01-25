@@ -8,10 +8,12 @@ import { POST_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import { useDealSite } from "@/context/deal-site-context";
 import OverlayPreloader from "@/components/general-components/OverlayPreloader";
+import ContactMessagesTab from "@/components/public-access-components/ContactMessagesTab";
 
 export default function ContactUsPage() {
   const { settings, updateSettings } = useDealSite();
   const [preloader, setPreloader] = useState(false);
+  const [activeTab, setActiveTab] = useState<"settings" | "messages">("settings");
   const [formData, setFormData] = useState({
     contactUsTitle: settings.contactUs?.hero?.title || "Get in Touch",
     contactUsDescription: settings.contactUs?.hero?.description || "Have a question? We'd love to hear from you.",
