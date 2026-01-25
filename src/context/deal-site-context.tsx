@@ -51,8 +51,8 @@ export interface PublicPageDesign {
 export interface InspectionDesignSettings {
   allowPublicBooking: boolean;
   defaultInspectionFee: number | "";
-  inspectionStatus?: string;
-  negotiationEnabled?: boolean;
+  inspectionStatus: string;
+  negotiationEnabled: boolean;
 }
 
 export interface AboutHeroCta {
