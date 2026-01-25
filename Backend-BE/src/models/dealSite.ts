@@ -227,6 +227,20 @@ export class DealSite {
           propertyIds: { type: String, default: "" },
           featuredListings: [{ type: String }],
         },
+        support: {
+          title: { type: String, default: "" },
+          description: { type: String, default: "" },
+          showHeroCtaButtons: { type: Boolean, default: false },
+          supportCards: [
+            {
+              cardTitle: { type: String },
+              cardIcon: { type: String },
+              description: { type: String },
+              ctaText: { type: String },
+              ctaLink: { type: String },
+            },
+          ],
+        },
         socialLinks: {
           website: String,
           twitter: String,
