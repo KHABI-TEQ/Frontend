@@ -803,7 +803,7 @@ export default function HomePageSettings() {
                   <input
                     type="text"
                     value={item.title}
-                    onChange={(e) => updateWhyChooseUsItem(item._id, "title", e.target.value)}
+                    onChange={(e) => updateWhyChooseUsItem(itemId, "title", e.target.value)}
                     placeholder="Feature Title"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
                   />
@@ -814,7 +814,7 @@ export default function HomePageSettings() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Content</label>
                   <textarea
                     value={item.content}
-                    onChange={(e) => updateWhyChooseUsItem(item._id, "content", e.target.value)}
+                    onChange={(e) => updateWhyChooseUsItem(itemId, "content", e.target.value)}
                     placeholder="Describe this feature..."
                     rows={3}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
