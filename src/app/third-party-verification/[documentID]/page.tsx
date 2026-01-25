@@ -132,8 +132,8 @@ const ThirdPartyVerificationPage: React.FC = () => {
     );
   }
 
-  // Show boundary component if document is already verified
-  if (documentStatusDetails && (documentStatusDetails.status === "registered" || documentStatusDetails.status === "unregistered")) {
+  // show this if the 
+  if (documentStatusDetails?.status === "registered" || documentStatusDetails?.status === "unregistered") {
     return (
       <div className="min-h-screen bg-[#EEF1F1] flex items-center justify-center py-8 px-4">
         <div className="max-w-lg w-full">
