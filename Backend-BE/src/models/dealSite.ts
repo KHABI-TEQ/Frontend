@@ -261,6 +261,8 @@ export interface IDealSite {
       title: string;
       subTitle: string;
       testimonials: {
+        _id?: string;
+        id?: string;
         rating: number;
         description: string;
         image: string;
@@ -272,6 +274,8 @@ export interface IDealSite {
       title: string;
       subTitle: string;
       items: {
+        _id?: string;
+        id?: string;
         icon: string;
         title: string;
         content: string;
