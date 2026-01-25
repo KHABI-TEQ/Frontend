@@ -106,6 +106,20 @@ export default function HomePageSettings() {
     subTitle: settings.homeSettings?.whyChooseUs?.subTitle || "Here's what sets us apart",
   });
 
+  // Support state
+  const [supportCards, setSupportCards] = useState<SupportCard[]>(
+    (settings.homeSettings?.support?.supportCards || []).map((card, index) => ({
+      ...card,
+      id: (card as any).id || `${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`,
+    }))
+  );
+
+  const [supportSection, setSupportSection] = useState({
+    title: settings.homeSettings?.support?.title || "Support",
+    description: settings.homeSettings?.support?.description || "How we support your journey",
+    showHeroCtaButtons: settings.homeSettings?.support?.showHeroCtaButtons || false,
+  });
+
   const [uploadingTestimonialId, setUploadingTestimonialId] = useState<string>("");
   const [showIconPicker, setShowIconPicker] = useState<Record<string, boolean>>({});
   const [iconSearchTerms, setIconSearchTerms] = useState<Record<string, string>>({});
