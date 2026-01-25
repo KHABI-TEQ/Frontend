@@ -13,7 +13,6 @@ const allowedSections = [
   "socialLinks",
   "contactVisibility",
   "featureSelection",
-  "marketplaceDefaults",
   "footer",
   "securitySettings",
   "publicPage",
