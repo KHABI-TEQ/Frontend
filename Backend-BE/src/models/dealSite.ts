@@ -162,12 +162,6 @@ export interface IDealSite {
   subscribeSettings?: {
     title: string;
     subTitle: string;
-    miniTitle: string;
-    backgroundColor: string;
-    cta: {
-      text: string;
-      color: string;
-    };
   };
 
   paymentDetails?: {
