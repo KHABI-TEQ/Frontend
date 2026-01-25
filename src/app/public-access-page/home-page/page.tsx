@@ -304,6 +304,11 @@ export default function HomePageSettings() {
     return Icon || (LucideIcons as any)["Award"];
   };
 
+  // Helper to get item ID - uses _id if available, falls back to finding index
+  const getItemId = (item: WhyChooseUsItem, index: number): string => {
+    return item._id || `index-${index}`;
+  };
+
   return (
     <div className="space-y-8">
       <OverlayPreloader visible={preloader} message="Saving..." />
