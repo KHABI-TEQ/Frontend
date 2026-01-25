@@ -132,7 +132,7 @@ const ThirdPartyVerificationPage: React.FC = () => {
     );
   }
 
-  // show this if the 
+  // show this if the
   if (documentStatusDetails?.status === "registered" || documentStatusDetails?.status === "unregistered") {
     return (
       <div className="min-h-screen bg-[#EEF1F1] flex items-center justify-center py-8 px-4">
@@ -169,6 +169,17 @@ const ThirdPartyVerificationPage: React.FC = () => {
     );
   }
 
+  // Show loading state while checking document status
+  if (isLoadingData && !documentStatusDetails) {
+    return (
+      <div className="min-h-screen bg-[#EEF1F1] flex items-center justify-center py-8 px-4">
+        <div className="flex flex-col items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0B423D]"></div>
+          <p className="text-gray-600 mt-4">Verifying document status...</p>
+        </div>
+      </div>
+    );
+  }
 
   const validateToken = async () => {
     if (!accessCode.trim()) {
