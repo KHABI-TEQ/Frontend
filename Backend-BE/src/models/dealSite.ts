@@ -18,7 +18,6 @@ export interface IDealSite {
   inspectionSettings?: {
     allowPublicBooking: boolean;
     defaultInspectionFee: number;
-    inspectionStatus: InspectionStatus;
     negotiationEnabled: boolean;
   };
 
