@@ -81,25 +81,6 @@ export interface IDealSite {
   };
 
   about?: {
-    hero?: {
-      title: string;
-      subTitle: string;
-      description: string;
-      backgroundImage: string;
-      backgroundVideo?: string;
-      mobileFallbackImage: string;
-      overlayColor: string;
-      cta: {
-        text: string;
-        link: string;
-        style: string;
-      };
-    };
-    identity?: {
-      headline: string;
-      content: string;
-      keyHighlights: string[];
-    };
     whoWeAre?: {
       title: string;
       description: string;
@@ -144,68 +125,6 @@ export interface IDealSite {
         image: string;
         bio: string;
       }[];
-    };
-    missionVision?: {
-      title: string;
-      items: {
-        title: string;
-        description: string;
-      }[];
-      backgroundImage: string;
-    };
-    values?: {
-      title: string;
-      description: string;
-      items: {
-        icon: string;
-        title: string;
-        description: string;
-      }[];
-    };
-    journey?: {
-      title: string;
-      timeline: {
-        year: string;
-        title: string;
-        description: string;
-      }[];
-    };
-    leadership?: {
-      title: string;
-      subTitle: string;
-      members: {
-        name: string;
-        role: string;
-        image: string;
-        quote: string;
-      }[];
-    };
-    stats?: {
-      title: string;
-      subTitle: string;
-      backgroundColor: string;
-      items: {
-        label: string;
-        value: string;
-      }[];
-    };
-    partners?: {
-      title: string;
-      subTitle: string;
-      logos: string[];
-    };
-    testimonials?: {
-      showFromHome: boolean;
-      limit: number;
-      title: string;
-      layout: "carousel" | "grid";
-    };
-    cta?: {
-      title: string;
-      subTitle: string;
-      buttonText: string;
-      link: string;
-      backgroundGradient: string;
     };
   };
 
