@@ -341,6 +341,12 @@ export class DealSite {
           isVerified: { type: Boolean, default: false },
           active: { type: Boolean, default: false },
         },
+        marketplaceDefaults: {
+          defaultTab: { type: String, enum: ["buy", "rent", "shortlet", "jv"], default: "buy" },
+          showVerifiedOnly: { type: Boolean, default: false },
+          enablePriceNegotiationButton: { type: Boolean, default: true },
+        },
+        listingsLimit: { type: Number, default: 6 },
 
         status: {
           type: String,
