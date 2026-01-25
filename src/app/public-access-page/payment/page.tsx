@@ -6,9 +6,12 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
+import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import { Save, DollarSign, Lock } from "lucide-react";
 import { useDealSite } from "@/context/deal-site-context";
+import { POST_REQUEST } from "@/utils/requests";
+import { URLS } from "@/utils/URLS";
 
 export default function PaymentPage() {
   const { settings, updateSettings } = useDealSite();
