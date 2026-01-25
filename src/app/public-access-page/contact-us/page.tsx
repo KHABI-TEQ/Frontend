@@ -91,9 +91,38 @@ export default function ContactUsPage() {
           <Mail size={32} />
           Contact Us Page
         </h1>
-        <p className="text-gray-600 mt-2">Customize your contact page appearance and settings</p>
+        <p className="text-gray-600 mt-2">Manage your contact page settings and view messages</p>
       </div>
 
+      {/* Tabs */}
+      <div className="border-b border-gray-200">
+        <div className="flex gap-4">
+          <button
+            onClick={() => setActiveTab("settings")}
+            className={`px-4 py-3 font-medium text-sm border-b-2 transition-colors ${
+              activeTab === "settings"
+                ? "border-emerald-600 text-emerald-600"
+                : "border-transparent text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            Page Settings
+          </button>
+          <button
+            onClick={() => setActiveTab("messages")}
+            className={`px-4 py-3 font-medium text-sm border-b-2 transition-colors ${
+              activeTab === "messages"
+                ? "border-emerald-600 text-emerald-600"
+                : "border-transparent text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            Messages
+          </button>
+        </div>
+      </div>
+
+      {/* Settings Tab Content */}
+      {activeTab === "settings" && (
+      <>
       {/* Page Content Section */}
       <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
         <div>
@@ -250,6 +279,13 @@ export default function ContactUsPage() {
           </button>
         </div>
       </div>
+      </>
+      )}
+
+      {/* Messages Tab Content */}
+      {activeTab === "messages" && settings.publicSlug && (
+        <ContactMessagesTab publicSlug={settings.publicSlug} />
+      )}
     </div>
   );
 }
