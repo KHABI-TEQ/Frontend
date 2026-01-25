@@ -725,12 +725,12 @@ export default function HomePageSettings() {
                       onClick={() => {
                         setShowIconPicker((prev) => ({
                           ...prev,
-                          [item._id]: !prev[item._id],
+                          [itemId]: !prev[itemId],
                         }));
-                        if (!showIconPicker[item._id]) {
+                        if (!showIconPicker[itemId]) {
                           setIconSearchTerms((prev) => ({
                             ...prev,
-                            [item._id]: "",
+                            [itemId]: "",
                           }));
                         }
                       }}
@@ -740,21 +740,21 @@ export default function HomePageSettings() {
                         {React.createElement(getLucideIcon(item.icon), { size: 20 })}
                         {item.icon}
                       </span>
-                      <span className={`text-gray-500 transition-transform ${showIconPicker[item._id] ? "rotate-180" : ""}`}>▼</span>
+                      <span className={`text-gray-500 transition-transform ${showIconPicker[itemId] ? "rotate-180" : ""}`}>▼</span>
                     </button>
 
-                    {showIconPicker[item._id] && (
+                    {showIconPicker[itemId] && (
                       <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg z-50 min-w-96">
                         {/* Search Input */}
                         <div className="border-b border-gray-200 p-3">
                           <input
                             type="text"
                             placeholder="Search icons..."
-                            value={iconSearchTerms[item._id] || ""}
+                            value={iconSearchTerms[itemId] || ""}
                             onChange={(e) =>
                               setIconSearchTerms((prev) => ({
                                 ...prev,
-                                [item._id]: e.target.value,
+                                [itemId]: e.target.value,
                               }))
                             }
                             autoFocus
@@ -765,19 +765,19 @@ export default function HomePageSettings() {
                         {/* Icon Grid */}
                         <div className="grid grid-cols-6 gap-2 p-3 max-h-72 overflow-y-auto">
                           {LUCIDE_ICONS.filter(icon =>
-                            icon.toLowerCase().includes((iconSearchTerms[item._id] || "").toLowerCase())
+                            icon.toLowerCase().includes((iconSearchTerms[itemId] || "").toLowerCase())
                           ).map((iconName, index) => (
                             <button
                               key={index}
                               onClick={() => {
-                                updateWhyChooseUsItem(item._id, "icon", iconName);
+                                updateWhyChooseUsItem(itemId, "icon", iconName);
                                 setShowIconPicker((prev) => ({
                                   ...prev,
-                                  [item._id]: false,
+                                  [itemId]: false,
                                 }));
                                 setIconSearchTerms((prev) => ({
                                   ...prev,
-                                  [item._id]: "",
+                                  [itemId]: "",
                                 }));
                               }}
                               className={`p-2 rounded-lg flex flex-col items-center gap-1 text-xs transition-colors ${
