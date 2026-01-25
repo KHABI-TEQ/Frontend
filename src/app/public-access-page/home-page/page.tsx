@@ -84,9 +84,12 @@ export default function HomePageSettings() {
     subTitle: settings.homeSettings?.testimonials?.subTitle || "What our clients say about us",
   });
 
-  // Why Choose Us state
+  // Why Choose Us state - ensure all items have client-side _id for state management
   const [whyChooseUs, setWhyChooseUs] = useState<WhyChooseUsItem[]>(
-    settings.homeSettings?.whyChooseUs?.items || []
+    (settings.homeSettings?.whyChooseUs?.items || []).map((item, index) => ({
+      ...item,
+      _id: item._id || `${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`,
+    }))
   );
 
   const [whyChooseUsSection, setWhyChooseUsSection] = useState({
