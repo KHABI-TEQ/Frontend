@@ -236,7 +236,7 @@ const Setup = () => {
               Back
             </button>
 
-            {step < 4 ? (
+            {step < 3 ? (
               <button
                 onClick={handleNextStep}
                 className="px-6 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-all"
