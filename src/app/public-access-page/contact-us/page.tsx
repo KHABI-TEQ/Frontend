@@ -23,6 +23,10 @@ export default function ContactUsPage() {
     showPhone: settings.contactVisibility?.showPhone ?? true,
     showWhatsAppButton: settings.contactVisibility?.showWhatsAppButton ?? true,
     whatsappNumber: settings.contactVisibility?.whatsappNumber || "",
+    locationName: settings.contactUs?.location?.name || "",
+    locationAddress: settings.contactUs?.location?.address || "",
+    locationLatitude: settings.contactUs?.location?.coordinates?.[0]?.toString() || "",
+    locationLongitude: settings.contactUs?.location?.coordinates?.[1]?.toString() || "",
   });
 
   const handleInputChange = useCallback((field: string, value: string | boolean) => {
