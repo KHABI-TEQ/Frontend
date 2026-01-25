@@ -1,7 +1,7 @@
 /**
  * Public Access Page Dashboard Layout
  * Wraps all public-access-page routes with sidebar navigation
- * Handles setup completion guard logic
+ * Handles setup completion guard logic and page gating modal
  */
 
 "use client";
@@ -18,6 +18,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user } = useUserContext();
   const { isSetupComplete, slugLocked, isLoading } = useDealSite();
+  const [showSetupModal, setShowSetupModal] = useState(false);
 
   // Guard logic: redirect based on setup completion
   useEffect(() => {
@@ -39,7 +40,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       !isSetupComplete &&
       pathname.startsWith("/public-access-page")
     ) {
-      router.replace("/public-access-page/setup");
+      setShowSetupModal(true);
     }
   }, [isLoading, isSetupComplete, pathname, user, router]);
 
