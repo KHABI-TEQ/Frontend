@@ -123,11 +123,6 @@ const Setup = () => {
     }
 
     if (step === 2) {
-      // Marketplace validation
-      return true;
-    }
-
-    if (step === 3) {
       // Payment validation
       if (
         !formData.paymentDetails?.businessName ||
