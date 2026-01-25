@@ -233,8 +233,6 @@ export class DealSite {
         },
 
         featureSelection: {
-          mode: { type: String, enum: ["auto", "manual"], default: "auto" },
-          propertyIds: { type: String, default: "" },
           featuredListings: [{ type: String }],
         },
 
