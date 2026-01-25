@@ -259,9 +259,9 @@ const Setup = () => {
         <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4 flex gap-3">
           <AlertCircle size={20} className="text-blue-600 flex-shrink-0" />
           <div>
-            <h3 className="font-semibold text-blue-900">Setup is one-time only</h3>
+            <h3 className="font-semibold text-blue-900">Quick Setup</h3>
             <p className="text-sm text-blue-800 mt-1">
-              Once you complete the setup, you'll be able to manage and edit your public page settings from the dashboard.
+              We only need the basics to get your page live. Once complete, you can customize everything else from your dashboard including branding, hero image, testimonials, featured properties, and much more.
             </p>
           </div>
         </div>
