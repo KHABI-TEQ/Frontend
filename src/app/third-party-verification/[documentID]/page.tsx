@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { useParams } from 'next/navigation';
 import { URLS } from '@/utils/URLS';
 import { POST_REQUEST, POST_REQUEST_FILE_UPLOAD, GET_REQUEST } from '@/utils/requests';
+import DocumentVerificationBoundary from './DocumentVerificationBoundary';
 
 // Types for verification data
 type DocumentStatus = 'pending' | 'registered' | 'unregistered' | 'in-progress';
