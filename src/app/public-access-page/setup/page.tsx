@@ -6,16 +6,24 @@
 
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
-import { AlertCircle, CheckCircle, Lock } from "lucide-react";
-import { POST_REQUEST } from "@/utils/requests";
+import { AlertCircle, CheckCircle, Lock, ChevronDown } from "lucide-react";
+import { POST_REQUEST, GET_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import { useDealSite } from "@/context/deal-site-context";
 import { DealSiteSettings } from "@/context/deal-site-context";
 import Stepper from "@/components/post-property-components/Stepper";
+
+interface Bank {
+  name: string;
+  code: string;
+  country?: string;
+  currency?: string;
+  type?: string;
+}
 
 const Setup = () => {
   const router = useRouter();
