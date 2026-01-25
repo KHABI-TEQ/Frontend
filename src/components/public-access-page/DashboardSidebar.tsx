@@ -59,7 +59,6 @@ const NAV_ITEMS: NavItem[] = [
   { id: "subscribe", label: "Subscribe Settings", path: "/public-access-page/subscribe-settings", icon: <Mail size={18} />, group: "settings" },
 
   // System
-  { id: "security", label: "Security", path: "/public-access-page/security", icon: <Lock size={18} />, group: "system" },
   { id: "logs", label: "Activity Logs", path: "/public-access-page/logs", icon: <Activity size={18} />, group: "system" },
 ];
 
