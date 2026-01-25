@@ -587,9 +587,17 @@ export class DealSite {
           },
         },
 
-        footerSection: {
+        footer: {
           shortDescription: { type: String, default: "" },
           copyrightText: { type: String, default: "" },
+        },
+
+        securitySettings: {
+          enablePasswordProtection: { type: Boolean, default: false },
+          pagePassword: { type: String, default: "" },
+          enableRateLimiting: { type: Boolean, default: true },
+          enableSpamFilter: { type: Boolean, default: true },
+          requireEmailVerification: { type: Boolean, default: false },
         },
 
         paymentDetails: {
