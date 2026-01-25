@@ -12,12 +12,6 @@ export interface SetupPayload {
   title: string;
   description: string;
   keywords: string[];
-  marketplaceDefaults: {
-    defaultTab: "buy" | "rent" | "shortlet" | "jv";
-    showVerifiedOnly: boolean;
-    enablePriceNegotiationButton: boolean;
-  };
-  listingsLimit: number;
   paymentDetails: {
     businessName: string;
     accountNumber: string;
