@@ -9,63 +9,10 @@ export interface IDealSite {
   keywords: string[];
   description: string;
   logoUrl?: string;
-
   theme?: {
     primaryColor: string;
     secondaryColor: string;
   };
-
-  inspectionSettings?: {
-    allowPublicBooking: boolean;
-    defaultInspectionFee: number;
-    inspectionStatus?: string;
-    negotiationEnabled: boolean;
-  };
-
-  listingsLimit?: number;
-
-  socialLinks?: {
-    website?: string;
-    twitter?: string;
-    instagram?: string;
-    facebook?: string;
-    linkedin?: string;
-  };
-
-  contactVisibility?: {
-    showEmail: boolean;
-    showPhone: boolean;
-    enableContactForm: boolean;
-    showWhatsAppButton: boolean;
-    whatsappNumber?: string;
-  };
-
-  featureSelection?: {
-    mode?: "auto" | "manual";
-    propertyIds?: string;
-    featuredListings?: string[];
-  };
-
-  marketplaceDefaults?: {
-    defaultTab: DefaultTab;
-    defaultSort?: "newest" | "price-asc" | "price-desc";
-    showVerifiedOnly: boolean;
-    enablePriceNegotiationButton: boolean;
-  };
-
-  footer?: {
-    shortDescription: string;
-    copyrightText: string;
-  };
-
-  securitySettings?: {
-    enablePasswordProtection?: boolean;
-    pagePassword?: string;
-    enableRateLimiting?: boolean;
-    enableSpamFilter?: boolean;
-    requireEmailVerification?: boolean;
-  };
-
   publicPage?: {
     heroTitle: string;
     heroSubtitle: string;
@@ -74,24 +21,57 @@ export interface IDealSite {
     ctaText2?: string;
     ctaLink2?: string;
     heroImageUrl?: string;
-    heroImage?: string;
   };
-
+  homeSettings?: {
+    testimonials?: {
+      title: string;
+      subTitle: string;
+      testimonials: {
+        rating: number;
+        description: string;
+        image: string;
+        name: string;
+        company: string;
+      }[];
+    };
+    whyChooseUs?: {
+      title: string;
+      subTitle: string;
+      items: {
+        icon: string;
+        title: string;
+        content: string;
+      }[];
+    };
+  };
+  footer?: {
+    shortDescription: string;
+    copyrightText: string;
+  };
+  featureSelection?: {
+    mode?: "auto" | "manual";
+    propertyIds?: string;
+    featuredListings?: string[];
+  };
+  socialLinks?: {
+    website?: string;
+    twitter?: string;
+    instagram?: string;
+    facebook?: string;
+    linkedin?: string;
+  };
   about?: {
     whoWeAre?: {
       title: string;
       description: string;
-      image?: string;
     };
     ourMission?: {
       title: string;
       description: string;
-      image?: string;
     };
     ourExperience?: {
       title: string;
       description: string;
-      image?: string;
     };
     whatWeStandFor?: {
       title: string;
@@ -111,7 +91,7 @@ export interface IDealSite {
       title: string;
       locations?: {
         name: string;
-        address: string;
+        address?: string;
         coordinates?: [number, number];
       }[];
     };
@@ -124,56 +104,29 @@ export interface IDealSite {
       }[];
     };
   };
-
+  inspectionSettings?: {
+    defaultInspectionFee: number;
+  };
+  contactVisibility?: {
+    showEmail: boolean;
+    showPhone: boolean;
+    enableContactForm: boolean;
+    showWhatsAppButton: boolean;
+    whatsappNumber?: string;
+  };
   contactUs?: {
-    hero?: {
-      title: string;
-      description: string;
-    };
+    title: string;
+    description: string;
     cta?: {
-      title: string;
+      name: string;
+      address?: string;
+      coordinates?: [number, number];
     };
   };
-
-  homeSettings?: {
-    testimonials?: {
-      title: string;
-      subTitle: string;
-      testimonials: {
-        _id?: string;
-        id?: string;
-        rating: number;
-        description: string;
-        image: string;
-        name: string;
-        company: string;
-      }[];
-    };
-    whyChooseUs?: {
-      title: string;
-      subTitle: string;
-      items: {
-        _id?: string;
-        id?: string;
-        icon: string;
-        title: string;
-        content: string;
-      }[];
-    };
-    readyToFind?: {
-      title?: string;
-      subTitle?: string;
-      ctas?: Array<{ bgColor: string; text: string; actionLink: string }>;
-      items?: Array<{ icon?: string; title: string; subTitle: string; content: string }>;
-    };
-  };
-
-
   subscribeSettings?: {
     title: string;
     subTitle: string;
     miniTitle?: string;
-    backgroundColor?: string;
     cta?: {
       text?: string;
       color?: string;
@@ -182,7 +135,6 @@ export interface IDealSite {
     subscriptionPlaceholder?: string;
     confirmationMessage?: string;
   };
-
   paymentDetails?: {
     subAccountCode?: string;
     businessName?: string;
@@ -216,62 +168,10 @@ export class DealSite {
         keywords: { type: [String], default: [] },
         description: { type: String, required: true },
         logoUrl: { type: String },
-
         theme: {
           primaryColor: { type: String, default: "#09391C" },
           secondaryColor: { type: String, default: "#8DDB90" },
         },
-
-        inspectionSettings: {
-          allowPublicBooking: { type: Boolean, default: true },
-          defaultInspectionFee: { type: Number, default: 0 },
-          inspectionStatus: {
-            type: String,
-            enum: ["required", "optional", "disabled"],
-            default: "optional",
-          },
-          negotiationEnabled: { type: Boolean, default: true },
-        },
-
-        listingsLimit: { type: Number, default: 6 },
-
-        socialLinks: {
-          website: String,
-          twitter: String,
-          instagram: String,
-          facebook: String,
-          linkedin: String,
-        },
-
-        contactVisibility: {
-          showEmail: { type: Boolean, default: true },
-          showPhone: { type: Boolean, default: true },
-          enableContactForm: { type: Boolean, default: true },
-          showWhatsAppButton: { type: Boolean, default: false },
-          whatsappNumber: { type: String, default: "" },
-        },
-
-        featureSelection: {
-          mode: { type: String, enum: ["auto", "manual"], default: "auto" },
-          propertyIds: { type: String, default: "" },
-          featuredListings: [{ type: String }],
-        },
-
-        marketplaceDefaults: {
-          defaultTab: {
-            type: String,
-            enum: ["buy", "rent", "shortlet", "jv"],
-            default: "buy",
-          },
-          defaultSort: {
-            type: String,
-            enum: ["newest", "price-asc", "price-desc"],
-            default: "newest",
-          },
-          showVerifiedOnly: { type: Boolean, default: false },
-          enablePriceNegotiationButton: { type: Boolean, default: true },
-        },
-
         publicPage: {
           heroTitle: { type: String, default: "" },
           heroSubtitle: { type: String, default: "" },
@@ -280,30 +180,67 @@ export class DealSite {
           ctaText2: { type: String, default: "" },
           ctaLink2: { type: String, default: "" },
           heroImageUrl: { type: String, default: "" },
-          heroImage: { type: String, default: "" },
         },
-
+        homeSettings: {
+          testimonials: {
+            title: { type: String, default: "" },
+            subTitle: { type: String, default: "" },
+            testimonials: [
+              {
+                rating: { type: Number },
+                description: { type: String },
+                image: { type: String },
+                name: { type: String },
+                company: { type: String },
+              },
+            ],
+          },
+          whyChooseUs: {
+            title: { type: String, default: "" },
+            subTitle: { type: String, default: "" },
+            items: [
+              {
+                icon: { type: String },
+                title: { type: String },
+                content: { type: String },
+              },
+            ],
+          },
+        },
+        footer: {
+          shortDescription: { type: String, default: "" },
+          copyrightText: { type: String, default: "" },
+        },
+        featureSelection: {
+          mode: { type: String, enum: ["auto", "manual"], default: "auto" },
+          propertyIds: { type: String, default: "" },
+          featuredListings: [{ type: String }],
+        },
+        socialLinks: {
+          website: String,
+          twitter: String,
+          instagram: String,
+          facebook: String,
+          linkedin: String,
+        },
         // 🟢 About Section
         about: {
           // Who We Are
           whoWeAre: {
             title: { type: String, default: "" },
             description: { type: String, default: "" },
-            image: { type: String, default: "" },
           },
 
           // Our Mission
           ourMission: {
             title: { type: String, default: "" },
             description: { type: String, default: "" },
-            image: { type: String, default: "" },
           },
 
           // Our Experience
           ourExperience: {
             title: { type: String, default: "" },
             description: { type: String, default: "" },
-            image: { type: String, default: "" },
           },
 
           // What We Stand For
@@ -352,77 +289,30 @@ export class DealSite {
             ],
           },
         },
-
+        inspectionSettings: {
+          defaultInspectionFee: { type: Number, default: 0 },
+        },
+        contactVisibility: {
+          showEmail: { type: Boolean, default: true },
+          showPhone: { type: Boolean, default: true },
+          enableContactForm: { type: Boolean, default: true },
+          showWhatsAppButton: { type: Boolean, default: false },
+          whatsappNumber: { type: String, default: "" },
+        },
         // 🟣 Contact Us Section
         contactUs: {
-          // Hero Section
-          hero: {
-            title: { type: String, default: "" },
-            description: { type: String, default: "" },
-          },
-
-          // Call to Action
-          cta: {
-            title: { type: String, default: "" },
+          title: { type: String, default: "" },
+          description: { type: String, default: "" },
+          location: {
+            name: { type: String },
+            address: { type: String },
+            coordinates: [{ type: Number }],
           },
         },
-
-
-        homeSettings: {
-          testimonials: {
-            title: { type: String, default: "" },
-            subTitle: { type: String, default: "" },
-            testimonials: [
-              {
-                _id: { type: String },
-                id: { type: String },
-                rating: { type: Number },
-                description: { type: String },
-                image: { type: String },
-                name: { type: String },
-                company: { type: String },
-              },
-            ],
-          },
-          whyChooseUs: {
-            title: { type: String, default: "" },
-            subTitle: { type: String, default: "" },
-            items: [
-              {
-                _id: { type: String },
-                id: { type: String },
-                icon: { type: String },
-                title: { type: String },
-                content: { type: String },
-              },
-            ],
-          },
-          readyToFind: {
-            title: { type: String, default: "" },
-            subTitle: { type: String, default: "" },
-            ctas: [
-              {
-                bgColor: { type: String },
-                text: { type: String },
-                actionLink: { type: String },
-              },
-            ],
-            items: [
-              {
-                icon: { type: String },
-                title: { type: String },
-                subTitle: { type: String },
-                content: { type: String },
-              },
-            ],
-          },
-        },
- 
         subscribeSettings: {
           title: { type: String, default: "" },
           subTitle: { type: String, default: "" },
           miniTitle: { type: String, default: "" },
-          backgroundColor: { type: String, default: "" },
           cta: {
             text: { type: String, default: "" },
             color: { type: String, default: "" },
@@ -431,20 +321,6 @@ export class DealSite {
           subscriptionPlaceholder: { type: String, default: "Enter your email" },
           confirmationMessage: { type: String, default: "Thank you for subscribing! Check your email for confirmation." },
         },
-
-        footer: {
-          shortDescription: { type: String, default: "" },
-          copyrightText: { type: String, default: "" },
-        },
-
-        securitySettings: {
-          enablePasswordProtection: { type: Boolean, default: false },
-          pagePassword: { type: String, default: "" },
-          enableRateLimiting: { type: Boolean, default: true },
-          enableSpamFilter: { type: Boolean, default: true },
-          requireEmailVerification: { type: Boolean, default: false },
-        },
-
         paymentDetails: {
           subAccountCode: { type: String },
           accountNumber: { type: String },

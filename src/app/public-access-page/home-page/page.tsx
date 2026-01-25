@@ -68,7 +68,7 @@ export default function HomePageSettings() {
   const [formData, setFormData] = useState({
     heroTitle: settings.publicPage?.heroTitle || "",
     heroSubtitle: settings.publicPage?.heroSubtitle || "",
-    heroImage: settings.publicPage?.heroImage || "",
+    heroImageUrl: settings.publicPage?.heroImageUrl || "",
     ctaText: settings.publicPage?.ctaText || "",
     ctaLink: settings.publicPage?.ctaLink || "",
     ctaText2: settings.publicPage?.ctaText2 || "",
@@ -144,7 +144,7 @@ export default function HomePageSettings() {
       if (res?.success && res.data?.url) {
         setFormData((prev) => ({
           ...prev,
-          heroImage: res.data.url,
+          heroImageUrl: res.data.url,
         }));
         toast.success("Hero image uploaded successfully");
       } else {
@@ -162,7 +162,7 @@ export default function HomePageSettings() {
   const handleRemoveHeroImage = useCallback(() => {
     setFormData((prev) => ({
       ...prev,
-      heroImage: "",
+      heroImageUrl: "",
     }));
     toast.success("Hero image removed");
   }, []);
@@ -248,7 +248,7 @@ export default function HomePageSettings() {
           ...settings.publicPage,
           heroTitle: formData.heroTitle,
           heroSubtitle: formData.heroSubtitle,
-          heroImage: formData.heroImage,
+          heroImageUrl: formData.heroImageUrl,
           ctaText: formData.ctaText,
           ctaLink: formData.ctaLink,
           ctaText2: formData.ctaText2,
@@ -334,11 +334,11 @@ export default function HomePageSettings() {
               <h2 className="text-lg font-semibold text-[#09391C] mb-4">Hero Image</h2>
               <p className="text-sm text-gray-600 mb-4">Upload an image to display in your hero section</p>
 
-              {formData.heroImage ? (
+              {formData.heroImageUrl ? (
                 <div className="space-y-4">
                   <div className="relative w-full">
                     <img
-                      src={formData.heroImage}
+                      src={formData.heroImageUrl}
                       alt="Hero"
                       className="w-full h-64 object-cover rounded-lg border border-gray-200"
                     />

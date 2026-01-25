@@ -85,8 +85,8 @@ export default function FeaturedPage() {
           featuredListings: Array.from(featuredIds),
         },
       };
-
-      const res = await api.patch(`/account/dealSite/${settings._id}/update/featureSelection`, payload);
+ 
+      const res = await api.put(`/account/dealSite/${settings.publicSlug}/featureSelection/update`, payload);
 
       if (res?.data?.success) {
         updateSettings(payload as any);
