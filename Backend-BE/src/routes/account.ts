@@ -158,6 +158,8 @@ AccountRouter.post("/inspectionsFieldAgent/:inspectionId/stopInspection", comple
 // PREFERENCES ROUTES
 AccountRouter.get("/my-preferences/fetchAll", getMatchedPreferencesForOwner);
 AccountRouter.get("/my-preferences/:matchId", getOneMatchedPreferenceForOwner);
+AccountRouter.get("/dealsite-preferences/fetchAll", fetchDealsitePreferences);
+AccountRouter.get("/dealsite-preferences/:preferenceId", fetchDealsitePreferenceById);
 
 // NOTIFICATIONS ROUTES
 AccountRouter.get("/notifications", getAllNotifications);
