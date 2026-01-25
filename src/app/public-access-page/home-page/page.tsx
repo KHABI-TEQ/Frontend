@@ -71,7 +71,7 @@ export default function HomePageSettings() {
   const { settings, updateSettings } = useDealSite();
   const [preloader, setPreloader] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"hero" | "testimonials" | "why-choose-us">("hero");
+  const [activeTab, setActiveTab] = useState<"hero" | "testimonials" | "why-choose-us" | "support">("hero");
 
   // Hero state
   const [formData, setFormData] = useState({
