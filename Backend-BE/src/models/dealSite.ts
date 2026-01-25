@@ -160,6 +160,12 @@ export interface IDealSite {
         content: string;
       }[];
     };
+    readyToFind?: {
+      title?: string;
+      subTitle?: string;
+      ctas?: Array<{ bgColor: string; text: string; actionLink: string }>;
+      items?: Array<{ icon?: string; title: string; subTitle: string; content: string }>;
+    };
   };
 
 
