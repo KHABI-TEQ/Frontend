@@ -1,16 +1,23 @@
 'use client';
 import React, { useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
 import '../globals.css';
 
 // Verification Portal Header Component
 const VerificationHeader = () => {
+  const router = useRouter();
+
+  const handleLogoClick = () => {
+    router.push('/');
+  };
+
   return (
     <header className="bg-gradient-to-r from-[#0B423D] via-[#0B423D] to-[#8DDB90] text-white shadow-2xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row justify-between items-center py-4 sm:h-24 gap-4">
           {/* Logo Section */}
-          <div className="flex items-center space-x-3 sm:space-x-4">
+          <div className="flex items-center space-x-3 sm:space-x-4 cursor-pointer" onClick={handleLogoClick}>
             <div className="bg-white p-2 sm:p-3 rounded-xl shadow-lg">
               <img
                 src="/khabi-teq.svg"
