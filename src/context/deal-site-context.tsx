@@ -338,8 +338,12 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
             status: data.status || prev.status,
           }));
           if (data.publicSlug) setSlugLocked(true);
-          if (data.paused) setIsPaused(true);
-          if (data.status === "on-hold") setIsOnHold(true);
+          if (data.status) {
+            setDealSiteStatus(data.status);
+            if (data.status === "on-hold") setIsOnHold(true);
+            if (data.status === "paused") setIsPaused(true);
+            if (data.status === "running") setIsPaused(false);
+          }
           setIsSetupComplete(!!data.publicSlug);
         }
       }
