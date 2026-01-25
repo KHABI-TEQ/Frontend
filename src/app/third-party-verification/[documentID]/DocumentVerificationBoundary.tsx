@@ -1,9 +1,10 @@
 import React from 'react';
 import { CheckCircle } from 'lucide-react';
-import type { DocumentStatusDetails } from './types';
+
+type DocumentStatus = 'pending' | 'registered' | 'unregistered' | 'in-progress' | 'payment-approved' | 'payment-failed';
 
 interface DocumentVerificationBoundaryProps {
-  status: DocumentStatusDetails['status'];
+  status: DocumentStatus;
   documentID: string;
 }
 
