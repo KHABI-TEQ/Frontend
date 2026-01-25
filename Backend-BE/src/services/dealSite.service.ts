@@ -411,7 +411,7 @@ export class DealSiteService {
   /**
    * Fetch featured properties for a given DealSite
    * - If manual mode → uses propertyIds
-   * - If auto mode → selects latest active properties up to listingsLimit
+   * - If auto mode → selects latest active properties
    */
   static async getFeaturedProperties(dealSite: IDealSiteDoc) {
     const Property = DB.Models.Property;
@@ -419,7 +419,7 @@ export class DealSiteService {
     if (!dealSite.featureSelection) {
       return [];
     }
- 
+
     // Manual mode → specific IDs
     if (dealSite.featureSelection.mode === "manual" && dealSite.featureSelection.propertyIds) {
       const ids = dealSite.featureSelection.propertyIds
@@ -428,7 +428,7 @@ export class DealSiteService {
         .filter((id) => Types.ObjectId.isValid(id));
 
       return Property.find({ _id: { $in: ids }, isAvailable: true, isApproved: true, isDeleted: false })
-        .limit(dealSite.listingsLimit || 6)
+        .limit(6)
         .lean();
     }
 
@@ -440,7 +440,7 @@ export class DealSiteService {
       isDeleted: false
     })
       .sort({ createdAt: -1 })
-      .limit(dealSite.listingsLimit || 6)
+      .limit(6)
       .lean();
   }
 
