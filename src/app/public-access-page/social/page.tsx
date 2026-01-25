@@ -5,9 +5,12 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
+import Cookies from "js-cookie";
 import { Share2, Save } from "lucide-react";
 import { useDealSite } from "@/context/deal-site-context";
+import { PUT_REQUEST } from "@/utils/requests";
+import { URLS } from "@/utils/URLS";
 import toast from "react-hot-toast";
 
 export default function SocialPage() {
