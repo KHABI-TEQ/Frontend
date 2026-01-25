@@ -197,9 +197,8 @@ const Setup = () => {
   const steps = [
     { label: "Public Link", status: step > 0 ? "completed" : "active" },
     { label: "Design", status: step > 1 ? "completed" : step === 1 ? "active" : "pending" },
-    { label: "Marketplace", status: step > 2 ? "completed" : step === 2 ? "active" : "pending" },
-    { label: "Payment", status: step > 3 ? "completed" : step === 3 ? "active" : "pending" },
-    { label: "Review", status: step === 4 ? "active" : "pending" },
+    { label: "Payment", status: step > 2 ? "completed" : step === 2 ? "active" : "pending" },
+    { label: "Review", status: step === 3 ? "active" : "pending" },
   ] as const;
 
   return (
