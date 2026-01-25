@@ -36,6 +36,7 @@ interface Preference {
 }
 
 export default function PreferencesRequestsPage() {
+  const router = useRouter();
   const [preferences, setPreferences] = useState<Preference[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
