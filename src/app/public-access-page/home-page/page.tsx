@@ -58,6 +58,15 @@ type WhyChooseUsItem = {
   content: string;
 };
 
+type SupportCard = {
+  id: string;
+  cardTitle: string;
+  cardIcon: string;
+  description: string;
+  ctaText: string;
+  ctaLink: string;
+};
+
 export default function HomePageSettings() {
   const { settings, updateSettings } = useDealSite();
   const [preloader, setPreloader] = useState(false);
