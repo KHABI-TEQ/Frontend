@@ -55,9 +55,17 @@ export interface IDealSite {
     enablePriceNegotiationButton: boolean;
   };
 
-  footerSection?: {
+  footer?: {
     shortDescription: string;
     copyrightText: string;
+  };
+
+  securitySettings?: {
+    enablePasswordProtection?: boolean;
+    pagePassword?: string;
+    enableRateLimiting?: boolean;
+    enableSpamFilter?: boolean;
+    requireEmailVerification?: boolean;
   };
 
   publicPage?: {
