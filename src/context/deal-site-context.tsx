@@ -435,6 +435,7 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
     isPaused,
     isOnHold,
     slugLocked,
+    dealSiteStatus,
     isLoading,
     isSaving,
     previewUrl,
