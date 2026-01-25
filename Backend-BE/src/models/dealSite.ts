@@ -339,61 +339,13 @@ export class DealSite {
           // Hero Section
           hero: {
             title: { type: String, default: "" },
-            subTitle: { type: String, default: "" },
             description: { type: String, default: "" },
-            backgroundImage: { type: String, default: "" },
-            backgroundVideo: { type: String, default: "" },
-            overlayColor: { type: String, default: "rgba(0, 0, 0, 0.45)" },
-            cta: {
-              text: { type: String, default: "" },
-              link: { type: String, default: "" },
-              style: { type: String, default: "light" },
-            },
-          },
-
-          // Contact Information
-          contactInfo: {
-            title: { type: String, default: "" },
-            subTitle: { type: String, default: "" },
-            items: [
-              {
-                icon: { type: String },
-                label: { type: String },
-                value: { type: String },
-              },
-            ],
-          },
-
-          // Map Section
-          mapSection: {
-            title: { type: String, default: "" },
-            subTitle: { type: String, default: "" },
-            locations: [
-              {
-                city: { type: String },
-                address: { type: String },
-                coordinates: [{ type: Number }],
-              },
-            ],
           },
 
           // Call to Action
           cta: {
             title: { type: String, default: "" },
-            subTitle: { type: String, default: "" },
-            buttonText: { type: String, default: "" },
-            link: { type: String, default: "" },
-            backgroundGradient: { type: String, default: "" },
           },
-
-          // Legacy fields (keeping for backward compatibility)
-          officeHours: { type: String, default: "" },
-          faqs: [
-            {
-              question: { type: String },
-              answer: { type: String },
-            },
-          ],
         },
 
 
