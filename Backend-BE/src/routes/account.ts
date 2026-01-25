@@ -45,7 +45,7 @@ import { agentKycSchema } from "../validators/agentKYC.validator";
 import { fetchReferralRecords, fetchReferralStats } from "../controllers/Account/referrals";
 import { getDealSiteDetailsBySlug, getDealSiteDetailsByUser, getDealSiteLogsBySlug } from "../controllers/DealSite/verifyPublicAccessID";
 import { bankList, checkSlugAvailability, createDealSite } from "../controllers/DealSite/setUp";
-import { bulkUpdateDealSite, deleteDealSite, disableDealSite, enableDealSite, updateDealSite } from "../controllers/DealSite/otherActions";
+import { bulkUpdateDealSite, deleteDealSite, disableDealSite, enableDealSite, updateDealSite, getDealSiteContactMessages, deleteDealSiteContactMessage, getDealSiteEmailSubscribers, deleteDealSiteEmailSubscriber, exportDealSiteEmailSubscribers } from "../controllers/DealSite/otherActions";
 import { fetchUserBookings, getBookingStats, getOneUserBooking, respondToBookingRequest } from "../controllers/Account/fetchBookings";
 import { agentSubscriptionFeatureChecker } from "../middlewares/agentSubscriptionFeatureChecker";
 import { fetchMyDealSitePreference } from "../controllers/DealSite/fetchDealSitePreferences";
