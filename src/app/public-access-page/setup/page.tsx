@@ -350,14 +350,14 @@ function Step1Design({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-[#09391C] mb-4">Page Branding</h2>
+        <h2 className="text-2xl font-bold text-[#09391C] mb-4">Basic Information</h2>
         <p className="text-gray-600">
-          Set your page title and description for SEO and visitor preview.
+          Tell visitors about your business. You can customize more details later from your dashboard.
         </p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Page Title</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Page Title *</label>
         <input
           type="text"
           value={formData.title}
@@ -365,10 +365,11 @@ function Step1Design({
           placeholder="My Real Estate Business"
           className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
         />
+        <p className="text-xs text-gray-500 mt-1">This is how your page appears to search engines and visitors</p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Description *</label>
         <textarea
           value={formData.description}
           onChange={(e) => onChange("description", e.target.value)}
@@ -376,22 +377,13 @@ function Step1Design({
           rows={4}
           className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
         />
+        <p className="text-xs text-gray-500 mt-1">Keep it concise and engaging</p>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Keywords (comma separated)</label>
-        <input
-          type="text"
-          value={formData.keywords.join(", ")}
-          onChange={(e) =>
-            onChange(
-              "keywords",
-              e.target.value.split(",").map((k) => k.trim()).filter(Boolean)
-            )
-          }
-          placeholder="real estate, agent, properties, listings"
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
-        />
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <p className="text-sm text-blue-800">
+          <strong>Later:</strong> You'll be able to add keywords, logo, custom colors, hero image, and more from your dashboard settings.
+        </p>
       </div>
     </div>
   );
