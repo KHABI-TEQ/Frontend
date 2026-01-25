@@ -57,6 +57,13 @@ export default function ContactUsPage() {
             ...settings.contactUs?.cta,
             title: formData.responseMessage,
           },
+          location: {
+            name: formData.locationName,
+            address: formData.locationAddress,
+            coordinates: formData.locationLatitude && formData.locationLongitude
+              ? [parseFloat(formData.locationLatitude), parseFloat(formData.locationLongitude)]
+              : undefined,
+          },
         },
         contactVisibility: {
           showEmail: formData.showEmail,
