@@ -45,7 +45,6 @@ export interface IDealSite {
 
   marketplaceDefaults?: {
     defaultTab: DefaultTab;
-    defaultSort: DefaultSort;
     showVerifiedOnly: boolean;
     enablePriceNegotiationButton: boolean;
   };
