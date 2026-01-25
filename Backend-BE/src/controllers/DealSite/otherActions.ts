@@ -10,6 +10,65 @@ import { generalTemplate } from "../../common/email.template";
 import { RouteError } from "../../common/classes";
 
 /**
+ * Bulk update a DealSite (handles multiple sections in one request)
+ * Used by frontend forms that update multiple sections at once
+ */
+export const bulkUpdateDealSite = async (
+  req: AppRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user?._id;
+    const payload = req.body;
+
+    // Get the user's dealSite (they should have only one)
+    const dealSites = await DealSiteService.getByAgent(userId, false);
+    if (!dealSites || dealSites.length === 0) {
+      return res.status(HttpStatusCodes.NOT_FOUND).json({
+        success: false,
+        message: "Public access page not found",
+      });
+    }
+
+    const dealSite = dealSites[0];
+    const publicSlug = dealSite.publicSlug;
+
+    // Process each section in the payload
+    const sections = Object.keys(payload);
+    let updated = dealSite;
+
+    for (const sectionName of sections) {
+      updated = await DealSiteService.updateDealSiteSection(
+        userId,
+        publicSlug,
+        sectionName,
+        payload[sectionName]
+      );
+    }
+
+    // Log activity
+    await dealSiteActivityService.logActivity({
+      dealSiteId: updated._id.toString(),
+      actorId: req.user._id,
+      actorModel: "User",
+      category: "settings-updated",
+      action: `Updated ${sections.join(", ")} sections`,
+      description: `User modified multiple settings on their deal site.`,
+      req,
+    });
+
+    return res.status(HttpStatusCodes.OK).json({
+      success: true,
+      message: "Public access page updated successfully",
+      data: updated,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
  * Update a DealSite
  */
 export const updateDealSite = async (
@@ -17,7 +76,7 @@ export const updateDealSite = async (
   res: Response,
   next: NextFunction
 ) => {
-  try { 
+  try {
     const { publicSlug, sectionName } = req.params;
     const userId = req.user?._id;
 
