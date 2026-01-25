@@ -35,7 +35,7 @@ export interface FeatureSelection {
 
 export interface MarketplaceDefaults {
   defaultTab: "buy" | "rent" | "shortlet" | "jv";
-  defaultSort: "newest" | "price-asc" | "price-desc";
+  defaultSort?: "newest" | "price-asc" | "price-desc";
   showVerifiedOnly: boolean;
   enablePriceNegotiationButton: boolean;
 }
@@ -51,8 +51,8 @@ export interface PublicPageDesign {
 export interface InspectionDesignSettings {
   allowPublicBooking: boolean;
   defaultInspectionFee: number | "";
-  inspectionStatus?: string;
-  negotiationEnabled?: boolean;
+  inspectionStatus: string;
+  negotiationEnabled: boolean;
 }
 
 export interface AboutHeroCta {
@@ -304,6 +304,9 @@ export interface SubscribeSettings {
     text?: string;
     color?: string;
   };
+  enableEmailSubscription?: boolean;
+  subscriptionPlaceholder?: string;
+  confirmationMessage?: string;
 }
 
 export interface FooterDetails {
@@ -329,6 +332,7 @@ export interface SecuritySettings {
 }
 
 export interface DealSiteSettings {
+  _id?: string;
   publicSlug: string;
   title: string;
   keywords: string[];
@@ -422,7 +426,13 @@ const DEFAULT_SETTINGS: DealSiteSettings = {
   about: {},
   contactUs: {},
   homeSettings: {},
-  subscribeSettings: {},
+  subscribeSettings: {
+    title: "",
+    subTitle: "",
+    enableEmailSubscription: true,
+    subscriptionPlaceholder: "Enter your email",
+    confirmationMessage: "Thank you for subscribing! Check your email for confirmation.",
+  },
   securitySettings: {
     enablePasswordProtection: false,
     enableRateLimiting: true,
@@ -464,6 +474,7 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
         if (data) {
           setSettings((prev) => ({
             ...prev,
+            _id: data._id || prev._id,
             publicSlug: data.publicSlug || prev.publicSlug,
             title: data.title || prev.title,
             keywords: data.keywords || prev.keywords,
@@ -484,6 +495,7 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
             homeSettings: data.homeSettings || prev.homeSettings,
             subscribeSettings: data.subscribeSettings || prev.subscribeSettings,
             securitySettings: data.securitySettings || prev.securitySettings,
+            status: data.status || prev.status,
           }));
           if (data.publicSlug) setSlugLocked(true);
           if (data.paused) setIsPaused(true);

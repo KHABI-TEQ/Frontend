@@ -14,10 +14,11 @@ export interface IDealSite {
     primaryColor: string;
     secondaryColor: string;
   };
- 
+
   inspectionSettings?: {
     allowPublicBooking: boolean;
     defaultInspectionFee: number;
+    inspectionStatus?: string;
     negotiationEnabled: boolean;
   };
 
@@ -40,11 +41,14 @@ export interface IDealSite {
   };
 
   featureSelection?: {
+    mode?: "auto" | "manual";
+    propertyIds?: string;
     featuredListings?: string[];
   };
 
   marketplaceDefaults?: {
     defaultTab: DefaultTab;
+    defaultSort?: "newest" | "price-asc" | "price-desc";
     showVerifiedOnly: boolean;
     enablePriceNegotiationButton: boolean;
   };
@@ -156,12 +160,27 @@ export interface IDealSite {
         content: string;
       }[];
     };
+    readyToFind?: {
+      title?: string;
+      subTitle?: string;
+      ctas?: Array<{ bgColor: string; text: string; actionLink: string }>;
+      items?: Array<{ icon?: string; title: string; subTitle: string; content: string }>;
+    };
   };
 
 
   subscribeSettings?: {
     title: string;
     subTitle: string;
+    miniTitle?: string;
+    backgroundColor?: string;
+    cta?: {
+      text?: string;
+      color?: string;
+    };
+    enableEmailSubscription?: boolean;
+    subscriptionPlaceholder?: string;
+    confirmationMessage?: string;
   };
 
   paymentDetails?: {
@@ -233,6 +252,8 @@ export class DealSite {
         },
 
         featureSelection: {
+          mode: { type: String, enum: ["auto", "manual"], default: "auto" },
+          propertyIds: { type: String, default: "" },
           featuredListings: [{ type: String }],
         },
 
@@ -241,6 +262,11 @@ export class DealSite {
             type: String,
             enum: ["buy", "rent", "shortlet", "jv"],
             default: "buy",
+          },
+          defaultSort: {
+            type: String,
+            enum: ["newest", "price-asc", "price-desc"],
+            default: "newest",
           },
           showVerifiedOnly: { type: Boolean, default: false },
           enablePriceNegotiationButton: { type: Boolean, default: true },
@@ -371,11 +397,39 @@ export class DealSite {
               },
             ],
           },
+          readyToFind: {
+            title: { type: String, default: "" },
+            subTitle: { type: String, default: "" },
+            ctas: [
+              {
+                bgColor: { type: String },
+                text: { type: String },
+                actionLink: { type: String },
+              },
+            ],
+            items: [
+              {
+                icon: { type: String },
+                title: { type: String },
+                subTitle: { type: String },
+                content: { type: String },
+              },
+            ],
+          },
         },
  
         subscribeSettings: {
           title: { type: String, default: "" },
           subTitle: { type: String, default: "" },
+          miniTitle: { type: String, default: "" },
+          backgroundColor: { type: String, default: "" },
+          cta: {
+            text: { type: String, default: "" },
+            color: { type: String, default: "" },
+          },
+          enableEmailSubscription: { type: Boolean, default: true },
+          subscriptionPlaceholder: { type: String, default: "Enter your email" },
+          confirmationMessage: { type: String, default: "Thank you for subscribing! Check your email for confirmation." },
         },
 
         footer: {
