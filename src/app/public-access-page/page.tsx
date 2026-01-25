@@ -255,8 +255,22 @@ export default function OverviewPage() {
         />
         <StatCard
           title="Status"
-          value={isPaused ? "Paused" : "Live"}
-          icon={isPaused ? "⏸️" : "✅"}
+          value={
+            dealSiteStatus === "pending"
+              ? "Pending Review"
+              : dealSiteStatus === "on-hold"
+              ? "Under Review"
+              : isPaused
+              ? "Paused"
+              : "Live"
+          }
+          icon={
+            dealSiteStatus === "pending" || dealSiteStatus === "on-hold"
+              ? "⏳"
+              : isPaused
+              ? "⏸️"
+              : "✅"
+          }
         />
       </div>
 
