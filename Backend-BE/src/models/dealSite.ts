@@ -427,6 +427,9 @@ export class DealSite {
             text: { type: String, default: "" },
             color: { type: String, default: "" },
           },
+          enableEmailSubscription: { type: Boolean, default: true },
+          subscriptionPlaceholder: { type: String, default: "Enter your email" },
+          confirmationMessage: { type: String, default: "Thank you for subscribing! Check your email for confirmation." },
         },
 
         footer: {
