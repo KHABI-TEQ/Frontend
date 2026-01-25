@@ -24,7 +24,6 @@ import {
   Star,
   Grid,
   Home,
-  Lock,
   Activity,
   ChevronDown,
   FileText,
