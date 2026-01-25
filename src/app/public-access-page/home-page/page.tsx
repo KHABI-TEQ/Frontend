@@ -94,8 +94,20 @@ export default function HomePageSettings() {
   });
 
   const [uploadingTestimonialId, setUploadingTestimonialId] = useState<string>("");
-  const [showIconPicker, setShowIconPicker] = useState<Record<string, boolean>>({});
-  const [iconSearchTerms, setIconSearchTerms] = useState<Record<string, string>>({});
+  const [showIconPicker, setShowIconPicker] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    whyChooseUs.forEach(item => {
+      initial[item.id] = false;
+    });
+    return initial;
+  });
+  const [iconSearchTerms, setIconSearchTerms] = useState<Record<string, string>>(() => {
+    const initial: Record<string, string> = {};
+    whyChooseUs.forEach(item => {
+      initial[item.id] = "";
+    });
+    return initial;
+  });
 
   const handleInputChange = useCallback((field: string, value: string) => {
     setFormData((prev) => ({
