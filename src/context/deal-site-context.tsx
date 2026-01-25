@@ -474,6 +474,7 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
         if (data) {
           setSettings((prev) => ({
             ...prev,
+            _id: data._id || prev._id,
             publicSlug: data.publicSlug || prev.publicSlug,
             title: data.title || prev.title,
             keywords: data.keywords || prev.keywords,
@@ -494,6 +495,7 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
             homeSettings: data.homeSettings || prev.homeSettings,
             subscribeSettings: data.subscribeSettings || prev.subscribeSettings,
             securitySettings: data.securitySettings || prev.securitySettings,
+            status: data.status || prev.status,
           }));
           if (data.publicSlug) setSlugLocked(true);
           if (data.paused) setIsPaused(true);
