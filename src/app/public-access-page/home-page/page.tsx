@@ -403,6 +403,7 @@ export default function HomePageSettings() {
           { id: "hero", label: "Hero Section" },
           { id: "testimonials", label: "Testimonials" },
           { id: "why-choose-us", label: "Why Choose Us" },
+          { id: "support", label: "Support" },
         ].map((tab) => (
           <button
             key={tab.id}
