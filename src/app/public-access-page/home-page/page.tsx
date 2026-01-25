@@ -287,7 +287,22 @@ export default function HomePageSettings() {
       );
 
       if (res?.success) {
-        updateSettings(payload as any);
+        // Update context with the full payload structure (backend won't have _id/id, but frontend state has them)
+        updateSettings({
+          publicPage: payload.publicPage,
+          homeSettings: {
+            testimonials: {
+              title: testimonialsSection.title,
+              subTitle: testimonialsSection.subTitle,
+              testimonials: testimonials, // Use frontend state with id fields
+            },
+            whyChooseUs: {
+              title: whyChooseUsSection.title,
+              subTitle: whyChooseUsSection.subTitle,
+              items: whyChooseUs, // Use frontend state with _id fields
+            },
+          },
+        } as any);
         toast.success("Home page settings saved successfully");
       } else {
         toast.error(res?.message || "Failed to save settings");
