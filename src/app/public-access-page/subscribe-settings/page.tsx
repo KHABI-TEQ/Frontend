@@ -8,10 +8,12 @@ import { POST_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import { useDealSite } from "@/context/deal-site-context";
 import OverlayPreloader from "@/components/general-components/OverlayPreloader";
+import SubscribersTab from "@/components/public-access-components/SubscribersTab";
 
 export default function SubscribeSettingsPage() {
   const { settings, updateSettings } = useDealSite();
   const [preloader, setPreloader] = useState(false);
+  const [activeTab, setActiveTab] = useState<"settings" | "subscribers">("settings");
   const [formData, setFormData] = useState({
     enableEmailSubscription: true,
     subscriptionTitle: settings.subscribeSettings?.title || "Subscribe to Updates",
@@ -70,10 +72,38 @@ export default function SubscribeSettingsPage() {
           Subscribe Settings
         </h1>
         <p className="text-gray-600 mt-2">
-          Configure email subscription options on your public page
+          Manage your email subscription settings and view subscribers
         </p>
       </div>
 
+      {/* Tabs */}
+      <div className="border-b border-gray-200">
+        <div className="flex gap-4">
+          <button
+            onClick={() => setActiveTab("settings")}
+            className={`px-4 py-3 font-medium text-sm border-b-2 transition-colors ${
+              activeTab === "settings"
+                ? "border-emerald-600 text-emerald-600"
+                : "border-transparent text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            Settings
+          </button>
+          <button
+            onClick={() => setActiveTab("subscribers")}
+            className={`px-4 py-3 font-medium text-sm border-b-2 transition-colors ${
+              activeTab === "subscribers"
+                ? "border-emerald-600 text-emerald-600"
+                : "border-transparent text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            Subscribers
+          </button>
+        </div>
+      </div>
+
+      {/* Settings Tab Content */}
+      {activeTab === "settings" && (
       <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
         <div className="flex items-center gap-3">
           <input
@@ -173,6 +203,12 @@ export default function SubscribeSettingsPage() {
           </button>
         </div>
       </div>
+      )}
+
+      {/* Subscribers Tab Content */}
+      {activeTab === "subscribers" && settings.publicSlug && (
+        <SubscribersTab publicSlug={settings.publicSlug} />
+      )}
     </div>
   );
 }
