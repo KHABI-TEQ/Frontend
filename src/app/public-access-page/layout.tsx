@@ -1,7 +1,7 @@
 /**
  * Public Access Page Dashboard Layout
  * Wraps all public-access-page routes with sidebar navigation
- * Handles setup completion guard logic
+ * Handles setup completion guard logic and page gating modal
  */
 
 "use client";
@@ -18,6 +18,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user } = useUserContext();
   const { isSetupComplete, slugLocked, isLoading } = useDealSite();
+  const [showSetupModal, setShowSetupModal] = useState(false);
 
   // Guard logic: redirect based on setup completion
   useEffect(() => {
@@ -39,7 +40,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       !isSetupComplete &&
       pathname.startsWith("/public-access-page")
     ) {
-      router.replace("/public-access-page/setup");
+      setShowSetupModal(true);
     }
   }, [isLoading, isSetupComplete, pathname, user, router]);
 
@@ -82,14 +83,34 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
   // Dashboard layout with sidebar
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <DashboardSidebar />
-      <main className="flex-1 overflow-auto lg:ml-0">
-        <div className="p-6 lg:p-8">
-          {children}
+    <>
+      {showSetupModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 text-center">
+            <h2 className="text-2xl font-bold text-[#09391C] mb-2">
+              Setup Your Public Page
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Your public access page is not yet configured. Set it up now to get started.
+            </p>
+            <button
+              onClick={() => router.push("/public-access-page/setup")}
+              className="w-full px-6 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-all"
+            >
+              Set Up Your Public Page Now
+            </button>
+          </div>
         </div>
-      </main>
-    </div>
+      )}
+      <div className="flex min-h-screen bg-gray-50">
+        <DashboardSidebar />
+        <main className="flex-1 overflow-auto lg:ml-0">
+          <div className="p-6 lg:p-8">
+            {children}
+          </div>
+        </main>
+      </div>
+    </>
   );
 }
 
