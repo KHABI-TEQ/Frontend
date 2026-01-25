@@ -40,6 +40,9 @@ export default function SubscribeSettingsPage() {
         subscribeSettings: {
           title: formData.subscriptionTitle,
           subTitle: formData.subscriptionDescription,
+          enableEmailSubscription: formData.enableEmailSubscription,
+          subscriptionPlaceholder: formData.subscriptionPlaceholder,
+          confirmationMessage: formData.confirmationMessage,
         },
       };
 
