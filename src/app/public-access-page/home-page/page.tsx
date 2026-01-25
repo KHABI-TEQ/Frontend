@@ -267,6 +267,29 @@ export default function HomePageSettings() {
     setWhyChooseUs((prev) => prev.filter((item) => item._id !== id));
   }, []);
 
+  // Support card handlers
+  const addSupportCard = useCallback(() => {
+    const newCard: SupportCard = {
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      cardTitle: "",
+      cardIcon: "Award",
+      description: "",
+      ctaText: "",
+      ctaLink: "",
+    };
+    setSupportCards((prev) => [...prev, newCard]);
+  }, []);
+
+  const updateSupportCard = useCallback((id: string, field: string, value: any) => {
+    setSupportCards((prev) =>
+      prev.map((card) => (card.id === id ? { ...card, [field]: value } : card))
+    );
+  }, []);
+
+  const removeSupportCard = useCallback((id: string) => {
+    setSupportCards((prev) => prev.filter((card) => card.id !== id));
+  }, []);
+
   const handleSave = useCallback(async () => {
     setPreloader(true);
     try {
