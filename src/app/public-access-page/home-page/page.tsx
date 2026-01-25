@@ -342,7 +342,7 @@ export default function HomePageSettings() {
       );
 
       if (res?.success) {
-        // Update context with the full payload structure (backend won't have _id/id, but frontend state has them)
+        // Update context with the full payload structure (backend won't have id, but frontend state has them)
         updateSettings({
           publicPage: payload.publicPage,
           homeSettings: {
@@ -356,6 +356,12 @@ export default function HomePageSettings() {
               subTitle: whyChooseUsSection.subTitle,
               items: whyChooseUs, // Use frontend state with _id fields
             },
+            support: {
+              title: supportSection.title,
+              description: supportSection.description,
+              showHeroCtaButtons: supportSection.showHeroCtaButtons,
+              supportCards: supportCards, // Use frontend state with id fields
+            },
           },
         } as any);
         toast.success("Home page settings saved successfully");
@@ -367,7 +373,7 @@ export default function HomePageSettings() {
     } finally {
       setPreloader(false);
     }
-  }, [formData, settings, testimonials, testimonialsSection, whyChooseUs, whyChooseUsSection, updateSettings]);
+  }, [formData, settings, testimonials, testimonialsSection, whyChooseUs, whyChooseUsSection, supportCards, supportSection, updateSettings]);
 
   const getLucideIcon = (iconName: string) => {
     const Icon = (LucideIcons as any)[iconName];
