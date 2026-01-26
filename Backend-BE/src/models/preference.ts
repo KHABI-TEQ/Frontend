@@ -27,6 +27,8 @@ export interface IPropertyDetails {
   propertyCondition?: string;
   purpose?: string;
   landSize?: string; // Changed to string to match payload
+  minLandSize?: string; // New: for SQM range
+  maxLandSize?: string; // New: for SQM range
   measurementUnit?: string; // Changed from measurementType
   documentTypes?: string[]; // Changed from documents
   landConditions?: string[]; // New field
