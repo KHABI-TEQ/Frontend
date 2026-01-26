@@ -645,6 +645,8 @@ const PreferenceFormContent: React.FC = () => {
             ).trim(),
             purpose: (shortletData.propertyDetails?.purpose || "").trim(),
             landSize: (shortletData.propertyDetails?.landSize || "").trim(),
+            minLandSize: (shortletData.propertyDetails?.minLandSize || "").trim(),
+            maxLandSize: (shortletData.propertyDetails?.maxLandSize || "").trim(),
             measurementUnit: (
               shortletData.propertyDetails?.measurementUnit || ""
             ).trim(),
