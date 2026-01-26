@@ -259,10 +259,10 @@ export default function MyInspectionRequestsPage() {
         const response = await GET_REQUEST(url, token);
 
         if (response?.success) {
-          setInspections(Array.isArray(response.data) ? response.data : []);
-          setTotalPages(response.pagination?.totalPages || 1);
-          setTotalCount(response.pagination?.total || (response.data?.length || 0));
-          setCurrentPage(response.pagination?.page || page);
+          setInspections(Array.isArray(response.data) ? (response.data as any) : []);
+          setTotalPages((response.pagination as any)?.totalPages || 1);
+          setTotalCount((response.pagination as any)?.total || ((response.data as any)?.length || 0));
+          setCurrentPage((response.pagination as any)?.page || page);
         } else {
           throw new Error(response?.message || "Failed to fetch inspections");
         }
