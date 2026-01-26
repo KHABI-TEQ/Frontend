@@ -162,7 +162,6 @@ export default function HomePageSettings() {
     const token = Cookies.get("token");
 
     setUploading(true);
-    setPreloader(true);
     try {
       const res = await POST_REQUEST_FILE_UPLOAD<{ url: string }>(
         `${URLS.BASE}${URLS.uploadSingleImg}`,
@@ -183,7 +182,6 @@ export default function HomePageSettings() {
       toast.error("Failed to upload hero image");
     } finally {
       setUploading(false);
-      setPreloader(false);
     }
   }, []);
 
