@@ -213,7 +213,7 @@ const Setup = () => {
   ] as const;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-blue-50 py-12 px-4">
+    <div className="min-h-screen bg-[#EEF1F1] py-12 px-4">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
