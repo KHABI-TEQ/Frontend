@@ -82,7 +82,6 @@ export default function BrandingPage() {
 
   return (
     <div className="space-y-8">
-      <OverlayPreloader visible={preloader.visible} message={preloader.message} />
 
       <div>
         <h1 className="text-3xl font-bold text-[#09391C] flex items-center gap-3">
