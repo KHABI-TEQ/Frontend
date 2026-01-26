@@ -446,13 +446,7 @@ function Step1Design({ formik }: { formik: any }) {
   );
 }
 
-function Step2Payment({
-  formData,
-  onChange,
-}: {
-  formData: DealSiteSettings;
-  onChange: (field: keyof DealSiteSettings, value: any) => void;
-}) {
+function Step2Payment({ formik }: { formik: any }) {
   const [banks, setBanks] = useState<Bank[]>([]);
   const [filteredBanks, setFilteredBanks] = useState<Bank[]>([]);
   const [bankSearch, setBankSearch] = useState("");
@@ -514,12 +508,17 @@ function Step2Payment({
 
   // Handle bank selection
   const selectBank = (bank: Bank) => {
-    onChange("paymentDetails", {
-      ...formData.paymentDetails,
+    formik.setFieldValue("paymentDetails", {
+      ...formik.values.paymentDetails,
       sortCode: bank.code,
     });
     setBankSearch(bank.name);
     setShowBankDropdown(false);
+  };
+
+  // Handle settlement bank field focus
+  const handleBankFieldFocus = () => {
+    setShowBankDropdown(true);
   };
 
   return (
