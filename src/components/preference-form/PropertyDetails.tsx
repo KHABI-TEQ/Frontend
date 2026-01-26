@@ -291,6 +291,8 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
       if (!state.formData || Object.keys(state.formData).length === 0) {
         setPropertySubtype(null);
         setLandSize("");
+        setMinLandSize("");
+        setMaxLandSize("");
         setMeasurementUnit(null);
         setDocumentTypes([]);
         setPropertyCondition(null);
