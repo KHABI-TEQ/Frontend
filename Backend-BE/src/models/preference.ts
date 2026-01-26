@@ -208,6 +208,8 @@ export class Preference {
           propertyCondition: String,
           purpose: String,
           landSize: String, // Stored as string
+          minLandSize: String, // New: for SQM range
+          maxLandSize: String, // New: for SQM range
           measurementUnit: String, // Stored as string
           documentTypes: [String],
           landConditions: [String],
