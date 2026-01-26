@@ -19,6 +19,7 @@ export default function BrandingPage() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [preloader, setPreloader] = useState({ visible: false, message: "" });
+  const [keywordInput, setKeywordInput] = useState(settings.keywords.join(", "));
 
   const showPreloader = (message: string) => setPreloader({ visible: true, message });
   const hidePreloader = () => setPreloader({ visible: false, message: "" });
