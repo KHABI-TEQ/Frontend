@@ -156,7 +156,7 @@ const ContactMessagesTab: React.FC<{ publicSlug: string }> = ({ publicSlug }) =>
 
   return (
     <div className="space-y-6">
-      <OverlayPreloader visible={isDeleting} message="Deleting..." />
+      <OverlayPreloader isVisible={isDeleting} message="Deleting..." />
 
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
