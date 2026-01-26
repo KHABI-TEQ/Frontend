@@ -177,6 +177,18 @@ export default function OverviewPage() {
         </div>
       )}
 
+      {/* On Hold Notification */}
+      {dealSiteStatus === "on-hold" && (
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 flex items-start gap-3">
+          <div className="flex-1">
+            <h3 className="font-semibold text-orange-900">Public Access Page is On Hold</h3>
+            <p className="text-sm text-orange-800 mt-1">
+              Your public access page is currently on hold. Please contact support for more information or to resolve any issues.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Status Card */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
