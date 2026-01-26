@@ -75,7 +75,7 @@ export default function AboutPage() {
           if (currentData && typeof currentData === "object") {
             updateAboutSection(section as keyof AboutSection, {
               ...currentData,
-              image: res.data.url,
+              image: (res.data as any)?.url,
             });
           }
           toast.success("Image uploaded successfully");
