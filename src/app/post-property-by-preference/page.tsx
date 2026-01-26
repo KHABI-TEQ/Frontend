@@ -86,6 +86,8 @@ interface PropertyDetails {
   minBathrooms?: number;
   propertyCondition?: string;
   landSize?: string;
+  minLandSize?: string;
+  maxLandSize?: string;
   measurementUnit?: string;
   documentTypes?: string[];
 }
