@@ -261,13 +261,20 @@ export default function OverviewPage() {
                     Pause
                   </button>
                 ) : (
-                  <button
-                    onClick={openResumeConfirmation}
-                    className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition-all"
-                  >
-                    <Play size={16} />
-                    Resume
-                  </button>
+                  <div title={isPageConfigured() ? "" : "Please configure logo, title, description, and footer details before starting"}>
+                    <button
+                      onClick={openResumeConfirmation}
+                      disabled={!isPageConfigured()}
+                      className={`inline-flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-all ${
+                        isPageConfigured()
+                          ? "border-gray-300 hover:bg-gray-50"
+                          : "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
+                      }`}
+                    >
+                      <Play size={16} />
+                      {isPageConfigured() ? "Resume" : "Resume (Incomplete)"}
+                    </button>
+                  </div>
                 )}
               </>
             )}
