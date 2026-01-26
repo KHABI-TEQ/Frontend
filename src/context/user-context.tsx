@@ -113,8 +113,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     try {
       const response = await GET_REQUEST(url, token);
 
-      if (response?.success && response?.data?.user.id) {
-        setUserState(response.data.user); // ✅ correctly set user
+      const data = response?.data as any;
+      if (response?.success && data?.user?.id) {
+        setUserState(data.user); // ✅ correctly set user
       } else if (
         typeof response?.message === "string" &&
         (response.message.toLowerCase().includes("unauthorized") ||
