@@ -154,7 +154,7 @@ export default function OverviewPage() {
 
   return (
     <div className="space-y-8">
-      <OverlayPreloader visible={preloader} message="Loading..." />
+      <OverlayPreloader isVisible={preloader} message="Loading..." />
 
       {/* Header */}
       <div>
