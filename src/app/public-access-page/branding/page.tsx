@@ -5,7 +5,7 @@
 
 "use client";
 
-import React, { useState, useCallback, useMemo, useEffect } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import { Save, Trash2, ImageIcon, Settings, X } from "lucide-react";
