@@ -47,8 +47,9 @@ export default function SubscriptionTransactionDetailsPage() {
     try {
       const response = await GET_REQUEST(`${URLS.BASE}${URLS.getSubscriptionTransactions}/${transactionId}`);
       if (response.success) {
-        setTransaction(response.data.transaction);
-        setSubscription(response.data.subscription);
+        const data = response.data as any;
+        setTransaction(data.transaction);
+        setSubscription(data.subscription);
       } else {
         toast.error('Transaction not found');
         router.push('/agent-subscriptions');

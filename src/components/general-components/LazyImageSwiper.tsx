@@ -60,7 +60,7 @@ const LazyImageSwiper: React.FC<LazyImageSwiperProps> = ({ images }) => {
           return (
             <SwiperSlide
               onClick={() => {
-                setImageData(images);
+                setImageData(images as string[]);
                 setViewImage(true);
               }}
               key={i}

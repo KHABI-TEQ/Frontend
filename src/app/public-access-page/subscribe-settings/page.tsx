@@ -212,7 +212,7 @@ export default function SubscribeSettingsPage() {
 
       {/* Subscribers Tab Content */}
       {activeTab === "subscribers" && settings.publicSlug && (
-        <SubscribersTab publicSlug={settings.publicSlug} />
+        <SubscribersTab />
       )}
     </div>
   );

@@ -23,17 +23,18 @@ const EmailVerification = () => {
 					const response = await GET_REQUEST(url);
 					console.log("response from email verification", response);
 
-					if (response && response.data?.token) {
-						Cookies.set("token", response.data.token);
-						setUser(response.data);
+					const data = response?.data as any;
+					if (response && data?.token) {
+						Cookies.set("token", data.token);
+						setUser(data);
 
 						// Redirect based on user type
-						if (response.data?.userType === "Landowners") {
+						if (data?.userType === "Landowners") {
 							toast.success(
 								"Email verified successfully! Redirecting to your dashboard..."
 							);
 							router.push("/dashboard");
-						} else if (response.data?.userType === "Agent") {
+						} else if (data?.userType === "Agent") {
 							toast.success(
 								"Email verified successfully! Please complete your profile."
 							);

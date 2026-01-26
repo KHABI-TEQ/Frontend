@@ -39,7 +39,7 @@ export const useNegotiationData = (potentialClientID: string) => {
 
         if (response.success === true) {
           setFormStatus("success");
-          const data: PotentialClientData = response.data;
+          const data: PotentialClientData = response.data as any;
           const property = data.propertyId || {};
 
           // Determine negotiation type

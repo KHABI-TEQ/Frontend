@@ -78,8 +78,9 @@ export default function PreferencesRequestsPage() {
 
         // Set pagination info
         if (response.pagination) {
-          setTotalPages(response.pagination.pages || 1);
-          setTotalItems(response.pagination.total || validPreferences.length);
+          const pagination = response.pagination as any;
+          setTotalPages(pagination.pages || 1);
+          setTotalItems(pagination.total || validPreferences.length);
         } else {
           setTotalPages(1);
           setTotalItems(validPreferences.length);

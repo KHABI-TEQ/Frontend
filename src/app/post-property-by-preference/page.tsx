@@ -360,21 +360,22 @@ const PostPropertyByPreference = () => {
         const response = await GET_REQUEST(url, token);
 
         if (response?.success && response?.data) {
+          const data = response.data as any;
           const pref: Preference = {
-            preferenceId: response.data.preferenceId || response.data.preferenceId,
-            preferenceMode: response.data.preferenceMode,
-            preferenceType: response.data.preferenceType,
-            location: response.data.location,
-            budget: response.data.budget,
-            propertyDetails: response.data.propertyDetails,
-            bookingDetails: response.data.bookingDetails,
-            features: response.data.features,
-            status: response.data.status,
-            createdAt: response.data.createdAt,
-            buyer: response.data.buyer,
-            contactInfo: response.data.contactInfo,
-            nearbyLandmark: response.data.nearbyLandmark,
-            additionalNotes: response.data.additionalNotes,
+            preferenceId: data._id || data.preferenceId,
+            preferenceMode: data.preferenceMode,
+            preferenceType: data.preferenceType,
+            location: data.location,
+            budget: data.budget,
+            propertyDetails: data.propertyDetails,
+            bookingDetails: data.bookingDetails,
+            features: data.features,
+            status: data.status,
+            createdAt: data.createdAt,
+            buyer: data.buyer,
+            contactInfo: data.contactInfo,
+            nearbyLandmark: data.nearbyLandmark,
+            additionalNotes: data.additionalNotes,
           };
           setPreference(pref);
  

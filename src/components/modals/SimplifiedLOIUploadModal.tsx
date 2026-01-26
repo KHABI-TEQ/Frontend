@@ -101,7 +101,7 @@ const SimplifiedLOIUploadModal: React.FC<SimplifiedLOIUploadModalProps> = ({
       });
 
       if (response.success) {
-        setUploadedFileUrl(response.url);
+        setUploadedFileUrl((response as any)?.data?.url || (response as any)?.url);
         setUploadError("");
       }else{
         setUploadError("Failed to upload file. Please try again.");

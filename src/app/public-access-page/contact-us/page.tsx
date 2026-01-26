@@ -369,7 +369,7 @@ export default function ContactUsPage() {
 
       {/* Messages Tab Content */}
       {activeTab === "messages" && settings.publicSlug && (
-        <ContactMessagesTab publicSlug={settings.publicSlug} />
+        <ContactMessagesTab />
       )}
     </div>
   );

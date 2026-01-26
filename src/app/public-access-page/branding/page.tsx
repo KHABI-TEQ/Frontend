@@ -273,8 +273,8 @@ export default function BrandingPage() {
               onChange={(e) =>
                 updateSettings({
                   footer: {
-                    ...settings.footer,
                     shortDescription: e.target.value,
+                    copyrightText: settings.footer?.copyrightText ?? "",
                   },
                 })
               }
@@ -298,7 +298,7 @@ export default function BrandingPage() {
               onChange={(e) =>
                 updateSettings({
                   footer: {
-                    ...settings.footer,
+                    shortDescription: settings.footer?.shortDescription ?? "",
                     copyrightText: e.target.value,
                   },
                 })
