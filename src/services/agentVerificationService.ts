@@ -125,7 +125,7 @@ export class AgentVerificationService {
         this.getAuthToken()
       );
 
-      return response.data;
+      return response.data as any;
     } catch (error) {
       console.error("Failed to set inspection fee:", error);
       throw error;
@@ -151,7 +151,7 @@ export class AgentVerificationService {
         this.getAuthToken()
       );
 
-      return response.data;
+      return response.data as any;
     } catch (error) {
       console.error("Failed to get agent stats:", error);
       throw error;
@@ -173,7 +173,7 @@ export class AgentVerificationService {
         this.getAuthToken()
       );
 
-      return response.data;
+      return response.data as any;
     } catch (error) {
       console.error("Failed to verify upgrade payment:", error);
       throw error;
