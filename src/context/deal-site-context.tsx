@@ -124,6 +124,13 @@ export interface AboutSection {
 export interface ContactUsSection {
   title?: string;
   description?: string;
+  hero?: {
+    title?: string;
+    description?: string;
+  };
+  cta?: {
+    title?: string;
+  };
   location?: {
     name?: string;
     address?: string;
