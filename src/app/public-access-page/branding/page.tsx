@@ -156,11 +156,13 @@ export default function BrandingPage() {
                   <span className="text-sm font-medium">{keyword}</span>
                   <button
                     type="button"
-                    onClick={() =>
+                    onClick={() => {
+                      const newKeywords = settings.keywords.filter((_, i) => i !== index);
                       updateSettings({
-                        keywords: settings.keywords.filter((_, i) => i !== index),
-                      })
-                    }
+                        keywords: newKeywords,
+                      });
+                      setKeywordInput(newKeywords.join(", "));
+                    }}
                     className="text-emerald-700 hover:text-emerald-900 transition-colors"
                     title="Remove keyword"
                   >
