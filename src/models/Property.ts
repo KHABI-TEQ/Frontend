@@ -1,3 +1,4 @@
+// @ts-ignore
 import { Schema, model, Document, Model } from 'mongoose';
 
 // Location Interface
