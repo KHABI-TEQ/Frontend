@@ -257,6 +257,8 @@ export class Preference {
           propertyCondition: String,
           purpose: String,
           landSize: String,
+          minLandSize: String,
+          maxLandSize: String,
           measurementUnit: String,
           documentTypes: [String],
           landConditions: [String],
