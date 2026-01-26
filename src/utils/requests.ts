@@ -256,11 +256,15 @@ export const POST_REQUEST_FILE_UPLOAD = async <T = unknown>(
   token?: string,
 ): Promise<ApiResponse<T, unknown>> => {
   try {
+    const headers: Record<string, string> = {};
+
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
     const request = await fetch(url, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers,
       body: data,
     });
     if (!request.ok && request.status === 401) {
