@@ -72,7 +72,7 @@ export default function LandlordDashboard() {
       );
 
       if (response?.success && response.data) {
-        setDashboardData(response.data);
+        setDashboardData(response.data as any);
       } else {
         toast.error("Failed to load dashboard data");
         setDashboardData(null);
