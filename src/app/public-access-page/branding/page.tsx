@@ -27,14 +27,12 @@ export default function BrandingPage() {
     const token = Cookies.get("token");
 
     setUploading(true);
-    showPreloader("Uploading logo...");
     try {
       const res = await POST_REQUEST_FILE_UPLOAD<{ url: string }>(
         `${URLS.BASE}${URLS.uploadSingleImg}`,
         formData,
         token
       );
-      hidePreloader();
       if (res?.success && res.data?.url) {
         updateSettings({ logoUrl: res.data.url });
         toast.success("Logo uploaded successfully");
@@ -42,7 +40,6 @@ export default function BrandingPage() {
         toast.error(res?.message || "Upload failed");
       }
     } catch (error) {
-      hidePreloader();
       toast.error("Upload failed");
     } finally {
       setUploading(false);
