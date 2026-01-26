@@ -4,7 +4,7 @@
  */
 
 "use client";
- 
+
 import React, { useState, useCallback, useMemo } from "react";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
@@ -19,6 +19,7 @@ export default function BrandingPage() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [preloader, setPreloader] = useState({ visible: false, message: "" });
+  const [keywordInput, setKeywordInput] = useState(settings.keywords.join(", "));
 
   const showPreloader = (message: string) => setPreloader({ visible: true, message });
   const hidePreloader = () => setPreloader({ visible: false, message: "" });
@@ -128,15 +129,18 @@ export default function BrandingPage() {
           </p>
           <input
             type="text"
-            value={settings.keywords.join(", ")}
-            onChange={(e) =>
+            value={keywordInput}
+            onChange={(e) => {
+              const input = e.target.value;
+              setKeywordInput(input);
+              // Update keywords from comma-separated values
               updateSettings({
-                keywords: e.target.value
+                keywords: input
                   .split(",")
                   .map((k) => k.trim())
                   .filter(Boolean),
-              })
-            }
+              });
+            }}
             className={inputBase}
             placeholder="real estate, agent, properties, listings"
           />
@@ -152,11 +156,13 @@ export default function BrandingPage() {
                   <span className="text-sm font-medium">{keyword}</span>
                   <button
                     type="button"
-                    onClick={() =>
+                    onClick={() => {
+                      const newKeywords = settings.keywords.filter((_, i) => i !== index);
                       updateSettings({
-                        keywords: settings.keywords.filter((_, i) => i !== index),
-                      })
-                    }
+                        keywords: newKeywords,
+                      });
+                      setKeywordInput(newKeywords.join(", "));
+                    }}
                     className="text-emerald-700 hover:text-emerald-900 transition-colors"
                     title="Remove keyword"
                   >
