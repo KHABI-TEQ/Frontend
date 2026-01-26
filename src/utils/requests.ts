@@ -166,7 +166,7 @@ export const POST_REQUEST = async <T = unknown>(
   data: unknown,
   token?: string,
   customHeaders?: Record<string, string>,
-): Promise<T> => {
+): Promise<ApiResponse<T, unknown>> => {
   try {
     // Build headers with sensible defaults
     const headers: Record<string, string> = {
@@ -199,18 +199,28 @@ export const POST_REQUEST = async <T = unknown>(
         handleAuthExpirySideEffects();
       }
       const errMsg = (parsed as any)?.error || (parsed as any)?.message || `HTTP ${request.status}`;
-      throw new Error(errMsg);
+      return {
+        error: errMsg,
+        success: false,
+        message: errMsg,
+        data: null,
+      };
     }
 
     if (!(parsed as any)?.success && isAuthExpiredMessage((parsed as any)?.message || (parsed as any)?.error)) {
       handleAuthExpirySideEffects();
     }
 
-    return parsed as T;
+    return parsed as ApiResponse<T, unknown>;
   } catch (error: unknown) {
     // Ensure consistent error objects
     const e = error as Error;
-    throw new Error(e.message || "Network error");
+    return {
+      error: e.message || "Network error",
+      success: false,
+      message: e.message || "Network error",
+      data: null,
+    };
   }
 };
 
