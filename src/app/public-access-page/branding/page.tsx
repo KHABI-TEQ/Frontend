@@ -129,14 +129,23 @@ export default function BrandingPage() {
           <input
             type="text"
             value={settings.keywords.join(", ")}
-            onChange={(e) =>
-              updateSettings({
-                keywords: e.target.value
-                  .split(",")
-                  .map((k) => k.trim())
-                  .filter(Boolean),
-              })
-            }
+            onChange={(e) => {
+              const input = e.target.value;
+              // If input ends with comma or comma+space, keep the input as-is
+              // Only process completed keywords (separated by commas)
+              if (input.endsWith(",") || input.endsWith(", ")) {
+                // User is typing a comma, just show it in the input
+                // Don't update keywords yet
+              } else {
+                // Update keywords from comma-separated values
+                updateSettings({
+                  keywords: input
+                    .split(",")
+                    .map((k) => k.trim())
+                    .filter(Boolean),
+                });
+              }
+            }}
             className={inputBase}
             placeholder="real estate, agent, properties, listings"
           />
