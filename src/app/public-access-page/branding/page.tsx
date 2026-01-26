@@ -24,11 +24,6 @@ export default function BrandingPage() {
   const showPreloader = (message: string) => setPreloader({ visible: true, message });
   const hidePreloader = () => setPreloader({ visible: false, message: "" });
 
-  // Sync keywordInput when keywords change (e.g., via chip removal)
-  useEffect(() => {
-    setKeywordInput(settings.keywords.join(", "));
-  }, [settings.keywords]);
-
   const handleUploadLogo = useCallback(async (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
