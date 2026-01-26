@@ -289,10 +289,10 @@ export default function MyInspectionRequestsPage() {
         const response = await GET_REQUEST(url, token);
 
         if (response?.success) {
-          setBookings(Array.isArray(response.data) ? response.data : []);
-          setTotalPages(response.pagination?.totalPages || 1);
-          setTotalCount(response.pagination?.total || (response.data?.length || 0));
-          setCurrentPage(response.pagination?.page || page);
+          setBookings(Array.isArray(response.data) ? (response.data as any) : []);
+          setTotalPages((response.pagination as any)?.totalPages || 1);
+          setTotalCount((response.pagination as any)?.total || ((response.data as any)?.length || 0));
+          setCurrentPage((response.pagination as any)?.page || page);
         } else {
           throw new Error(response?.message || "Failed to fetch bookings");
         }
@@ -314,7 +314,7 @@ export default function MyInspectionRequestsPage() {
       const url = `${URLS.BASE}/account/my-inspections/stats`;
       if (!token) return;
       const response = await GET_REQUEST(url, token);
-      if (response?.success) setStats(response.data);
+      if (response?.success) setStats(response.data as any);
     } catch (error) {
       console.error("Failed to fetch stats:", error);
     }
