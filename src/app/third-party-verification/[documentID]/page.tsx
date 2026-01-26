@@ -349,7 +349,7 @@ const ThirdPartyVerificationPage: React.FC = () => {
       );
 
       if (uploadResponse.success) {
-        handleReportChange("newDocumentUrl", uploadResponse.data.url);
+        handleReportChange("newDocumentUrl", (uploadResponse.data as any)?.url);
         setUploadProgress(100);
 
         // Reset file input ref so same file can be selected again
@@ -539,7 +539,7 @@ const ThirdPartyVerificationPage: React.FC = () => {
         setDynamicDocuments(prevDocs =>
           prevDocs.map(doc =>
             doc.id === recordId
-              ? { ...doc, documentFile: uploadResponse.data.url, uploadProgress: 100 }
+              ? { ...doc, documentFile: (uploadResponse.data as any)?.url, uploadProgress: 100 }
               : doc
           )
         );
@@ -1047,7 +1047,7 @@ const ThirdPartyVerificationPage: React.FC = () => {
                               </div>
                               <div className="flex items-center space-x-2">
                                 <button
-                                  onClick={() => handleDocumentPreview(report.newDocumentUrl)}
+                                  onClick={() => handleDocumentPreview(report.newDocumentUrl || "")}
                                   className="p-2.5 text-green-600 bg-white border border-green-200 rounded-lg hover:bg-green-50 transition-colors"
                                   title="Preview uploaded document"
                                 >
