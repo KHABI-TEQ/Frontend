@@ -599,7 +599,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
           <>
             {/* Land Size and Measurement Unit (optional for rent, required for buy/joint-venture) */}
             {(preferenceType === "buy" || preferenceType === "joint-venture") && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <>
                 <div className="space-y-2">
                   <label className="block text-sm font-semibold text-gray-800">
                     Measurement Unit <span className="text-red-500">*</span>
@@ -613,30 +613,83 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-gray-800">
-                    Land Size <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    value={landSize}
-                    onChange={(e) => {
-                      const value = Math.max(0, parseFloat(e.target.value) || 0);
-                      setLandSize(value.toString());
-                    }}
-                    onInput={(e) => {
-                      const target = e.target as HTMLInputElement;
-                      if (parseFloat(target.value) < 0) {
-                        target.value = "0";
-                      }
-                    }}
-                    placeholder="Enter land size"
-                    min="0"
-                    step="0.01"
-                    className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                  />
-                </div>
-              </div>
+                {/* Show range inputs for SQM */}
+                {measurementUnit?.value === "sqm" ? (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-gray-800">
+                        Minimum Land Size (SQM) <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        value={minLandSize}
+                        onChange={(e) => {
+                          const value = Math.max(0, parseFloat(e.target.value) || 0);
+                          setMinLandSize(value.toString());
+                        }}
+                        onInput={(e) => {
+                          const target = e.target as HTMLInputElement;
+                          if (parseFloat(target.value) < 0) {
+                            target.value = "0";
+                          }
+                        }}
+                        placeholder="Enter minimum land size"
+                        min="0"
+                        step="0.01"
+                        className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-gray-800">
+                        Maximum Land Size (SQM) <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        value={maxLandSize}
+                        onChange={(e) => {
+                          const value = Math.max(0, parseFloat(e.target.value) || 0);
+                          setMaxLandSize(value.toString());
+                        }}
+                        onInput={(e) => {
+                          const target = e.target as HTMLInputElement;
+                          if (parseFloat(target.value) < 0) {
+                            target.value = "0";
+                          }
+                        }}
+                        placeholder="Enter maximum land size"
+                        min="0"
+                        step="0.01"
+                        className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-800">
+                      Land Size <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      value={landSize}
+                      onChange={(e) => {
+                        const value = Math.max(0, parseFloat(e.target.value) || 0);
+                        setLandSize(value.toString());
+                      }}
+                      onInput={(e) => {
+                        const target = e.target as HTMLInputElement;
+                        if (parseFloat(target.value) < 0) {
+                          target.value = "0";
+                        }
+                      }}
+                      placeholder="Enter land size"
+                      min="0"
+                      step="0.01"
+                      className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    />
+                  </div>
+                )}
+              </>
             )}
 
 
