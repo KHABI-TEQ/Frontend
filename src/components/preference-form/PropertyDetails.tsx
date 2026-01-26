@@ -405,6 +405,8 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
         const propertyData = {
           propertySubtype: propertySubtype?.value || "",
           landSize,
+          minLandSize,
+          maxLandSize,
           measurementUnit: measurementUnit?.value || "",
           documentTypes: documentTypes || [],
           propertyCondition: propertyCondition?.value || "",
@@ -419,6 +421,8 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
       preferenceType,
       propertySubtype,
       landSize,
+      minLandSize,
+      maxLandSize,
       measurementUnit,
       documentTypes,
       propertyCondition,
