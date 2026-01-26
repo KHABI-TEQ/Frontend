@@ -148,8 +148,9 @@ const Setup = () => {
           { publicSlug: slug },
           token
         );
+        const respData = resp?.data as any || resp;
         const available =
-          resp?.data?.available ?? resp?.available ?? resp?.data?.isAvailable ?? resp?.isAvailable ?? false;
+          respData?.available ?? respData?.isAvailable ?? false;
         if (!cancelled) {
           setSlugStatus(available ? "available" : "taken");
           setSlugMessage(available ? "Subdomain is available" : "Subdomain is taken");

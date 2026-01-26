@@ -325,7 +325,7 @@ export default function OverviewPage() {
         />
         <StatCard
           title="This Month"
-          value={Array.isArray(stats?.viewsByDay) && stats.viewsByDay.length > 0 ? stats.viewsByDay[stats.viewsByDay.length - 1].count : "0"}
+          value={String(Array.isArray(stats?.viewsByDay) && stats.viewsByDay.length > 0 ? stats.viewsByDay[stats.viewsByDay.length - 1].count : "0")}
           icon="📊"
         />
         <StatCard
