@@ -34,7 +34,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       router.replace("/public-access-page");
     }
 
-    // If trying to access dashboard but setup not complete, redirect to setup
+    // If trying to access dashboard but setup not complete, show modal
     if (
       pathname !== "/public-access-page/setup" &&
       !isSetupComplete &&
@@ -43,6 +43,19 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       setShowSetupModal(true);
     }
   }, [isLoading, isSetupComplete, pathname, user, router]);
+
+  // Prevent background scroll when modal is open
+  useEffect(() => {
+    if (showSetupModal) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [showSetupModal]);
 
   // Show error for non-agents
   if (!user || user?.userType !== "Agent") {
