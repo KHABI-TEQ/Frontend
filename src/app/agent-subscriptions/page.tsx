@@ -85,9 +85,9 @@ export default function AgentSubscriptionsPage() {
       setTabLoading(true);
       const response = await GET_REQUEST(`${URLS.BASE}/account/subscriptions/fetchAll?page=${page}&limit=10`, token);
       if (response.success) {
-        setSubscriptions(response.data || []);
-        setSubscriptionsPage(response.pagination?.page || 1);
-        setSubscriptionsTotalPages(response.pagination?.totalPages || 1);
+        setSubscriptions((response.data as any) || []);
+        setSubscriptionsPage((response.pagination as any)?.page || 1);
+        setSubscriptionsTotalPages((response.pagination as any)?.totalPages || 1);
       }
     } catch (error) {
       console.error('Failed to fetch subscriptions:', error);
