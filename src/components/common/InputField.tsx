@@ -11,7 +11,7 @@ interface InputFieldProps<T extends Record<string, unknown> = Record<string, unk
   type?: React.HTMLInputTypeAttribute;
   placeholder?: string;
   icon?: StaticImageData;
-  formik: FormikProps<T>;
+  formik: FormikProps<any>;
   showPasswordToggle?: boolean;
   isPasswordVisible?: boolean;
   togglePasswordVisibility?: () => void;
