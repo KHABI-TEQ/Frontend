@@ -236,10 +236,10 @@ export default function AgentSubscriptionsPage() {
       const response = await POST_REQUEST(`${URLS.BASE}${URLS.renewSubscription}`, payload);
 
       if (response.success) {
-        if (response.data?.transaction?.authorization_url) {
+        if ((response.data as any)?.transaction?.authorization_url) {
           toast.success('Renewal request created! Redirecting to payment...');
           setTimeout(() => {
-            window.location.href = response.data.transaction.authorization_url;
+            window.location.href = (response.data as any).transaction.authorization_url;
           }, 2000);
         } else {
           toast.success('Subscription renewed successfully!');
