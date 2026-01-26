@@ -56,7 +56,7 @@ export default function AboutPage() {
   );
 
   const handleImageUpload = useCallback(
-    async (file: File, section: string) => {
+    async (file: File, section: string, memberIdx?: number) => {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("for", "about-page");
@@ -71,11 +71,18 @@ export default function AboutPage() {
         );
         hidePreloader();
         if (res?.success && res.data?.url) {
-          const currentData = aboutData[section as keyof AboutSection];
-          if (currentData && typeof currentData === "object") {
-            updateAboutSection(section as keyof AboutSection, {
-              ...currentData,
-              image: (res.data as any)?.url,
+          if (section === "profile" && memberIdx !== undefined) {
+            const members = aboutData.profile?.members || [];
+            const updated = [...members];
+            if (updated[memberIdx]) {
+              updated[memberIdx] = {
+                ...updated[memberIdx],
+                image: res.data.url,
+              };
+            }
+            updateAboutSection("profile", {
+              ...aboutData.profile,
+              members: updated,
             });
           }
           toast.success("Image uploaded successfully");
