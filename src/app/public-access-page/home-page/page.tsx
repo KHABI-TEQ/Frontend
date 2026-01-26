@@ -86,7 +86,14 @@ export default function HomePageSettings() {
 
   // Testimonials state
   const [testimonials, setTestimonials] = useState<Testimonial[]>(
-    settings.homeSettings?.testimonials?.testimonials || []
+    (settings.homeSettings?.testimonials?.testimonials || []).map((item: any, index: number) => ({
+      id: item.id || `testimonial-${index}`,
+      rating: item.rating || 5,
+      description: item.description || "",
+      image: item.image || "",
+      name: item.name || "",
+      company: item.company || "",
+    }))
   );
   const [testimonialsSection, setTestimonialsSection] = useState({
     title: settings.homeSettings?.testimonials?.title || "Our Testimonials",
@@ -95,8 +102,10 @@ export default function HomePageSettings() {
 
   // Why Choose Us state - ensure all items have client-side _id for state management
   const [whyChooseUs, setWhyChooseUs] = useState<WhyChooseUsItem[]>(
-    (settings.homeSettings?.whyChooseUs?.items || []).map((item, index) => ({
-      ...item,
+    (settings.homeSettings?.whyChooseUs?.items || []).map((item: any, index: number) => ({
+      icon: item.icon || "",
+      title: item.title || "",
+      content: item.content || "",
       _id: item._id || `${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`,
     }))
   );
