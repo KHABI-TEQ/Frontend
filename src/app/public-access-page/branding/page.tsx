@@ -12,17 +12,13 @@ import { Save, Trash2, ImageIcon, Settings, X } from "lucide-react";
 import { useDealSite, FooterDetails } from "@/context/deal-site-context";
 import { POST_REQUEST, POST_REQUEST_FILE_UPLOAD } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
-import OverlayPreloader from "@/components/general-components/OverlayPreloader";
+import StandardPreloader from "@/components/new-marketplace/StandardPreloader";
 
 export default function BrandingPage() {
   const { settings, updateSettings } = useDealSite();
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [preloader, setPreloader] = useState({ visible: false, message: "" });
   const [keywordInput, setKeywordInput] = useState(settings.keywords.join(", "));
-
-  const showPreloader = (message: string) => setPreloader({ visible: true, message });
-  const hidePreloader = () => setPreloader({ visible: false, message: "" });
 
   const handleUploadLogo = useCallback(async (file: File) => {
     const formData = new FormData();
@@ -31,14 +27,12 @@ export default function BrandingPage() {
     const token = Cookies.get("token");
 
     setUploading(true);
-    showPreloader("Uploading logo...");
     try {
       const res = await POST_REQUEST_FILE_UPLOAD<{ url: string }>(
         `${URLS.BASE}${URLS.uploadSingleImg}`,
         formData,
         token
       );
-      hidePreloader();
       if (res?.success && res.data?.url) {
         updateSettings({ logoUrl: res.data.url });
         toast.success("Logo uploaded successfully");
@@ -46,7 +40,6 @@ export default function BrandingPage() {
         toast.error(res?.message || "Upload failed");
       }
     } catch (error) {
-      hidePreloader();
       toast.error("Upload failed");
     } finally {
       setUploading(false);
@@ -58,10 +51,12 @@ export default function BrandingPage() {
     try {
       const token = Cookies.get("token");
       const payload = {
-        title: settings.title,
-        keywords: settings.keywords,
-        description: settings.description,
-        logoUrl: settings.logoUrl,
+        brandingSeo: {
+          title: settings.title,
+          keywords: settings.keywords,
+          description: settings.description,
+          logoUrl: settings.logoUrl,
+        },
         footer: settings.footer,
       };
 
@@ -89,7 +84,6 @@ export default function BrandingPage() {
 
   return (
     <div className="space-y-8">
-      <OverlayPreloader visible={preloader.visible} message={preloader.message} />
 
       <div>
         <h1 className="text-3xl font-bold text-[#09391C] flex items-center gap-3">
@@ -212,12 +206,13 @@ export default function BrandingPage() {
               <button
                 type="button"
                 onClick={() => updateSettings({ logoUrl: "" })}
-                className="inline-flex items-center gap-2 px-4 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-all"
+                disabled={uploading}
+                className="inline-flex items-center gap-2 px-4 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 <Trash2 size={16} />
                 Remove
               </button>
-              <label className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 cursor-pointer transition-all">
+              <label className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-all">
                 <input
                   type="file"
                   accept="image/*"
@@ -232,22 +227,29 @@ export default function BrandingPage() {
             </div>
           </div>
         ) : (
-          <label className="flex items-center justify-center gap-3 px-6 py-12 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 cursor-pointer hover:bg-gray-50 transition-all">
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) =>
-                e.target.files && handleUploadLogo(e.target.files[0])
-              }
-              disabled={uploading}
-            />
-            <ImageIcon size={20} />
-            <span className="text-center">
-              <p className="font-medium">Drag & drop or click to upload</p>
-              <p className="text-xs text-gray-500 mt-1">PNG, JPG, SVG up to 5MB</p>
-            </span>
-          </label>
+          <div className="relative">
+            <StandardPreloader isVisible={uploading} message="Uploading..." overlay={false} />
+            <label className="flex items-center justify-center gap-3 px-6 py-12 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 cursor-pointer hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) =>
+                  e.target.files && handleUploadLogo(e.target.files[0])
+                }
+                disabled={uploading}
+              />
+              {!uploading && (
+                <>
+                  <ImageIcon size={20} />
+                  <span className="text-center">
+                    <p className="font-medium">Drag & drop or click to upload</p>
+                    <p className="text-xs text-gray-500 mt-1">PNG, JPG, SVG up to 5MB</p>
+                  </span>
+                </>
+              )}
+            </label>
+          </div>
         )}
       </div>
 

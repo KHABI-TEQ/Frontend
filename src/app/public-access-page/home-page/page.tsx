@@ -8,7 +8,7 @@ import * as LucideIcons from "lucide-react";
 import { POST_REQUEST, POST_REQUEST_FILE_UPLOAD } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import { useDealSite } from "@/context/deal-site-context";
-import OverlayPreloader from "@/components/general-components/OverlayPreloader";
+import StandardPreloader from "@/components/new-marketplace/StandardPreloader";
 
 const LUCIDE_ICONS = [
   // Popular and relevant icons
@@ -162,7 +162,6 @@ export default function HomePageSettings() {
     const token = Cookies.get("token");
 
     setUploading(true);
-    setPreloader(true);
     try {
       const res = await POST_REQUEST_FILE_UPLOAD<{ url: string }>(
         `${URLS.BASE}${URLS.uploadSingleImg}`,
@@ -183,7 +182,6 @@ export default function HomePageSettings() {
       toast.error("Failed to upload hero image");
     } finally {
       setUploading(false);
-      setPreloader(false);
     }
   }, []);
 
@@ -225,7 +223,6 @@ export default function HomePageSettings() {
     const token = Cookies.get("token");
 
     setUploadingTestimonialId(testimonialId);
-    setPreloader(true);
     try {
       const res = await POST_REQUEST_FILE_UPLOAD<{ url: string }>(
         `${URLS.BASE}${URLS.uploadSingleImg}`,
@@ -242,7 +239,6 @@ export default function HomePageSettings() {
       toast.error("Failed to upload image");
     } finally {
       setUploadingTestimonialId("");
-      setPreloader(false);
     }
   }, [updateTestimonial]);
 
@@ -387,7 +383,7 @@ export default function HomePageSettings() {
 
   return (
     <div className="space-y-8">
-      <OverlayPreloader visible={preloader} message="Saving..." />
+      <StandardPreloader isVisible={preloader} message="Saving..." overlay={true} />
 
       <div>
         <h1 className="text-3xl font-bold text-[#09391C] flex items-center gap-3">
@@ -448,25 +444,30 @@ export default function HomePageSettings() {
                   </button>
                 </div>
               ) : (
-                <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    <ImageIcon size={40} className="text-gray-400 mb-2" />
-                    <p className="text-sm text-gray-700 font-medium">Click to upload hero image</p>
-                    <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
-                  </div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        handleUploadHeroImage(file);
-                      }
-                    }}
-                    disabled={uploading}
-                    className="hidden"
-                  />
-                </label>
+                <div className="relative">
+                  <StandardPreloader isVisible={uploading} message="Uploading..." overlay={false} />
+                  <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                    {!uploading && (
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <ImageIcon size={40} className="text-gray-400 mb-2" />
+                        <p className="text-sm text-gray-700 font-medium">Click to upload hero image</p>
+                        <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          handleUploadHeroImage(file);
+                        }
+                      }}
+                      disabled={uploading}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
               )}
             </div>
           </div>
@@ -635,30 +636,36 @@ export default function HomePageSettings() {
                       />
                       <button
                         onClick={() => updateTestimonial(testimonial.id, "image", "")}
-                        className="text-sm text-red-600 hover:text-red-700"
+                        disabled={uploadingTestimonialId === testimonial.id}
+                        className="text-sm text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Remove Image
                       </button>
                     </div>
                   ) : (
-                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
-                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <ImageIcon size={24} className="text-gray-400 mb-2" />
-                        <p className="text-xs text-gray-700">Click to upload image</p>
-                      </div>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            handleUploadTestimonialImage(file, testimonial.id);
-                          }
-                        }}
-                        disabled={uploadingTestimonialId === testimonial.id}
-                        className="hidden"
-                      />
-                    </label>
+                    <div className="relative">
+                      <StandardPreloader isVisible={uploadingTestimonialId === testimonial.id} message="Uploading..." overlay={false} />
+                      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                        {uploadingTestimonialId !== testimonial.id && (
+                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                            <ImageIcon size={24} className="text-gray-400 mb-2" />
+                            <p className="text-xs text-gray-700">Click to upload image</p>
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              handleUploadTestimonialImage(file, testimonial.id);
+                            }
+                          }}
+                          disabled={uploadingTestimonialId === testimonial.id}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
                   )}
                 </div>
 
@@ -1104,7 +1111,7 @@ export default function HomePageSettings() {
       <div className="flex justify-end gap-3 pt-4">
         <button
           onClick={handleSave}
-          disabled={uploading || uploadingTestimonialId !== ""}
+          disabled={uploading || uploadingTestimonialId !== "" || preloader}
           className="inline-flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         >
           <Save size={18} />
