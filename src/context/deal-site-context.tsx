@@ -375,6 +375,7 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
     setSlugLocked(true);
     setIsSetupComplete(true);
     setIsPaused(true);
+    setDealSiteStatus("paused");
   }, []);
 
   const pauseDealSite = useCallback(async () => {
