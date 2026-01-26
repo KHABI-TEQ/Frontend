@@ -532,6 +532,8 @@ const PreferenceFormContent: React.FC = () => {
               rentData.propertyDetails?.propertyCondition || "",
             purpose: rentData.propertyDetails?.purpose || "Residential",
             landSize: rentData.propertyDetails?.landSize || "",
+            minLandSize: rentData.propertyDetails?.minLandSize || "",
+            maxLandSize: rentData.propertyDetails?.maxLandSize || "",
             measurementUnit: rentData.propertyDetails?.measurementUnit || "",
             documentTypes:
               rentData.propertyDetails?.documentTypes?.filter(
