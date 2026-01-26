@@ -91,10 +91,10 @@ export const getHomePageSettings = async (): Promise<HomePageSettings> => {
     if (response.success && response.data) {
       return convertSettingsToObject<HomePageSettings>(response.data);
     }
-    return {};
+    return {} as any;
   } catch (error) {
     console.error('Error fetching home page settings:', error);
-    return {};
+    return {} as any;
   }
 };
 
@@ -108,10 +108,10 @@ export const getSocialLinksSettings = async (): Promise<SocialLinksSettings> => 
     if (response.success && response.data) {
       return convertSettingsToObject<SocialLinksSettings>(response.data);
     }
-    return {};
+    return {} as any;
   } catch (error) {
     console.error('Error fetching home page settings:', error);
-    return {};
+    return {} as any;
   }
 };
 
@@ -126,10 +126,10 @@ export const getDocumentVerificationSettings = async (): Promise<DocumentVerific
     if (response.success && response.data) {
       return convertSettingsToObject<DocumentVerificationSettings>(response.data);
     }
-    return {};
+    return {} as any;
   } catch (error) {
     console.error('Error fetching document verification settings:', error);
-    return {};
+    return {} as any;
   }
 };
 
@@ -166,10 +166,10 @@ export const getInspectionSettings = async (): Promise<InspectionSettings> => {
     if (response.success && response.data) {
       return convertSettingsToObject<InspectionSettings>(response.data);
     }
-    return {};
+    return {} as any;
   } catch (error) {
     console.error('Error fetching inspection settings:', error);
-    return {};
+    return {} as any;
   }
 };
 
