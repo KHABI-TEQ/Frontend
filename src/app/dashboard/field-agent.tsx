@@ -95,11 +95,11 @@ export default function FieldAgentDashboard() {
 
       if (statsResponse?.success && statsResponse.data) {
         const combinedStats: FieldAgentStats = {
-          totalInspections: statsResponse.data.totalInspections,
-          assignedToday: statsResponse.data.assignedToday,
-          completedInspections: statsResponse.data.completedInspections,
-          completionRate: statsResponse.data.completionRate,
-          recentInspections: recentResponse?.success ? recentResponse.data || [] : [],
+          totalInspections: (statsResponse.data as any).totalInspections,
+          assignedToday: (statsResponse.data as any).assignedToday,
+          completedInspections: (statsResponse.data as any).completedInspections,
+          completionRate: (statsResponse.data as any).completionRate,
+          recentInspections: recentResponse?.success ? (recentResponse.data as any) || [] : [],
         };
         setStats(combinedStats);
       }
