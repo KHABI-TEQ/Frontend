@@ -969,34 +969,8 @@ const PostPropertyByPreference = () => {
             </div>
 
             {preference && !showPropertySummary && !showCommissionModal && (
-              <div className="bg-white rounded-xl border-l-4 border-[#8DDB90] p-4 mb-6 md:mb-8 max-w-4xl mx-auto">
-                <div className="flex items-start space-x-4">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-[#09391C] mb-2">Buyer&apos;s Requirements</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                      <div>
-                        <span className="text-gray-600">Type:</span>
-                        <span className="ml-2 font-medium">{preference.preferenceType}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-600">Budget:</span>
-                        <span className="ml-2 font-medium">
-                          {preference?.budget?.minPrice
-                            ? `₦${preference.budget.minPrice.toLocaleString()}`
-                            : "Not specified"} 
-                          {" - "}
-                          {preference?.budget?.maxPrice
-                            ? `₦${preference.budget.maxPrice.toLocaleString()}`
-                            : "Not specified"}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-gray-600">Location:</span>
-                        <span className="ml-2 font-medium">{preference.location.state}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              <div className="mb-6 md:mb-8 max-w-4xl mx-auto">
+                <CollapsibleBuyerRequirements preference={preference as any} />
               </div>
             )}
 
