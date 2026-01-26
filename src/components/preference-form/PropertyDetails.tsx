@@ -268,6 +268,8 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
     // Form state
     const [propertySubtype, setPropertySubtype] = useState<Option | null>(null);
     const [landSize, setLandSize] = useState<string>("");
+    const [minLandSize, setMinLandSize] = useState<string>("");
+    const [maxLandSize, setMaxLandSize] = useState<string>("");
     const [measurementUnit, setMeasurementUnit] = useState<Option | null>(null);
     const [documentTypes, setDocumentTypes] = useState<string[]>([]);
     const [propertyCondition, setPropertyCondition] = useState<Option | null>(
