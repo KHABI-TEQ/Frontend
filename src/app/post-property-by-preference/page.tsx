@@ -102,6 +102,10 @@ interface BookingDetails {
   travelType?: string;
   preferredCheckInTime?: string;
   preferredCheckOutTime?: string;
+  landSize?: string;
+  minLandSize?: string;
+  maxLandSize?: string;
+  measurementUnit?: string;
 }
 
 interface Features {
