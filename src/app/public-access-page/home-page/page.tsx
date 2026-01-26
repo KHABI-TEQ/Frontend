@@ -293,7 +293,7 @@ export default function HomePageSettings() {
 
   return (
     <div className="space-y-8">
-      <OverlayPreloader visible={preloader} message="Saving..." />
+      <OverlayPreloader isVisible={preloader} message="Saving..." />
 
       <div>
         <h1 className="text-3xl font-bold text-[#09391C] flex items-center gap-3">
