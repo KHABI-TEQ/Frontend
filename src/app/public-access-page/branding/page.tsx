@@ -8,7 +8,7 @@
 import React, { useState, useCallback, useMemo } from "react";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
-import { Save, Trash2, ImageIcon, Settings } from "lucide-react";
+import { Save, Trash2, ImageIcon, Settings, X } from "lucide-react";
 import { useDealSite, FooterDetails } from "@/context/deal-site-context";
 import { POST_REQUEST, POST_REQUEST_FILE_UPLOAD } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
@@ -140,6 +140,32 @@ export default function BrandingPage() {
             className={inputBase}
             placeholder="real estate, agent, properties, listings"
           />
+
+          {/* Keywords Chips */}
+          {settings.keywords.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {settings.keywords.map((keyword, index) => (
+                <div
+                  key={index}
+                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-100 text-emerald-900 rounded-full border border-emerald-200"
+                >
+                  <span className="text-sm font-medium">{keyword}</span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateSettings({
+                        keywords: settings.keywords.filter((_, i) => i !== index),
+                      })
+                    }
+                    className="text-emerald-700 hover:text-emerald-900 transition-colors"
+                    title="Remove keyword"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Description */}
