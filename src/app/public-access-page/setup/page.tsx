@@ -393,13 +393,7 @@ function Step0PublicLink({
   );
 }
 
-function Step1Design({
-  formData,
-  onChange,
-}: {
-  formData: DealSiteSettings;
-  onChange: (field: keyof DealSiteSettings, value: any) => void;
-}) {
+function Step1Design({ formik }: { formik: any }) {
   return (
     <div className="space-y-6">
       <div>
@@ -413,23 +407,33 @@ function Step1Design({
         <label className="block text-sm font-medium text-gray-700 mb-2">Page Title *</label>
         <input
           type="text"
-          value={formData.title}
-          onChange={(e) => onChange("title", e.target.value)}
+          name="title"
+          value={formik.values.title}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
           placeholder="My Real Estate Business"
           className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
         />
+        {formik.touched.title && formik.errors.title && (
+          <p className="mt-1 text-sm text-red-600">{formik.errors.title}</p>
+        )}
         <p className="text-xs text-gray-500 mt-1">This is how your page appears to search engines and visitors</p>
       </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Description *</label>
         <textarea
-          value={formData.description}
-          onChange={(e) => onChange("description", e.target.value)}
+          name="description"
+          value={formik.values.description}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
           placeholder="Tell visitors about your business, services, and why they should choose you..."
           rows={4}
           className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
         />
+        {formik.touched.description && formik.errors.description && (
+          <p className="mt-1 text-sm text-red-600">{formik.errors.description}</p>
+        )}
         <p className="text-xs text-gray-500 mt-1">Keep it concise and engaging</p>
       </div>
 
