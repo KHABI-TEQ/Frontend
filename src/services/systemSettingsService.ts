@@ -75,10 +75,10 @@ export const getSubscriptionSettings = async (): Promise<SubscriptionSettings> =
     if (response.success && response.data) {
       return convertSettingsToObject<SubscriptionSettings>(response.data);
     }
-    return {};
+    return {} as any;
   } catch (error) {
     console.error('Error fetching subscription settings:', error);
-    return {};
+    return {} as any;
   }
 };
 
