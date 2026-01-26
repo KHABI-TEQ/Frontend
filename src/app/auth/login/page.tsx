@@ -145,8 +145,8 @@ const Login: FC = () => {
         const response = await POST_REQUEST(url, { idToken: codeResponse.code });
 
         if (response.success) {
-          Cookies.set("token", response.data.token);
-          setUser(response.data.user);
+          Cookies.set("token", (response.data as any).token);
+          setUser((response.data as any).user);
 
           toast.success("Authentication successful via Google!");
 
@@ -231,8 +231,8 @@ const Login: FC = () => {
                   const result = await POST_REQUEST(url, payload);
 
                   if (result.success) {
-                    Cookies.set("token", result.data.token);
-                    setUser(result.data.user);
+                    Cookies.set("token", (result.data as any).token);
+                    setUser((result.data as any).user);
 
                     toast.success("Authentication successful via Facebook!");
 

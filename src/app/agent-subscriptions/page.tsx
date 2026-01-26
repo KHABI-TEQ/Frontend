@@ -85,9 +85,9 @@ export default function AgentSubscriptionsPage() {
       setTabLoading(true);
       const response = await GET_REQUEST(`${URLS.BASE}/account/subscriptions/fetchAll?page=${page}&limit=10`, token);
       if (response.success) {
-        setSubscriptions(response.data || []);
-        setSubscriptionsPage(response.pagination?.page || 1);
-        setSubscriptionsTotalPages(response.pagination?.totalPages || 1);
+        setSubscriptions((response.data as any) || []);
+        setSubscriptionsPage((response.pagination as any)?.page || 1);
+        setSubscriptionsTotalPages((response.pagination as any)?.totalPages || 1);
       }
     } catch (error) {
       console.error('Failed to fetch subscriptions:', error);
@@ -157,7 +157,7 @@ export default function AgentSubscriptionsPage() {
       setTabLoading(true);
       const response = await GET_REQUEST(`${URLS.BASE}${URLS.getSubscriptionTransactions}`, token);
       if (response.success) {
-        setTransactions(response.data || []);
+        setTransactions((response.data as any) || []);
       }
     } catch (error) {
       console.error('Failed to fetch transactions:', error);
@@ -236,10 +236,10 @@ export default function AgentSubscriptionsPage() {
       const response = await POST_REQUEST(`${URLS.BASE}${URLS.renewSubscription}`, payload);
 
       if (response.success) {
-        if (response.data?.transaction?.authorization_url) {
+        if ((response.data as any)?.transaction?.authorization_url) {
           toast.success('Renewal request created! Redirecting to payment...');
           setTimeout(() => {
-            window.location.href = response.data.transaction.authorization_url;
+            window.location.href = (response.data as any).transaction.authorization_url;
           }, 2000);
         } else {
           toast.success('Subscription renewed successfully!');

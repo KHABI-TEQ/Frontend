@@ -172,7 +172,7 @@ const DocumentVerificationPage: React.FC = () => {
       const response = await POST_REQUEST_FILE_UPLOAD(`${URLS.BASE}${URLS.uploadSingleImg}`, formData)
 
       if (response.success) {
-        return response.data.url;
+        return (response.data as any).url;
       } else {
         throw new Error(response.message || 'Upload failed');
       }
@@ -359,13 +359,13 @@ const DocumentVerificationPage: React.FC = () => {
 
       if (response.success) {
         // Check if payment authorization URL is provided
-        if (response.data?.transaction?.authorization_url) {
+        if ((response.data as any)?.transaction?.authorization_url) {
           toast.success('Document verification request submitted! Redirecting to payment...');
           setIsRedirectingToPayment(true);
 
           // Show overlay and redirect to payment
           setTimeout(() => {
-            window.location.href = response.data.transaction.authorization_url;
+            window.location.href = (response.data as any).transaction.authorization_url;
           }, 2000);
         } else {
           setShowSuccessModal(true);

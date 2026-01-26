@@ -121,8 +121,8 @@ const MyListingPage = () => {
       const response = await GET_REQUEST(url, Cookies.get("token"));
 
       if (response?.success) {
-        const propertiesData = response.data || [];
-        const paginationData = response.pagination || {
+        const propertiesData = (response.data as any) || [];
+        const paginationData = (response.pagination as any) || {
           total: propertiesData.length,
           page: activeFilters.page || 1,
           limit: activeFilters.limit || 12,
