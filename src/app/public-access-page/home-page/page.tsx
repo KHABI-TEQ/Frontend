@@ -8,7 +8,7 @@ import * as LucideIcons from "lucide-react";
 import { POST_REQUEST, POST_REQUEST_FILE_UPLOAD } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import { useDealSite } from "@/context/deal-site-context";
-import OverlayPreloader from "@/components/general-components/OverlayPreloader";
+import StandardPreloader from "@/components/new-marketplace/StandardPreloader";
 
 const LUCIDE_ICONS = [
   // Popular and relevant icons
