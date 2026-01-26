@@ -125,7 +125,7 @@ export const completeTransactionData = [
   {
     date: '09/12/2024',
     propertyType: 'Residential',
-    location: `Lagos, ${badagryCity?.name || 'Badagry'}`, // Badagry city in Lagos
+    location: `Lagos, ${getRandomCity('LA')}`, // Random city in Lagos
     propertyPrice: 200000000,
     amountSold: 200000000,
   },
