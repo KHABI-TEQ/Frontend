@@ -712,7 +712,7 @@ function Step2Payment({ formik }: { formik: any }) {
   );
 }
 
-function Step3Review({ formData }: { formData: DealSiteSettings }) {
+function Step3Review({ formik }: { formik: any }) {
   return (
     <div className="space-y-6">
       <div>
@@ -726,7 +726,7 @@ function Step3Review({ formData }: { formData: DealSiteSettings }) {
       <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-200">
         <h3 className="font-semibold text-emerald-900 mb-2">Your Public Page</h3>
         <p className="text-emerald-700 font-medium break-all">
-          https://{formData.publicSlug}.khabiteq.com
+          https://{formik.values.publicSlug}.khabiteq.com
         </p>
       </div>
 
@@ -736,11 +736,11 @@ function Step3Review({ formData }: { formData: DealSiteSettings }) {
         <div className="space-y-3 text-sm">
           <div>
             <p className="text-gray-600 font-medium">Title</p>
-            <p className="text-gray-900">{formData.title}</p>
+            <p className="text-gray-900">{formik.values.title}</p>
           </div>
           <div>
             <p className="text-gray-600 font-medium">Description</p>
-            <p className="text-gray-900">{formData.description}</p>
+            <p className="text-gray-900">{formik.values.description}</p>
           </div>
         </div>
       </div>
@@ -751,15 +751,15 @@ function Step3Review({ formData }: { formData: DealSiteSettings }) {
         <div className="space-y-3 text-sm">
           <div>
             <p className="text-gray-600 font-medium">Business Name</p>
-            <p className="text-gray-900">{formData.paymentDetails?.businessName}</p>
+            <p className="text-gray-900">{formik.values.paymentDetails?.businessName}</p>
           </div>
           <div>
             <p className="text-gray-600 font-medium">Account Number</p>
-            <p className="text-gray-900">****{formData.paymentDetails?.accountNumber?.slice(-4)}</p>
+            <p className="text-gray-900">****{formik.values.paymentDetails?.accountNumber?.slice(-4)}</p>
           </div>
           <div>
             <p className="text-gray-600 font-medium">Settlement Bank</p>
-            <p className="text-gray-900">{formData.paymentDetails?.sortCode || "Not specified"}</p>
+            <p className="text-gray-900">{formik.values.paymentDetails?.sortCode || "Not specified"}</p>
           </div>
         </div>
       </div>
@@ -770,15 +770,15 @@ function Step3Review({ formData }: { formData: DealSiteSettings }) {
         <div className="space-y-3 text-sm">
           <div>
             <p className="text-gray-600 font-medium">Contact Name</p>
-            <p className="text-gray-900">{formData.paymentDetails?.primaryContactName}</p>
+            <p className="text-gray-900">{formik.values.paymentDetails?.primaryContactName}</p>
           </div>
           <div>
             <p className="text-gray-600 font-medium">Email</p>
-            <p className="text-gray-900">{formData.paymentDetails?.primaryContactEmail}</p>
+            <p className="text-gray-900">{formik.values.paymentDetails?.primaryContactEmail}</p>
           </div>
           <div>
             <p className="text-gray-600 font-medium">Phone</p>
-            <p className="text-gray-900">{formData.paymentDetails?.primaryContactPhone}</p>
+            <p className="text-gray-900">{formik.values.paymentDetails?.primaryContactPhone}</p>
           </div>
         </div>
       </div>
