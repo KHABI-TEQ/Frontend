@@ -157,7 +157,7 @@ export default function AgentSubscriptionsPage() {
       setTabLoading(true);
       const response = await GET_REQUEST(`${URLS.BASE}${URLS.getSubscriptionTransactions}`, token);
       if (response.success) {
-        setTransactions(response.data || []);
+        setTransactions((response.data as any) || []);
       }
     } catch (error) {
       console.error('Failed to fetch transactions:', error);
