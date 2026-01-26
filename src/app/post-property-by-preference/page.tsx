@@ -27,6 +27,7 @@ import Preloader from "@/components/general-components/preloader";
 // Import additional step components
 import Step2FeaturesConditions from "@/components/post-property-components/Step2FeaturesConditions";
 import Step4OwnershipDeclaration from "@/components/post-property-components/Step4OwnershipDeclaration";
+import CollapsibleBuyerRequirements from "@/components/post-property-components/CollapsibleBuyerRequirements";
 
 // Import step-specific validation schemas
 import {
