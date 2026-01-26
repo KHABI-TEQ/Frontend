@@ -216,7 +216,7 @@ const ThirdPartyVerificationPage: React.FC = () => {
       const response = await GET_REQUEST(`${URLS.BASE}${URLS.getDocumentDetails}/${documentID}/status`);
 
       if (response.success && response.data) {
-        setDocumentStatusDetails(response.data);
+        setDocumentStatusDetails(response.data as any);
         return response.data;
       } else {
         toast.error('Failed to fetch document status details');
@@ -237,12 +237,13 @@ const ThirdPartyVerificationPage: React.FC = () => {
       const response = await GET_REQUEST(`${URLS.BASE}${URLS.getDocumentDetails}/${documentID}`);
 
       if (response.success && response.data) {
-        setDocumentDetails(response.data);
- 
+        setDocumentDetails(response.data as any);
+
         // Use single document instead of array
-        const documentObj = Array.isArray(response.data.documents)
-          ? response.data.documents[0]
-          : response.data.documents;
+        const data = response.data as any;
+        const documentObj = Array.isArray(data.documents)
+          ? data.documents[0]
+          : data.documents;
 
         // Initialize reports data based on documents
         const initialReport: ReportDocument = {
