@@ -636,30 +636,36 @@ export default function HomePageSettings() {
                       />
                       <button
                         onClick={() => updateTestimonial(testimonial.id, "image", "")}
-                        className="text-sm text-red-600 hover:text-red-700"
+                        disabled={uploadingTestimonialId === testimonial.id}
+                        className="text-sm text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Remove Image
                       </button>
                     </div>
                   ) : (
-                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
-                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <ImageIcon size={24} className="text-gray-400 mb-2" />
-                        <p className="text-xs text-gray-700">Click to upload image</p>
-                      </div>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            handleUploadTestimonialImage(file, testimonial.id);
-                          }
-                        }}
-                        disabled={uploadingTestimonialId === testimonial.id}
-                        className="hidden"
-                      />
-                    </label>
+                    <div className="relative">
+                      <StandardPreloader isVisible={uploadingTestimonialId === testimonial.id} message="Uploading..." overlay={false} />
+                      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                        {uploadingTestimonialId !== testimonial.id && (
+                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                            <ImageIcon size={24} className="text-gray-400 mb-2" />
+                            <p className="text-xs text-gray-700">Click to upload image</p>
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              handleUploadTestimonialImage(file, testimonial.id);
+                            }
+                          }}
+                          disabled={uploadingTestimonialId === testimonial.id}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
                   )}
                 </div>
 
