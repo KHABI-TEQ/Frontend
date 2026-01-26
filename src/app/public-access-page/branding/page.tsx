@@ -51,10 +51,12 @@ export default function BrandingPage() {
     try {
       const token = Cookies.get("token");
       const payload = {
-        title: settings.title,
-        keywords: settings.keywords,
-        description: settings.description,
-        logoUrl: settings.logoUrl,
+        brandingSeo: {
+          title: settings.title,
+          keywords: settings.keywords,
+          description: settings.description,
+          logoUrl: settings.logoUrl,
+        },
         footer: settings.footer,
       };
 
