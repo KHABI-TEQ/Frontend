@@ -12,7 +12,7 @@ import { Save, Trash2, ImageIcon, Settings, X } from "lucide-react";
 import { useDealSite, FooterDetails } from "@/context/deal-site-context";
 import { POST_REQUEST, POST_REQUEST_FILE_UPLOAD } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
-import OverlayPreloader from "@/components/general-components/OverlayPreloader";
+import StandardPreloader from "@/components/new-marketplace/StandardPreloader";
 
 export default function BrandingPage() {
   const { settings, updateSettings } = useDealSite();
