@@ -40,6 +40,17 @@ export default function OverviewPage() {
     isLoading?: boolean;
   }>({ isOpen: false });
 
+  // Check if all required fields are set for playing the page
+  const isPageConfigured = (): boolean => {
+    return !!(
+      settings.logoUrl &&
+      settings.title &&
+      settings.description &&
+      settings.footer?.shortDescription &&
+      settings.footer?.copyrightText
+    );
+  };
+
   const fetchAnalytics = useCallback(async () => {
     try {
       const token = Cookies.get("token");
@@ -189,6 +200,32 @@ export default function OverviewPage() {
         </div>
       )}
 
+      {/* Missing Configuration Notification */}
+      {isPaused && !isPageConfigured() && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
+          <div className="flex-1">
+            <h3 className="font-semibold text-amber-900">Setup Incomplete - Cannot Start Page</h3>
+            <p className="text-sm text-amber-800 mt-2">
+              Before you can start your public access page, please configure the following required fields:
+            </p>
+            <ul className="text-sm text-amber-800 mt-2 ml-4 list-disc space-y-1">
+              {!settings.logoUrl && <li>Logo</li>}
+              {!settings.title && <li>Page Title</li>}
+              {!settings.description && <li>Page Description</li>}
+              {!settings.footer?.shortDescription && <li>Footer Short Description</li>}
+              {!settings.footer?.copyrightText && <li>Footer Copyright Text</li>}
+            </ul>
+            <button
+              onClick={() => router.push("/public-access-page/branding")}
+              className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition-all"
+            >
+              <Settings size={16} />
+              Go to Branding Settings
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Status Card */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -250,13 +287,20 @@ export default function OverviewPage() {
                     Pause
                   </button>
                 ) : (
-                  <button
-                    onClick={openResumeConfirmation}
-                    className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition-all"
-                  >
-                    <Play size={16} />
-                    Resume
-                  </button>
+                  <div title={isPageConfigured() ? "" : "Please configure logo, title, description, and footer details before starting"}>
+                    <button
+                      onClick={openResumeConfirmation}
+                      disabled={!isPageConfigured()}
+                      className={`inline-flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-all ${
+                        isPageConfigured()
+                          ? "border-gray-300 hover:bg-gray-50"
+                          : "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
+                      }`}
+                    >
+                      <Play size={16} />
+                      {isPageConfigured() ? "Resume" : "Resume (Incomplete)"}
+                    </button>
+                  </div>
                 )}
               </>
             )}

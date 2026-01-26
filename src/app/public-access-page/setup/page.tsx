@@ -412,7 +412,11 @@ function Step1Design({ formik }: { formik: any }) {
           onChange={formik.handleChange}
           onBlur={formik.handleBlur}
           placeholder="My Real Estate Business"
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+          className={`w-full px-4 py-2 border rounded-lg outline-none ${
+            formik.touched.title && formik.errors.title
+              ? "border-red-500 focus:ring-2 focus:ring-red-200"
+              : "border-gray-300 focus:ring-2 focus:ring-emerald-200"
+          }`}
         />
         {formik.touched.title && formik.errors.title && (
           <p className="mt-1 text-sm text-red-600">{formik.errors.title}</p>
@@ -429,7 +433,11 @@ function Step1Design({ formik }: { formik: any }) {
           onBlur={formik.handleBlur}
           placeholder="Tell visitors about your business, services, and why they should choose you..."
           rows={4}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+          className={`w-full px-4 py-2 border rounded-lg outline-none resize-none ${
+            formik.touched.description && formik.errors.description
+              ? "border-red-500 focus:ring-2 focus:ring-red-200"
+              : "border-gray-300 focus:ring-2 focus:ring-emerald-200"
+          }`}
         />
         {formik.touched.description && formik.errors.description && (
           <p className="mt-1 text-sm text-red-600">{formik.errors.description}</p>
@@ -544,7 +552,11 @@ function Step2Payment({ formik }: { formik: any }) {
               })
             }
             onBlur={formik.handleBlur}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+            className={`w-full px-4 py-2 border rounded-lg outline-none ${
+              formik.touched.paymentDetails?.businessName && formik.errors.paymentDetails?.businessName
+                ? "border-red-500 focus:ring-2 focus:ring-red-200"
+                : "border-gray-300 focus:ring-2 focus:ring-emerald-200"
+            }`}
           />
           {formik.touched.paymentDetails?.businessName && formik.errors.paymentDetails?.businessName && (
             <p className="mt-1 text-sm text-red-600">{formik.errors.paymentDetails.businessName}</p>
@@ -564,7 +576,11 @@ function Step2Payment({ formik }: { formik: any }) {
               })
             }
             onBlur={formik.handleBlur}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+            className={`w-full px-4 py-2 border rounded-lg outline-none ${
+              formik.touched.paymentDetails?.accountNumber && formik.errors.paymentDetails?.accountNumber
+                ? "border-red-500 focus:ring-2 focus:ring-red-200"
+                : "border-gray-300 focus:ring-2 focus:ring-emerald-200"
+            }`}
           />
           {formik.touched.paymentDetails?.accountNumber && formik.errors.paymentDetails?.accountNumber && (
             <p className="mt-1 text-sm text-red-600">{formik.errors.paymentDetails.accountNumber}</p>
@@ -576,7 +592,11 @@ function Step2Payment({ formik }: { formik: any }) {
         <label className="block text-sm font-medium text-gray-700 mb-2">Settlement Bank *</label>
         <div className="relative" ref={dropdownRef}>
           <div
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200 cursor-pointer bg-white flex items-center justify-between"
+            className={`w-full px-4 py-2 border rounded-lg outline-none cursor-pointer bg-white flex items-center justify-between ${
+              formik.touched.paymentDetails?.sortCode && formik.errors.paymentDetails?.sortCode
+                ? "border-red-500 focus:ring-2 focus:ring-red-200"
+                : "border-gray-300 focus:ring-2 focus:ring-emerald-200"
+            }`}
             onClick={() => setShowBankDropdown(!showBankDropdown)}
             onFocus={handleBankFieldFocus}
           >
@@ -633,7 +653,11 @@ function Step2Payment({ formik }: { formik: any }) {
           }
           onBlur={formik.handleBlur}
           placeholder="e.g., 058"
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+          className={`w-full px-4 py-2 border rounded-lg outline-none ${
+            formik.touched.paymentDetails?.sortCode && formik.errors.paymentDetails?.sortCode
+              ? "border-red-500 focus:ring-2 focus:ring-red-200"
+              : "border-gray-300 focus:ring-2 focus:ring-emerald-200"
+          }`}
         />
       </div>
 
@@ -654,7 +678,11 @@ function Step2Payment({ formik }: { formik: any }) {
                 })
               }
               onBlur={formik.handleBlur}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+              className={`w-full px-4 py-2 border rounded-lg outline-none ${
+                formik.touched.paymentDetails?.primaryContactName && formik.errors.paymentDetails?.primaryContactName
+                  ? "border-red-500 focus:ring-2 focus:ring-red-200"
+                  : "border-gray-300 focus:ring-2 focus:ring-emerald-200"
+              }`}
             />
             {formik.touched.paymentDetails?.primaryContactName && formik.errors.paymentDetails?.primaryContactName && (
               <p className="mt-1 text-sm text-red-600">{formik.errors.paymentDetails.primaryContactName}</p>
@@ -674,7 +702,11 @@ function Step2Payment({ formik }: { formik: any }) {
                 })
               }
               onBlur={formik.handleBlur}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+              className={`w-full px-4 py-2 border rounded-lg outline-none ${
+                formik.touched.paymentDetails?.primaryContactEmail && formik.errors.paymentDetails?.primaryContactEmail
+                  ? "border-red-500 focus:ring-2 focus:ring-red-200"
+                  : "border-gray-300 focus:ring-2 focus:ring-emerald-200"
+              }`}
             />
             {formik.touched.paymentDetails?.primaryContactEmail && formik.errors.paymentDetails?.primaryContactEmail && (
               <p className="mt-1 text-sm text-red-600">{formik.errors.paymentDetails.primaryContactEmail}</p>
@@ -695,7 +727,11 @@ function Step2Payment({ formik }: { formik: any }) {
               })
             }
             onBlur={formik.handleBlur}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+            className={`w-full px-4 py-2 border rounded-lg outline-none ${
+              formik.touched.paymentDetails?.primaryContactPhone && formik.errors.paymentDetails?.primaryContactPhone
+                ? "border-red-500 focus:ring-2 focus:ring-red-200"
+                : "border-gray-300 focus:ring-2 focus:ring-emerald-200"
+            }`}
           />
           {formik.touched.paymentDetails?.primaryContactPhone && formik.errors.paymentDetails?.primaryContactPhone && (
             <p className="mt-1 text-sm text-red-600">{formik.errors.paymentDetails.primaryContactPhone}</p>
