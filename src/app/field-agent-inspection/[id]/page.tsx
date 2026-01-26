@@ -144,10 +144,10 @@ export default function InspectionDetailPage() {
       );
 
       if (response?.success && response.data) {
-        setInspection(response.data);
+        setInspection(response.data as any);
         // Pre-populate report if exists
-        if (response.data.inspectionReport) {
-          const existingReport = response.data.inspectionReport;
+        if ((response.data as any).inspectionReport) {
+          const existingReport = (response.data as any).inspectionReport;
           setReport({
             buyerPresent: existingReport.buyerPresent || false,
             sellerPresent: existingReport.sellerPresent || false,
