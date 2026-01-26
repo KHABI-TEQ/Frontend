@@ -181,7 +181,7 @@ const SubscribersTab: React.FC<{ publicSlug: string }> = ({ publicSlug }) => {
 
   return (
     <div className="space-y-6">
-      <OverlayPreloader visible={isDeleting || isExporting} message={isExporting ? "Exporting..." : "Deleting..."} />
+      <OverlayPreloader isVisible={isDeleting || isExporting} message={isExporting ? "Exporting..." : "Deleting..."} />
 
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
