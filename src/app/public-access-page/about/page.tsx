@@ -816,7 +816,8 @@ export default function AboutPage() {
                             if (e.target.files?.[0]) {
                               handleImageUpload(
                                 e.target.files[0],
-                                `profileMember${idx}`
+                                "profile",
+                                idx
                               );
                             }
                           }}
