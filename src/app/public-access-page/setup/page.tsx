@@ -229,6 +229,17 @@ const Setup = () => {
 
   return (
     <div className="min-h-screen bg-[#EEF1F1] py-12 px-4">
+      {/* Processing Preloader */}
+      {isProcessing && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 flex flex-col items-center gap-4">
+            <Loader size={40} className="animate-spin text-emerald-600" />
+            <p className="text-lg font-semibold text-gray-800">Setting up your deal site...</p>
+            <p className="text-sm text-gray-600 text-center">This may take a few moments</p>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
@@ -247,10 +258,16 @@ const Setup = () => {
 
         {/* Step Content */}
         <div className="bg-white rounded-lg border border-gray-200 p-8">
-          {step === 0 && <Step0PublicLink formData={formData} onSlugChange={handleSlugChange} slugStatus={slugStatus} slugMessage={slugMessage} />}
-          {step === 1 && <Step1Design formData={formData} onChange={handleInputChange} />}
-          {step === 2 && <Step2Payment formData={formData} onChange={handleInputChange} />}
-          {step === 3 && <Step3Review formData={formData} />}
+          {step === 0 && (
+            <Step0PublicLink
+              formik={formik}
+              slugStatus={slugStatus}
+              slugMessage={slugMessage}
+            />
+          )}
+          {step === 1 && <Step1Design formik={formik} />}
+          {step === 2 && <Step2Payment formik={formik} />}
+          {step === 3 && <Step3Review formik={formik} />}
 
           {/* Navigation Buttons */}
           <div className="flex items-center justify-between gap-4 mt-8 pt-6 border-t border-gray-200">
@@ -271,11 +288,18 @@ const Setup = () => {
               </button>
             ) : (
               <button
-                onClick={handleSubmit}
-                disabled={saving || slugStatus !== "available"}
+                onClick={handleNextStep}
+                disabled={isProcessing || slugStatus !== "available"}
                 className="px-8 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
               >
-                {saving ? "Completing..." : "Complete Setup"}
+                {isProcessing ? (
+                  <>
+                    <Loader size={16} className="animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  "Complete Setup"
+                )}
               </button>
             )}
           </div>
