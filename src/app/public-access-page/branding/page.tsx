@@ -204,12 +204,13 @@ export default function BrandingPage() {
               <button
                 type="button"
                 onClick={() => updateSettings({ logoUrl: "" })}
-                className="inline-flex items-center gap-2 px-4 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-all"
+                disabled={uploading}
+                className="inline-flex items-center gap-2 px-4 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 <Trash2 size={16} />
                 Remove
               </button>
-              <label className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 cursor-pointer transition-all">
+              <label className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-all">
                 <input
                   type="file"
                   accept="image/*"
@@ -224,22 +225,29 @@ export default function BrandingPage() {
             </div>
           </div>
         ) : (
-          <label className="flex items-center justify-center gap-3 px-6 py-12 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 cursor-pointer hover:bg-gray-50 transition-all">
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) =>
-                e.target.files && handleUploadLogo(e.target.files[0])
-              }
-              disabled={uploading}
-            />
-            <ImageIcon size={20} />
-            <span className="text-center">
-              <p className="font-medium">Drag & drop or click to upload</p>
-              <p className="text-xs text-gray-500 mt-1">PNG, JPG, SVG up to 5MB</p>
-            </span>
-          </label>
+          <div className="relative">
+            <StandardPreloader isVisible={uploading} message="Uploading..." overlay={false} />
+            <label className="flex items-center justify-center gap-3 px-6 py-12 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 cursor-pointer hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) =>
+                  e.target.files && handleUploadLogo(e.target.files[0])
+                }
+                disabled={uploading}
+              />
+              {!uploading && (
+                <>
+                  <ImageIcon size={20} />
+                  <span className="text-center">
+                    <p className="font-medium">Drag & drop or click to upload</p>
+                    <p className="text-xs text-gray-500 mt-1">PNG, JPG, SVG up to 5MB</p>
+                  </span>
+                </>
+              )}
+            </label>
+          </div>
         )}
       </div>
 
