@@ -191,12 +191,26 @@ export default function OverviewPage() {
 
       {/* Status Card */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>
-            <h2 className="text-lg font-semibold text-[#09391C]">
-              Your page is {dealSiteStatus === "on-hold" ? "under review" : isPaused ? "paused" : "live"}
-            </h2>
-            {previewUrl && dealSiteStatus !== "pending" && (
+            <div className="flex items-center gap-3 flex-wrap">
+              <h2 className="text-lg font-semibold text-[#09391C]">
+                Your page is {dealSiteStatus === "on-hold" ? "under review" : isPaused ? "paused" : "live"}
+              </h2>
+              {isPaused && (
+                <span className="inline-flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-xs font-medium">
+                  <span className="w-2 h-2 bg-orange-600 rounded-full"></span>
+                  Paused
+                </span>
+              )}
+              {dealSiteStatus === "on-hold" && (
+                <span className="inline-flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-xs font-medium">
+                  <span className="w-2 h-2 bg-orange-600 rounded-full"></span>
+                  On Hold
+                </span>
+              )}
+            </div>
+            {previewUrl && dealSiteStatus !== "pending" && !isPaused && (
               <div className="mt-2 flex items-center gap-2 flex-wrap">
                 <a
                   href={previewUrl}
@@ -215,6 +229,11 @@ export default function OverviewPage() {
                   Copy
                 </button>
               </div>
+            )}
+            {isPaused && (
+              <p className="mt-2 text-sm text-gray-600">
+                Your public access page is paused and not visible to visitors. Resume it to make it live again.
+              </p>
             )}
           </div>
 
