@@ -68,14 +68,14 @@ const Step3ImageUpload: React.FC<StepProps> = ({ errors, touched }) => {
     );
 
     try {
-      const response = await POST_REQUEST_FILE_UPLOAD(
+      const response = await POST_REQUEST_FILE_UPLOAD<{ url: string }>(
         `${URLS.BASE + URLS.uploadSingleImg}`,
         formData,
         Cookies.get("token"),
       );
 
-      if (response?.success) {
-        return response.data.url;
+      if (response?.success && response.data) {
+        return (response.data as any).url;
       }
 
       return null;

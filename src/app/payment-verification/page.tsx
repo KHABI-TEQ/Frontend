@@ -45,11 +45,11 @@ const PaymentVerificationPage = () => {
       setVerificationStatus('verifying');
 
       const paymentReference = reference || transactionId;
-      const response = await GET_REQUEST(`${URLS.BASE}${URLS.verifyPayment}?reference=${paymentReference}`);
+      const response = await GET_REQUEST<any>(`${URLS.BASE}${URLS.verifyPayment}?reference=${paymentReference}`);
 
-      if (response.success) {
+      if (response.success && response.data) {
         setVerificationData(response.data);
-        const trxType = response.data?.transaction?.transactionType;
+        const trxType = (response.data as any)?.transaction?.transactionType;
 
         // Subscription: immediately redirect to dashboard (no receipt)
         if (trxType === 'subscription') {

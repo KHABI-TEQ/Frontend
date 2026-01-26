@@ -62,15 +62,15 @@ const SubscribersTab: React.FC = () => {
         url += `&search=${encodeURIComponent(searchTerm)}`;
       }
 
-      const res = await GET_REQUEST<Subscriber[]>(url, token);
+      const res = await GET_REQUEST<Subscriber[], { total: number; page: number; limit: number; pages: number }>(url, token);
 
       if (res?.success && res.data) {
         setSubscribers(res.data);
         if (res.pagination) {
           setPagination({
-            total: (res.pagination as any).total,
-            pages: (res.pagination as any).pages,
-            limit: (res.pagination as any).limit,
+            total: res.pagination.total,
+            pages: res.pagination.pages,
+            limit: res.pagination.limit,
           });
         }
       } else {
