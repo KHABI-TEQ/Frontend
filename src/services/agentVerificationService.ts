@@ -70,7 +70,7 @@ export class AgentVerificationService {
         this.getAuthToken()
       );
 
-      return response.data;
+      return response.data as any;
     } catch (error) {
       console.error("Failed to get agent verification status:", error);
       throw error;
@@ -87,7 +87,7 @@ export class AgentVerificationService {
         this.getAuthToken()
       );
 
-      return response.data;
+      return response.data as any;
     } catch (error) {
       console.error("Failed to get agent public profile:", error);
       throw error;
