@@ -444,25 +444,30 @@ export default function HomePageSettings() {
                   </button>
                 </div>
               ) : (
-                <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    <ImageIcon size={40} className="text-gray-400 mb-2" />
-                    <p className="text-sm text-gray-700 font-medium">Click to upload hero image</p>
-                    <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
-                  </div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        handleUploadHeroImage(file);
-                      }
-                    }}
-                    disabled={uploading}
-                    className="hidden"
-                  />
-                </label>
+                <div className="relative">
+                  <StandardPreloader isVisible={uploading} message="Uploading..." overlay={false} />
+                  <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                    {!uploading && (
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <ImageIcon size={40} className="text-gray-400 mb-2" />
+                        <p className="text-sm text-gray-700 font-medium">Click to upload hero image</p>
+                        <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          handleUploadHeroImage(file);
+                        }
+                      }}
+                      disabled={uploading}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
               )}
             </div>
           </div>
