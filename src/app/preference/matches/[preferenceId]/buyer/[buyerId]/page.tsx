@@ -6,7 +6,6 @@ import api from '@/utils/axiosConfig';
 import { Property } from '@/types/property.types';
 import GlobalPropertyCard from '@/components/common/property-cards/GlobalPropertyCard';
 import GlobalJVPropertyCard from '@/components/common/property-cards/GlobalJVPropertyCard';
-import { ClipLoader } from 'react-spinners';
 
 interface MatchDetails {
   _id: string;
@@ -210,7 +209,9 @@ const PreferenceMatchesPage: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <ClipLoader size={40} color="#10B981" />
+          <div className="inline-flex items-center justify-center">
+            <div className="w-10 h-10 border-4 border-gray-200 rounded-full border-t-emerald-500 animate-spin"></div>
+          </div>
           <p className="mt-4 text-gray-600">Loading matched properties...</p>
         </div>
       </div>
