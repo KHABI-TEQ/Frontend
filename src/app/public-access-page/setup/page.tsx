@@ -27,185 +27,198 @@ interface Bank {
   type?: string;
 }
 
+// Yup validation schemas for each step
+const createValidationSchema = (step: number) => {
+  if (step === 0) {
+    return Yup.object({
+      publicSlug: Yup.string().required("Public link is required").min(2, "Minimum 2 characters"),
+    });
+  }
+
+  if (step === 1) {
+    return Yup.object({
+      title: Yup.string().required("Title is required"),
+      description: Yup.string().required("Description is required"),
+    });
+  }
+
+  if (step === 2) {
+    return Yup.object({
+      paymentDetails: Yup.object().shape({
+        businessName: Yup.string().required("Business name is required"),
+        accountNumber: Yup.string().required("Account number is required"),
+        sortCode: Yup.string().required("Settlement bank is required"),
+        primaryContactName: Yup.string().required("Contact name is required"),
+        primaryContactEmail: Yup.string().email("Invalid email").required("Email is required"),
+        primaryContactPhone: Yup.string().required("Phone is required"),
+      }),
+    });
+  }
+
+  return Yup.object({});
+};
+
 const Setup = () => {
   const router = useRouter();
   const { settings, updateSettings, markSetupComplete } = useDealSite();
   const [step, setStep] = useState(0);
-  const [saving, setSaving] = useState(false);
   const [slugStatus, setSlugStatus] = useState<"idle" | "invalid" | "checking" | "available" | "taken">("idle");
   const [slugMessage, setSlugMessage] = useState<string>("");
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  // Form state - track changes locally during setup
-  const [formData, setFormData] = useState<DealSiteSettings>({
-    ...settings,
+  // Initialize Formik
+  const formik = useFormik({
+    initialValues: {
+      publicSlug: settings.publicSlug || "",
+      title: settings.title || "",
+      description: settings.description || "",
+      keywords: settings.keywords || [],
+      logoUrl: settings.logoUrl || "",
+      theme: settings.theme || { primaryColor: "#09391C", secondaryColor: "#8DDB90" },
+      publicPage: settings.publicPage || {
+        heroTitle: "Hi, I'm your trusted agent",
+        heroSubtitle: "Browse my verified listings and book inspections easily.",
+        ctaText: "Tell Us about property you want",
+        ctaLink: "/market-place",
+        ctaText2: "Browse Listings",
+        ctaLink2: "/market-place",
+        heroImageUrl: "",
+      },
+      featureSelection: settings.featureSelection || { mode: "auto", propertyIds: "", featuredListings: [] },
+      socialLinks: settings.socialLinks || {},
+      inspectionSettings: settings.inspectionSettings || { defaultInspectionFee: 0 },
+      contactVisibility: settings.contactVisibility || {
+        showEmail: true,
+        showPhone: true,
+        enableContactForm: true,
+        showWhatsAppButton: false,
+        whatsappNumber: "",
+      },
+      paymentDetails: settings.paymentDetails || {
+        businessName: "",
+        accountNumber: "",
+        sortCode: "",
+        primaryContactName: "",
+        primaryContactEmail: "",
+        primaryContactPhone: "",
+      },
+    },
+    validationSchema: createValidationSchema(step),
+    validateOnChange: true,
+    validateOnBlur: true,
+    onSubmit: async (values) => {
+      if (step < 3) {
+        if (Object.keys(formik.errors).length === 0) {
+          setStep(step + 1);
+        }
+        return;
+      }
+
+      // Final submission
+      await handleFinalSubmit(values);
+    },
   });
 
-  const handleInputChange = useCallback(
-    (field: keyof DealSiteSettings, value: any) => {
-      setFormData((prev) => ({
-        ...prev,
-        [field]: value,
-      }));
-    },
-    []
-  );
+  // Slug validation with availability check
+  useEffect(() => {
+    const slug = formik.values.publicSlug;
 
-  // Slug validation
-  const handleSlugChange = useCallback(
-    (slug: string) => {
-      setFormData((prev) => ({
-        ...prev,
-        publicSlug: slug,
-      }));
+    if (!slug) {
+      setSlugStatus("idle");
+      setSlugMessage("");
+      return;
+    }
 
-      if (!slug) {
-        setSlugStatus("idle");
-        setSlugMessage("");
-        return;
-      }
+    const valid = /^[a-z0-9]([a-z0-9-]{1,61}[a-z0-9])?$/.test(slug);
+    if (!valid) {
+      setSlugStatus("invalid");
+      setSlugMessage("Use 2-63 chars: letters, numbers, hyphens. Cannot start/end with hyphen.");
+      return;
+    }
 
-      const valid = /^[a-z0-9]([a-z0-9-]{1,61}[a-z0-9])?$/.test(slug);
-      if (!valid) {
-        setSlugStatus("invalid");
-        setSlugMessage("Use 2-63 chars: letters, numbers, hyphens. Cannot start/end with hyphen.");
-        return;
-      }
+    let cancelled = false;
+    setSlugStatus("checking");
+    setSlugMessage("Checking availability...");
 
-      let cancelled = false;
-      setSlugStatus("checking");
-      setSlugMessage("Checking availability...");
-
-      const token = Cookies.get("token");
-      const checkTimeout = setTimeout(async () => {
-        try {
-          const resp = await POST_REQUEST<any>(
-            `${URLS.BASE}${URLS.dealSiteSlugAvailability}`,
-            { publicSlug: slug },
-            token
-          );
-          const available =
-            resp?.data?.available ?? resp?.available ?? resp?.data?.isAvailable ?? resp?.isAvailable ?? false;
-          if (!cancelled) {
-            setSlugStatus(available ? "available" : "taken");
-            setSlugMessage(available ? "Subdomain is available" : "Subdomain is taken");
-          }
-        } catch (e) {
-          if (!cancelled) {
-            setSlugStatus("taken");
-            setSlugMessage("Unable to verify. Try again.");
-          }
+    const token = Cookies.get("token");
+    const checkTimeout = setTimeout(async () => {
+      try {
+        const resp = await POST_REQUEST<any>(
+          `${URLS.BASE}${URLS.dealSiteSlugAvailability}`,
+          { publicSlug: slug },
+          token
+        );
+        const available =
+          resp?.data?.available ?? resp?.available ?? resp?.data?.isAvailable ?? resp?.isAvailable ?? false;
+        if (!cancelled) {
+          setSlugStatus(available ? "available" : "taken");
+          setSlugMessage(available ? "Subdomain is available" : "Subdomain is taken");
         }
-      }, 400);
-
-      return () => {
-        cancelled = true;
-        clearTimeout(checkTimeout);
-      };
-    },
-    []
-  );
-
-  const validateStep = useCallback((): boolean => {
-    if (step === 0) {
-      // Public Link validation
-      if (!formData.publicSlug) {
-        toast.error("Please set your public link");
-        return false;
+      } catch (e) {
+        if (!cancelled) {
+          setSlugStatus("taken");
+          setSlugMessage("Unable to verify. Try again.");
+        }
       }
-      if (slugStatus !== "available") {
-        toast.error("Please use a valid and available subdomain");
-        return false;
-      }
-      return true;
+    }, 400);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(checkTimeout);
+    };
+  }, [formik.values.publicSlug]);
+
+  const handleFinalSubmit = async (values: any) => {
+    // Validate slug availability for final submission
+    if (slugStatus !== "available") {
+      toast.error("Please use a valid and available subdomain");
+      return;
     }
 
-    if (step === 1) {
-      // Design validation
-      if (!formData.title) {
-        toast.error("Title is required");
-        return false;
-      }
-      if (!formData.description) {
-        toast.error("Description is required");
-        return false;
-      }
-      return true;
-    }
-
-    if (step === 2) {
-      // Payment validation
-      if (
-        !formData.paymentDetails?.businessName ||
-        !formData.paymentDetails?.accountNumber ||
-        !formData.paymentDetails?.sortCode ||
-        !formData.paymentDetails?.primaryContactEmail ||
-        !formData.paymentDetails?.primaryContactName ||
-        !formData.paymentDetails?.primaryContactPhone
-      ) {
-        toast.error("Please complete all payment details");
-        return false;
-      }
-      return true;
-    }
-
-    return true;
-  }, [step, formData, slugStatus]);
-
-  const handleNextStep = useCallback(() => {
-    if (validateStep()) {
-      if (step < 3) {
-        setStep(step + 1);
-      }
-    }
-  }, [step, validateStep]);
-
-  const handlePrevStep = useCallback(() => {
-    if (step > 0) {
-      setStep(step - 1);
-    }
-  }, [step]);
-
-  const handleSubmit = useCallback(async () => {
-    if (!validateStep()) return;
-
-    setSaving(true);
+    setIsProcessing(true);
     try {
       const token = Cookies.get("token");
       const payload: DealSiteSettings = {
-        ...formData,
-        keywords: formData.keywords
-          .map((k) => (typeof k === "string" ? k.trim() : ""))
+        ...values,
+        keywords: values.keywords
+          .map((k: any) => (typeof k === "string" ? k.trim() : ""))
           .filter(Boolean),
         contactVisibility: {
-          ...formData.contactVisibility,
-          whatsappNumber: formData.contactVisibility.showWhatsAppButton
-            ? formData.contactVisibility.whatsappNumber
+          ...values.contactVisibility,
+          whatsappNumber: values.contactVisibility.showWhatsAppButton
+            ? values.contactVisibility.whatsappNumber
             : "",
         },
       };
 
-      toast.promise(
-        POST_REQUEST(`${URLS.BASE}${URLS.dealSiteSetup}`, payload, token),
-        {
-          loading: "Setting up your deal site...",
-          success: (res: any) => {
-            if (res?.success) {
-              updateSettings(formData);
-              markSetupComplete();
-              setTimeout(() => {
-                router.replace("/public-access-page");
-              }, 1000);
-              return "Setup complete!";
-            }
-            throw new Error(res?.message || "Setup failed");
-          },
-          error: (err: any) => err?.message || "Failed to complete setup",
-        }
-      );
+      const res = await POST_REQUEST(`${URLS.BASE}${URLS.dealSiteSetup}`, payload, token);
+
+      if (res?.success) {
+        updateSettings(values);
+        markSetupComplete();
+        toast.success("Setup complete!");
+        setTimeout(() => {
+          router.replace("/public-access-page");
+        }, 1000);
+      } else {
+        toast.error(res?.message || "Setup failed");
+      }
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to complete setup");
     } finally {
-      setSaving(false);
+      setIsProcessing(false);
     }
-  }, [formData, validateStep, updateSettings, markSetupComplete, router]);
+  };
+
+  const handleNextStep = () => {
+    formik.submitForm();
+  };
+
+  const handlePrevStep = () => {
+    if (step > 0) {
+      setStep(step - 1);
+    }
+  };
 
   const steps = [
     { label: "Public Link", status: step > 0 ? "completed" : "active" },
