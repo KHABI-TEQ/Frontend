@@ -73,15 +73,15 @@ const ContactMessagesTab: React.FC<{ publicSlug: string }> = ({ publicSlug }) =>
         url += `&search=${encodeURIComponent(searchTerm)}`;
       }
 
-      const res = await GET_REQUEST<ApiResponse>(url, token);
+      const res = await GET_REQUEST<ContactMessage[]>(url, token);
 
       if (res?.success && res.data) {
         setMessages(res.data);
         if (res.pagination) {
           setPagination({
-            total: res.pagination.total,
-            pages: res.pagination.pages,
-            limit: res.pagination.limit,
+            total: (res.pagination as any).total,
+            pages: (res.pagination as any).pages,
+            limit: (res.pagination as any).limit,
           });
         }
       } else {
