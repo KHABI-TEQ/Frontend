@@ -205,8 +205,7 @@ const Sidebar = () => {
                     strokeLinejoin='round'
                   />
                 </svg>
-                <span
-                  className={`${product_sans.className} text-base text-black`}>
+                <span className="text-base text-black">
                   {item}
                 </span>
               </div>

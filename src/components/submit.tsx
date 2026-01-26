@@ -77,7 +77,7 @@ const SubmitPopUp: React.FC<SubmitPopUpProps> = ({
               router.push(href);
               if (onClose) onClose();
             }}
-            className={`min-h-[57px] w-full rounded-[5px] py-[14px] px-[27px] gap-[10px] bg-[#8DDB90] text-white text-[18px] leading-[28.8px] font-bold text-center text-whitespace-nowrap ${product_sans.className}`}>
+            className="min-h-[57px] w-full rounded-[5px] py-[14px] px-[27px] gap-[10px] bg-[#8DDB90] text-white text-[18px] leading-[28.8px] font-bold text-center text-whitespace-nowrap">
             {buttonText}
           </Link>
         </div>
