@@ -535,30 +535,40 @@ function Step2Payment({ formik }: { formik: any }) {
           <label className="block text-sm font-medium text-gray-700 mb-2">Business Name *</label>
           <input
             type="text"
-            value={formData.paymentDetails?.businessName || ""}
+            name="paymentDetails.businessName"
+            value={formik.values.paymentDetails?.businessName || ""}
             onChange={(e) =>
-              onChange("paymentDetails", {
-                ...formData.paymentDetails,
+              formik.setFieldValue("paymentDetails", {
+                ...formik.values.paymentDetails,
                 businessName: e.target.value,
               })
             }
+            onBlur={formik.handleBlur}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
           />
+          {formik.touched.paymentDetails?.businessName && formik.errors.paymentDetails?.businessName && (
+            <p className="mt-1 text-sm text-red-600">{formik.errors.paymentDetails.businessName}</p>
+          )}
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Account Number *</label>
           <input
             type="text"
-            value={formData.paymentDetails?.accountNumber || ""}
+            name="paymentDetails.accountNumber"
+            value={formik.values.paymentDetails?.accountNumber || ""}
             onChange={(e) =>
-              onChange("paymentDetails", {
-                ...formData.paymentDetails,
+              formik.setFieldValue("paymentDetails", {
+                ...formik.values.paymentDetails,
                 accountNumber: e.target.value,
               })
             }
+            onBlur={formik.handleBlur}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
           />
+          {formik.touched.paymentDetails?.accountNumber && formik.errors.paymentDetails?.accountNumber && (
+            <p className="mt-1 text-sm text-red-600">{formik.errors.paymentDetails.accountNumber}</p>
+          )}
         </div>
       </div>
 
@@ -568,12 +578,14 @@ function Step2Payment({ formik }: { formik: any }) {
           <div
             className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200 cursor-pointer bg-white flex items-center justify-between"
             onClick={() => setShowBankDropdown(!showBankDropdown)}
+            onFocus={handleBankFieldFocus}
           >
             <input
               type="text"
               placeholder="Search banks..."
               value={bankSearch}
               onChange={(e) => handleBankSearch(e.target.value)}
+              onFocus={handleBankFieldFocus}
               onClick={(e) => e.stopPropagation()}
               className="flex-1 outline-none bg-transparent"
             />
@@ -600,6 +612,9 @@ function Step2Payment({ formik }: { formik: any }) {
               )}
             </div>
           )}
+          {formik.touched.paymentDetails?.sortCode && formik.errors.paymentDetails?.sortCode && (
+            <p className="mt-2 text-sm text-red-600">{formik.errors.paymentDetails.sortCode}</p>
+          )}
         </div>
       </div>
 
@@ -608,13 +623,15 @@ function Step2Payment({ formik }: { formik: any }) {
         <p className="text-xs text-gray-500 mb-2">Auto-filled when you select a bank</p>
         <input
           type="text"
-          value={formData.paymentDetails?.sortCode || ""}
+          name="paymentDetails.sortCode"
+          value={formik.values.paymentDetails?.sortCode || ""}
           onChange={(e) =>
-            onChange("paymentDetails", {
-              ...formData.paymentDetails,
+            formik.setFieldValue("paymentDetails", {
+              ...formik.values.paymentDetails,
               sortCode: e.target.value,
             })
           }
+          onBlur={formik.handleBlur}
           placeholder="e.g., 058"
           className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
         />
@@ -628,30 +645,40 @@ function Step2Payment({ formik }: { formik: any }) {
             <label className="block text-sm font-medium text-gray-700 mb-2">Contact Name *</label>
             <input
               type="text"
-              value={formData.paymentDetails?.primaryContactName || ""}
+              name="paymentDetails.primaryContactName"
+              value={formik.values.paymentDetails?.primaryContactName || ""}
               onChange={(e) =>
-                onChange("paymentDetails", {
-                  ...formData.paymentDetails,
+                formik.setFieldValue("paymentDetails", {
+                  ...formik.values.paymentDetails,
                   primaryContactName: e.target.value,
                 })
               }
+              onBlur={formik.handleBlur}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
             />
+            {formik.touched.paymentDetails?.primaryContactName && formik.errors.paymentDetails?.primaryContactName && (
+              <p className="mt-1 text-sm text-red-600">{formik.errors.paymentDetails.primaryContactName}</p>
+            )}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
             <input
               type="email"
-              value={formData.paymentDetails?.primaryContactEmail || ""}
+              name="paymentDetails.primaryContactEmail"
+              value={formik.values.paymentDetails?.primaryContactEmail || ""}
               onChange={(e) =>
-                onChange("paymentDetails", {
-                  ...formData.paymentDetails,
+                formik.setFieldValue("paymentDetails", {
+                  ...formik.values.paymentDetails,
                   primaryContactEmail: e.target.value,
                 })
               }
+              onBlur={formik.handleBlur}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
             />
+            {formik.touched.paymentDetails?.primaryContactEmail && formik.errors.paymentDetails?.primaryContactEmail && (
+              <p className="mt-1 text-sm text-red-600">{formik.errors.paymentDetails.primaryContactEmail}</p>
+            )}
           </div>
         </div>
 
@@ -659,15 +686,20 @@ function Step2Payment({ formik }: { formik: any }) {
           <label className="block text-sm font-medium text-gray-700 mb-2">Phone *</label>
           <input
             type="tel"
-            value={formData.paymentDetails?.primaryContactPhone || ""}
+            name="paymentDetails.primaryContactPhone"
+            value={formik.values.paymentDetails?.primaryContactPhone || ""}
             onChange={(e) =>
-              onChange("paymentDetails", {
-                ...formData.paymentDetails,
+              formik.setFieldValue("paymentDetails", {
+                ...formik.values.paymentDetails,
                 primaryContactPhone: e.target.value,
               })
             }
+            onBlur={formik.handleBlur}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
           />
+          {formik.touched.paymentDetails?.primaryContactPhone && formik.errors.paymentDetails?.primaryContactPhone && (
+            <p className="mt-1 text-sm text-red-600">{formik.errors.paymentDetails.primaryContactPhone}</p>
+          )}
         </div>
       </div>
 
