@@ -141,7 +141,7 @@ const MatchedPropertiesPage = () => {
         const response = await GET_REQUEST(`${URLS.BASE}/properties/${matchedId}/${preferenceId}/matches`);
 
         if (response?.success) {
-          setData(response.data);
+          setData(response.data as any);
         } else {
           setError(response?.error || "Failed to fetch matched properties");
           toast.error("Failed to load matched properties");
