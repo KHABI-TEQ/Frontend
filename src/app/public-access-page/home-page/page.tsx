@@ -223,7 +223,6 @@ export default function HomePageSettings() {
     const token = Cookies.get("token");
 
     setUploadingTestimonialId(testimonialId);
-    setPreloader(true);
     try {
       const res = await POST_REQUEST_FILE_UPLOAD<{ url: string }>(
         `${URLS.BASE}${URLS.uploadSingleImg}`,
@@ -240,7 +239,6 @@ export default function HomePageSettings() {
       toast.error("Failed to upload image");
     } finally {
       setUploadingTestimonialId("");
-      setPreloader(false);
     }
   }, [updateTestimonial]);
 
