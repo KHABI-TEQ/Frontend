@@ -10,7 +10,9 @@ import React, { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
-import { AlertCircle, CheckCircle, Lock, ChevronDown } from "lucide-react";
+import { AlertCircle, CheckCircle, Lock, ChevronDown, Loader } from "lucide-react";
+import { useFormik } from "formik";
+import * as Yup from "yup";
 import { POST_REQUEST, GET_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import { useDealSite } from "@/context/deal-site-context";
@@ -25,185 +27,198 @@ interface Bank {
   type?: string;
 }
 
+// Yup validation schemas for each step
+const createValidationSchema = (step: number) => {
+  if (step === 0) {
+    return Yup.object({
+      publicSlug: Yup.string().required("Public link is required").min(2, "Minimum 2 characters"),
+    });
+  }
+
+  if (step === 1) {
+    return Yup.object({
+      title: Yup.string().required("Title is required"),
+      description: Yup.string().required("Description is required"),
+    });
+  }
+
+  if (step === 2) {
+    return Yup.object({
+      paymentDetails: Yup.object().shape({
+        businessName: Yup.string().required("Business name is required"),
+        accountNumber: Yup.string().required("Account number is required"),
+        sortCode: Yup.string().required("Settlement bank is required"),
+        primaryContactName: Yup.string().required("Contact name is required"),
+        primaryContactEmail: Yup.string().email("Invalid email").required("Email is required"),
+        primaryContactPhone: Yup.string().required("Phone is required"),
+      }),
+    });
+  }
+
+  return Yup.object({});
+};
+
 const Setup = () => {
   const router = useRouter();
   const { settings, updateSettings, markSetupComplete } = useDealSite();
   const [step, setStep] = useState(0);
-  const [saving, setSaving] = useState(false);
   const [slugStatus, setSlugStatus] = useState<"idle" | "invalid" | "checking" | "available" | "taken">("idle");
   const [slugMessage, setSlugMessage] = useState<string>("");
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  // Form state - track changes locally during setup
-  const [formData, setFormData] = useState<DealSiteSettings>({
-    ...settings,
+  // Initialize Formik
+  const formik = useFormik({
+    initialValues: {
+      publicSlug: settings.publicSlug || "",
+      title: settings.title || "",
+      description: settings.description || "",
+      keywords: settings.keywords || [],
+      logoUrl: settings.logoUrl || "",
+      theme: settings.theme || { primaryColor: "#09391C", secondaryColor: "#8DDB90" },
+      publicPage: settings.publicPage || {
+        heroTitle: "Hi, I'm your trusted agent",
+        heroSubtitle: "Browse my verified listings and book inspections easily.",
+        ctaText: "Tell Us about property you want",
+        ctaLink: "/market-place",
+        ctaText2: "Browse Listings",
+        ctaLink2: "/market-place",
+        heroImageUrl: "",
+      },
+      featureSelection: settings.featureSelection || { mode: "auto", propertyIds: "", featuredListings: [] },
+      socialLinks: settings.socialLinks || {},
+      inspectionSettings: settings.inspectionSettings || { defaultInspectionFee: 0 },
+      contactVisibility: settings.contactVisibility || {
+        showEmail: true,
+        showPhone: true,
+        enableContactForm: true,
+        showWhatsAppButton: false,
+        whatsappNumber: "",
+      },
+      paymentDetails: settings.paymentDetails || {
+        businessName: "",
+        accountNumber: "",
+        sortCode: "",
+        primaryContactName: "",
+        primaryContactEmail: "",
+        primaryContactPhone: "",
+      },
+    },
+    validationSchema: createValidationSchema(step),
+    validateOnChange: true,
+    validateOnBlur: true,
+    onSubmit: async (values) => {
+      if (step < 3) {
+        if (Object.keys(formik.errors).length === 0) {
+          setStep(step + 1);
+        }
+        return;
+      }
+
+      // Final submission
+      await handleFinalSubmit(values);
+    },
   });
 
-  const handleInputChange = useCallback(
-    (field: keyof DealSiteSettings, value: any) => {
-      setFormData((prev) => ({
-        ...prev,
-        [field]: value,
-      }));
-    },
-    []
-  );
+  // Slug validation with availability check
+  useEffect(() => {
+    const slug = formik.values.publicSlug;
 
-  // Slug validation
-  const handleSlugChange = useCallback(
-    (slug: string) => {
-      setFormData((prev) => ({
-        ...prev,
-        publicSlug: slug,
-      }));
+    if (!slug) {
+      setSlugStatus("idle");
+      setSlugMessage("");
+      return;
+    }
 
-      if (!slug) {
-        setSlugStatus("idle");
-        setSlugMessage("");
-        return;
-      }
+    const valid = /^[a-z0-9]([a-z0-9-]{1,61}[a-z0-9])?$/.test(slug);
+    if (!valid) {
+      setSlugStatus("invalid");
+      setSlugMessage("Use 2-63 chars: letters, numbers, hyphens. Cannot start/end with hyphen.");
+      return;
+    }
 
-      const valid = /^[a-z0-9]([a-z0-9-]{1,61}[a-z0-9])?$/.test(slug);
-      if (!valid) {
-        setSlugStatus("invalid");
-        setSlugMessage("Use 2-63 chars: letters, numbers, hyphens. Cannot start/end with hyphen.");
-        return;
-      }
+    let cancelled = false;
+    setSlugStatus("checking");
+    setSlugMessage("Checking availability...");
 
-      let cancelled = false;
-      setSlugStatus("checking");
-      setSlugMessage("Checking availability...");
-
-      const token = Cookies.get("token");
-      const checkTimeout = setTimeout(async () => {
-        try {
-          const resp = await POST_REQUEST<any>(
-            `${URLS.BASE}${URLS.dealSiteSlugAvailability}`,
-            { publicSlug: slug },
-            token
-          );
-          const available =
-            resp?.data?.available ?? resp?.available ?? resp?.data?.isAvailable ?? resp?.isAvailable ?? false;
-          if (!cancelled) {
-            setSlugStatus(available ? "available" : "taken");
-            setSlugMessage(available ? "Subdomain is available" : "Subdomain is taken");
-          }
-        } catch (e) {
-          if (!cancelled) {
-            setSlugStatus("taken");
-            setSlugMessage("Unable to verify. Try again.");
-          }
+    const token = Cookies.get("token");
+    const checkTimeout = setTimeout(async () => {
+      try {
+        const resp = await POST_REQUEST<any>(
+          `${URLS.BASE}${URLS.dealSiteSlugAvailability}`,
+          { publicSlug: slug },
+          token
+        );
+        const available =
+          resp?.data?.available ?? resp?.available ?? resp?.data?.isAvailable ?? resp?.isAvailable ?? false;
+        if (!cancelled) {
+          setSlugStatus(available ? "available" : "taken");
+          setSlugMessage(available ? "Subdomain is available" : "Subdomain is taken");
         }
-      }, 400);
-
-      return () => {
-        cancelled = true;
-        clearTimeout(checkTimeout);
-      };
-    },
-    []
-  );
-
-  const validateStep = useCallback((): boolean => {
-    if (step === 0) {
-      // Public Link validation
-      if (!formData.publicSlug) {
-        toast.error("Please set your public link");
-        return false;
+      } catch (e) {
+        if (!cancelled) {
+          setSlugStatus("taken");
+          setSlugMessage("Unable to verify. Try again.");
+        }
       }
-      if (slugStatus !== "available") {
-        toast.error("Please use a valid and available subdomain");
-        return false;
-      }
-      return true;
+    }, 400);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(checkTimeout);
+    };
+  }, [formik.values.publicSlug]);
+
+  const handleFinalSubmit = async (values: any) => {
+    // Validate slug availability for final submission
+    if (slugStatus !== "available") {
+      toast.error("Please use a valid and available subdomain");
+      return;
     }
 
-    if (step === 1) {
-      // Design validation
-      if (!formData.title) {
-        toast.error("Title is required");
-        return false;
-      }
-      if (!formData.description) {
-        toast.error("Description is required");
-        return false;
-      }
-      return true;
-    }
-
-    if (step === 2) {
-      // Payment validation
-      if (
-        !formData.paymentDetails?.businessName ||
-        !formData.paymentDetails?.accountNumber ||
-        !formData.paymentDetails?.sortCode ||
-        !formData.paymentDetails?.primaryContactEmail ||
-        !formData.paymentDetails?.primaryContactName ||
-        !formData.paymentDetails?.primaryContactPhone
-      ) {
-        toast.error("Please complete all payment details");
-        return false;
-      }
-      return true;
-    }
-
-    return true;
-  }, [step, formData, slugStatus]);
-
-  const handleNextStep = useCallback(() => {
-    if (validateStep()) {
-      if (step < 3) {
-        setStep(step + 1);
-      }
-    }
-  }, [step, validateStep]);
-
-  const handlePrevStep = useCallback(() => {
-    if (step > 0) {
-      setStep(step - 1);
-    }
-  }, [step]);
-
-  const handleSubmit = useCallback(async () => {
-    if (!validateStep()) return;
-
-    setSaving(true);
+    setIsProcessing(true);
     try {
       const token = Cookies.get("token");
       const payload: DealSiteSettings = {
-        ...formData,
-        keywords: formData.keywords
-          .map((k) => (typeof k === "string" ? k.trim() : ""))
+        ...values,
+        keywords: values.keywords
+          .map((k: any) => (typeof k === "string" ? k.trim() : ""))
           .filter(Boolean),
         contactVisibility: {
-          ...formData.contactVisibility,
-          whatsappNumber: formData.contactVisibility.showWhatsAppButton
-            ? formData.contactVisibility.whatsappNumber
+          ...values.contactVisibility,
+          whatsappNumber: values.contactVisibility.showWhatsAppButton
+            ? values.contactVisibility.whatsappNumber
             : "",
         },
       };
 
-      toast.promise(
-        POST_REQUEST(`${URLS.BASE}${URLS.dealSiteSetup}`, payload, token),
-        {
-          loading: "Setting up your deal site...",
-          success: (res: any) => {
-            if (res?.success) {
-              updateSettings(formData);
-              markSetupComplete();
-              setTimeout(() => {
-                router.replace("/public-access-page");
-              }, 1000);
-              return "Setup complete!";
-            }
-            throw new Error(res?.message || "Setup failed");
-          },
-          error: (err: any) => err?.message || "Failed to complete setup",
-        }
-      );
+      const res = await POST_REQUEST(`${URLS.BASE}${URLS.dealSiteSetup}`, payload, token);
+
+      if (res?.success) {
+        updateSettings(values);
+        markSetupComplete();
+        toast.success("Setup complete!");
+        setTimeout(() => {
+          router.replace("/public-access-page");
+        }, 1000);
+      } else {
+        toast.error(res?.message || "Setup failed");
+      }
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to complete setup");
     } finally {
-      setSaving(false);
+      setIsProcessing(false);
     }
-  }, [formData, validateStep, updateSettings, markSetupComplete, router]);
+  };
+
+  const handleNextStep = () => {
+    formik.submitForm();
+  };
+
+  const handlePrevStep = () => {
+    if (step > 0) {
+      setStep(step - 1);
+    }
+  };
 
   const steps = [
     { label: "Public Link", status: step > 0 ? "completed" : "active" },
@@ -214,6 +229,17 @@ const Setup = () => {
 
   return (
     <div className="min-h-screen bg-[#EEF1F1] py-12 px-4">
+      {/* Processing Preloader */}
+      {isProcessing && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 flex flex-col items-center gap-4">
+            <Loader size={40} className="animate-spin text-emerald-600" />
+            <p className="text-lg font-semibold text-gray-800">Setting up your deal site...</p>
+            <p className="text-sm text-gray-600 text-center">This may take a few moments</p>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
@@ -232,10 +258,16 @@ const Setup = () => {
 
         {/* Step Content */}
         <div className="bg-white rounded-lg border border-gray-200 p-8">
-          {step === 0 && <Step0PublicLink formData={formData} onSlugChange={handleSlugChange} slugStatus={slugStatus} slugMessage={slugMessage} />}
-          {step === 1 && <Step1Design formData={formData} onChange={handleInputChange} />}
-          {step === 2 && <Step2Payment formData={formData} onChange={handleInputChange} />}
-          {step === 3 && <Step3Review formData={formData} />}
+          {step === 0 && (
+            <Step0PublicLink
+              formik={formik}
+              slugStatus={slugStatus}
+              slugMessage={slugMessage}
+            />
+          )}
+          {step === 1 && <Step1Design formik={formik} />}
+          {step === 2 && <Step2Payment formik={formik} />}
+          {step === 3 && <Step3Review formik={formik} />}
 
           {/* Navigation Buttons */}
           <div className="flex items-center justify-between gap-4 mt-8 pt-6 border-t border-gray-200">
@@ -256,11 +288,18 @@ const Setup = () => {
               </button>
             ) : (
               <button
-                onClick={handleSubmit}
-                disabled={saving || slugStatus !== "available"}
+                onClick={handleNextStep}
+                disabled={isProcessing || slugStatus !== "available"}
                 className="px-8 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
               >
-                {saving ? "Completing..." : "Complete Setup"}
+                {isProcessing ? (
+                  <>
+                    <Loader size={16} className="animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  "Complete Setup"
+                )}
               </button>
             )}
           </div>
@@ -283,13 +322,11 @@ const Setup = () => {
 
 // Step Components
 function Step0PublicLink({
-  formData,
-  onSlugChange,
+  formik,
   slugStatus,
   slugMessage,
 }: {
-  formData: DealSiteSettings;
-  onSlugChange: (slug: string) => void;
+  formik: any;
   slugStatus: string;
   slugMessage: string;
 }) {
@@ -308,8 +345,10 @@ function Step0PublicLink({
           <span className="px-4 py-2 bg-gray-100 text-gray-600 font-medium">https://</span>
           <input
             type="text"
-            value={formData.publicSlug}
-            onChange={(e) => onSlugChange(e.target.value.toLowerCase())}
+            name="publicSlug"
+            value={formik.values.publicSlug}
+            onChange={(e) => formik.setFieldValue("publicSlug", e.target.value.toLowerCase())}
+            onBlur={formik.handleBlur}
             placeholder="your-name"
             className="flex-1 px-4 py-2 outline-none text-lg"
           />
@@ -330,18 +369,21 @@ function Step0PublicLink({
             {slugMessage}
           </div>
         )}
+        {formik.touched.publicSlug && formik.errors.publicSlug && (
+          <p className="mt-2 text-sm text-red-600">{formik.errors.publicSlug}</p>
+        )}
       </div>
 
       <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
         <h3 className="font-semibold text-emerald-900 mb-2">Preview:</h3>
-        {formData.publicSlug ? (
+        {formik.values.publicSlug ? (
           <a
-            href={`https://${formData.publicSlug}.khabiteq.com`}
+            href={`https://${formik.values.publicSlug}.khabiteq.com`}
             target="_blank"
             rel="noreferrer"
             className="text-emerald-600 hover:underline break-all"
           >
-            https://{formData.publicSlug}.khabiteq.com
+            https://{formik.values.publicSlug}.khabiteq.com
           </a>
         ) : (
           <p className="text-emerald-600">https://your-name.khabiteq.com</p>
@@ -351,13 +393,7 @@ function Step0PublicLink({
   );
 }
 
-function Step1Design({
-  formData,
-  onChange,
-}: {
-  formData: DealSiteSettings;
-  onChange: (field: keyof DealSiteSettings, value: any) => void;
-}) {
+function Step1Design({ formik }: { formik: any }) {
   return (
     <div className="space-y-6">
       <div>
@@ -371,23 +407,33 @@ function Step1Design({
         <label className="block text-sm font-medium text-gray-700 mb-2">Page Title *</label>
         <input
           type="text"
-          value={formData.title}
-          onChange={(e) => onChange("title", e.target.value)}
+          name="title"
+          value={formik.values.title}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
           placeholder="My Real Estate Business"
           className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
         />
+        {formik.touched.title && formik.errors.title && (
+          <p className="mt-1 text-sm text-red-600">{formik.errors.title}</p>
+        )}
         <p className="text-xs text-gray-500 mt-1">This is how your page appears to search engines and visitors</p>
       </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Description *</label>
         <textarea
-          value={formData.description}
-          onChange={(e) => onChange("description", e.target.value)}
+          name="description"
+          value={formik.values.description}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
           placeholder="Tell visitors about your business, services, and why they should choose you..."
           rows={4}
           className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
         />
+        {formik.touched.description && formik.errors.description && (
+          <p className="mt-1 text-sm text-red-600">{formik.errors.description}</p>
+        )}
         <p className="text-xs text-gray-500 mt-1">Keep it concise and engaging</p>
       </div>
 
@@ -400,13 +446,7 @@ function Step1Design({
   );
 }
 
-function Step2Payment({
-  formData,
-  onChange,
-}: {
-  formData: DealSiteSettings;
-  onChange: (field: keyof DealSiteSettings, value: any) => void;
-}) {
+function Step2Payment({ formik }: { formik: any }) {
   const [banks, setBanks] = useState<Bank[]>([]);
   const [filteredBanks, setFilteredBanks] = useState<Bank[]>([]);
   const [bankSearch, setBankSearch] = useState("");
@@ -468,12 +508,17 @@ function Step2Payment({
 
   // Handle bank selection
   const selectBank = (bank: Bank) => {
-    onChange("paymentDetails", {
-      ...formData.paymentDetails,
+    formik.setFieldValue("paymentDetails", {
+      ...formik.values.paymentDetails,
       sortCode: bank.code,
     });
     setBankSearch(bank.name);
     setShowBankDropdown(false);
+  };
+
+  // Handle settlement bank field focus
+  const handleBankFieldFocus = () => {
+    setShowBankDropdown(true);
   };
 
   return (
@@ -490,30 +535,40 @@ function Step2Payment({
           <label className="block text-sm font-medium text-gray-700 mb-2">Business Name *</label>
           <input
             type="text"
-            value={formData.paymentDetails?.businessName || ""}
+            name="paymentDetails.businessName"
+            value={formik.values.paymentDetails?.businessName || ""}
             onChange={(e) =>
-              onChange("paymentDetails", {
-                ...formData.paymentDetails,
+              formik.setFieldValue("paymentDetails", {
+                ...formik.values.paymentDetails,
                 businessName: e.target.value,
               })
             }
+            onBlur={formik.handleBlur}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
           />
+          {formik.touched.paymentDetails?.businessName && formik.errors.paymentDetails?.businessName && (
+            <p className="mt-1 text-sm text-red-600">{formik.errors.paymentDetails.businessName}</p>
+          )}
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Account Number *</label>
           <input
             type="text"
-            value={formData.paymentDetails?.accountNumber || ""}
+            name="paymentDetails.accountNumber"
+            value={formik.values.paymentDetails?.accountNumber || ""}
             onChange={(e) =>
-              onChange("paymentDetails", {
-                ...formData.paymentDetails,
+              formik.setFieldValue("paymentDetails", {
+                ...formik.values.paymentDetails,
                 accountNumber: e.target.value,
               })
             }
+            onBlur={formik.handleBlur}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
           />
+          {formik.touched.paymentDetails?.accountNumber && formik.errors.paymentDetails?.accountNumber && (
+            <p className="mt-1 text-sm text-red-600">{formik.errors.paymentDetails.accountNumber}</p>
+          )}
         </div>
       </div>
 
@@ -523,12 +578,14 @@ function Step2Payment({
           <div
             className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200 cursor-pointer bg-white flex items-center justify-between"
             onClick={() => setShowBankDropdown(!showBankDropdown)}
+            onFocus={handleBankFieldFocus}
           >
             <input
               type="text"
               placeholder="Search banks..."
               value={bankSearch}
               onChange={(e) => handleBankSearch(e.target.value)}
+              onFocus={handleBankFieldFocus}
               onClick={(e) => e.stopPropagation()}
               className="flex-1 outline-none bg-transparent"
             />
@@ -555,6 +612,9 @@ function Step2Payment({
               )}
             </div>
           )}
+          {formik.touched.paymentDetails?.sortCode && formik.errors.paymentDetails?.sortCode && (
+            <p className="mt-2 text-sm text-red-600">{formik.errors.paymentDetails.sortCode}</p>
+          )}
         </div>
       </div>
 
@@ -563,13 +623,15 @@ function Step2Payment({
         <p className="text-xs text-gray-500 mb-2">Auto-filled when you select a bank</p>
         <input
           type="text"
-          value={formData.paymentDetails?.sortCode || ""}
+          name="paymentDetails.sortCode"
+          value={formik.values.paymentDetails?.sortCode || ""}
           onChange={(e) =>
-            onChange("paymentDetails", {
-              ...formData.paymentDetails,
+            formik.setFieldValue("paymentDetails", {
+              ...formik.values.paymentDetails,
               sortCode: e.target.value,
             })
           }
+          onBlur={formik.handleBlur}
           placeholder="e.g., 058"
           className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
         />
@@ -583,30 +645,40 @@ function Step2Payment({
             <label className="block text-sm font-medium text-gray-700 mb-2">Contact Name *</label>
             <input
               type="text"
-              value={formData.paymentDetails?.primaryContactName || ""}
+              name="paymentDetails.primaryContactName"
+              value={formik.values.paymentDetails?.primaryContactName || ""}
               onChange={(e) =>
-                onChange("paymentDetails", {
-                  ...formData.paymentDetails,
+                formik.setFieldValue("paymentDetails", {
+                  ...formik.values.paymentDetails,
                   primaryContactName: e.target.value,
                 })
               }
+              onBlur={formik.handleBlur}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
             />
+            {formik.touched.paymentDetails?.primaryContactName && formik.errors.paymentDetails?.primaryContactName && (
+              <p className="mt-1 text-sm text-red-600">{formik.errors.paymentDetails.primaryContactName}</p>
+            )}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
             <input
               type="email"
-              value={formData.paymentDetails?.primaryContactEmail || ""}
+              name="paymentDetails.primaryContactEmail"
+              value={formik.values.paymentDetails?.primaryContactEmail || ""}
               onChange={(e) =>
-                onChange("paymentDetails", {
-                  ...formData.paymentDetails,
+                formik.setFieldValue("paymentDetails", {
+                  ...formik.values.paymentDetails,
                   primaryContactEmail: e.target.value,
                 })
               }
+              onBlur={formik.handleBlur}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
             />
+            {formik.touched.paymentDetails?.primaryContactEmail && formik.errors.paymentDetails?.primaryContactEmail && (
+              <p className="mt-1 text-sm text-red-600">{formik.errors.paymentDetails.primaryContactEmail}</p>
+            )}
           </div>
         </div>
 
@@ -614,15 +686,20 @@ function Step2Payment({
           <label className="block text-sm font-medium text-gray-700 mb-2">Phone *</label>
           <input
             type="tel"
-            value={formData.paymentDetails?.primaryContactPhone || ""}
+            name="paymentDetails.primaryContactPhone"
+            value={formik.values.paymentDetails?.primaryContactPhone || ""}
             onChange={(e) =>
-              onChange("paymentDetails", {
-                ...formData.paymentDetails,
+              formik.setFieldValue("paymentDetails", {
+                ...formik.values.paymentDetails,
                 primaryContactPhone: e.target.value,
               })
             }
+            onBlur={formik.handleBlur}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
           />
+          {formik.touched.paymentDetails?.primaryContactPhone && formik.errors.paymentDetails?.primaryContactPhone && (
+            <p className="mt-1 text-sm text-red-600">{formik.errors.paymentDetails.primaryContactPhone}</p>
+          )}
         </div>
       </div>
 
@@ -635,7 +712,7 @@ function Step2Payment({
   );
 }
 
-function Step3Review({ formData }: { formData: DealSiteSettings }) {
+function Step3Review({ formik }: { formik: any }) {
   return (
     <div className="space-y-6">
       <div>
@@ -649,7 +726,7 @@ function Step3Review({ formData }: { formData: DealSiteSettings }) {
       <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-200">
         <h3 className="font-semibold text-emerald-900 mb-2">Your Public Page</h3>
         <p className="text-emerald-700 font-medium break-all">
-          https://{formData.publicSlug}.khabiteq.com
+          https://{formik.values.publicSlug}.khabiteq.com
         </p>
       </div>
 
@@ -659,11 +736,11 @@ function Step3Review({ formData }: { formData: DealSiteSettings }) {
         <div className="space-y-3 text-sm">
           <div>
             <p className="text-gray-600 font-medium">Title</p>
-            <p className="text-gray-900">{formData.title}</p>
+            <p className="text-gray-900">{formik.values.title}</p>
           </div>
           <div>
             <p className="text-gray-600 font-medium">Description</p>
-            <p className="text-gray-900">{formData.description}</p>
+            <p className="text-gray-900">{formik.values.description}</p>
           </div>
         </div>
       </div>
@@ -674,15 +751,15 @@ function Step3Review({ formData }: { formData: DealSiteSettings }) {
         <div className="space-y-3 text-sm">
           <div>
             <p className="text-gray-600 font-medium">Business Name</p>
-            <p className="text-gray-900">{formData.paymentDetails?.businessName}</p>
+            <p className="text-gray-900">{formik.values.paymentDetails?.businessName}</p>
           </div>
           <div>
             <p className="text-gray-600 font-medium">Account Number</p>
-            <p className="text-gray-900">****{formData.paymentDetails?.accountNumber?.slice(-4)}</p>
+            <p className="text-gray-900">****{formik.values.paymentDetails?.accountNumber?.slice(-4)}</p>
           </div>
           <div>
             <p className="text-gray-600 font-medium">Settlement Bank</p>
-            <p className="text-gray-900">{formData.paymentDetails?.sortCode || "Not specified"}</p>
+            <p className="text-gray-900">{formik.values.paymentDetails?.sortCode || "Not specified"}</p>
           </div>
         </div>
       </div>
@@ -693,15 +770,15 @@ function Step3Review({ formData }: { formData: DealSiteSettings }) {
         <div className="space-y-3 text-sm">
           <div>
             <p className="text-gray-600 font-medium">Contact Name</p>
-            <p className="text-gray-900">{formData.paymentDetails?.primaryContactName}</p>
+            <p className="text-gray-900">{formik.values.paymentDetails?.primaryContactName}</p>
           </div>
           <div>
             <p className="text-gray-600 font-medium">Email</p>
-            <p className="text-gray-900">{formData.paymentDetails?.primaryContactEmail}</p>
+            <p className="text-gray-900">{formik.values.paymentDetails?.primaryContactEmail}</p>
           </div>
           <div>
             <p className="text-gray-600 font-medium">Phone</p>
-            <p className="text-gray-900">{formData.paymentDetails?.primaryContactPhone}</p>
+            <p className="text-gray-900">{formik.values.paymentDetails?.primaryContactPhone}</p>
           </div>
         </div>
       </div>
