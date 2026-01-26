@@ -54,7 +54,7 @@ const SimpleMarketplace = () => {
       console.log('Response:', response);
       
       if (response?.success && response?.data) {
-        setProperties(response.data);
+        setProperties((response.data as any) || []);
       } else {
         setError('Failed to load properties');
       }

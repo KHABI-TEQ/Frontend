@@ -1145,7 +1145,7 @@ export const useNegotiationDataWithContext = (
         );
 
         if (response.success) {
-          const data: PotentialClientData = response.data;
+          const data: PotentialClientData = response.data as any;
 
           // Use the new initialization method
           actions.initializeFromExternalData(data, userRole);

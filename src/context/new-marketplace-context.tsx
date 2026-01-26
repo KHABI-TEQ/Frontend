@@ -578,17 +578,19 @@ export const NewMarketplaceProvider: React.FC<{
         const pagination = response?.pagination || {};
 
         // Update all states at once to avoid multiple re-renders
+        const respData = responseData as any || [];
+        const paginationData = pagination as any || {};
         updateTabState(tab, (state) => ({
           ...state,
-          properties: responseData,
-          totalPages: pagination.totalPages || 1,
-          totalItems: pagination.total || responseData.length,
-          currentPage: pagination.currentPage || searchParams.page || state.currentPage,
+          properties: respData,
+          totalPages: paginationData.totalPages || 1,
+          totalItems: paginationData.total || (respData?.length || 0),
+          currentPage: paginationData.currentPage || searchParams.page || state.currentPage,
           formikStatus: "success" as const,
           errMessage: "",
           searchStatus: {
             status: "success" as const,
-            couldNotFindAProperty: responseData.length === 0,
+            couldNotFindAProperty: respData?.length === 0,
           },
         }));
       } catch (err: any) {
