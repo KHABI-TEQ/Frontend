@@ -221,12 +221,12 @@ const Setup = () => {
     }
   };
 
-  const steps = [
+  const steps: { label: string; status: "completed" | "active" | "pending" }[] = [
     { label: "Public Link", status: step > 0 ? "completed" : "active" },
     { label: "Design", status: step > 1 ? "completed" : step === 1 ? "active" : "pending" },
     { label: "Payment", status: step > 2 ? "completed" : step === 2 ? "active" : "pending" },
     { label: "Review", status: step === 3 ? "active" : "pending" },
-  ] as const;
+  ];
 
   return (
     <div className="min-h-screen bg-[#EEF1F1] py-12 px-4">
