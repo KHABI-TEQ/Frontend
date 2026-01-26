@@ -180,7 +180,7 @@ export default function HomePageSettings() {
       if (res?.success && res.data?.url) {
         setFormData((prev) => ({
           ...prev,
-          heroImageUrl: res.data.url,
+          heroImageUrl: (res.data as any)?.url || "",
         }));
         toast.success("Hero image uploaded successfully");
       } else {
