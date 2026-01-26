@@ -322,13 +322,11 @@ const Setup = () => {
 
 // Step Components
 function Step0PublicLink({
-  formData,
-  onSlugChange,
+  formik,
   slugStatus,
   slugMessage,
 }: {
-  formData: DealSiteSettings;
-  onSlugChange: (slug: string) => void;
+  formik: any;
   slugStatus: string;
   slugMessage: string;
 }) {
@@ -347,8 +345,10 @@ function Step0PublicLink({
           <span className="px-4 py-2 bg-gray-100 text-gray-600 font-medium">https://</span>
           <input
             type="text"
-            value={formData.publicSlug}
-            onChange={(e) => onSlugChange(e.target.value.toLowerCase())}
+            name="publicSlug"
+            value={formik.values.publicSlug}
+            onChange={(e) => formik.setFieldValue("publicSlug", e.target.value.toLowerCase())}
+            onBlur={formik.handleBlur}
             placeholder="your-name"
             className="flex-1 px-4 py-2 outline-none text-lg"
           />
@@ -369,18 +369,21 @@ function Step0PublicLink({
             {slugMessage}
           </div>
         )}
+        {formik.touched.publicSlug && formik.errors.publicSlug && (
+          <p className="mt-2 text-sm text-red-600">{formik.errors.publicSlug}</p>
+        )}
       </div>
 
       <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
         <h3 className="font-semibold text-emerald-900 mb-2">Preview:</h3>
-        {formData.publicSlug ? (
+        {formik.values.publicSlug ? (
           <a
-            href={`https://${formData.publicSlug}.khabiteq.com`}
+            href={`https://${formik.values.publicSlug}.khabiteq.com`}
             target="_blank"
             rel="noreferrer"
             className="text-emerald-600 hover:underline break-all"
           >
-            https://{formData.publicSlug}.khabiteq.com
+            https://{formik.values.publicSlug}.khabiteq.com
           </a>
         ) : (
           <p className="text-emerald-600">https://your-name.khabiteq.com</p>
