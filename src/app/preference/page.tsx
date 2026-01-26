@@ -480,6 +480,8 @@ const PreferenceFormContent: React.FC = () => {
             propertyCondition: buyData.propertyDetails?.propertyCondition || "",
             purpose: buyData.propertyDetails?.purpose || "For living",
             landSize: buyData.propertyDetails?.landSize || "",
+            minLandSize: buyData.propertyDetails?.minLandSize || "",
+            maxLandSize: buyData.propertyDetails?.maxLandSize || "",
             measurementUnit: buyData.propertyDetails?.measurementUnit || "",
             documentTypes:
               buyData.propertyDetails?.documentTypes?.filter(
@@ -530,6 +532,8 @@ const PreferenceFormContent: React.FC = () => {
               rentData.propertyDetails?.propertyCondition || "",
             purpose: rentData.propertyDetails?.purpose || "Residential",
             landSize: rentData.propertyDetails?.landSize || "",
+            minLandSize: rentData.propertyDetails?.minLandSize || "",
+            maxLandSize: rentData.propertyDetails?.maxLandSize || "",
             measurementUnit: rentData.propertyDetails?.measurementUnit || "",
             documentTypes:
               rentData.propertyDetails?.documentTypes?.filter(
@@ -641,6 +645,8 @@ const PreferenceFormContent: React.FC = () => {
             ).trim(),
             purpose: (shortletData.propertyDetails?.purpose || "").trim(),
             landSize: (shortletData.propertyDetails?.landSize || "").trim(),
+            minLandSize: (shortletData.propertyDetails?.minLandSize || "").trim(),
+            maxLandSize: (shortletData.propertyDetails?.maxLandSize || "").trim(),
             measurementUnit: (
               shortletData.propertyDetails?.measurementUnit || ""
             ).trim(),
