@@ -117,7 +117,7 @@ export default function FeaturedPage() {
 
   return (
     <div className="space-y-8">
-      <OverlayPreloader visible={isSaving} message="Saving featured listings..." />
+      <OverlayPreloader isVisible={isSaving} message="Saving featured listings..." />
 
       <div>
         <h1 className="text-3xl font-bold text-[#09391C] flex items-center gap-3">
