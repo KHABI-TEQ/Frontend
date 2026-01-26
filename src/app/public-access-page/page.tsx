@@ -40,6 +40,17 @@ export default function OverviewPage() {
     isLoading?: boolean;
   }>({ isOpen: false });
 
+  // Check if all required fields are set for playing the page
+  const isPageConfigured = (): boolean => {
+    return !!(
+      settings.logoUrl &&
+      settings.title &&
+      settings.description &&
+      settings.footer?.shortDescription &&
+      settings.footer?.copyrightText
+    );
+  };
+
   const fetchAnalytics = useCallback(async () => {
     try {
       const token = Cookies.get("token");
