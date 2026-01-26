@@ -69,7 +69,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
       );
 
       if (response?.success && response?.data) {
-        setNotifications(response.data);
+        setNotifications((response.data as any) || []);
       } 
     } catch (error) {
       console.error("Error fetching notifications:", error);

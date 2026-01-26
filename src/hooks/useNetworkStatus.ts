@@ -52,7 +52,7 @@ export const useNetworkStatus = (): NetworkStatus => {
 
           setNetworkStatus((prev) => ({
             ...prev,
-            isSlowConnection,
+            isSlowConnection: isSlowConnection || false,
             connectionType: connection.effectiveType || "unknown",
           }));
         }
