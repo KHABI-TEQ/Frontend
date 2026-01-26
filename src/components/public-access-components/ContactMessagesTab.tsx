@@ -73,15 +73,15 @@ const ContactMessagesTab: React.FC = () => {
         url += `&search=${encodeURIComponent(searchTerm)}`;
       }
 
-      const res = await GET_REQUEST<ApiResponse>(url, token);
+      const res = await GET_REQUEST<ContactMessage[]>(url, token);
 
       if (res?.success && res.data) {
         setMessages(res.data);
         if (res.pagination) {
           setPagination({
-            total: res.pagination.total,
-            pages: res.pagination.pages,
-            limit: res.pagination.limit,
+            total: (res.pagination as any).total,
+            pages: (res.pagination as any).pages,
+            limit: (res.pagination as any).limit,
           });
         }
       } else {
@@ -156,7 +156,7 @@ const ContactMessagesTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <OverlayPreloader visible={isDeleting} message="Deleting..." />
+      <OverlayPreloader isVisible={isDeleting} message="Deleting..." />
 
       {/* Header */}
       <div className="flex items-center justify-between gap-4">

@@ -62,15 +62,15 @@ const SubscribersTab: React.FC = () => {
         url += `&search=${encodeURIComponent(searchTerm)}`;
       }
 
-      const res = await GET_REQUEST<ApiResponse>(url, token);
+      const res = await GET_REQUEST<Subscriber[]>(url, token);
 
       if (res?.success && res.data) {
         setSubscribers(res.data);
         if (res.pagination) {
           setPagination({
-            total: res.pagination.total,
-            pages: res.pagination.pages,
-            limit: res.pagination.limit,
+            total: (res.pagination as any).total,
+            pages: (res.pagination as any).pages,
+            limit: (res.pagination as any).limit,
           });
         }
       } else {
@@ -181,7 +181,7 @@ const SubscribersTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <OverlayPreloader visible={isDeleting || isExporting} message={isExporting ? "Exporting..." : "Deleting..."} />
+      <OverlayPreloader isVisible={isDeleting || isExporting} message={isExporting ? "Exporting..." : "Deleting..."} />
 
       {/* Header */}
       <div className="flex items-center justify-between gap-4">

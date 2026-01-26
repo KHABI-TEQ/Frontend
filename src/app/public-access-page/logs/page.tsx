@@ -119,7 +119,7 @@ export default function LogsPage() {
 
   return (
     <div className="space-y-8">
-      <OverlayPreloader visible={loading} message="Loading logs..." />
+      <OverlayPreloader isVisible={loading} message="Loading logs..." />
 
       <div>
         <h1 className="text-3xl font-bold text-[#09391C] flex items-center gap-3">
