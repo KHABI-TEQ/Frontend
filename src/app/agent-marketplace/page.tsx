@@ -169,9 +169,9 @@ const AgentMarketplace = () => {
           setPreferences(response.data);
           
           // Set pagination info from backend response
-          if (response.pagination) {
-            setTotalPages(response.pagination.pages || 1);
-            setTotalItems(response.pagination.total || response.data.length);
+          if (response.pagination as any) {
+            setTotalPages((response.pagination as any).pages || 1);
+            setTotalItems((response.pagination as any).total || response.data.length);
           } else {
             setTotalPages(1);
             setTotalItems(response.data.length);
