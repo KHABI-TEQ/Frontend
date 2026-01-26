@@ -4,7 +4,7 @@
  */
 
 "use client";
-
+ 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import Cookies from "js-cookie";
 import { GET_REQUEST } from "@/utils/requests";
@@ -31,13 +31,7 @@ export interface ContactVisibility {
 export interface FeatureSelection {
   mode: "auto" | "manual";
   propertyIds: string;
-}
-
-export interface MarketplaceDefaults {
-  defaultTab: "buy" | "rent" | "shortlet" | "jv";
-  defaultSort: "newest" | "price-asc" | "price-desc";
-  showVerifiedOnly: boolean;
-  enablePriceNegotiationButton: boolean;
+  featuredListings: string[];
 }
 
 export interface PublicPageDesign {
@@ -45,31 +39,19 @@ export interface PublicPageDesign {
   heroSubtitle: string;
   ctaText: string;
   ctaLink: string;
+  ctaText2: string;
+  ctaLink2: string;
   heroImageUrl?: string;
 }
 
 export interface InspectionDesignSettings {
-  allowPublicBooking: boolean;
   defaultInspectionFee: number | "";
-  inspectionStatus?: string;
-  negotiationEnabled?: boolean;
 }
 
 export interface AboutHeroCta {
   text?: string;
   link?: string;
   style?: string;
-}
-
-export interface AboutHero {
-  title?: string;
-  subTitle?: string;
-  description?: string;
-  backgroundImage?: string;
-  backgroundVideo?: string | null;
-  mobileFallbackImage?: string;
-  overlayColor?: string;
-  cta?: AboutHeroCta;
 }
 
 export interface AboutWhoWeAre {
@@ -129,95 +111,7 @@ export interface AboutProfile {
   members?: AboutTeamMember[];
 }
 
-export interface AboutIdentity {
-  headline?: string;
-  content?: string;
-  keyHighlights?: string[];
-}
-
-export interface AboutMissionVisionItem {
-  title?: string;
-  description?: string;
-}
-
-export interface AboutMissionVision {
-  title?: string;
-  items?: AboutMissionVisionItem[];
-  backgroundImage?: string;
-}
-
-export interface AboutValuesItem {
-  icon?: string;
-  title?: string;
-  description?: string;
-}
-
-export interface AboutValues {
-  title?: string;
-  description?: string;
-  items?: AboutValuesItem[];
-}
-
-export interface AboutJourneyItem {
-  year?: string;
-  title?: string;
-  description?: string;
-}
-
-export interface AboutJourney {
-  title?: string;
-  timeline?: AboutJourneyItem[];
-}
-
-export interface AboutLeadershipMember {
-  name?: string;
-  role?: string;
-  image?: string;
-  quote?: string;
-}
-
-export interface AboutLeadership {
-  title?: string;
-  subTitle?: string;
-  members?: AboutLeadershipMember[];
-}
-
-export interface AboutStatItem {
-  label?: string;
-  value?: string;
-}
-
-export interface AboutStats {
-  title?: string;
-  subTitle?: string;
-  backgroundColor?: string;
-  items?: AboutStatItem[];
-}
-
-export interface AboutPartners {
-  title?: string;
-  subTitle?: string;
-  logos?: string[];
-}
-
-export interface AboutTestimonials {
-  showFromHome?: boolean;
-  limit?: number;
-  title?: string;
-  layout?: string;
-}
-
-export interface AboutCtaSection {
-  title?: string;
-  subTitle?: string;
-  buttonText?: string;
-  link?: string;
-  backgroundGradient?: string;
-}
-
 export interface AboutSection {
-  hero?: AboutHero;
-  identity?: AboutIdentity;
   whoWeAre?: AboutWhoWeAre;
   ourMission?: AboutOurMission;
   ourExperience?: AboutOurExperience;
@@ -225,45 +119,16 @@ export interface AboutSection {
   whatWeDo?: AboutWhatWeDo;
   whereWeOperate?: AboutWhereWeOperate;
   profile?: AboutProfile;
-  missionVision?: AboutMissionVision;
-  values?: AboutValues;
-  journey?: AboutJourney;
-  leadership?: AboutLeadership;
-  stats?: AboutStats;
-  partners?: AboutPartners;
-  testimonials?: AboutTestimonials;
-  cta?: AboutCtaSection;
 }
 
 export interface ContactUsSection {
-  hero?: {
-    title?: string;
-    subTitle?: string;
-    description?: string;
-    backgroundImage?: string | null;
-    backgroundVideo?: string | null;
-    overlayColor?: string;
-    cta?: { text?: string; link?: string; style?: string };
+  title?: string;
+  description?: string;
+  location?: {
+    name?: string;
+    address?: string;
+    coordinates?: [number | string, number | string]
   };
-  contactInfo?: {
-    title?: string;
-    subTitle?: string;
-    items?: { icon?: string; label?: string; value?: string }[];
-  };
-  mapSection?: {
-    title?: string;
-    subTitle?: string;
-    locations?: { city?: string; address?: string; coordinates?: [number | string, number | string] }[];
-  };
-  cta?: {
-    title?: string;
-    subTitle?: string;
-    buttonText?: string;
-    link?: string;
-    backgroundGradient?: string;
-  };
-  officeHours?: string;
-  faqs?: { question: string; answer: string }[];
 }
 
 export interface Testimonial {
@@ -287,23 +152,20 @@ export interface HomeSettings {
     subTitle?: string;
     items: Array<{ icon?: string; title: string; content: string }>;
   };
-  readyToFind?: {
-    title?: string;
-    subTitle?: string;
-    ctas?: Array<{ bgColor: string; text: string; actionLink: string }>;
-    items?: Array<{ icon?: string; title: string; subTitle: string; content: string }>;
-  };
+  support?: SupportSection;
 }
 
 export interface SubscribeSettings {
   title?: string;
   subTitle?: string;
   miniTitle?: string;
-  backgroundColor?: string;
   cta?: {
     text?: string;
     color?: string;
   };
+  enableEmailSubscription?: boolean;
+  subscriptionPlaceholder?: string;
+  confirmationMessage?: string;
 }
 
 export interface FooterDetails {
@@ -320,35 +182,38 @@ export interface BankDetails {
   primaryContactPhone?: string;
 }
 
-export interface SecuritySettings {
-  enablePasswordProtection?: boolean;
-  pagePassword?: string;
-  enableRateLimiting?: boolean;
-  enableSpamFilter?: boolean;
-  requireEmailVerification?: boolean;
+export interface SupportSection {
+  title: string;
+  description: string;
+  showHeroCtaButtons: boolean;
+  supportCards: Array<{
+    cardTitle: string;
+    cardIcon: string;
+    description: string;
+    ctaText: string;
+    ctaLink: string;
+  }>;
 }
 
 export interface DealSiteSettings {
+  _id?: string;
   publicSlug: string;
   title: string;
   keywords: string[];
   description: string;
   logoUrl?: string;
   theme: { primaryColor: string; secondaryColor: string };
-  inspectionSettings: InspectionDesignSettings;
-  listingsLimit: number;
-  socialLinks: SocialLinks;
-  contactVisibility: ContactVisibility;
-  featureSelection: FeatureSelection;
-  marketplaceDefaults: MarketplaceDefaults;
   publicPage: PublicPageDesign;
-  footer?: FooterDetails;
-  about?: AboutSection;
-  contactUs?: ContactUsSection;
-  paymentDetails?: BankDetails;
   homeSettings?: HomeSettings;
+  footer?: FooterDetails;
+  featureSelection: FeatureSelection;
+  socialLinks: SocialLinks;
+  about?: AboutSection;
+  inspectionSettings: InspectionDesignSettings;
+  contactVisibility: ContactVisibility;
+  contactUs?: ContactUsSection;
   subscribeSettings?: SubscribeSettings;
-  securitySettings?: SecuritySettings;
+  paymentDetails?: BankDetails;
   status?: string;
 }
 
@@ -362,6 +227,7 @@ interface DealSiteContextType {
   isPaused: boolean;
   isOnHold: boolean;
   slugLocked: boolean;
+  dealSiteStatus: "pending" | "running" | "paused" | "on-hold" | "deleted" | null;
 
   // Loading state
   isLoading: boolean;
@@ -388,14 +254,22 @@ const DEFAULT_SETTINGS: DealSiteSettings = {
   description: "",
   logoUrl: "",
   theme: { primaryColor: "#09391C", secondaryColor: "#8DDB90" },
-  inspectionSettings: {
-    allowPublicBooking: true,
-    defaultInspectionFee: 0,
-    inspectionStatus: "optional",
-    negotiationEnabled: true,
+  publicPage: {
+    heroTitle: "Hi, I'm your trusted agent",
+    heroSubtitle: "Browse my verified listings and book inspections easily.",
+    ctaText: "Tell Us about property you want",
+    ctaLink: "/market-place",
+    ctaText2: "Browse Listings",
+    ctaLink2: "/market-place",
+    heroImageUrl: "",
   },
-  listingsLimit: 6,
+  homeSettings: {},
+  footer: { shortDescription: "", copyrightText: "" },
+  featureSelection: { mode: "auto", propertyIds: "", featuredListings: [] },
   socialLinks: {},
+  inspectionSettings: {
+    defaultInspectionFee: 0,
+  },
   contactVisibility: {
     showEmail: true,
     showPhone: true,
@@ -403,32 +277,10 @@ const DEFAULT_SETTINGS: DealSiteSettings = {
     showWhatsAppButton: false,
     whatsappNumber: "",
   },
-  featureSelection: { mode: "auto", propertyIds: "" },
-  marketplaceDefaults: {
-    defaultTab: "buy",
-    defaultSort: "newest",
-    showVerifiedOnly: false,
-    enablePriceNegotiationButton: true,
-  },
-  publicPage: {
-    heroTitle: "Hi, I'm your trusted agent",
-    heroSubtitle: "Browse my verified listings and book inspections easily.",
-    ctaText: "Browse Listings",
-    ctaLink: "/market-place",
-    heroImageUrl: "",
-  },
-  footer: { shortDescription: "", copyrightText: "" },
   paymentDetails: {},
   about: {},
   contactUs: {},
-  homeSettings: {},
   subscribeSettings: {},
-  securitySettings: {
-    enablePasswordProtection: false,
-    enableRateLimiting: true,
-    enableSpamFilter: true,
-    requireEmailVerification: false,
-  },
 };
 
 export function DealSiteProvider({ children }: { children: ReactNode }) {
@@ -438,6 +290,7 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
   const [isPaused, setIsPaused] = useState(false);
   const [isOnHold, setIsOnHold] = useState(false);
   const [slugLocked, setSlugLocked] = useState(false);
+  const [dealSiteStatus, setDealSiteStatus] = useState<"pending" | "running" | "paused" | "on-hold" | "deleted" | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -464,6 +317,7 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
         if (data) {
           setSettings((prev) => ({
             ...prev,
+            _id: data._id || prev._id,
             publicSlug: data.publicSlug || prev.publicSlug,
             title: data.title || prev.title,
             keywords: data.keywords || prev.keywords,
@@ -471,11 +325,9 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
             logoUrl: data.logoUrl || prev.logoUrl,
             theme: data.theme || prev.theme,
             inspectionSettings: data.inspectionSettings || prev.inspectionSettings,
-            listingsLimit: data.listingsLimit || prev.listingsLimit,
             socialLinks: data.socialLinks || prev.socialLinks,
             contactVisibility: data.contactVisibility || prev.contactVisibility,
             featureSelection: data.featureSelection || prev.featureSelection,
-            marketplaceDefaults: data.marketplaceDefaults || prev.marketplaceDefaults,
             publicPage: data.publicPage || prev.publicPage,
             footer: data.footer || prev.footer,
             paymentDetails: data.paymentDetails || prev.paymentDetails,
@@ -483,11 +335,15 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
             contactUs: data.contactUs || prev.contactUs,
             homeSettings: data.homeSettings || prev.homeSettings,
             subscribeSettings: data.subscribeSettings || prev.subscribeSettings,
-            securitySettings: data.securitySettings || prev.securitySettings,
+            status: data.status || prev.status,
           }));
           if (data.publicSlug) setSlugLocked(true);
-          if (data.paused) setIsPaused(true);
-          if (data.status === "on-hold") setIsOnHold(true);
+          if (data.status) {
+            setDealSiteStatus(data.status);
+            if (data.status === "on-hold") setIsOnHold(true);
+            if (data.status === "paused") setIsPaused(true);
+            if (data.status === "running") setIsPaused(false);
+          }
           setIsSetupComplete(!!data.publicSlug);
         }
       }
@@ -519,6 +375,7 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
     setSlugLocked(true);
     setIsSetupComplete(true);
     setIsPaused(true);
+    setDealSiteStatus("paused");
   }, []);
 
   const pauseDealSite = useCallback(async () => {
@@ -579,6 +436,7 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
     isPaused,
     isOnHold,
     slugLocked,
+    dealSiteStatus,
     isLoading,
     isSaving,
     previewUrl,

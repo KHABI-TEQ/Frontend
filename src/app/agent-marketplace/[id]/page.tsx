@@ -125,7 +125,7 @@ const PreferenceDetailPage = () => {
         const response = await GET_REQUEST(url, token);
 
         if (response?.success && response?.data) {
-          setPreference(response.data);
+          setPreference(response.data as Preference);
         } else {
           toast.error("Failed to load preference details")
           setError(response?.message || 'Failed to load preference details');

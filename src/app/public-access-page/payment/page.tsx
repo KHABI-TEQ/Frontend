@@ -6,9 +6,12 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
+import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import { Save, DollarSign, Lock } from "lucide-react";
 import { useDealSite } from "@/context/deal-site-context";
+import { POST_REQUEST } from "@/utils/requests";
+import { URLS } from "@/utils/URLS";
 
 export default function PaymentPage() {
   const { settings, updateSettings } = useDealSite();
@@ -26,9 +29,24 @@ export default function PaymentPage() {
 
     setSaving(true);
     try {
-      // Save logic will be implemented in context
-      toast.success("Payment details saved successfully");
+      const token = Cookies.get("token");
+      const payload = {
+        paymentDetails: settings.paymentDetails,
+      };
+
+      const res = await POST_REQUEST(
+        `${URLS.BASE}${URLS.dealSiteUpdate}`,
+        payload,
+        token
+      );
+
+      if (res?.success) {
+        toast.success("Payment details saved successfully");
+      } else {
+        toast.error(res?.message || "Failed to save payment details");
+      }
     } catch (error) {
+      console.error("Failed to save payment details:", error);
       toast.error("Failed to save payment details");
     } finally {
       setSaving(false);

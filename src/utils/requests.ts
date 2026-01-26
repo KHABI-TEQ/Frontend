@@ -166,8 +166,19 @@ export const POST_REQUEST = async <T = unknown>(
   data: unknown,
   token?: string,
   customHeaders?: Record<string, string>,
+  retryCount = 0,
 ): Promise<ApiResponse<T, unknown>> => {
   try {
+    // Check if URL is valid
+    if (!url || url.includes("undefined")) {
+      return {
+        error: "Invalid API URL",
+        success: false,
+        message: "API configuration is missing.",
+        data: null,
+      };
+    }
+
     // Build headers with sensible defaults
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -184,11 +195,18 @@ export const POST_REQUEST = async <T = unknown>(
       delete headers["Content-Type"];
     }
 
+    // Add timeout to prevent hanging requests
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
     const request = await fetch(url, {
       method: "POST",
       headers,
       body: isFormData ? (data as FormData) : JSON.stringify(data),
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
 
     // Read response body safely only once
     const text = await request.text();
@@ -213,12 +231,20 @@ export const POST_REQUEST = async <T = unknown>(
 
     return parsed as ApiResponse<T, unknown>;
   } catch (error: unknown) {
-    // Ensure consistent error objects
-    const e = error as Error;
+    const err = error as Error & { name?: string };
+    const isAbort = err.name === "AbortError";
+    const errorMsg = err.message || (isAbort ? "Request timed out" : "Network error");
+
+    // Retry once for transient network errors
+    if (retryCount === 0 && !isAbort) {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      return POST_REQUEST(url, data, token, customHeaders, 1);
+    }
+
     return {
-      error: e.message || "Network error",
+      error: errorMsg,
       success: false,
-      message: e.message || "Network error",
+      message: errorMsg,
       data: null,
     };
   }
@@ -230,11 +256,15 @@ export const POST_REQUEST_FILE_UPLOAD = async <T = unknown>(
   token?: string,
 ): Promise<ApiResponse<T, unknown>> => {
   try {
+    const headers: Record<string, string> = {};
+
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
     const request = await fetch(url, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers,
       body: data,
     });
     if (!request.ok && request.status === 401) {

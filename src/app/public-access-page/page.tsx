@@ -25,7 +25,7 @@ interface DashboardStats {
 
 export default function OverviewPage() {
   const router = useRouter();
-  const { settings, previewUrl, isPaused, isOnHold, pauseDealSite, resumeDealSite } = useDealSite();
+  const { settings, previewUrl, isPaused, isOnHold, dealSiteStatus, pauseDealSite, resumeDealSite } = useDealSite();
 
   // Analytics state
   const [stats, setStats] = useState<DashboardStats>({ viewsByDay: [] });
@@ -39,6 +39,17 @@ export default function OverviewPage() {
     action?: "pause" | "resume";
     isLoading?: boolean;
   }>({ isOpen: false });
+
+  // Check if all required fields are set for playing the page
+  const isPageConfigured = (): boolean => {
+    return !!(
+      settings.logoUrl &&
+      settings.title &&
+      settings.description &&
+      settings.footer?.shortDescription &&
+      settings.footer?.copyrightText
+    );
+  };
 
   const fetchAnalytics = useCallback(async () => {
     try {
@@ -165,14 +176,78 @@ export default function OverviewPage() {
         <p className="text-gray-600 mt-2">Monitor your public access page performance and activity</p>
       </div>
 
+      {/* Pending Review Banner */}
+      {dealSiteStatus === "pending" && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
+          <div className="flex-1">
+            <h3 className="font-semibold text-amber-900">Public Access Page is Pending Review</h3>
+            <p className="text-sm text-amber-800 mt-1">
+              Your page is currently under review. You can continue customizing your settings, but the page will not be visible to the public until approved.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* On Hold Notification */}
+      {dealSiteStatus === "on-hold" && (
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 flex items-start gap-3">
+          <div className="flex-1">
+            <h3 className="font-semibold text-orange-900">Public Access Page is On Hold</h3>
+            <p className="text-sm text-orange-800 mt-1">
+              Your public access page is currently on hold. Please contact support for more information or to resolve any issues.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Missing Configuration Notification */}
+      {isPaused && !isPageConfigured() && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
+          <div className="flex-1">
+            <h3 className="font-semibold text-amber-900">Setup Incomplete - Cannot Start Page</h3>
+            <p className="text-sm text-amber-800 mt-2">
+              Before you can start your public access page, please configure the following required fields:
+            </p>
+            <ul className="text-sm text-amber-800 mt-2 ml-4 list-disc space-y-1">
+              {!settings.logoUrl && <li>Logo</li>}
+              {!settings.title && <li>Page Title</li>}
+              {!settings.description && <li>Page Description</li>}
+              {!settings.footer?.shortDescription && <li>Footer Short Description</li>}
+              {!settings.footer?.copyrightText && <li>Footer Copyright Text</li>}
+            </ul>
+            <button
+              onClick={() => router.push("/public-access-page/branding")}
+              className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition-all"
+            >
+              <Settings size={16} />
+              Go to Branding Settings
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Status Card */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>
-            <h2 className="text-lg font-semibold text-[#09391C]">
-              Your page is {isPaused ? "paused" : "live"}
-            </h2>
-            {previewUrl && (
+            <div className="flex items-center gap-3 flex-wrap">
+              <h2 className="text-lg font-semibold text-[#09391C]">
+                Your page is {dealSiteStatus === "on-hold" ? "under review" : isPaused ? "paused" : "live"}
+              </h2>
+              {isPaused && (
+                <span className="inline-flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-xs font-medium">
+                  <span className="w-2 h-2 bg-orange-600 rounded-full"></span>
+                  Paused
+                </span>
+              )}
+              {dealSiteStatus === "on-hold" && (
+                <span className="inline-flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-xs font-medium">
+                  <span className="w-2 h-2 bg-orange-600 rounded-full"></span>
+                  On Hold
+                </span>
+              )}
+            </div>
+            {previewUrl && dealSiteStatus !== "pending" && !isPaused && (
               <div className="mt-2 flex items-center gap-2 flex-wrap">
                 <a
                   href={previewUrl}
@@ -192,27 +267,42 @@ export default function OverviewPage() {
                 </button>
               </div>
             )}
+            {isPaused && (
+              <p className="mt-2 text-sm text-gray-600">
+                Your public access page is paused and not visible to visitors. Resume it to make it live again.
+              </p>
+            )}
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            {!isPaused ? (
-              <button
-                onClick={openPauseConfirmation}
-                disabled={isOnHold}
-                className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-              >
-                <Pause size={16} />
-                Pause
-              </button>
-            ) : (
-              <button
-                onClick={openResumeConfirmation}
-                disabled={isOnHold}
-                className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-              >
-                <Play size={16} />
-                Resume
-              </button>
+            {/* Only show pause/resume buttons when status is paused or running */}
+            {(dealSiteStatus === "paused" || dealSiteStatus === "running") && (
+              <>
+                {!isPaused ? (
+                  <button
+                    onClick={openPauseConfirmation}
+                    className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition-all"
+                  >
+                    <Pause size={16} />
+                    Pause
+                  </button>
+                ) : (
+                  <div title={isPageConfigured() ? "" : "Please configure logo, title, description, and footer details before starting"}>
+                    <button
+                      onClick={openResumeConfirmation}
+                      disabled={!isPageConfigured()}
+                      className={`inline-flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-all ${
+                        isPageConfigured()
+                          ? "border-gray-300 hover:bg-gray-50"
+                          : "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
+                      }`}
+                    >
+                      <Play size={16} />
+                      {isPageConfigured() ? "Resume" : "Resume (Incomplete)"}
+                    </button>
+                  </div>
+                )}
+              </>
             )}
 
             <button
@@ -240,8 +330,22 @@ export default function OverviewPage() {
         />
         <StatCard
           title="Status"
-          value={isPaused ? "Paused" : "Live"}
-          icon={isPaused ? "⏸️" : "✅"}
+          value={
+            dealSiteStatus === "pending"
+              ? "Pending Review"
+              : dealSiteStatus === "on-hold"
+              ? "Under Review"
+              : isPaused
+              ? "Paused"
+              : "Live"
+          }
+          icon={
+            dealSiteStatus === "pending" || dealSiteStatus === "on-hold"
+              ? "⏳"
+              : isPaused
+              ? "⏸️"
+              : "✅"
+          }
         />
       </div>
 

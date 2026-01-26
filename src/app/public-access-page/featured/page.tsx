@@ -80,16 +80,16 @@ export default function FeaturedPage() {
     try {
       const token = Cookies.get("token");
       const payload = {
-        featureSelection: {
-          ...settings.featureSelection,
-          featuredListings: Array.from(featuredIds),
-        },
+        ...settings.featureSelection,
+        featuredListings: Array.from(featuredIds),
       };
 
-      const res = await api.patch(`/account/dealSite/${settings._id}/update/featureSelection`, payload);
+      const res = await api.put(`/account/dealSite/${settings.publicSlug}/featureSelection/update`, payload);
 
       if (res?.data?.success) {
-        updateSettings(payload as any);
+        updateSettings({
+          featureSelection: payload,
+        });
         toast.success("Featured listings updated successfully");
       } else {
         toast.error(res?.data?.message || "Failed to save featured listings");

@@ -8,20 +8,17 @@
 import React, { useState, useCallback, useMemo } from "react";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
-import { Save, Trash2, ImageIcon, Settings } from "lucide-react";
+import { Save, Trash2, ImageIcon, Settings, X } from "lucide-react";
 import { useDealSite, FooterDetails } from "@/context/deal-site-context";
-import { POST_REQUEST_FILE_UPLOAD } from "@/utils/requests";
+import { POST_REQUEST, POST_REQUEST_FILE_UPLOAD } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
-import OverlayPreloader from "@/components/general-components/OverlayPreloader";
+import StandardPreloader from "@/components/new-marketplace/StandardPreloader";
 
 export default function BrandingPage() {
   const { settings, updateSettings } = useDealSite();
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [preloader, setPreloader] = useState({ visible: false, message: "" });
-
-  const showPreloader = (message: string) => setPreloader({ visible: true, message });
-  const hidePreloader = () => setPreloader({ visible: false, message: "" });
+  const [keywordInput, setKeywordInput] = useState(settings.keywords.join(", "));
 
   const handleUploadLogo = useCallback(async (file: File) => {
     const formData = new FormData();
@@ -30,14 +27,12 @@ export default function BrandingPage() {
     const token = Cookies.get("token");
 
     setUploading(true);
-    showPreloader("Uploading logo...");
     try {
       const res = await POST_REQUEST_FILE_UPLOAD<{ url: string }>(
         `${URLS.BASE}${URLS.uploadSingleImg}`,
         formData,
         token
       );
-      hidePreloader();
       if (res?.success && res.data?.url) {
         updateSettings({ logoUrl: res.data.url });
         toast.success("Logo uploaded successfully");
@@ -45,7 +40,6 @@ export default function BrandingPage() {
         toast.error(res?.message || "Upload failed");
       }
     } catch (error) {
-      hidePreloader();
       toast.error("Upload failed");
     } finally {
       setUploading(false);
@@ -55,21 +49,41 @@ export default function BrandingPage() {
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
-      // Save logic will be implemented in the context
-      toast.success("Settings saved successfully");
+      const token = Cookies.get("token");
+      const payload = {
+        brandingSeo: {
+          title: settings.title,
+          keywords: settings.keywords,
+          description: settings.description,
+          logoUrl: settings.logoUrl,
+        },
+        footer: settings.footer,
+      };
+
+      const res = await POST_REQUEST(
+        `${URLS.BASE}${URLS.dealSiteUpdate}`,
+        payload,
+        token
+      );
+
+      if (res?.success) {
+        toast.success("Settings saved successfully");
+      } else {
+        toast.error(res?.message || "Failed to save settings");
+      }
     } catch (error) {
+      console.error("Failed to save settings:", error);
       toast.error("Failed to save settings");
     } finally {
       setSaving(false);
     }
-  }, []);
+  }, [settings]);
 
   const inputBase =
     "w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400 text-gray-900";
 
   return (
     <div className="space-y-8">
-      <OverlayPreloader visible={preloader.visible} message={preloader.message} />
 
       <div>
         <h1 className="text-3xl font-bold text-[#09391C] flex items-center gap-3">
@@ -109,18 +123,49 @@ export default function BrandingPage() {
           </p>
           <input
             type="text"
-            value={settings.keywords.join(", ")}
-            onChange={(e) =>
+            value={keywordInput}
+            onChange={(e) => {
+              const input = e.target.value;
+              setKeywordInput(input);
+              // Update keywords from comma-separated values
               updateSettings({
-                keywords: e.target.value
+                keywords: input
                   .split(",")
                   .map((k) => k.trim())
                   .filter(Boolean),
-              })
-            }
+              });
+            }}
             className={inputBase}
             placeholder="real estate, agent, properties, listings"
           />
+
+          {/* Keywords Chips */}
+          {settings.keywords.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {settings.keywords.map((keyword, index) => (
+                <div
+                  key={index}
+                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-100 text-emerald-900 rounded-full border border-emerald-200"
+                >
+                  <span className="text-sm font-medium">{keyword}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newKeywords = settings.keywords.filter((_, i) => i !== index);
+                      updateSettings({
+                        keywords: newKeywords,
+                      });
+                      setKeywordInput(newKeywords.join(", "));
+                    }}
+                    className="text-emerald-700 hover:text-emerald-900 transition-colors"
+                    title="Remove keyword"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Description */}
@@ -161,12 +206,13 @@ export default function BrandingPage() {
               <button
                 type="button"
                 onClick={() => updateSettings({ logoUrl: "" })}
-                className="inline-flex items-center gap-2 px-4 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-all"
+                disabled={uploading}
+                className="inline-flex items-center gap-2 px-4 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 <Trash2 size={16} />
                 Remove
               </button>
-              <label className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 cursor-pointer transition-all">
+              <label className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-all">
                 <input
                   type="file"
                   accept="image/*"
@@ -181,22 +227,29 @@ export default function BrandingPage() {
             </div>
           </div>
         ) : (
-          <label className="flex items-center justify-center gap-3 px-6 py-12 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 cursor-pointer hover:bg-gray-50 transition-all">
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) =>
-                e.target.files && handleUploadLogo(e.target.files[0])
-              }
-              disabled={uploading}
-            />
-            <ImageIcon size={20} />
-            <span className="text-center">
-              <p className="font-medium">Drag & drop or click to upload</p>
-              <p className="text-xs text-gray-500 mt-1">PNG, JPG, SVG up to 5MB</p>
-            </span>
-          </label>
+          <div className="relative">
+            <StandardPreloader isVisible={uploading} message="Uploading..." overlay={false} />
+            <label className="flex items-center justify-center gap-3 px-6 py-12 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 cursor-pointer hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) =>
+                  e.target.files && handleUploadLogo(e.target.files[0])
+                }
+                disabled={uploading}
+              />
+              {!uploading && (
+                <>
+                  <ImageIcon size={20} />
+                  <span className="text-center">
+                    <p className="font-medium">Drag & drop or click to upload</p>
+                    <p className="text-xs text-gray-500 mt-1">PNG, JPG, SVG up to 5MB</p>
+                  </span>
+                </>
+              )}
+            </label>
+          </div>
         )}
       </div>
 

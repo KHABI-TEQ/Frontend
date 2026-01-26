@@ -44,7 +44,7 @@ const statusColors: Record<string, { bg: string; text: string; badge: string }> 
   spam: { bg: "bg-red-50", text: "text-red-700", badge: "badge-red" },
 };
 
-const ContactMessagesTab: React.FC<{ publicSlug: string }> = ({ publicSlug }) => {
+const ContactMessagesTab: React.FC = () => {
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -62,8 +62,8 @@ const ContactMessagesTab: React.FC<{ publicSlug: string }> = ({ publicSlug }) =>
     try {
       setIsLoading(true);
       const token = Cookies.get("token");
-
-      let url = `${URLS.BASE}/account/dealSite/${publicSlug}/contact-messages?page=${page}&limit=${pagination.limit}`;
+ 
+      let url = `${URLS.BASE}/account/dealSite/contact-messages?page=${page}&limit=${pagination.limit}`;
 
       if (selectedStatus !== "all") {
         url += `&status=${selectedStatus}`;
@@ -93,7 +93,7 @@ const ContactMessagesTab: React.FC<{ publicSlug: string }> = ({ publicSlug }) =>
     } finally {
       setIsLoading(false);
     }
-  }, [publicSlug, page, selectedStatus, searchTerm, pagination.limit]);
+  }, [page, selectedStatus, searchTerm, pagination.limit]);
 
   useEffect(() => {
     loadMessages();
@@ -108,7 +108,7 @@ const ContactMessagesTab: React.FC<{ publicSlug: string }> = ({ publicSlug }) =>
       setIsDeleting(true);
       const token = Cookies.get("token");
       const res = await DELETE_REQUEST(
-        `${URLS.BASE}/account/dealSite/${publicSlug}/contact-messages/${messageId}`,
+        `${URLS.BASE}/account/dealSite/contact-messages/${messageId}`,
         undefined,
         token
       );

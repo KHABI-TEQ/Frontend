@@ -15,13 +15,15 @@ export default function SubscribeSettingsPage() {
   const [preloader, setPreloader] = useState(false);
   const [activeTab, setActiveTab] = useState<"settings" | "subscribers">("settings");
   const [formData, setFormData] = useState({
-    enableEmailSubscription: true,
+    enableEmailSubscription: settings.subscribeSettings?.enableEmailSubscription ?? true,
     subscriptionTitle: settings.subscribeSettings?.title || "Subscribe to Updates",
     subscriptionDescription:
       settings.subscribeSettings?.subTitle ||
       "Get notified about new listings and exclusive offers",
-    subscriptionPlaceholder: "Enter your email",
+    subscriptionPlaceholder:
+      settings.subscribeSettings?.subscriptionPlaceholder || "Enter your email",
     confirmationMessage:
+      settings.subscribeSettings?.confirmationMessage ||
       "Thank you for subscribing! Check your email for confirmation.",
   });
 
@@ -40,6 +42,9 @@ export default function SubscribeSettingsPage() {
         subscribeSettings: {
           title: formData.subscriptionTitle,
           subTitle: formData.subscriptionDescription,
+          enableEmailSubscription: formData.enableEmailSubscription,
+          subscriptionPlaceholder: formData.subscriptionPlaceholder,
+          confirmationMessage: formData.confirmationMessage,
         },
       };
 

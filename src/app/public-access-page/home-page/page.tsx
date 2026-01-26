@@ -8,7 +8,7 @@ import * as LucideIcons from "lucide-react";
 import { POST_REQUEST, POST_REQUEST_FILE_UPLOAD } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import { useDealSite } from "@/context/deal-site-context";
-import OverlayPreloader from "@/components/general-components/OverlayPreloader";
+import StandardPreloader from "@/components/new-marketplace/StandardPreloader";
 
 const LUCIDE_ICONS = [
   // Popular and relevant icons
@@ -52,23 +52,32 @@ type Testimonial = {
 };
 
 type WhyChooseUsItem = {
-  id: string;
+  _id?: string; // Client-side ID for tracking; not persisted to backend
   icon: string;
   title: string;
   content: string;
+};
+
+type SupportCard = {
+  id: string;
+  cardTitle: string;
+  cardIcon: string;
+  description: string;
+  ctaText: string;
+  ctaLink: string;
 };
 
 export default function HomePageSettings() {
   const { settings, updateSettings } = useDealSite();
   const [preloader, setPreloader] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"hero" | "testimonials" | "why-choose-us">("hero");
+  const [activeTab, setActiveTab] = useState<"hero" | "testimonials" | "why-choose-us" | "support">("hero");
 
   // Hero state
   const [formData, setFormData] = useState({
     heroTitle: settings.publicPage?.heroTitle || "",
     heroSubtitle: settings.publicPage?.heroSubtitle || "",
-    heroImage: settings.publicPage?.heroImage || "",
+    heroImageUrl: settings.publicPage?.heroImageUrl || "",
     ctaText: settings.publicPage?.ctaText || "",
     ctaLink: settings.publicPage?.ctaLink || "",
     ctaText2: settings.publicPage?.ctaText2 || "",
@@ -84,13 +93,31 @@ export default function HomePageSettings() {
     subTitle: settings.homeSettings?.testimonials?.subTitle || "What our clients say about us",
   });
 
-  // Why Choose Us state
+  // Why Choose Us state - ensure all items have client-side _id for state management
   const [whyChooseUs, setWhyChooseUs] = useState<WhyChooseUsItem[]>(
-    settings.homeSettings?.whyChooseUs?.items || []
+    (settings.homeSettings?.whyChooseUs?.items || []).map((item, index) => ({
+      ...item,
+      _id: item._id || `${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`,
+    }))
   );
+
   const [whyChooseUsSection, setWhyChooseUsSection] = useState({
     title: settings.homeSettings?.whyChooseUs?.title || "Why Choose Us",
     subTitle: settings.homeSettings?.whyChooseUs?.subTitle || "Here's what sets us apart",
+  });
+
+  // Support state
+  const [supportCards, setSupportCards] = useState<SupportCard[]>(
+    (settings.homeSettings?.support?.supportCards || []).map((card, index) => ({
+      ...card,
+      id: (card as any).id || `${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`,
+    }))
+  );
+
+  const [supportSection, setSupportSection] = useState({
+    title: settings.homeSettings?.support?.title || "Support",
+    description: settings.homeSettings?.support?.description || "How we support your journey",
+    showHeroCtaButtons: settings.homeSettings?.support?.showHeroCtaButtons || false,
   });
 
   const [uploadingTestimonialId, setUploadingTestimonialId] = useState<string>("");
@@ -101,18 +128,20 @@ export default function HomePageSettings() {
   React.useEffect(() => {
     setShowIconPicker((prev) => {
       const updated = { ...prev };
-      whyChooseUs.forEach((item) => {
-        if (!(item.id in updated)) {
-          updated[item.id] = false;
+      whyChooseUs.forEach((item, index) => {
+        const id = item._id || `index-${index}`;
+        if (!(id in updated)) {
+          updated[id] = false;
         }
       });
       return updated;
     });
     setIconSearchTerms((prev) => {
       const updated = { ...prev };
-      whyChooseUs.forEach((item) => {
-        if (!(item.id in updated)) {
-          updated[item.id] = "";
+      whyChooseUs.forEach((item, index) => {
+        const id = item._id || `index-${index}`;
+        if (!(id in updated)) {
+          updated[id] = "";
         }
       });
       return updated;
@@ -133,7 +162,6 @@ export default function HomePageSettings() {
     const token = Cookies.get("token");
 
     setUploading(true);
-    setPreloader(true);
     try {
       const res = await POST_REQUEST_FILE_UPLOAD<{ url: string }>(
         `${URLS.BASE}${URLS.uploadSingleImg}`,
@@ -143,7 +171,7 @@ export default function HomePageSettings() {
       if (res?.success && res.data?.url) {
         setFormData((prev) => ({
           ...prev,
-          heroImage: res.data.url,
+          heroImageUrl: res.data.url,
         }));
         toast.success("Hero image uploaded successfully");
       } else {
@@ -154,14 +182,13 @@ export default function HomePageSettings() {
       toast.error("Failed to upload hero image");
     } finally {
       setUploading(false);
-      setPreloader(false);
     }
   }, []);
 
   const handleRemoveHeroImage = useCallback(() => {
     setFormData((prev) => ({
       ...prev,
-      heroImage: "",
+      heroImageUrl: "",
     }));
     toast.success("Hero image removed");
   }, []);
@@ -196,7 +223,6 @@ export default function HomePageSettings() {
     const token = Cookies.get("token");
 
     setUploadingTestimonialId(testimonialId);
-    setPreloader(true);
     try {
       const res = await POST_REQUEST_FILE_UPLOAD<{ url: string }>(
         `${URLS.BASE}${URLS.uploadSingleImg}`,
@@ -213,14 +239,13 @@ export default function HomePageSettings() {
       toast.error("Failed to upload image");
     } finally {
       setUploadingTestimonialId("");
-      setPreloader(false);
     }
   }, [updateTestimonial]);
 
   // Why Choose Us handlers
   const addWhyChooseUsItem = useCallback(() => {
     const newItem: WhyChooseUsItem = {
-      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      _id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       icon: "Award",
       title: "",
       content: "",
@@ -230,24 +255,57 @@ export default function HomePageSettings() {
 
   const updateWhyChooseUsItem = useCallback((id: string, field: string, value: any) => {
     setWhyChooseUs((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item))
+      prev.map((item) => (item._id === id ? { ...item, [field]: value } : item))
     );
   }, []);
 
   const removeWhyChooseUsItem = useCallback((id: string) => {
-    setWhyChooseUs((prev) => prev.filter((item) => item.id !== id));
+    setWhyChooseUs((prev) => prev.filter((item) => item._id !== id));
+  }, []);
+
+  // Support card handlers
+  const addSupportCard = useCallback(() => {
+    const newCard: SupportCard = {
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      cardTitle: "",
+      cardIcon: "Award",
+      description: "",
+      ctaText: "",
+      ctaLink: "",
+    };
+    setSupportCards((prev) => [...prev, newCard]);
+  }, []);
+
+  const updateSupportCard = useCallback((id: string, field: string, value: any) => {
+    setSupportCards((prev) =>
+      prev.map((card) => (card.id === id ? { ...card, [field]: value } : card))
+    );
+  }, []);
+
+  const removeSupportCard = useCallback((id: string) => {
+    setSupportCards((prev) => prev.filter((card) => card.id !== id));
   }, []);
 
   const handleSave = useCallback(async () => {
     setPreloader(true);
     try {
       const token = Cookies.get("token");
+
+      // Remove client-side id from testimonials before sending to backend
+      const testimonialsForBackend = testimonials.map(({ id, ...rest }) => rest);
+
+      // Remove client-side _id from why choose us items before sending to backend
+      const whyChooseUsForBackend = whyChooseUs.map(({ _id, ...rest }) => rest);
+
+      // Remove client-side id from support cards before sending to backend
+      const supportCardsForBackend = supportCards.map(({ id, ...rest }) => rest);
+
       const payload = {
         publicPage: {
           ...settings.publicPage,
           heroTitle: formData.heroTitle,
           heroSubtitle: formData.heroSubtitle,
-          heroImage: formData.heroImage,
+          heroImageUrl: formData.heroImageUrl,
           ctaText: formData.ctaText,
           ctaLink: formData.ctaLink,
           ctaText2: formData.ctaText2,
@@ -257,12 +315,18 @@ export default function HomePageSettings() {
           testimonials: {
             title: testimonialsSection.title,
             subTitle: testimonialsSection.subTitle,
-            testimonials: testimonials,
+            testimonials: testimonialsForBackend,
           },
           whyChooseUs: {
             title: whyChooseUsSection.title,
             subTitle: whyChooseUsSection.subTitle,
-            items: whyChooseUs,
+            items: whyChooseUsForBackend,
+          },
+          support: {
+            title: supportSection.title,
+            description: supportSection.description,
+            showHeroCtaButtons: supportSection.showHeroCtaButtons,
+            supportCards: supportCardsForBackend,
           },
         },
       };
@@ -274,7 +338,28 @@ export default function HomePageSettings() {
       );
 
       if (res?.success) {
-        updateSettings(payload as any);
+        // Update context with the full payload structure (backend won't have id, but frontend state has them)
+        updateSettings({
+          publicPage: payload.publicPage,
+          homeSettings: {
+            testimonials: {
+              title: testimonialsSection.title,
+              subTitle: testimonialsSection.subTitle,
+              testimonials: testimonials, // Use frontend state with id fields
+            },
+            whyChooseUs: {
+              title: whyChooseUsSection.title,
+              subTitle: whyChooseUsSection.subTitle,
+              items: whyChooseUs, // Use frontend state with _id fields
+            },
+            support: {
+              title: supportSection.title,
+              description: supportSection.description,
+              showHeroCtaButtons: supportSection.showHeroCtaButtons,
+              supportCards: supportCards, // Use frontend state with id fields
+            },
+          },
+        } as any);
         toast.success("Home page settings saved successfully");
       } else {
         toast.error(res?.message || "Failed to save settings");
@@ -284,16 +369,21 @@ export default function HomePageSettings() {
     } finally {
       setPreloader(false);
     }
-  }, [formData, settings, testimonials, testimonialsSection, whyChooseUs, whyChooseUsSection, updateSettings]);
+  }, [formData, settings, testimonials, testimonialsSection, whyChooseUs, whyChooseUsSection, supportCards, supportSection, updateSettings]);
 
   const getLucideIcon = (iconName: string) => {
     const Icon = (LucideIcons as any)[iconName];
     return Icon || (LucideIcons as any)["Award"];
   };
 
+  // Helper to get item ID - uses _id if available, falls back to finding index
+  const getItemId = (item: WhyChooseUsItem, index: number): string => {
+    return item._id || `index-${index}`;
+  };
+
   return (
     <div className="space-y-8">
-      <OverlayPreloader isVisible={preloader} message="Saving..." />
+      <StandardPreloader isVisible={preloader} message="Saving..." overlay={true} />
 
       <div>
         <h1 className="text-3xl font-bold text-[#09391C] flex items-center gap-3">
@@ -309,6 +399,7 @@ export default function HomePageSettings() {
           { id: "hero", label: "Hero Section" },
           { id: "testimonials", label: "Testimonials" },
           { id: "why-choose-us", label: "Why Choose Us" },
+          { id: "support", label: "Support" },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -333,11 +424,11 @@ export default function HomePageSettings() {
               <h2 className="text-lg font-semibold text-[#09391C] mb-4">Hero Image</h2>
               <p className="text-sm text-gray-600 mb-4">Upload an image to display in your hero section</p>
 
-              {formData.heroImage ? (
+              {formData.heroImageUrl ? (
                 <div className="space-y-4">
                   <div className="relative w-full">
                     <img
-                      src={formData.heroImage}
+                      src={formData.heroImageUrl}
                       alt="Hero"
                       className="w-full h-64 object-cover rounded-lg border border-gray-200"
                     />
@@ -353,25 +444,30 @@ export default function HomePageSettings() {
                   </button>
                 </div>
               ) : (
-                <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    <ImageIcon size={40} className="text-gray-400 mb-2" />
-                    <p className="text-sm text-gray-700 font-medium">Click to upload hero image</p>
-                    <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
-                  </div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        handleUploadHeroImage(file);
-                      }
-                    }}
-                    disabled={uploading}
-                    className="hidden"
-                  />
-                </label>
+                <div className="relative">
+                  <StandardPreloader isVisible={uploading} message="Uploading..." overlay={false} />
+                  <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                    {!uploading && (
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <ImageIcon size={40} className="text-gray-400 mb-2" />
+                        <p className="text-sm text-gray-700 font-medium">Click to upload hero image</p>
+                        <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          handleUploadHeroImage(file);
+                        }
+                      }}
+                      disabled={uploading}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
               )}
             </div>
           </div>
@@ -540,30 +636,36 @@ export default function HomePageSettings() {
                       />
                       <button
                         onClick={() => updateTestimonial(testimonial.id, "image", "")}
-                        className="text-sm text-red-600 hover:text-red-700"
+                        disabled={uploadingTestimonialId === testimonial.id}
+                        className="text-sm text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Remove Image
                       </button>
                     </div>
                   ) : (
-                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
-                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <ImageIcon size={24} className="text-gray-400 mb-2" />
-                        <p className="text-xs text-gray-700">Click to upload image</p>
-                      </div>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            handleUploadTestimonialImage(file, testimonial.id);
-                          }
-                        }}
-                        disabled={uploadingTestimonialId === testimonial.id}
-                        className="hidden"
-                      />
-                    </label>
+                    <div className="relative">
+                      <StandardPreloader isVisible={uploadingTestimonialId === testimonial.id} message="Uploading..." overlay={false} />
+                      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                        {uploadingTestimonialId !== testimonial.id && (
+                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                            <ImageIcon size={24} className="text-gray-400 mb-2" />
+                            <p className="text-xs text-gray-700">Click to upload image</p>
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              handleUploadTestimonialImage(file, testimonial.id);
+                            }
+                          }}
+                          disabled={uploadingTestimonialId === testimonial.id}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
                   )}
                 </div>
 
@@ -670,12 +772,14 @@ export default function HomePageSettings() {
 
           {/* Why Choose Us Items */}
           <div className="space-y-4">
-            {whyChooseUs.map((item, index) => (
-              <div key={item.id} className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
+            {whyChooseUs.map((item, index) => {
+              const itemId = getItemId(item, index);
+              return (
+              <div key={itemId} className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-[#09391C]">Item {index + 1}</h3>
                   <button
-                    onClick={() => removeWhyChooseUsItem(item.id)}
+                    onClick={() => removeWhyChooseUsItem(itemId)}
                     className="text-red-600 hover:text-red-700 p-2"
                   >
                     <Trash2 size={18} />
@@ -690,12 +794,12 @@ export default function HomePageSettings() {
                       onClick={() => {
                         setShowIconPicker((prev) => ({
                           ...prev,
-                          [item.id]: !prev[item.id],
+                          [itemId]: !prev[itemId],
                         }));
-                        if (!showIconPicker[item.id]) {
+                        if (!showIconPicker[itemId]) {
                           setIconSearchTerms((prev) => ({
                             ...prev,
-                            [item.id]: "",
+                            [itemId]: "",
                           }));
                         }
                       }}
@@ -705,21 +809,21 @@ export default function HomePageSettings() {
                         {React.createElement(getLucideIcon(item.icon), { size: 20 })}
                         {item.icon}
                       </span>
-                      <span className={`text-gray-500 transition-transform ${showIconPicker[item.id] ? "rotate-180" : ""}`}>▼</span>
+                      <span className={`text-gray-500 transition-transform ${showIconPicker[itemId] ? "rotate-180" : ""}`}>▼</span>
                     </button>
 
-                    {showIconPicker[item.id] && (
+                    {showIconPicker[itemId] && (
                       <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg z-50 min-w-96">
                         {/* Search Input */}
                         <div className="border-b border-gray-200 p-3">
                           <input
                             type="text"
                             placeholder="Search icons..."
-                            value={iconSearchTerms[item.id] || ""}
+                            value={iconSearchTerms[itemId] || ""}
                             onChange={(e) =>
                               setIconSearchTerms((prev) => ({
                                 ...prev,
-                                [item.id]: e.target.value,
+                                [itemId]: e.target.value,
                               }))
                             }
                             autoFocus
@@ -730,19 +834,19 @@ export default function HomePageSettings() {
                         {/* Icon Grid */}
                         <div className="grid grid-cols-6 gap-2 p-3 max-h-72 overflow-y-auto">
                           {LUCIDE_ICONS.filter(icon =>
-                            icon.toLowerCase().includes((iconSearchTerms[item.id] || "").toLowerCase())
-                          ).map((iconName) => (
+                            icon.toLowerCase().includes((iconSearchTerms[itemId] || "").toLowerCase())
+                          ).map((iconName, index) => (
                             <button
-                              key={iconName}
+                              key={index}
                               onClick={() => {
-                                updateWhyChooseUsItem(item.id, "icon", iconName);
+                                updateWhyChooseUsItem(itemId, "icon", iconName);
                                 setShowIconPicker((prev) => ({
                                   ...prev,
-                                  [item.id]: false,
+                                  [itemId]: false,
                                 }));
                                 setIconSearchTerms((prev) => ({
                                   ...prev,
-                                  [item.id]: "",
+                                  [itemId]: "",
                                 }));
                               }}
                               className={`p-2 rounded-lg flex flex-col items-center gap-1 text-xs transition-colors ${
@@ -768,7 +872,7 @@ export default function HomePageSettings() {
                   <input
                     type="text"
                     value={item.title}
-                    onChange={(e) => updateWhyChooseUsItem(item.id, "title", e.target.value)}
+                    onChange={(e) => updateWhyChooseUsItem(itemId, "title", e.target.value)}
                     placeholder="Feature Title"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
                   />
@@ -779,14 +883,14 @@ export default function HomePageSettings() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Content</label>
                   <textarea
                     value={item.content}
-                    onChange={(e) => updateWhyChooseUsItem(item.id, "content", e.target.value)}
+                    onChange={(e) => updateWhyChooseUsItem(itemId, "content", e.target.value)}
                     placeholder="Describe this feature..."
                     rows={3}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
                   />
                 </div>
-              </div>
-            ))}
+              </div>)
+            })}
           </div>
 
           <button
@@ -799,11 +903,215 @@ export default function HomePageSettings() {
         </div>
       )}
 
+      {/* Support Section Tab */}
+      {activeTab === "support" && (
+        <div className="space-y-6">
+          {/* Support Section Header */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
+            <h2 className="text-lg font-semibold text-[#09391C] mb-4">Support Section</h2>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Section Title
+              </label>
+              <input
+                type="text"
+                value={supportSection.title}
+                onChange={(e) => setSupportSection((prev) => ({ ...prev, title: e.target.value }))}
+                placeholder="Support"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Section Description
+              </label>
+              <textarea
+                value={supportSection.description}
+                onChange={(e) => setSupportSection((prev) => ({ ...prev, description: e.target.value }))}
+                placeholder="How we support your journey"
+                rows={3}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+              />
+            </div>
+
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="show-hero-cta"
+                checked={supportSection.showHeroCtaButtons}
+                onChange={(e) =>
+                  setSupportSection((prev) => ({ ...prev, showHeroCtaButtons: e.target.checked }))
+                }
+                className="w-4 h-4 text-emerald-600 rounded"
+              />
+              <label htmlFor="show-hero-cta" className="text-sm font-medium text-gray-700">
+                Show Hero CTA Buttons
+              </label>
+            </div>
+          </div>
+
+          {/* Support Cards */}
+          <div className="space-y-4">
+            {supportCards.map((card, index) => (
+              <div key={card.id} className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-[#09391C]">Support Card {index + 1}</h3>
+                  <button
+                    onClick={() => removeSupportCard(card.id)}
+                    className="text-red-600 hover:text-red-700 p-2"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+
+                {/* Card Icon Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Icon</label>
+                  <div className="relative">
+                    <button
+                      onClick={() => {
+                        setShowIconPicker((prev) => ({
+                          ...prev,
+                          [card.id]: !prev[card.id],
+                        }));
+                        if (!showIconPicker[card.id]) {
+                          setIconSearchTerms((prev) => ({
+                            ...prev,
+                            [card.id]: "",
+                          }));
+                        }
+                      }}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200 flex items-center gap-2 justify-between"
+                    >
+                      <span className="flex items-center gap-2">
+                        {React.createElement(getLucideIcon(card.cardIcon), { size: 20 })}
+                        {card.cardIcon}
+                      </span>
+                      <span className={`text-gray-500 transition-transform ${showIconPicker[card.id] ? "rotate-180" : ""}`}>▼</span>
+                    </button>
+
+                    {showIconPicker[card.id] && (
+                      <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg z-50 min-w-96">
+                        {/* Search Input */}
+                        <div className="border-b border-gray-200 p-3">
+                          <input
+                            type="text"
+                            placeholder="Search icons..."
+                            value={iconSearchTerms[card.id] || ""}
+                            onChange={(e) =>
+                              setIconSearchTerms((prev) => ({
+                                ...prev,
+                                [card.id]: e.target.value,
+                              }))
+                            }
+                            autoFocus
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-200"
+                          />
+                        </div>
+
+                        {/* Icon Grid */}
+                        <div className="grid grid-cols-6 gap-2 p-3 max-h-72 overflow-y-auto">
+                          {LUCIDE_ICONS.filter(icon =>
+                            icon.toLowerCase().includes((iconSearchTerms[card.id] || "").toLowerCase())
+                          ).map((iconName, index) => (
+                            <button
+                              key={index}
+                              onClick={() => {
+                                updateSupportCard(card.id, "cardIcon", iconName);
+                                setShowIconPicker((prev) => ({
+                                  ...prev,
+                                  [card.id]: false,
+                                }));
+                                setIconSearchTerms((prev) => ({
+                                  ...prev,
+                                  [card.id]: "",
+                                }));
+                              }}
+                              className={`p-2 rounded-lg flex flex-col items-center gap-1 text-xs transition-colors ${
+                                card.cardIcon === iconName
+                                  ? "bg-emerald-100 border border-emerald-500"
+                                  : "hover:bg-gray-100 border border-transparent"
+                              }`}
+                              title={iconName}
+                            >
+                              {React.createElement(getLucideIcon(iconName), { size: 20 })}
+                              <span className="text-xs line-clamp-2 text-center">{iconName}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Card Title */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Card Title</label>
+                  <input
+                    type="text"
+                    value={card.cardTitle}
+                    onChange={(e) => updateSupportCard(card.id, "cardTitle", e.target.value)}
+                    placeholder="Support Title"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+                  />
+                </div>
+
+                {/* Card Description */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                  <textarea
+                    value={card.description}
+                    onChange={(e) => updateSupportCard(card.id, "description", e.target.value)}
+                    placeholder="Describe this support offering..."
+                    rows={3}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+                  />
+                </div>
+
+                {/* CTA Button Text */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">CTA Button Text</label>
+                  <input
+                    type="text"
+                    value={card.ctaText}
+                    onChange={(e) => updateSupportCard(card.id, "ctaText", e.target.value)}
+                    placeholder="Learn More"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+                  />
+                </div>
+
+                {/* CTA Button Link */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">CTA Button Link</label>
+                  <input
+                    type="text"
+                    value={card.ctaLink}
+                    onChange={(e) => updateSupportCard(card.id, "ctaLink", e.target.value)}
+                    placeholder="/contact-us"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <button
+            onClick={addSupportCard}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-all"
+          >
+            <Plus size={18} />
+            Add Support Card
+          </button>
+        </div>
+      )}
+
       {/* Save Button */}
       <div className="flex justify-end gap-3 pt-4">
         <button
           onClick={handleSave}
-          disabled={uploading || uploadingTestimonialId !== ""}
+          disabled={uploading || uploadingTestimonialId !== "" || preloader}
           className="inline-flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         >
           <Save size={18} />

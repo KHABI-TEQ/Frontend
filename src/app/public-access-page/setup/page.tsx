@@ -6,217 +6,248 @@
 
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
-import { AlertCircle, CheckCircle, Lock } from "lucide-react";
-import { POST_REQUEST } from "@/utils/requests";
+import { AlertCircle, CheckCircle, Lock, ChevronDown, Loader } from "lucide-react";
+import { useFormik } from "formik";
+import * as Yup from "yup";
+import { POST_REQUEST, GET_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import { useDealSite } from "@/context/deal-site-context";
 import { DealSiteSettings } from "@/context/deal-site-context";
 import Stepper from "@/components/post-property-components/Stepper";
 
+interface Bank {
+  name: string;
+  code: string;
+  country?: string;
+  currency?: string;
+  type?: string;
+}
+
+// Yup validation schemas for each step
+const createValidationSchema = (step: number) => {
+  if (step === 0) {
+    return Yup.object({
+      publicSlug: Yup.string().required("Public link is required").min(2, "Minimum 2 characters"),
+    });
+  }
+
+  if (step === 1) {
+    return Yup.object({
+      title: Yup.string().required("Title is required"),
+      description: Yup.string().required("Description is required"),
+    });
+  }
+
+  if (step === 2) {
+    return Yup.object({
+      paymentDetails: Yup.object().shape({
+        businessName: Yup.string().required("Business name is required"),
+        accountNumber: Yup.string().required("Account number is required"),
+        sortCode: Yup.string().required("Settlement bank is required"),
+        primaryContactName: Yup.string().required("Contact name is required"),
+        primaryContactEmail: Yup.string().email("Invalid email").required("Email is required"),
+        primaryContactPhone: Yup.string().required("Phone is required"),
+      }),
+    });
+  }
+
+  return Yup.object({});
+};
+
 const Setup = () => {
   const router = useRouter();
   const { settings, updateSettings, markSetupComplete } = useDealSite();
   const [step, setStep] = useState(0);
-  const [saving, setSaving] = useState(false);
   const [slugStatus, setSlugStatus] = useState<"idle" | "invalid" | "checking" | "available" | "taken">("idle");
   const [slugMessage, setSlugMessage] = useState<string>("");
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  // Form state - track changes locally during setup
-  const [formData, setFormData] = useState<DealSiteSettings>({
-    ...settings,
+  // Initialize Formik
+  const formik = useFormik({
+    initialValues: {
+      publicSlug: settings.publicSlug || "",
+      title: settings.title || "",
+      description: settings.description || "",
+      keywords: settings.keywords || [],
+      logoUrl: settings.logoUrl || "",
+      theme: settings.theme || { primaryColor: "#09391C", secondaryColor: "#8DDB90" },
+      publicPage: settings.publicPage || {
+        heroTitle: "Hi, I'm your trusted agent",
+        heroSubtitle: "Browse my verified listings and book inspections easily.",
+        ctaText: "Tell Us about property you want",
+        ctaLink: "/market-place",
+        ctaText2: "Browse Listings",
+        ctaLink2: "/market-place",
+        heroImageUrl: "",
+      },
+      featureSelection: settings.featureSelection || { mode: "auto", propertyIds: "", featuredListings: [] },
+      socialLinks: settings.socialLinks || {},
+      inspectionSettings: settings.inspectionSettings || { defaultInspectionFee: 0 },
+      contactVisibility: settings.contactVisibility || {
+        showEmail: true,
+        showPhone: true,
+        enableContactForm: true,
+        showWhatsAppButton: false,
+        whatsappNumber: "",
+      },
+      paymentDetails: settings.paymentDetails || {
+        businessName: "",
+        accountNumber: "",
+        sortCode: "",
+        primaryContactName: "",
+        primaryContactEmail: "",
+        primaryContactPhone: "",
+      },
+    },
+    validationSchema: createValidationSchema(step),
+    validateOnChange: true,
+    validateOnBlur: true,
+    onSubmit: async (values) => {
+      if (step < 3) {
+        if (Object.keys(formik.errors).length === 0) {
+          setStep(step + 1);
+        }
+        return;
+      }
+
+      // Final submission
+      await handleFinalSubmit(values);
+    },
   });
 
-  const handleInputChange = useCallback(
-    (field: keyof DealSiteSettings, value: any) => {
-      setFormData((prev) => ({
-        ...prev,
-        [field]: value,
-      }));
-    },
-    []
-  );
+  // Slug validation with availability check
+  useEffect(() => {
+    const slug = formik.values.publicSlug;
 
-  // Slug validation
-  const handleSlugChange = useCallback(
-    (slug: string) => {
-      setFormData((prev) => ({
-        ...prev,
-        publicSlug: slug,
-      }));
+    if (!slug) {
+      setSlugStatus("idle");
+      setSlugMessage("");
+      return;
+    }
 
-      if (!slug) {
-        setSlugStatus("idle");
-        setSlugMessage("");
-        return;
-      }
+    const valid = /^[a-z0-9]([a-z0-9-]{1,61}[a-z0-9])?$/.test(slug);
+    if (!valid) {
+      setSlugStatus("invalid");
+      setSlugMessage("Use 2-63 chars: letters, numbers, hyphens. Cannot start/end with hyphen.");
+      return;
+    }
 
-      const valid = /^[a-z0-9]([a-z0-9-]{1,61}[a-z0-9])?$/.test(slug);
-      if (!valid) {
-        setSlugStatus("invalid");
-        setSlugMessage("Use 2-63 chars: letters, numbers, hyphens. Cannot start/end with hyphen.");
-        return;
-      }
+    let cancelled = false;
+    setSlugStatus("checking");
+    setSlugMessage("Checking availability...");
 
-      let cancelled = false;
-      setSlugStatus("checking");
-      setSlugMessage("Checking availability...");
-
-      const token = Cookies.get("token");
-      const checkTimeout = setTimeout(async () => {
-        try {
-          const resp = await POST_REQUEST<any>(
-            `${URLS.BASE}${URLS.dealSiteSlugAvailability}`,
-            { publicSlug: slug },
-            token
-          );
-          const available =
-            resp?.data?.available ?? resp?.available ?? resp?.data?.isAvailable ?? resp?.isAvailable ?? false;
-          if (!cancelled) {
-            setSlugStatus(available ? "available" : "taken");
-            setSlugMessage(available ? "Subdomain is available" : "Subdomain is taken");
-          }
-        } catch (e) {
-          if (!cancelled) {
-            setSlugStatus("taken");
-            setSlugMessage("Unable to verify. Try again.");
-          }
+    const token = Cookies.get("token");
+    const checkTimeout = setTimeout(async () => {
+      try {
+        const resp = await POST_REQUEST<any>(
+          `${URLS.BASE}${URLS.dealSiteSlugAvailability}`,
+          { publicSlug: slug },
+          token
+        );
+        const available =
+          resp?.data?.available ?? resp?.available ?? resp?.data?.isAvailable ?? resp?.isAvailable ?? false;
+        if (!cancelled) {
+          setSlugStatus(available ? "available" : "taken");
+          setSlugMessage(available ? "Subdomain is available" : "Subdomain is taken");
         }
-      }, 400);
-
-      return () => {
-        cancelled = true;
-        clearTimeout(checkTimeout);
-      };
-    },
-    []
-  );
-
-  const validateStep = useCallback((): boolean => {
-    if (step === 0) {
-      // Public Link validation
-      if (!formData.publicSlug) {
-        toast.error("Please set your public link");
-        return false;
+      } catch (e) {
+        if (!cancelled) {
+          setSlugStatus("taken");
+          setSlugMessage("Unable to verify. Try again.");
+        }
       }
-      if (slugStatus !== "available") {
-        toast.error("Please use a valid and available subdomain");
-        return false;
-      }
-      return true;
+    }, 400);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(checkTimeout);
+    };
+  }, [formik.values.publicSlug]);
+
+  const handleFinalSubmit = async (values: any) => {
+    // Validate slug availability for final submission
+    if (slugStatus !== "available") {
+      toast.error("Please use a valid and available subdomain");
+      return;
     }
 
-    if (step === 1) {
-      // Design validation
-      if (!formData.title) {
-        toast.error("Title is required");
-        return false;
-      }
-      if (!formData.description) {
-        toast.error("Description is required");
-        return false;
-      }
-      return true;
-    }
-
-    if (step === 2) {
-      // Marketplace validation
-      return true;
-    }
-
-    if (step === 3) {
-      // Payment validation
-      if (
-        !formData.paymentDetails?.businessName ||
-        !formData.paymentDetails?.accountNumber ||
-        !formData.paymentDetails?.sortCode
-      ) {
-        toast.error("Please complete all payment details");
-        return false;
-      }
-      return true;
-    }
-
-    return true;
-  }, [step, formData, slugStatus]);
-
-  const handleNextStep = useCallback(() => {
-    if (validateStep()) {
-      if (step < 4) {
-        setStep(step + 1);
-      }
-    }
-  }, [step, validateStep]);
-
-  const handlePrevStep = useCallback(() => {
-    if (step > 0) {
-      setStep(step - 1);
-    }
-  }, [step]);
-
-  const handleSubmit = useCallback(async () => {
-    if (!validateStep()) return;
-
-    setSaving(true);
+    setIsProcessing(true);
     try {
       const token = Cookies.get("token");
       const payload: DealSiteSettings = {
-        ...formData,
-        keywords: formData.keywords
-          .map((k) => (typeof k === "string" ? k.trim() : ""))
+        ...values,
+        keywords: values.keywords
+          .map((k: any) => (typeof k === "string" ? k.trim() : ""))
           .filter(Boolean),
         contactVisibility: {
-          ...formData.contactVisibility,
-          whatsappNumber: formData.contactVisibility.showWhatsAppButton
-            ? formData.contactVisibility.whatsappNumber
+          ...values.contactVisibility,
+          whatsappNumber: values.contactVisibility.showWhatsAppButton
+            ? values.contactVisibility.whatsappNumber
             : "",
         },
       };
 
-      toast.promise(
-        POST_REQUEST(`${URLS.BASE}${URLS.dealSiteSetup}`, payload, token),
-        {
-          loading: "Setting up your deal site...",
-          success: (res: any) => {
-            if (res?.success) {
-              updateSettings(formData);
-              markSetupComplete();
-              setTimeout(() => {
-                router.replace("/public-access-page");
-              }, 1000);
-              return "Setup complete!";
-            }
-            throw new Error(res?.message || "Setup failed");
-          },
-          error: (err: any) => err?.message || "Failed to complete setup",
-        }
-      );
+      const res = await POST_REQUEST(`${URLS.BASE}${URLS.dealSiteSetup}`, payload, token);
+
+      if (res?.success) {
+        updateSettings(values);
+        markSetupComplete();
+        toast.success("Setup complete!");
+        setTimeout(() => {
+          router.replace("/public-access-page");
+        }, 1000);
+      } else {
+        toast.error(res?.message || "Setup failed");
+      }
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to complete setup");
     } finally {
-      setSaving(false);
+      setIsProcessing(false);
     }
-  }, [formData, validateStep, updateSettings, markSetupComplete, router]);
+  };
+
+  const handleNextStep = () => {
+    formik.submitForm();
+  };
+
+  const handlePrevStep = () => {
+    if (step > 0) {
+      setStep(step - 1);
+    }
+  };
 
   const steps = [
     { label: "Public Link", status: step > 0 ? "completed" : "active" },
     { label: "Design", status: step > 1 ? "completed" : step === 1 ? "active" : "pending" },
-    { label: "Marketplace", status: step > 2 ? "completed" : step === 2 ? "active" : "pending" },
-    { label: "Payment", status: step > 3 ? "completed" : step === 3 ? "active" : "pending" },
-    { label: "Review", status: step === 4 ? "active" : "pending" },
+    { label: "Payment", status: step > 2 ? "completed" : step === 2 ? "active" : "pending" },
+    { label: "Review", status: step === 3 ? "active" : "pending" },
   ] as const;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-blue-50 py-12 px-4">
+    <div className="min-h-screen bg-[#EEF1F1] py-12 px-4">
+      {/* Processing Preloader */}
+      {isProcessing && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 flex flex-col items-center gap-4">
+            <Loader size={40} className="animate-spin text-emerald-600" />
+            <p className="text-lg font-semibold text-gray-800">Setting up your deal site...</p>
+            <p className="text-sm text-gray-600 text-center">This may take a few moments</p>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-[#09391C] mb-2">
-            Setup Your Public Access Page
+            Launch Your Public Access Page
           </h1>
           <p className="text-gray-600">
-            Follow the steps to get your public agent page live in minutes
+            Complete these 3 steps to go live. You can customize everything else later.
           </p>
         </div>
 
@@ -227,11 +258,16 @@ const Setup = () => {
 
         {/* Step Content */}
         <div className="bg-white rounded-lg border border-gray-200 p-8">
-          {step === 0 && <Step0PublicLink formData={formData} onSlugChange={handleSlugChange} slugStatus={slugStatus} slugMessage={slugMessage} />}
-          {step === 1 && <Step1Design formData={formData} onChange={handleInputChange} />}
-          {step === 2 && <Step2Marketplace formData={formData} onChange={handleInputChange} />}
-          {step === 3 && <Step3Payment formData={formData} onChange={handleInputChange} />}
-          {step === 4 && <Step4Review formData={formData} />}
+          {step === 0 && (
+            <Step0PublicLink
+              formik={formik}
+              slugStatus={slugStatus}
+              slugMessage={slugMessage}
+            />
+          )}
+          {step === 1 && <Step1Design formik={formik} />}
+          {step === 2 && <Step2Payment formik={formik} />}
+          {step === 3 && <Step3Review formik={formik} />}
 
           {/* Navigation Buttons */}
           <div className="flex items-center justify-between gap-4 mt-8 pt-6 border-t border-gray-200">
@@ -243,7 +279,7 @@ const Setup = () => {
               Back
             </button>
 
-            {step < 4 ? (
+            {step < 3 ? (
               <button
                 onClick={handleNextStep}
                 className="px-6 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-all"
@@ -252,11 +288,18 @@ const Setup = () => {
               </button>
             ) : (
               <button
-                onClick={handleSubmit}
-                disabled={saving || slugStatus !== "available"}
+                onClick={handleNextStep}
+                disabled={isProcessing || slugStatus !== "available"}
                 className="px-8 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
               >
-                {saving ? "Completing..." : "Complete Setup"}
+                {isProcessing ? (
+                  <>
+                    <Loader size={16} className="animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  "Complete Setup"
+                )}
               </button>
             )}
           </div>
@@ -266,9 +309,9 @@ const Setup = () => {
         <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4 flex gap-3">
           <AlertCircle size={20} className="text-blue-600 flex-shrink-0" />
           <div>
-            <h3 className="font-semibold text-blue-900">Setup is one-time only</h3>
+            <h3 className="font-semibold text-blue-900">Quick Setup</h3>
             <p className="text-sm text-blue-800 mt-1">
-              Once you complete the setup, you'll be able to manage and edit your public page settings from the dashboard.
+              We only need the basics to get your page live. Once complete, you can customize everything else from your dashboard including branding, hero image, testimonials, featured properties, and much more.
             </p>
           </div>
         </div>
@@ -279,13 +322,11 @@ const Setup = () => {
 
 // Step Components
 function Step0PublicLink({
-  formData,
-  onSlugChange,
+  formik,
   slugStatus,
   slugMessage,
 }: {
-  formData: DealSiteSettings;
-  onSlugChange: (slug: string) => void;
+  formik: any;
   slugStatus: string;
   slugMessage: string;
 }) {
@@ -304,8 +345,10 @@ function Step0PublicLink({
           <span className="px-4 py-2 bg-gray-100 text-gray-600 font-medium">https://</span>
           <input
             type="text"
-            value={formData.publicSlug}
-            onChange={(e) => onSlugChange(e.target.value.toLowerCase())}
+            name="publicSlug"
+            value={formik.values.publicSlug}
+            onChange={(e) => formik.setFieldValue("publicSlug", e.target.value.toLowerCase())}
+            onBlur={formik.handleBlur}
             placeholder="your-name"
             className="flex-1 px-4 py-2 outline-none text-lg"
           />
@@ -326,18 +369,21 @@ function Step0PublicLink({
             {slugMessage}
           </div>
         )}
+        {formik.touched.publicSlug && formik.errors.publicSlug && (
+          <p className="mt-2 text-sm text-red-600">{formik.errors.publicSlug}</p>
+        )}
       </div>
 
       <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
         <h3 className="font-semibold text-emerald-900 mb-2">Preview:</h3>
-        {formData.publicSlug ? (
+        {formik.values.publicSlug ? (
           <a
-            href={`https://${formData.publicSlug}.khabiteq.com`}
+            href={`https://${formik.values.publicSlug}.khabiteq.com`}
             target="_blank"
             rel="noreferrer"
             className="text-emerald-600 hover:underline break-all"
           >
-            https://{formData.publicSlug}.khabiteq.com
+            https://{formik.values.publicSlug}.khabiteq.com
           </a>
         ) : (
           <p className="text-emerald-600">https://your-name.khabiteq.com</p>
@@ -347,209 +393,350 @@ function Step0PublicLink({
   );
 }
 
-function Step1Design({
-  formData,
-  onChange,
-}: {
-  formData: DealSiteSettings;
-  onChange: (field: keyof DealSiteSettings, value: any) => void;
-}) {
+function Step1Design({ formik }: { formik: any }) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-[#09391C] mb-4">Page Branding</h2>
+        <h2 className="text-2xl font-bold text-[#09391C] mb-4">Basic Information</h2>
         <p className="text-gray-600">
-          Set your page title and description for SEO and visitor preview.
+          Tell visitors about your business. You can customize more details later from your dashboard.
         </p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Page Title</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Page Title *</label>
         <input
           type="text"
-          value={formData.title}
-          onChange={(e) => onChange("title", e.target.value)}
+          name="title"
+          value={formik.values.title}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
           placeholder="My Real Estate Business"
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+          className={`w-full px-4 py-2 border rounded-lg outline-none ${
+            formik.touched.title && formik.errors.title
+              ? "border-red-500 focus:ring-2 focus:ring-red-200"
+              : "border-gray-300 focus:ring-2 focus:ring-emerald-200"
+          }`}
         />
+        {formik.touched.title && formik.errors.title && (
+          <p className="mt-1 text-sm text-red-600">{formik.errors.title}</p>
+        )}
+        <p className="text-xs text-gray-500 mt-1">This is how your page appears to search engines and visitors</p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Description *</label>
         <textarea
-          value={formData.description}
-          onChange={(e) => onChange("description", e.target.value)}
+          name="description"
+          value={formik.values.description}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
           placeholder="Tell visitors about your business, services, and why they should choose you..."
           rows={4}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+          className={`w-full px-4 py-2 border rounded-lg outline-none resize-none ${
+            formik.touched.description && formik.errors.description
+              ? "border-red-500 focus:ring-2 focus:ring-red-200"
+              : "border-gray-300 focus:ring-2 focus:ring-emerald-200"
+          }`}
         />
+        {formik.touched.description && formik.errors.description && (
+          <p className="mt-1 text-sm text-red-600">{formik.errors.description}</p>
+        )}
+        <p className="text-xs text-gray-500 mt-1">Keep it concise and engaging</p>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Keywords (comma separated)</label>
-        <input
-          type="text"
-          value={formData.keywords.join(", ")}
-          onChange={(e) =>
-            onChange(
-              "keywords",
-              e.target.value.split(",").map((k) => k.trim()).filter(Boolean)
-            )
-          }
-          placeholder="real estate, agent, properties, listings"
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
-        />
-      </div>
-    </div>
-  );
-}
-
-function Step2Marketplace({
-  formData,
-  onChange,
-}: {
-  formData: DealSiteSettings;
-  onChange: (field: keyof DealSiteSettings, value: any) => void;
-}) {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-[#09391C] mb-4">Marketplace Settings</h2>
-        <p className="text-gray-600">
-          Configure how your listings are displayed to visitors.
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <p className="text-sm text-blue-800">
+          <strong>Later:</strong> You'll be able to add keywords, logo, custom colors, hero image, and more from your dashboard settings.
         </p>
       </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Default Listing Category</label>
-        <select
-          value={formData.marketplaceDefaults.defaultTab}
-          onChange={(e) =>
-            onChange("marketplaceDefaults", {
-              ...formData.marketplaceDefaults,
-              defaultTab: e.target.value as any,
-            })
-          }
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
-        >
-          <option value="buy">Buy</option>
-          <option value="rent">Rent</option>
-          <option value="shortlet">Shortlet</option>
-          <option value="jv">Joint Venture</option>
-        </select>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Featured Listings Limit</label>
-        <input
-          type="number"
-          value={formData.listingsLimit}
-          onChange={(e) => onChange("listingsLimit", parseInt(e.target.value))}
-          min="1"
-          max="50"
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
-        />
-        <p className="text-xs text-gray-500 mt-1">Maximum number of featured listings to display</p>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <input
-          type="checkbox"
-          id="verified-only"
-          checked={formData.marketplaceDefaults.showVerifiedOnly}
-          onChange={(e) =>
-            onChange("marketplaceDefaults", {
-              ...formData.marketplaceDefaults,
-              showVerifiedOnly: e.target.checked,
-            })
-          }
-          className="w-4 h-4 text-emerald-600 rounded"
-        />
-        <label htmlFor="verified-only" className="text-sm font-medium text-gray-700">
-          Show verified listings only
-        </label>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <input
-          type="checkbox"
-          id="enable-negotiation"
-          checked={formData.marketplaceDefaults.enablePriceNegotiationButton}
-          onChange={(e) =>
-            onChange("marketplaceDefaults", {
-              ...formData.marketplaceDefaults,
-              enablePriceNegotiationButton: e.target.checked,
-            })
-          }
-          className="w-4 h-4 text-emerald-600 rounded"
-        />
-        <label htmlFor="enable-negotiation" className="text-sm font-medium text-gray-700">
-          Enable price negotiation button
-        </label>
-      </div>
     </div>
   );
 }
 
-function Step3Payment({
-  formData,
-  onChange,
-}: {
-  formData: DealSiteSettings;
-  onChange: (field: keyof DealSiteSettings, value: any) => void;
-}) {
+function Step2Payment({ formik }: { formik: any }) {
+  const [banks, setBanks] = useState<Bank[]>([]);
+  const [filteredBanks, setFilteredBanks] = useState<Bank[]>([]);
+  const [bankSearch, setBankSearch] = useState("");
+  const [showBankDropdown, setShowBankDropdown] = useState(false);
+  const [loadingBanks, setLoadingBanks] = useState(false);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+  // Load banks on mount
+  useEffect(() => {
+    const loadBanks = async () => {
+      try {
+        setLoadingBanks(true);
+        const token = Cookies.get("token");
+        const res = await GET_REQUEST<any>(`${URLS.BASE}/account/dealSite/bankList`, token);
+
+        if (res?.data && Array.isArray(res.data)) {
+          setBanks(res.data);
+          setFilteredBanks(res.data);
+        }
+      } catch (error) {
+        console.warn("Failed to load banks:", error);
+        // Continue without banks - user can enter sort code manually
+      } finally {
+        setLoadingBanks(false);
+      }
+    };
+
+    loadBanks();
+  }, []);
+
+  // Handle click outside dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowBankDropdown(false);
+      }
+    };
+
+    if (showBankDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showBankDropdown]);
+
+  // Handle bank search
+  const handleBankSearch = (query: string) => {
+    setBankSearch(query);
+    if (query.trim()) {
+      const filtered = banks.filter(
+        (bank) =>
+          bank.name.toLowerCase().includes(query.toLowerCase()) ||
+          bank.code.toLowerCase().includes(query.toLowerCase())
+      );
+      setFilteredBanks(filtered);
+    } else {
+      setFilteredBanks(banks);
+    }
+  };
+
+  // Handle bank selection
+  const selectBank = (bank: Bank) => {
+    formik.setFieldValue("paymentDetails", {
+      ...formik.values.paymentDetails,
+      sortCode: bank.code,
+    });
+    setBankSearch(bank.name);
+    setShowBankDropdown(false);
+  };
+
+  // Handle settlement bank field focus
+  const handleBankFieldFocus = () => {
+    setShowBankDropdown(true);
+  };
+
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-[#09391C] mb-4">Payment Details</h2>
         <p className="text-gray-600">
-          Provide your bank details for commission payments.
+          Provide your bank details and contact information for commission payments.
         </p>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Business Name *</label>
-        <input
-          type="text"
-          value={formData.paymentDetails?.businessName || ""}
-          onChange={(e) =>
-            onChange("paymentDetails", {
-              ...formData.paymentDetails,
-              businessName: e.target.value,
-            })
-          }
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
-        />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Business Name *</label>
+          <input
+            type="text"
+            name="paymentDetails.businessName"
+            value={formik.values.paymentDetails?.businessName || ""}
+            onChange={(e) =>
+              formik.setFieldValue("paymentDetails", {
+                ...formik.values.paymentDetails,
+                businessName: e.target.value,
+              })
+            }
+            onBlur={formik.handleBlur}
+            className={`w-full px-4 py-2 border rounded-lg outline-none ${
+              formik.touched.paymentDetails?.businessName && formik.errors.paymentDetails?.businessName
+                ? "border-red-500 focus:ring-2 focus:ring-red-200"
+                : "border-gray-300 focus:ring-2 focus:ring-emerald-200"
+            }`}
+          />
+          {formik.touched.paymentDetails?.businessName && formik.errors.paymentDetails?.businessName && (
+            <p className="mt-1 text-sm text-red-600">{formik.errors.paymentDetails.businessName}</p>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Account Number *</label>
+          <input
+            type="text"
+            name="paymentDetails.accountNumber"
+            value={formik.values.paymentDetails?.accountNumber || ""}
+            onChange={(e) =>
+              formik.setFieldValue("paymentDetails", {
+                ...formik.values.paymentDetails,
+                accountNumber: e.target.value,
+              })
+            }
+            onBlur={formik.handleBlur}
+            className={`w-full px-4 py-2 border rounded-lg outline-none ${
+              formik.touched.paymentDetails?.accountNumber && formik.errors.paymentDetails?.accountNumber
+                ? "border-red-500 focus:ring-2 focus:ring-red-200"
+                : "border-gray-300 focus:ring-2 focus:ring-emerald-200"
+            }`}
+          />
+          {formik.touched.paymentDetails?.accountNumber && formik.errors.paymentDetails?.accountNumber && (
+            <p className="mt-1 text-sm text-red-600">{formik.errors.paymentDetails.accountNumber}</p>
+          )}
+        </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Account Number *</label>
-        <input
-          type="text"
-          value={formData.paymentDetails?.accountNumber || ""}
-          onChange={(e) =>
-            onChange("paymentDetails", {
-              ...formData.paymentDetails,
-              accountNumber: e.target.value,
-            })
-          }
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
-        />
+        <label className="block text-sm font-medium text-gray-700 mb-2">Settlement Bank *</label>
+        <div className="relative" ref={dropdownRef}>
+          <div
+            className={`w-full px-4 py-2 border rounded-lg outline-none cursor-pointer bg-white flex items-center justify-between ${
+              formik.touched.paymentDetails?.sortCode && formik.errors.paymentDetails?.sortCode
+                ? "border-red-500 focus:ring-2 focus:ring-red-200"
+                : "border-gray-300 focus:ring-2 focus:ring-emerald-200"
+            }`}
+            onClick={() => setShowBankDropdown(!showBankDropdown)}
+            onFocus={handleBankFieldFocus}
+          >
+            <input
+              type="text"
+              placeholder="Search banks..."
+              value={bankSearch}
+              onChange={(e) => handleBankSearch(e.target.value)}
+              onFocus={handleBankFieldFocus}
+              onClick={(e) => e.stopPropagation()}
+              className="flex-1 outline-none bg-transparent"
+            />
+            <ChevronDown size={20} className={`text-gray-400 transition-transform ${showBankDropdown ? "rotate-180" : ""}`} />
+          </div>
+
+          {showBankDropdown && (
+            <div className="absolute top-full left-0 right-0 mt-1 border border-gray-300 rounded-lg bg-white shadow-lg z-10 max-h-60 overflow-y-auto">
+              {loadingBanks ? (
+                <div className="p-4 text-center text-gray-500">Loading banks...</div>
+              ) : filteredBanks.length > 0 ? (
+                filteredBanks.map((bank) => (
+                  <div
+                    key={bank.code}
+                    onClick={() => selectBank(bank)}
+                    className="px-4 py-2 hover:bg-emerald-50 cursor-pointer border-b last:border-b-0"
+                  >
+                    <div className="font-medium text-gray-900">{bank.name}</div>
+                    <div className="text-xs text-gray-500">{bank.code}</div>
+                  </div>
+                ))
+              ) : (
+                <div className="p-4 text-center text-gray-500">No banks found</div>
+              )}
+            </div>
+          )}
+          {formik.touched.paymentDetails?.sortCode && formik.errors.paymentDetails?.sortCode && (
+            <p className="mt-2 text-sm text-red-600">{formik.errors.paymentDetails.sortCode}</p>
+          )}
+        </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Bank Code / Sort Code *</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Sort Code / Bank Code *</label>
+        <p className="text-xs text-gray-500 mb-2">Auto-filled when you select a bank</p>
         <input
           type="text"
-          value={formData.paymentDetails?.sortCode || ""}
+          name="paymentDetails.sortCode"
+          value={formik.values.paymentDetails?.sortCode || ""}
           onChange={(e) =>
-            onChange("paymentDetails", {
-              ...formData.paymentDetails,
+            formik.setFieldValue("paymentDetails", {
+              ...formik.values.paymentDetails,
               sortCode: e.target.value,
             })
           }
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
+          onBlur={formik.handleBlur}
+          placeholder="e.g., 058"
+          className={`w-full px-4 py-2 border rounded-lg outline-none ${
+            formik.touched.paymentDetails?.sortCode && formik.errors.paymentDetails?.sortCode
+              ? "border-red-500 focus:ring-2 focus:ring-red-200"
+              : "border-gray-300 focus:ring-2 focus:ring-emerald-200"
+          }`}
         />
+      </div>
+
+      <div className="border-t pt-6">
+        <h3 className="text-lg font-semibold text-[#09391C] mb-4">Primary Contact Information</h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Contact Name *</label>
+            <input
+              type="text"
+              name="paymentDetails.primaryContactName"
+              value={formik.values.paymentDetails?.primaryContactName || ""}
+              onChange={(e) =>
+                formik.setFieldValue("paymentDetails", {
+                  ...formik.values.paymentDetails,
+                  primaryContactName: e.target.value,
+                })
+              }
+              onBlur={formik.handleBlur}
+              className={`w-full px-4 py-2 border rounded-lg outline-none ${
+                formik.touched.paymentDetails?.primaryContactName && formik.errors.paymentDetails?.primaryContactName
+                  ? "border-red-500 focus:ring-2 focus:ring-red-200"
+                  : "border-gray-300 focus:ring-2 focus:ring-emerald-200"
+              }`}
+            />
+            {formik.touched.paymentDetails?.primaryContactName && formik.errors.paymentDetails?.primaryContactName && (
+              <p className="mt-1 text-sm text-red-600">{formik.errors.paymentDetails.primaryContactName}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+            <input
+              type="email"
+              name="paymentDetails.primaryContactEmail"
+              value={formik.values.paymentDetails?.primaryContactEmail || ""}
+              onChange={(e) =>
+                formik.setFieldValue("paymentDetails", {
+                  ...formik.values.paymentDetails,
+                  primaryContactEmail: e.target.value,
+                })
+              }
+              onBlur={formik.handleBlur}
+              className={`w-full px-4 py-2 border rounded-lg outline-none ${
+                formik.touched.paymentDetails?.primaryContactEmail && formik.errors.paymentDetails?.primaryContactEmail
+                  ? "border-red-500 focus:ring-2 focus:ring-red-200"
+                  : "border-gray-300 focus:ring-2 focus:ring-emerald-200"
+              }`}
+            />
+            {formik.touched.paymentDetails?.primaryContactEmail && formik.errors.paymentDetails?.primaryContactEmail && (
+              <p className="mt-1 text-sm text-red-600">{formik.errors.paymentDetails.primaryContactEmail}</p>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Phone *</label>
+          <input
+            type="tel"
+            name="paymentDetails.primaryContactPhone"
+            value={formik.values.paymentDetails?.primaryContactPhone || ""}
+            onChange={(e) =>
+              formik.setFieldValue("paymentDetails", {
+                ...formik.values.paymentDetails,
+                primaryContactPhone: e.target.value,
+              })
+            }
+            onBlur={formik.handleBlur}
+            className={`w-full px-4 py-2 border rounded-lg outline-none ${
+              formik.touched.paymentDetails?.primaryContactPhone && formik.errors.paymentDetails?.primaryContactPhone
+                ? "border-red-500 focus:ring-2 focus:ring-red-200"
+                : "border-gray-300 focus:ring-2 focus:ring-emerald-200"
+            }`}
+          />
+          {formik.touched.paymentDetails?.primaryContactPhone && formik.errors.paymentDetails?.primaryContactPhone && (
+            <p className="mt-1 text-sm text-red-600">{formik.errors.paymentDetails.primaryContactPhone}</p>
+          )}
+        </div>
       </div>
 
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
@@ -561,59 +748,82 @@ function Step3Payment({
   );
 }
 
-function Step4Review({ formData }: { formData: DealSiteSettings }) {
+function Step3Review({ formik }: { formik: any }) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-[#09391C] mb-4">Review Your Setup</h2>
+        <h2 className="text-2xl font-bold text-[#09391C] mb-4">Confirm and Launch</h2>
         <p className="text-gray-600">
-          Please review the information below before completing your setup.
+          Review your information below, then click "Complete Setup" to go live.
         </p>
       </div>
 
       {/* Public Link Summary */}
-      <div className="bg-gray-50 rounded-lg p-4">
-        <h3 className="font-semibold text-gray-900 mb-2">Public Link</h3>
-        <p className="text-emerald-600 font-medium">
-          https://{formData.publicSlug}.khabiteq.com
+      <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-200">
+        <h3 className="font-semibold text-emerald-900 mb-2">Your Public Page</h3>
+        <p className="text-emerald-700 font-medium break-all">
+          https://{formik.values.publicSlug}.khabiteq.com
         </p>
       </div>
 
       {/* Branding Summary */}
-      <div className="bg-gray-50 rounded-lg p-4">
-        <h3 className="font-semibold text-gray-900 mb-2">Branding</h3>
-        <div className="space-y-2 text-sm">
-          <p><span className="text-gray-600">Title:</span> {formData.title}</p>
-          <p><span className="text-gray-600">Description:</span> {formData.description.substring(0, 100)}...</p>
-        </div>
-      </div>
-
-      {/* Marketplace Summary */}
-      <div className="bg-gray-50 rounded-lg p-4">
-        <h3 className="font-semibold text-gray-900 mb-2">Marketplace</h3>
-        <div className="space-y-2 text-sm">
-          <p><span className="text-gray-600">Default Category:</span> {formData.marketplaceDefaults.defaultTab}</p>
-          <p><span className="text-gray-600">Featured Listings:</span> {formData.listingsLimit}</p>
+      <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+        <h3 className="font-semibold text-gray-900 mb-3">Basic Information</h3>
+        <div className="space-y-3 text-sm">
+          <div>
+            <p className="text-gray-600 font-medium">Title</p>
+            <p className="text-gray-900">{formik.values.title}</p>
+          </div>
+          <div>
+            <p className="text-gray-600 font-medium">Description</p>
+            <p className="text-gray-900">{formik.values.description}</p>
+          </div>
         </div>
       </div>
 
       {/* Payment Summary */}
-      <div className="bg-gray-50 rounded-lg p-4">
-        <h3 className="font-semibold text-gray-900 mb-2">Payment Details</h3>
-        <div className="space-y-2 text-sm">
-          <p><span className="text-gray-600">Business:</span> {formData.paymentDetails?.businessName}</p>
-          <p><span className="text-gray-600">Account:</span> ****{formData.paymentDetails?.accountNumber?.slice(-4)}</p>
+      <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+        <h3 className="font-semibold text-gray-900 mb-3">Payment Details</h3>
+        <div className="space-y-3 text-sm">
+          <div>
+            <p className="text-gray-600 font-medium">Business Name</p>
+            <p className="text-gray-900">{formik.values.paymentDetails?.businessName}</p>
+          </div>
+          <div>
+            <p className="text-gray-600 font-medium">Account Number</p>
+            <p className="text-gray-900">****{formik.values.paymentDetails?.accountNumber?.slice(-4)}</p>
+          </div>
+          <div>
+            <p className="text-gray-600 font-medium">Settlement Bank</p>
+            <p className="text-gray-900">{formik.values.paymentDetails?.sortCode || "Not specified"}</p>
+          </div>
         </div>
       </div>
 
-      <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 flex gap-3">
-        <CheckCircle size={20} className="text-emerald-600 flex-shrink-0" />
-        <div>
-          <h3 className="font-semibold text-emerald-900">Ready to launch!</h3>
-          <p className="text-sm text-emerald-800 mt-1">
-            Click "Complete Setup" to finalize and take your page live.
-          </p>
+      {/* Contact Information Summary */}
+      <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+        <h3 className="font-semibold text-gray-900 mb-3">Primary Contact Information</h3>
+        <div className="space-y-3 text-sm">
+          <div>
+            <p className="text-gray-600 font-medium">Contact Name</p>
+            <p className="text-gray-900">{formik.values.paymentDetails?.primaryContactName}</p>
+          </div>
+          <div>
+            <p className="text-gray-600 font-medium">Email</p>
+            <p className="text-gray-900">{formik.values.paymentDetails?.primaryContactEmail}</p>
+          </div>
+          <div>
+            <p className="text-gray-600 font-medium">Phone</p>
+            <p className="text-gray-900">{formik.values.paymentDetails?.primaryContactPhone}</p>
+          </div>
         </div>
+      </div>
+
+      <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+        <h3 className="font-semibold text-emerald-900 mb-2">You're almost there! 🎉</h3>
+        <p className="text-sm text-emerald-800">
+          After launching, you'll have access to your dashboard where you can add a logo, customize colors, add featured properties, testimonials, and much more.
+        </p>
       </div>
     </div>
   );

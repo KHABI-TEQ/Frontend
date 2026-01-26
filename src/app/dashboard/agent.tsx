@@ -99,9 +99,9 @@ export default function AgentDashboard() {
 
       if (dashboardResponse?.data) {
         setStats({
-          ...dashboardResponse.data,
+          ...(dashboardResponse.data as any),
           // Ensure newPendingBriefs is an array, default to empty if not present
-          newPendingBriefs: dashboardResponse.data.newPendingBriefs || [],
+          newPendingBriefs: (dashboardResponse.data as any).newPendingBriefs || [],
         });
       }
     } catch (error) {

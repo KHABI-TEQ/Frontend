@@ -182,8 +182,8 @@ const Register = () => {
         });
 
         if (response.success) {
-          Cookies.set("token", response.data.token);
-          setUser(response.data.user);
+          Cookies.set("token", (response.data as any).token);
+          setUser((response.data as any).user);
 
           toast.success("Authentication successful via Google!");
 
@@ -257,8 +257,8 @@ const Register = () => {
                   const result = await POST_REQUEST(url, payload);
 
                   if (result.success) {
-                    Cookies.set("token", result.data.token);
-                    setUser(result.data.user);
+                    Cookies.set("token", (result.data as any).token);
+                    setUser((result.data as any).user);
 
                     toast.success("Authentication successful via Facebook!");
  

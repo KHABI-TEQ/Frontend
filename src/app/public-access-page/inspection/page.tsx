@@ -38,7 +38,7 @@ export default function InspectionPage() {
         payload,
         token
       );
-
+ 
       if (res?.success) {
         updateSettings(payload as any);
         toast.success("Inspection settings saved");
@@ -80,34 +80,6 @@ export default function InspectionPage() {
             />
           </div>
           <p className="text-xs text-gray-500 mt-1">Leave empty for no default fee</p>
-        </div>
-
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              id="allow-public-booking"
-              checked={formData.allowPublicBooking}
-              onChange={(e) => handleInputChange("allowPublicBooking", e.target.checked)}
-              className="w-4 h-4 text-emerald-600 rounded"
-            />
-            <label htmlFor="allow-public-booking" className="text-sm font-medium text-gray-700">
-              Allow public users to book inspections
-            </label>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              id="negotiation-enabled"
-              checked={formData.negotiationEnabled}
-              onChange={(e) => handleInputChange("negotiationEnabled", e.target.checked)}
-              className="w-4 h-4 text-emerald-600 rounded"
-            />
-            <label htmlFor="negotiation-enabled" className="text-sm font-medium text-gray-700">
-              Enable inspection fee negotiation
-            </label>
-          </div>
         </div>
 
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">

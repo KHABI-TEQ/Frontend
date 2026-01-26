@@ -95,7 +95,7 @@ export default function FieldAgentInspections() {
 
       if (response?.success && response.data) {
         // Transform the response data to match our interface
-        const transformedInspections: Inspection[] = response.data.map((inspection: any) => ({
+        const transformedInspections: Inspection[] = (response.data as any).map((inspection: any) => ({
           _id: inspection._id || inspection.id,
           propertyId: inspection.propertyId?._id || inspection.propertyId,
           propertyType: inspection.propertyId?.propertyType || "Property",

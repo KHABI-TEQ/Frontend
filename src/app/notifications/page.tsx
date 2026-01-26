@@ -71,12 +71,12 @@ const NotificationsPage: React.FC = () => {
       if (response?.success && response?.data) {
         if (reset) {
           // Replace notifications (for initial load or refresh)
-          setNotifications(response.data);
+          setNotifications(response.data as any);
         } else {
           // Append notifications (for load more)
-          setNotifications(prev => [...prev, ...response.data]);
+          setNotifications(prev => [...prev, ...(response.data as any)]);
         }
-        setTotalPages(response.pagination.totalPages);
+        setTotalPages((response.pagination as any).totalPages);
         setCurrentPage(page);
       }
     } catch (error) {

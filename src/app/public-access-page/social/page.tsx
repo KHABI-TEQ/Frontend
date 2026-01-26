@@ -5,9 +5,12 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
+import Cookies from "js-cookie";
 import { Share2, Save } from "lucide-react";
 import { useDealSite } from "@/context/deal-site-context";
+import { PUT_REQUEST } from "@/utils/requests";
+import { URLS } from "@/utils/URLS";
 import toast from "react-hot-toast";
 
 export default function SocialPage() {
@@ -47,16 +50,30 @@ export default function SocialPage() {
     },
   ];
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     setSaving(true);
     try {
-      toast.success("Social links saved successfully");
+      const token = Cookies.get("token");
+      const payload = settings.socialLinks;
+
+      const res = await PUT_REQUEST(
+        `${URLS.BASE}/account/dealSite/${settings.publicSlug}/socialLinks/update`,
+        payload,
+        token
+      );
+
+      if (res?.success) {
+        toast.success("Social links saved successfully");
+      } else {
+        toast.error(res?.message || "Failed to save social links");
+      }
     } catch (error) {
+      console.error("Failed to save social links:", error);
       toast.error("Failed to save social links");
     } finally {
       setSaving(false);
     }
-  };
+  }, [settings.socialLinks, settings.publicSlug]);
 
   const inputBase =
     "w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200 text-gray-900";
