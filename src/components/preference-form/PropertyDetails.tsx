@@ -341,6 +341,8 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
             setPropertySubtype(propertySubtypeOption || null);
 
             setLandSize(propertyDetails.landSize || "");
+            setMinLandSize(propertyDetails.minLandSize || "");
+            setMaxLandSize(propertyDetails.maxLandSize || "");
 
             const measurementUnitOption = MEASUREMENT_UNITS.find(
               (opt) => opt.value === propertyDetails.measurementUnit
