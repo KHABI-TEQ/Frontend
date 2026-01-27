@@ -17,6 +17,8 @@ const documentOptions = [
   'governors-consent',
   'survey-plan',
   'deed-of-lease',
+  'deed-of-conveyance-or-sale',
+  'land-certificate'
 ] as const;
 
 
@@ -53,6 +55,8 @@ const initialDocumentNumbers: DocumentNumbers = {
   'governors-consent': '',
   'survey-plan': '',
   'deed-of-lease': '',
+  'deed-of-conveyance-or-sale': '',
+  'land-certificate': ''
 };
 
 
@@ -123,6 +127,8 @@ const DocumentVerificationPage: React.FC = () => {
       "governors-consent": "Governor's Consent",
       'survey-plan': 'Survey plan',
       'deed-of-lease': 'Deed of Lease',
+      'deed-of-conveyance-or-sale': 'Deed Of Conveyance/Sale',
+      'land-certificate': 'land Certificate',
     };
     return displayNames[document] || document;
   };
