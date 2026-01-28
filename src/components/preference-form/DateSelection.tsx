@@ -97,12 +97,12 @@ const CustomDateInput = forwardRef<
         onClick={onClick as React.MouseEventHandler<HTMLInputElement>}
         placeholder={placeholder as string}
         readOnly
-        className={`w-full px-6 py-4 text-base border-2 rounded-xl bg-white focus:ring-4 focus:ring-emerald-100 transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer ${
+        className={`w-full px-6 py-4 text-base border-2 rounded-xl bg-white transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer ${
           hasError
-            ? "border-red-400 focus:border-red-500 focus:ring-red-100"
+            ? "border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100"
             : value
-              ? "border-emerald-400 focus:border-emerald-500"
-              : "border-gray-200 focus:border-emerald-400 hover:border-emerald-300"
+              ? "border-emerald-500 focus:border-emerald-600 focus:ring-4 focus:ring-emerald-200"
+              : "border-gray-200 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 hover:border-emerald-300"
         }`}
       />
       <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
