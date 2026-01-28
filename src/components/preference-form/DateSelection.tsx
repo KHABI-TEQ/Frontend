@@ -508,7 +508,7 @@ const DateSelection: React.FC<DateSelectionProps> = memo(
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
+            transition={{ delay: 0.3 }}
             className="space-y-4"
           >
             <h5 className="text-sm font-semibold text-gray-800 flex items-center">
