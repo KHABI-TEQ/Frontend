@@ -347,6 +347,39 @@ const DateSelection: React.FC<DateSelectionProps> = memo(
           transition={{ delay: 0.1 }}
           className="space-y-8"
         >
+          {/* Quick Selection Options - Moved Above Date Inputs */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="space-y-3"
+          >
+            <h4 className="text-sm font-semibold text-gray-800 flex items-center">
+              <span className="mr-2">⚡</span>
+              Quick Selection
+            </h4>
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+              {quickSelections.map((option, index) => (
+                <motion.button
+                  key={option.nights}
+                  type="button"
+                  onClick={() => handleQuickSelection(option.nights)}
+                  className="px-3 py-2 text-xs font-medium border border-gray-300 rounded-lg bg-white hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm hover:shadow-md"
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 + index * 0.1 }}
+                >
+                  <div className="flex flex-col items-center space-y-1">
+                    <span className="text-base">{option.icon}</span>
+                    <span>{option.label}</span>
+                  </div>
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
+
           {/* Date Selection */}
           <div className="w-full flex flex-col md:flex-row gap-5 justify-start items-start">
             {/* Check-in Date */}
