@@ -454,7 +454,7 @@ const ShortletPropertyForm: React.FC<ShortletPropertyFormProps> = ({
       allowedUserTypes={["Agent", "Landowners"]}
       requireAgentOnboarding={false}
       requireAgentApproval={false}
-      requireActiveSubscription={true}
+      requireActiveSubscription={user?.userType === "Agent"} // Only Agents need subscription, not Landowners
       agentCustomMessage="You must complete onboarding and be approved before you can post properties."
     >
       <Preloader isVisible={isSubmitting} message="Submitting Property..." />

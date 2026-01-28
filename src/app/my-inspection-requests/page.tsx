@@ -429,7 +429,7 @@ export default function MyInspectionRequestsPage() {
 
  
   return (
-    <CombinedAuthGuard requireAuth={true} allowedUserTypes={["Agent", "Landowners"]} requireAgentOnboarding={false} requireAgentApproval={false} requireActiveSubscription={true} agentCustomMessage="You must complete onboarding and be approved before you view inspection requests.">
+    <CombinedAuthGuard requireAuth={true} allowedUserTypes={["Agent", "Landowners"]} requireAgentOnboarding={false} requireAgentApproval={false} requireActiveSubscription={user?.userType === "Agent"} agentCustomMessage="You must complete onboarding and be approved before you view inspection requests.">
       <div className="min-h-screen bg-[#EEF1F1]">
         <div className="container mx-auto px-4 sm:px-6 max-w-7xl py-8">
           <div className="mb-8">

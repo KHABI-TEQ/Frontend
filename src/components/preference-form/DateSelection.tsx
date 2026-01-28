@@ -97,12 +97,12 @@ const CustomDateInput = forwardRef<
         onClick={onClick as React.MouseEventHandler<HTMLInputElement>}
         placeholder={placeholder as string}
         readOnly
-        className={`w-full px-6 py-4 text-base border-2 rounded-xl bg-white focus:ring-4 focus:ring-emerald-100 transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer ${
+        className={`w-full px-6 py-4 text-base border-2 rounded-xl bg-white transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer ${
           hasError
-            ? "border-red-400 focus:border-red-500 focus:ring-red-100"
+            ? "border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100"
             : value
-              ? "border-emerald-400 focus:border-emerald-500"
-              : "border-gray-200 focus:border-emerald-400 hover:border-emerald-300"
+              ? "border-emerald-500 focus:border-emerald-600 focus:ring-4 focus:ring-emerald-200"
+              : "border-gray-200 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 hover:border-emerald-300"
         }`}
       />
       <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
@@ -347,6 +347,39 @@ const DateSelection: React.FC<DateSelectionProps> = memo(
           transition={{ delay: 0.1 }}
           className="space-y-8"
         >
+          {/* Quick Selection Options - Moved Above Date Inputs */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="space-y-3"
+          >
+            <h4 className="text-sm font-semibold text-gray-800 flex items-center">
+              <span className="mr-2">⚡</span>
+              Quick Selection
+            </h4>
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+              {quickSelections.map((option, index) => (
+                <motion.button
+                  key={option.nights}
+                  type="button"
+                  onClick={() => handleQuickSelection(option.nights)}
+                  className="px-3 py-2 text-xs font-medium border border-gray-300 rounded-lg bg-white hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm hover:shadow-md"
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 + index * 0.1 }}
+                >
+                  <div className="flex flex-col items-center space-y-1">
+                    <span className="text-base">{option.icon}</span>
+                    <span>{option.label}</span>
+                  </div>
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
+
           {/* Date Selection */}
           <div className="w-full flex flex-col md:flex-row gap-5 justify-start items-start">
             {/* Check-in Date */}
@@ -471,44 +504,11 @@ const DateSelection: React.FC<DateSelectionProps> = memo(
             </div>
           </div>
 
-          {/* Quick Selection Options */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="space-y-3"
-          >
-            <h4 className="text-sm font-semibold text-gray-800 flex items-center">
-              <span className="mr-2">⚡</span>
-              Quick Selection
-            </h4>
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-              {quickSelections.map((option, index) => (
-                <motion.button
-                  key={option.nights}
-                  type="button"
-                  onClick={() => handleQuickSelection(option.nights)}
-                  className="px-3 py-2 text-xs font-medium border border-gray-300 rounded-lg bg-white hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm hover:shadow-md"
-                  whileHover={{ scale: 1.05, y: -2 }}
-                  whileTap={{ scale: 0.95 }}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 + index * 0.1 }}
-                >
-                  <div className="flex flex-col items-center space-y-1">
-                    <span className="text-base">{option.icon}</span>
-                    <span>{option.label}</span>
-                  </div>
-                </motion.button>
-              ))}
-            </div>
-          </motion.div>
-
           {/* Time Preferences */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
+            transition={{ delay: 0.3 }}
             className="space-y-4"
           >
             <h5 className="text-sm font-semibold text-gray-800 flex items-center">
@@ -566,7 +566,7 @@ const DateSelection: React.FC<DateSelectionProps> = memo(
               initial={{ opacity: 0, y: 20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30, delay: 0.1 }}
               className="p-6 bg-gradient-to-r from-emerald-50 via-teal-50 to-cyan-50 rounded-2xl border-2 border-emerald-200 shadow-sm"
             >
               <div className="flex items-center justify-between mb-4">
@@ -661,7 +661,7 @@ const DateSelection: React.FC<DateSelectionProps> = memo(
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.4 }}
           className="p-6 bg-white rounded-xl border border-gray-200 shadow-sm"
         >
           <div className="flex items-center mb-4">
@@ -689,7 +689,7 @@ const DateSelection: React.FC<DateSelectionProps> = memo(
               <motion.div
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.6 }}
+                transition={{ delay: 0.45 }}
                 className="flex items-start space-x-3"
               >
                 <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2 flex-shrink-0"></div>
@@ -705,7 +705,7 @@ const DateSelection: React.FC<DateSelectionProps> = memo(
               <motion.div
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.7 }}
+                transition={{ delay: 0.55 }}
                 className="flex items-start space-x-3"
               >
                 <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
@@ -721,7 +721,7 @@ const DateSelection: React.FC<DateSelectionProps> = memo(
               <motion.div
                 initial={{ x: 20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.8 }}
+                transition={{ delay: 0.5 }}
                 className="flex items-start space-x-3"
               >
                 <div className="w-1.5 h-1.5 bg-orange-500 rounded-full mt-2 flex-shrink-0"></div>
@@ -737,7 +737,7 @@ const DateSelection: React.FC<DateSelectionProps> = memo(
               <motion.div
                 initial={{ x: 20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.9 }}
+                transition={{ delay: 0.6 }}
                 className="flex items-start space-x-3"
               >
                 <div className="w-1.5 h-1.5 bg-purple-500 rounded-full mt-2 flex-shrink-0"></div>
