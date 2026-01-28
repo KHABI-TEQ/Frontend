@@ -601,28 +601,17 @@ const PreferenceFormContent: React.FC = () => {
           preferenceMode: "shortlet",
           bookingDetails: {
             propertyType: (
-              shortletData.propertyDetails?.propertyType ||
-              shortletData.bookingDetails?.propertyType ||
-              ""
-            ).trim(),
-            buildingType: (
-              shortletData.propertyDetails?.buildingType || ""
+              shortletData.propertyDetails?.propertyType || ""
             ).trim(),
             minBedrooms: (
-              shortletData.propertyDetails?.bedrooms ||
-              shortletData.bookingDetails?.minBedrooms ||
-              ""
+              shortletData.propertyDetails?.bedrooms || ""
             )
               .toString()
               .trim(),
             minBathrooms:
-              shortletData.propertyDetails?.bathrooms ||
-              shortletData.bookingDetails?.minBathrooms ||
-              0,
+              shortletData.propertyDetails?.bathrooms || 0,
             numberOfGuests:
-              shortletData.propertyDetails?.maxGuests ||
-              shortletData.bookingDetails?.numberOfGuests ||
-              0,
+              shortletData.propertyDetails?.maxGuests || 0,
             checkInDate: (
               shortletData.bookingDetails?.checkInDate || ""
             ).trim(),
@@ -630,9 +619,7 @@ const PreferenceFormContent: React.FC = () => {
               shortletData.bookingDetails?.checkOutDate || ""
             ).trim(),
             travelType: (
-              shortletData.propertyDetails?.travelType ||
-              shortletData.bookingDetails?.travelType ||
-              ""
+              shortletData.propertyDetails?.travelType || ""
             ).trim(),
             preferredCheckInTime: (
               shortletData.contactInfo?.preferredCheckInTime || ""
@@ -640,24 +627,6 @@ const PreferenceFormContent: React.FC = () => {
             preferredCheckOutTime: (
               shortletData.contactInfo?.preferredCheckOutTime || ""
             ).trim(),
-            propertyCondition: (
-              shortletData.propertyDetails?.propertyCondition || ""
-            ).trim(),
-            purpose: (shortletData.propertyDetails?.purpose || "").trim(),
-            landSize: (shortletData.propertyDetails?.landSize || "").trim(),
-            minLandSize: (shortletData.propertyDetails?.minLandSize || "").trim(),
-            maxLandSize: (shortletData.propertyDetails?.maxLandSize || "").trim(),
-            measurementUnit: (
-              shortletData.propertyDetails?.measurementUnit || ""
-            ).trim(),
-            documentTypes:
-              shortletData.propertyDetails?.documentTypes?.filter(
-                (doc: string) => doc.trim() !== "",
-              ) || [],
-            landConditions:
-              shortletData.propertyDetails?.landConditions?.filter(
-                (condition: string) => condition.trim() !== "",
-              ) || [],
           },
           contactInfo: {
             fullName: (shortletData.contactInfo?.fullName || "").trim(),
@@ -680,9 +649,7 @@ const PreferenceFormContent: React.FC = () => {
             ).trim(),
           },
           nearbyLandmark: (
-            shortletData.propertyDetails?.nearbyLandmark ||
-            shortletData.nearbyLandmark ||
-            ""
+            shortletData.propertyDetails?.nearbyLandmark || ""
           ).trim(),
           additionalNotes: (shortletData.additionalNotes || "").trim(),
         };
