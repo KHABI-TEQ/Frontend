@@ -566,7 +566,7 @@ const DateSelection: React.FC<DateSelectionProps> = memo(
               initial={{ opacity: 0, y: 20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30, delay: 0.1 }}
               className="p-6 bg-gradient-to-r from-emerald-50 via-teal-50 to-cyan-50 rounded-2xl border-2 border-emerald-200 shadow-sm"
             >
               <div className="flex items-center justify-between mb-4">
