@@ -661,7 +661,7 @@ const DateSelection: React.FC<DateSelectionProps> = memo(
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.4 }}
           className="p-6 bg-white rounded-xl border border-gray-200 shadow-sm"
         >
           <div className="flex items-center mb-4">
