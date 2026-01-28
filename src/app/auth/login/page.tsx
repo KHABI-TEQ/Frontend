@@ -31,6 +31,7 @@ import mailIcon from "@/svgs/envelope.svg";
 import googleIcon from "@/svgs/googleIcon.svg";
 import facebookIcon from "@/svgs/facebookIcon.svg";
 import Link from "next/link";
+import CustomToast from "@/components/general-components/CustomToast";
 
 
 declare global {
@@ -112,9 +113,19 @@ const Login: FC = () => {
       setIsSubmitting(true);
       try {
         const url = URLS.BASE + URLS.authLogin;
+ 
+        await toast.promise(
+          (async () => {
 
-        const response = await toast.promise(
-          POST_REQUEST(url, values),
+            const response = await POST_REQUEST(url, values);
+
+            if (response.success) {
+              handleAuthSuccess(response);
+              return "Login successful";
+            } else {
+              throw new Error(response.error || "Login failed");
+            }
+          })(),
           {
             loading: "Logging in...",
             success: "Login successful!",
@@ -125,8 +136,6 @@ const Login: FC = () => {
             },
           }
         );
-
-        handleAuthSuccess(response);
       } catch (error) {
         console.error("Login error:", error);
       } finally {
