@@ -68,7 +68,7 @@ const PreferenceSuccessModal: React.FC<PreferenceSuccessModalProps> = ({
                 Property Matched Successfully!
               </h2>
               <p className="text-white text-opacity-90">
-                Your property has been matched to {buyerName ? `${buyerName}'s` : "the buyer's"} preference
+                Your property has been successfully matched to a preference
               </p>
             </div>
           </div>
@@ -94,7 +94,7 @@ const PreferenceSuccessModal: React.FC<PreferenceSuccessModalProps> = ({
                 What would you like to do next?
               </h4>
               <p className="text-sm text-green-700 text-center">
-                You can create another property for the same buyer preference or return to find more opportunities.
+                You can create another property for the same preference or return to find more opportunities.
               </p>
             </div>
 

@@ -308,28 +308,28 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
           viewport={{ once: true }}
-          className='bg-white/5 rounded-2xl p-6 md:p-8 mb-12'>
-          <div className='text-center md:text-left md:flex md:items-center md:justify-between'>
-            <div className='mb-6 md:mb-0'>
-              <h4 className={`text-white font-bold text-xl mb-2 ${archivo.variable}`}>
+          className='bg-white/5 rounded-2xl p-4 sm:p-6 md:p-8 mb-12'>
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-center'>
+            <div>
+              <h4 className={`text-white font-bold text-lg sm:text-xl mb-2 ${archivo.variable}`}>
                 Stay Updated with Property Deals
               </h4>
-              <p className="text-[#D6DDEB]">
+              <p className="text-[#D6DDEB] text-sm sm:text-base">
                 Get notified about new properties, market insights, and exclusive offers.
               </p>
             </div>
-            <div className='flex gap-3 max-w-md md:max-w-none'>
+            <div className='flex flex-col sm:flex-row gap-2 sm:gap-3'>
               <input
                 type="email"
                 placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className='flex-1 px-4 py-3 rounded-full bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#8DDB90]'
+                className='w-full px-4 py-3 rounded-full bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#8DDB90] text-sm'
               />
               <button
                 onClick={handleSubscribe}
                 disabled={isSubmitting}
-                className='bg-[#8DDB90] hover:bg-[#7BC87F] disabled:opacity-60 text-white px-4 sm:px-6 py-3 rounded-full font-medium transition-colors duration-300 whitespace-nowrap text-sm sm:text-base flex items-center justify-center min-h-[48px]'
+                className='bg-[#8DDB90] hover:bg-[#7BC87F] disabled:opacity-60 text-white px-6 py-3 rounded-full font-medium transition-colors duration-300 whitespace-nowrap text-sm sm:text-base flex items-center justify-center min-h-[48px]'
               >
                 {isSubmitting ? 'Subscribing...' : 'Subscribe'}
               </button>
@@ -338,15 +338,16 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
         </motion.div>
 
         {/* Bottom Section */}
-        <div className='border-t border-white/20 pt-8'>
-          <div className='flex flex-col md:flex-row justify-between items-center gap-6'>
+        <div className='border-t border-white/20 pt-6 sm:pt-8'>
+          <div className='space-y-4 sm:space-y-0'>
             {/* Copyright */}
             <motion.div
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.5 }}
-              viewport={{ once: true }}>
-              <p className={`text-gray-400 text-center md:text-left ${archivo.variable}`}>
+              viewport={{ once: true }}
+              className='text-center sm:text-left'>
+              <p className={`text-gray-400 text-xs sm:text-sm ${archivo.variable}`}>
                 © {new Date().getFullYear()} Khabiteq Realty Limited. All rights reserved.
               </p>
             </motion.div>
@@ -356,21 +357,23 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
               whileInView={{ opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.6 }}
               viewport={{ once: true }}
-              className='flex items-center gap-4'>
-              <span className="text-[#D6DDEB] text-sm mr-2">
+              className='flex flex-col sm:flex-row items-center justify-center sm:justify-end gap-3 sm:gap-4'>
+              <span className="text-[#D6DDEB] text-xs sm:text-sm whitespace-nowrap">
                 Follow us:
               </span>
-              {(computedLinks.length ? computedLinks : defaultSocialLinks).map((social, index) => (
-                <Link
-                  key={index}
-                  href={social.url}
-                  target='_blank'
-                  rel='noopener noreferrer'
-                  className='w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-[#D6DDEB] hover:bg-[#8DDB90] hover:text-white transition-all duration-300 hover:scale-110'
-                  title={social.name}>
-                  {social.icon}
-                </Link>
-              ))}
+              <div className='flex flex-wrap gap-2 sm:gap-3 justify-center sm:justify-end'>
+                {(computedLinks.length ? computedLinks : defaultSocialLinks).map((social, index) => (
+                  <Link
+                    key={index}
+                    href={social.url}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    className='w-9 h-9 sm:w-10 sm:h-10 bg-white/10 rounded-full flex items-center justify-center text-[#D6DDEB] hover:bg-[#8DDB90] hover:text-white transition-all duration-300 hover:scale-110'
+                    title={social.name}>
+                    {social.icon}
+                  </Link>
+                ))}
+              </div>
             </motion.div>
           </div>
         </div>

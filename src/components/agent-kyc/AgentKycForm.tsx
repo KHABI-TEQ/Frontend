@@ -41,7 +41,7 @@ const kycValidationSchema = Yup.object({
     }),
   ).min(1, "At least one form of identification is required"),
   agentLicenseNumber: Yup.string().optional().min(3, "License number must be at least 3 characters"),
-  profileBio: Yup.string().required("Profile bio is required").max(500, "Bio cannot exceed 500 characters"),
+  profileBio: Yup.string().optional().max(500, "Bio cannot exceed 500 characters"),
   specializations: Yup.array().of(Yup.string()).min(1, "Pick at least one specialization").max(5, "Maximum 5 specializations allowed"),
   languagesSpoken: Yup.array().of(Yup.string()).min(1, "Pick at least one language"),
   servicesOffered: Yup.array().of(Yup.string()).min(1, "Pick at least one service"),
@@ -124,7 +124,7 @@ const AgentKycForm: React.FC = () => {
 
   const isRequired = (path: string): boolean => {
     const requiredFields = [
-      "meansOfId", "profileBio", "specializations", "languagesSpoken", "servicesOffered",
+      "meansOfId", "specializations", "languagesSpoken", "servicesOffered",
       "address.street", "address.homeNo", "address.state", "address.localGovtArea", "regionOfOperation"
     ];
     return requiredFields.some(field => path === field || path.startsWith(field + "["));
@@ -260,7 +260,6 @@ const AgentKycForm: React.FC = () => {
 
     if (currentStep === 1) {
       const fields = [
-        "profileBio",
         "specializations",
         "languagesSpoken",
         "servicesOffered",
@@ -318,11 +317,10 @@ const AgentKycForm: React.FC = () => {
     }
 
     if (currentStep === 1) {
-      const bioDefined = !!formik.values.profileBio && formik.values.profileBio.trim().length > 0;
       const hasSpecializations = formik.values.specializations.length > 0;
       const hasLanguages = formik.values.languagesSpoken.length > 0;
       const hasServices = formik.values.servicesOffered.length > 0;
-      return bioDefined && hasSpecializations && hasLanguages && hasServices;
+      return hasSpecializations && hasLanguages && hasServices;
     }
 
     if (currentStep === 2) {

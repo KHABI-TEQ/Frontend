@@ -69,6 +69,15 @@ const customSelectStyles = {
     color: "#9CA3AF",
     fontSize: "15px",
   }),
+  clearIndicator: (provided: any) => ({
+    ...provided,
+    padding: "8px 4px",
+    cursor: "pointer",
+    color: "#9CA3AF",
+    "&:hover": {
+      color: "#EF4444",
+    },
+  }),
   multiValue: (provided: any) => ({
     ...provided,
     backgroundColor: "#D1FAE5",
