@@ -1067,7 +1067,6 @@ const PostPropertyByPreference = () => {
             <PreferenceSuccessModal
               isOpen={showSuccessModal}
               onClose={() => setShowSuccessModal(false)}
-              buyerName={preference?.buyer?.fullName}
             />
           </div>
         </div>
