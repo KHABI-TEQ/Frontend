@@ -124,7 +124,7 @@ const AgentKycForm: React.FC = () => {
 
   const isRequired = (path: string): boolean => {
     const requiredFields = [
-      "meansOfId", "profileBio", "specializations", "languagesSpoken", "servicesOffered",
+      "meansOfId", "specializations", "languagesSpoken", "servicesOffered",
       "address.street", "address.homeNo", "address.state", "address.localGovtArea", "regionOfOperation"
     ];
     return requiredFields.some(field => path === field || path.startsWith(field + "["));
