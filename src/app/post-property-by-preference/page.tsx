@@ -963,14 +963,14 @@ const PostPropertyByPreference = () => {
               <p className="text-[#5A5D63] text-sm md:text-lg max-w-2xl mx-auto px-4">
                 {preference && (
                   <span className="block mb-2">
-                    For: <strong>{preference.buyer.fullName}</strong> - {preference.preferenceType === 'buy' ? 'Looking to Buy' : preference.preferenceType === 'rent' ? 'Looking to Rent' : 'Looking for Shortlet'}
+                    Preference Type: <strong>{preference.preferenceType === 'buy' ? 'Looking to Buy' : preference.preferenceType === 'rent' ? 'Looking to Rent' : 'Looking for Shortlet'}</strong>
                   </span>
                 )}
                 {showPropertySummary
                   ? "Review your property listing before submission"
                   : showCommissionModal
                     ? "Review and accept the commission terms"
-                    : "Follow these simple steps to list your property that matches the buyer's requirements"}
+                    : "Follow these simple steps to list your property that matches the preference requirements"}
               </p>
             </div>
 
