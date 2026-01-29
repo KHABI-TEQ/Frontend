@@ -203,7 +203,6 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
     const lgaOrderRef = useRef<string[]>([]);
     const stableSelectStylesRef = useRef(customSelectStyles);
     const compactSelectStylesRef = useRef(compactSelectStyles);
-    const isInitializedRef = useRef(false);
     const hasUserClearedStateRef = useRef(false);
 
     // Memoized options to prevent recreation
