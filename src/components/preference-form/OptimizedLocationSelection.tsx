@@ -660,7 +660,7 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
                           styles={compactSelectStylesRef.current}
                           placeholder={`Areas in ${lga.label}...`}
                           isSearchable={true}
-                          isClearable={false}
+                          isClearable={true}
                           formatCreateLabel={(inputValue) =>
                             `Add "${inputValue}"`
                           }
