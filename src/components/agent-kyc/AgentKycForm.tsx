@@ -260,7 +260,6 @@ const AgentKycForm: React.FC = () => {
 
     if (currentStep === 1) {
       const fields = [
-        "profileBio",
         "specializations",
         "languagesSpoken",
         "servicesOffered",
