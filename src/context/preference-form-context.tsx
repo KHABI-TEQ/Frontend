@@ -472,11 +472,44 @@ export const PreferenceFormProvider: React.FC<{ children: ReactNode }> = ({
               });
             }
 
-            if (!formData.propertyDetails?.landSize) {
-              errors.push({
-                field: "propertyDetails.landSize",
-                message: "Land size is required",
-              });
+            // Check for land size based on measurement unit
+            if (formData.propertyDetails?.measurementUnit === "sqm") {
+              // For SQM, require min and max land size
+              if (!formData.propertyDetails?.minLandSize || parseFloat(formData.propertyDetails.minLandSize as any) <= 0) {
+                errors.push({
+                  field: "propertyDetails.minLandSize",
+                  message: "Minimum land size is required",
+                });
+              }
+
+              if (!formData.propertyDetails?.maxLandSize || parseFloat(formData.propertyDetails.maxLandSize as any) <= 0) {
+                errors.push({
+                  field: "propertyDetails.maxLandSize",
+                  message: "Maximum land size is required",
+                });
+              }
+
+              // Check that max is greater than min
+              if (
+                formData.propertyDetails?.minLandSize &&
+                formData.propertyDetails?.maxLandSize &&
+                parseFloat(formData.propertyDetails.minLandSize as any) > 0 &&
+                parseFloat(formData.propertyDetails.maxLandSize as any) > 0 &&
+                parseFloat(formData.propertyDetails.maxLandSize as any) <= parseFloat(formData.propertyDetails.minLandSize as any)
+              ) {
+                errors.push({
+                  field: "propertyDetails.maxLandSize",
+                  message: "Maximum land size must be greater than minimum",
+                });
+              }
+            } else {
+              // For other units, require single land size
+              if (!formData.propertyDetails?.landSize || parseFloat(formData.propertyDetails.landSize as any) <= 0) {
+                errors.push({
+                  field: "propertyDetails.landSize",
+                  message: "Land size is required",
+                });
+              }
             }
           }
 
