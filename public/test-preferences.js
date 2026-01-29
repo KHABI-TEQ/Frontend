@@ -146,6 +146,31 @@ function getReactFiber(el) {
   return el[fiberKey];
 }
 
+function waitForSubmitButton(timeout = 5000) {
+  return new Promise((resolve, reject) => {
+    const start = Date.now();
+
+    const interval = setInterval(() => {
+      const button = Array.from(document.querySelectorAll('button'))
+        .find(btn =>
+          !btn.disabled &&
+          /submit|save|continue|finish|next/i.test(btn.textContent || '')
+        );
+
+      if (button) {
+        clearInterval(interval);
+        resolve(button);
+      }
+
+      if (Date.now() - start > timeout) {
+        clearInterval(interval);
+        reject(new Error('Submit button not found'));
+      }
+    }, 200);
+  });
+}
+
+
 // Helper function to find hook state dispatcher
 function useDispatch(component) {
   const fiber = getReactFiber(component);
@@ -202,18 +227,19 @@ async function testAllPreferences() {
         || Array.from(document.querySelectorAll('button')).find(btn => 
           btn.textContent?.includes('Submit'));
       
-      if (submitButton) {
+      try {
+        const submitButton = await waitForSubmitButton();
         console.log(`   Clicking submit button for ${type}...`);
         submitButton.click();
-        
-        // Wait for submission
+
         await new Promise(resolve => setTimeout(resolve, 2000));
         results[type] = 'SUCCESS';
         console.log(`✅ ${type} submitted successfully`);
-      } else {
-        console.warn(`⚠️  Could not find submit button for ${type}`);
+      } catch (err) {
+        console.warn(`⚠️  ${type}: ${err.message}`);
         results[type] = 'MANUAL_ACTION_REQUIRED';
       }
+
     } catch (error) {
       console.error(`❌ Error testing ${type}:`, error);
       results[type] = `ERROR: ${error.message}`;
