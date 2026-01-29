@@ -330,13 +330,13 @@ export default function HomePageSettings() {
             title: whyChooseUsSection.title,
             subTitle: whyChooseUsSection.subTitle,
             items: whyChooseUsForBackend,
-          },
-          support: {
-            title: supportSection.title,
-            description: supportSection.description,
-            showHeroCtaButtons: supportSection.showHeroCtaButtons,
-            supportCards: supportCardsForBackend,
-          },
+          }
+        },
+        support: {
+          title: supportSection.title,
+          description: supportSection.description,
+          showHeroCtaButtons: supportSection.showHeroCtaButtons,
+          supportCards: supportCardsForBackend,
         },
       };
 
@@ -361,12 +361,12 @@ export default function HomePageSettings() {
               subTitle: whyChooseUsSection.subTitle,
               items: whyChooseUs, // Use frontend state with _id fields
             },
-            support: {
-              title: supportSection.title,
-              description: supportSection.description,
-              showHeroCtaButtons: supportSection.showHeroCtaButtons,
-              supportCards: supportCards, // Use frontend state with id fields
-            },
+          },
+          support: {
+            title: supportSection.title,
+            description: supportSection.description,
+            showHeroCtaButtons: supportSection.showHeroCtaButtons,
+            supportCards: supportCards, // Use frontend state with id fields
           },
         } as any);
         toast.success("Home page settings saved successfully");
