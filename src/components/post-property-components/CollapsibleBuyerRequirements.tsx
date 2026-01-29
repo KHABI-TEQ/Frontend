@@ -492,66 +492,6 @@ export const CollapsibleBuyerRequirements: React.FC<CollapsibleBuyerRequirements
         </div>
       )}
 
-      {/* Contact & House Rules Section */}
-      {preference.contactInfo && renderSection(
-        "Buyer's House Rules & Preferences",
-        "contact",
-        <CheckCircle size={20} />,
-        <div className="space-y-4 text-sm">
-          <div className="flex flex-col">
-            <span className="text-gray-600 font-medium mb-1">Full Name</span>
-            <span className="font-semibold text-[#09391C]">
-              {preference.contactInfo.fullName || "Not provided"}
-            </span>
-          </div>
-
-          <div className="flex flex-col">
-            <span className="text-gray-600 font-medium mb-1">Email</span>
-            <span className="font-semibold text-[#09391C] break-all">
-              {preference.contactInfo.email || "Not provided"}
-            </span>
-          </div>
-
-          <div className="flex flex-col">
-            <span className="text-gray-600 font-medium mb-1">Phone Number</span>
-            <span className="font-semibold text-[#09391C]">
-              {preference.contactInfo.phoneNumber || "Not provided"}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-4 border-t border-gray-300">
-            <div className="flex items-center space-x-2">
-              <div className={`w-3 h-3 rounded-full ${preference.contactInfo.petsAllowed ? 'bg-green-500' : 'bg-red-500'}`}></div>
-              <span className="text-gray-700">
-                Pets: <span className="font-semibold">{preference.contactInfo.petsAllowed ? 'Yes' : 'No'}</span>
-              </span>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <div className={`w-3 h-3 rounded-full ${preference.contactInfo.smokingAllowed ? 'bg-green-500' : 'bg-red-500'}`}></div>
-              <span className="text-gray-700">
-                Smoking: <span className="font-semibold">{preference.contactInfo.smokingAllowed ? 'Yes' : 'No'}</span>
-              </span>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <div className={`w-3 h-3 rounded-full ${preference.contactInfo.partiesAllowed ? 'bg-green-500' : 'bg-red-500'}`}></div>
-              <span className="text-gray-700">
-                Parties: <span className="font-semibold">{preference.contactInfo.partiesAllowed ? 'Yes' : 'No'}</span>
-              </span>
-            </div>
-          </div>
-
-          {preference.contactInfo.additionalRequests && (
-            <div className="flex flex-col pt-4 border-t border-gray-300">
-              <span className="text-gray-600 font-medium mb-2">Additional Requests</span>
-              <span className="text-[#09391C] bg-gray-50 p-3 rounded">
-                {preference.contactInfo.additionalRequests}
-              </span>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Additional Information Section */}
       {(preference.nearbyLandmark || preference.additionalNotes) && renderSection(
