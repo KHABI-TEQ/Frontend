@@ -58,7 +58,7 @@ export default function RootLayout({
                             <body
                               className={`${roboto.variable} ${archivo.variable} antialiased`}
                             >
-                              <div id="promo-top-placeholder" className="w-full overflow-hidden bg-transparent" />
+                              <div id="promo-top-placeholder" className="w-full overflow-hidden bg-transparent h-28 mb-4" />
                               <HeaderFooterWrapper>
                                 <Body>{children}</Body>
                               </HeaderFooterWrapper>
