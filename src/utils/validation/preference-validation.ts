@@ -115,7 +115,37 @@ const buyPropertyDetailsSchema = Yup.object({
     .required("Property type is required"),
   landSize: Yup.number()
     .min(0.01, "Land size must be greater than 0")
-    .required("Land size is required"),
+    .when("measurementUnit", {
+      is: (val: string) => val !== "sqm",
+      then: (schema) => schema.required("Land size is required"),
+      otherwise: (schema) => schema.nullable(),
+    }),
+  minLandSize: Yup.number().when("measurementUnit", {
+    is: "sqm",
+    then: (schema) =>
+      schema
+        .typeError("Minimum land size must be a valid number")
+        .required("Minimum land size is required")
+        .min(0.01, "Minimum land size must be greater than 0"),
+    otherwise: (schema) => schema.nullable(),
+  }),
+  maxLandSize: Yup.number().when("measurementUnit", {
+    is: "sqm",
+    then: (schema) =>
+      schema
+        .typeError("Maximum land size must be a valid number")
+        .required("Maximum land size is required")
+        .min(0.01, "Maximum land size must be greater than 0")
+        .test(
+          "max-greater-than-min",
+          "Maximum land size must be greater than minimum land size",
+          function (value) {
+            const { minLandSize } = this.parent;
+            return !minLandSize || !value || value > minLandSize;
+          },
+        ),
+    otherwise: (schema) => schema.nullable(),
+  }),
   measurementUnit: Yup.string()
     .oneOf(
       ["plot", "sqm", "hectares"],
