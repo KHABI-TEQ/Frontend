@@ -58,12 +58,12 @@ export default function RootLayout({
                             <body
                               className={`${roboto.variable} ${archivo.variable} antialiased`}
                             >
-                              <div id="promo-top-placeholder" className="w-full overflow-hidden bg-transparent h-28 mb-4" />
+                              <div id="promo-top-placeholder"> </div>
                               <HeaderFooterWrapper>
                                 <Body>{children}</Body>
                               </HeaderFooterWrapper>
                               <Suspense fallback={null}>
-                                <PromoMount slot="top-header" targetId="promo-top-placeholder" className="mb-2" height="h-20" />
+                                <PromoMount slot="header" targetId="promo-top-placeholder" className="w-full overflow-hidden bg-transparent mb-4" height="h-20" />
                               </Suspense>
                               <Suspense fallback={null}>
                                 <GlobalPropertyActionsFAB />
