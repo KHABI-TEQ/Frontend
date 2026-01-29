@@ -191,7 +191,7 @@ interface LocationSelectionProps {
 const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
   ({ className = "" }) => {
     const { state, updateFormData } = usePreferenceForm();
- 
+
     // Enhanced local state for LGA-area mapping with proper scoping
     const [selectedState, setSelectedState] = useState<Option | null>(null);
     const [selectedLGAs, setSelectedLGAs] = useState<Option[]>([]);
@@ -203,6 +203,7 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
     const lgaOrderRef = useRef<string[]>([]);
     const stableSelectStylesRef = useRef(customSelectStyles);
     const compactSelectStylesRef = useRef(compactSelectStyles);
+    const hasUserClearedStateRef = useRef(false);
 
     // Memoized options to prevent recreation
     const stateOptions = useMemo(
@@ -283,15 +284,28 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
         setCustomLocation("");
         setShowCustomLocation(false);
         lgaOrderRef.current = [];
+        hasUserClearedStateRef.current = false;
         return;
       }
 
       if (locationData) {
-        if (locationData.state && !selectedState) {
+        // Only restore state from context if:
+        // 1. We haven't initialized yet (first mount), OR
+        // 2. The user didn't just clear it, AND we need to sync from context
+        if (
+          locationData.state &&
+          !selectedState &&
+          !hasUserClearedStateRef.current
+        ) {
           setSelectedState({
             value: locationData.state,
             label: locationData.state,
           });
+        }
+
+        // If the context state was cleared (after user cleared it), reset our flag
+        if (!locationData.state && hasUserClearedStateRef.current) {
+          hasUserClearedStateRef.current = false;
         }
 
         // Initialize enhanced LGA-area mapping from existing data
@@ -340,7 +354,7 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
           setShowCustomLocation(true);
         }
       }
-    }, [state.formData, state.currentStep, selectedState]);
+    }, [state.formData, state.currentStep]);
 
     // Use context's built-in debouncing
     const debouncedUpdateFormData = useCallback(
@@ -383,6 +397,10 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
     // Handler functions
     const handleStateChange = useCallback((newValue: SingleValue<Option>) => {
       setSelectedState(newValue);
+      // Track if user intentionally cleared the state (clicked X button)
+      if (newValue === null) {
+        hasUserClearedStateRef.current = true;
+      }
       // Reset LGAs and areas when state changes
       setSelectedLGAs([]);
       setLgasWithAreas([]);
