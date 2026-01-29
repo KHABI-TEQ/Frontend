@@ -385,6 +385,10 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
     // Handler functions
     const handleStateChange = useCallback((newValue: SingleValue<Option>) => {
       setSelectedState(newValue);
+      // Track if user intentionally cleared the state (clicked X button)
+      if (newValue === null) {
+        hasUserClearedStateRef.current = true;
+      }
       // Reset LGAs and areas when state changes
       setSelectedLGAs([]);
       setLgasWithAreas([]);
