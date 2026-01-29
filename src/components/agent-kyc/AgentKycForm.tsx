@@ -41,7 +41,7 @@ const kycValidationSchema = Yup.object({
     }),
   ).min(1, "At least one form of identification is required"),
   agentLicenseNumber: Yup.string().optional().min(3, "License number must be at least 3 characters"),
-  profileBio: Yup.string().required("Profile bio is required").max(500, "Bio cannot exceed 500 characters"),
+  profileBio: Yup.string().optional().max(500, "Bio cannot exceed 500 characters"),
   specializations: Yup.array().of(Yup.string()).min(1, "Pick at least one specialization").max(5, "Maximum 5 specializations allowed"),
   languagesSpoken: Yup.array().of(Yup.string()).min(1, "Pick at least one language"),
   servicesOffered: Yup.array().of(Yup.string()).min(1, "Pick at least one service"),
