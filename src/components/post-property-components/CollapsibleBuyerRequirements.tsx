@@ -146,7 +146,7 @@ export const CollapsibleBuyerRequirements: React.FC<CollapsibleBuyerRequirements
     <div className="bg-white rounded-xl border-l-4 border-[#8DDB90] overflow-hidden">
       {/* Basic Information Section */}
       {renderSection(
-        "Buyer's Basic Requirements",
+        "Preference Requirements",
         "basic",
         <Home size={20} />,
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
@@ -162,14 +162,6 @@ export const CollapsibleBuyerRequirements: React.FC<CollapsibleBuyerRequirements
               {preference.preferenceMode}
             </span>
           </div>
-          {preference.buyer && (
-            <div className="flex flex-col">
-              <span className="text-gray-600 font-medium mb-1">Buyer Name</span>
-              <span className="font-semibold text-[#09391C]">
-                {preference.buyer.fullName}
-              </span>
-            </div>
-          )}
         </div>
       )}
 
