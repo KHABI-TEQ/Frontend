@@ -94,7 +94,7 @@ const PreferenceSuccessModal: React.FC<PreferenceSuccessModalProps> = ({
                 What would you like to do next?
               </h4>
               <p className="text-sm text-green-700 text-center">
-                You can create another property for the same buyer preference or return to find more opportunities.
+                You can create another property for the same preference or return to find more opportunities.
               </p>
             </div>
 
