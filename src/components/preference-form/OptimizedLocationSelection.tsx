@@ -563,6 +563,7 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
                 styles={stableSelectStylesRef.current}
                 placeholder="Select up to 3 local government areas"
                 isSearchable={true}
+                isClearable={true}
                 className="react-select-container"
                 classNamePrefix="react-select"
                 noOptionsMessage={() => "No LGAs found for selected state"}
@@ -659,7 +660,7 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
                           styles={compactSelectStylesRef.current}
                           placeholder={`Areas in ${lga.label}...`}
                           isSearchable={true}
-                          isClearable={false}
+                          isClearable={true}
                           formatCreateLabel={(inputValue) =>
                             `Add "${inputValue}"`
                           }
