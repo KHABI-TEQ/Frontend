@@ -27,16 +27,16 @@ import InputField from "@/components/common/InputField";
 const ForgotPassword = () => {
   const isLoading = useLoading();
   const { isContactUsClicked } = usePageContext();
-  const { user } = useUserContext();
+  const { user, isInitialized } = useUserContext();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Redirect authenticated users to dashboard
+  // Redirect authenticated users to dashboard (only after user context is initialized)
   useEffect(() => {
-    if (user) {
+    if (isInitialized && user) {
       router.replace("/dashboard");
     }
-  }, [user, router]);
+  }, [user, isInitialized, router]);
 
   const validationSchema = Yup.object({
     email: Yup.string().email("Invalid email address").required("Enter email"),
