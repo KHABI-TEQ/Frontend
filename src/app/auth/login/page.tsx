@@ -44,7 +44,7 @@ declare global {
 const Login: FC = () => {
   const isLoading = useLoading();
   const { isContactUsClicked } = usePageContext();
-  const { setUser } = useUserContext();
+  const { user, setUser, isInitialized } = useUserContext();
   const router = useRouter();
   const searchParams = useSearchParams();
   const searchParamsString = searchParams?.toString() ?? "";
@@ -72,6 +72,13 @@ const Login: FC = () => {
     email: Yup.string().email("Invalid email address").required("Enter email"),
     password: Yup.string().required("Password is required"),
   });
+
+  // Redirect authenticated users to dashboard (only after user context is initialized)
+  useEffect(() => {
+    if (isInitialized && user) {
+      router.replace("/dashboard");
+    }
+  }, [user, isInitialized, router]);
 
   useEffect(() => {
     if (resolvedRedirectTarget) {

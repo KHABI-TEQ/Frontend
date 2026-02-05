@@ -12,6 +12,7 @@ import React, { useEffect, useState, useRef } from "react";
 import Button from "@/components/general-components/button";
 import Link from "next/link";
 import { usePageContext } from "@/context/page-context";
+import { useUserContext } from "@/context/user-context";
 import { POST_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import toast from "react-hot-toast";
@@ -20,12 +21,21 @@ import { useRouter } from "next/navigation";
 const VerifyResetRequest = () => {
   const isLoading = useLoading();
   const { isContactUsClicked } = usePageContext();
+  const { user, isInitialized } = useUserContext();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [isResending, setIsResending] = useState(false);
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [isVerifying, setIsVerifying] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // Redirect authenticated users to dashboard (only after user context is initialized)
+  useEffect(() => {
+    if (isInitialized && user) {
+      router.replace("/dashboard");
+      return;
+    }
+  }, [user, isInitialized, router]);
 
   useEffect(() => {
     const resetEmail = localStorage.getItem("resetEmail");

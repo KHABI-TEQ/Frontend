@@ -4,6 +4,7 @@ import React, { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { CheckCircle, XCircle, Loader2, Mail } from "lucide-react";
+import { useUserContext } from "@/context/user-context";
 import { GET_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 
@@ -18,10 +19,18 @@ interface VerificationResponse {
 // This is the core logic component that uses useSearchParams
 const VerifyAccountComponent: React.FC = () => {
   const router = useRouter();
+  const { user, isInitialized } = useUserContext();
   const searchParams = useSearchParams(); // This hook requires Suspense
   const [status, setStatus] = useState<VerificationStatus>("loading");
   const [message, setMessage] = useState<string>("");
   const [countdown, setCountdown] = useState<number>(5);
+
+  // Redirect authenticated users to dashboard (only after user context is initialized)
+  useEffect(() => {
+    if (isInitialized && user) {
+      router.replace("/dashboard");
+    }
+  }, [user, isInitialized, router]);
 
   useEffect(() => {
     const token = searchParams?.get("token");

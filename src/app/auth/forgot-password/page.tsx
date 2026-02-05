@@ -9,7 +9,7 @@
 "use client";
 import Loading from "@/components/loading-component/loading";
 import { useLoading } from "@/hooks/useLoading";
-import React, { FC, useState } from "react";
+import React, { FC, useState, useEffect } from "react";
 import mailIcon from "@/svgs/envelope.svg";
 import { StaticImport } from "next/dist/shared/lib/get-img-props";
 import * as Yup from "yup";
@@ -17,6 +17,7 @@ import { useFormik } from "formik";
 import Button from "@/components/general-components/button";
 import Link from "next/link";
 import { usePageContext } from "@/context/page-context";
+import { useUserContext } from "@/context/user-context";
 import { POST_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import toast from "react-hot-toast";
@@ -26,8 +27,16 @@ import InputField from "@/components/common/InputField";
 const ForgotPassword = () => {
   const isLoading = useLoading();
   const { isContactUsClicked } = usePageContext();
+  const { user, isInitialized } = useUserContext();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Redirect authenticated users to dashboard (only after user context is initialized)
+  useEffect(() => {
+    if (isInitialized && user) {
+      router.replace("/dashboard");
+    }
+  }, [user, isInitialized, router]);
 
   const validationSchema = Yup.object({
     email: Yup.string().email("Invalid email address").required("Enter email"),

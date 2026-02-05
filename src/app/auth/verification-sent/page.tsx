@@ -9,6 +9,7 @@ import React, { useEffect, useState } from "react";
 import Button from "@/components/general-components/button";
 import Link from "next/link";
 import { usePageContext } from "@/context/page-context";
+import { useUserContext } from "@/context/user-context";
 import { POST_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import toast from "react-hot-toast";
@@ -17,6 +18,7 @@ import { useRouter } from "next/navigation";
 const VerificationSent = () => {
   const isLoading = useLoading();
   const { isContactUsClicked } = usePageContext();
+  const { user, isInitialized } = useUserContext();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [userType, setUserType] = useState<"Agent" | "Landowners" | null>(null);
@@ -24,6 +26,14 @@ const VerificationSent = () => {
 
   const isAgent = userType === "Agent";
   const isLandowner = userType === "Landowners";
+
+  // Redirect authenticated users to dashboard (only after user context is initialized)
+  useEffect(() => {
+    if (isInitialized && user) {
+      router.replace("/dashboard");
+      return;
+    }
+  }, [user, isInitialized, router]);
 
   useEffect(() => {
     const userEmail = localStorage.getItem("email");
