@@ -561,18 +561,23 @@ const AgentKycForm: React.FC = () => {
         await formik.submitForm();
       } else {
         // Mark all required fields as touched to show validation errors
+        const meansOfIdTouched = formik.values.meansOfId.map(() => ({
+          name: true,
+          docImg: true,
+        }));
+
         formik.setTouched({
-          meansOfId: true,
-          specializations: true,
-          languagesSpoken: true,
-          servicesOffered: true,
+          meansOfId: meansOfIdTouched as any,
+          specializations: true as any,
+          languagesSpoken: true as any,
+          servicesOffered: true as any,
           address: {
             street: true,
             homeNo: true,
             state: true,
             localGovtArea: true,
           },
-          regionOfOperation: true,
+          regionOfOperation: true as any,
         }, true);
       }
     }
