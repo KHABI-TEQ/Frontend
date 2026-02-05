@@ -3,21 +3,11 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
-import { Star, Save, ExternalLink } from "lucide-react";
+import { Star, Save } from "lucide-react";
 import api from "@/utils/axiosConfig";
 import { useDealSite } from "@/context/deal-site-context";
 import OverlayPreloader from "@/components/general-components/OverlayPreloader";
-
-interface Property {
-  _id: string;
-  title: string;
-  type: string;
-  price: number;
-  location: string;
-  status: string;
-  images?: string[];
-  isFeatured?: boolean;
-}
+import { Property } from "@/types/my-listings.types";
 
 export default function FeaturedPage() {
   const { settings, updateSettings } = useDealSite();
@@ -26,6 +16,25 @@ export default function FeaturedPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Helper function to build location string from location object
+  const buildLocationString = (location: any): string => {
+    if (!location) return "Unknown Location";
+    const parts = [location.area, location.localGovernment, location.state].filter(Boolean);
+    return parts.join(", ");
+  };
+
+  // Helper function to build property title
+  const buildPropertyTitle = (property: Property): string => {
+    const type = property.briefType || property.propertyType || "Property";
+    const category = property.propertyCategory || "Residential";
+    const bedrooms = property.additionalFeatures?.noOfBedroom || 0;
+    
+    if (bedrooms > 0) {
+      return `${bedrooms}BR ${category} ${type}`;
+    }
+    return `${category} ${type}`;
+  };
 
   // Fetch all properties
   const fetchProperties = useCallback(async () => {
@@ -78,7 +87,6 @@ export default function FeaturedPage() {
   const handleSave = useCallback(async () => {
     setIsSaving(true);
     try {
-      const token = Cookies.get("token");
       const payload = {
         ...settings.featureSelection,
         featuredListings: Array.from(featuredIds),
@@ -102,10 +110,15 @@ export default function FeaturedPage() {
     }
   }, [featuredIds, settings, updateSettings]);
 
-  const filteredProperties = properties.filter((prop) =>
-    prop.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    prop.location.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter properties based on search term
+  const filteredProperties = properties.filter((prop) => {
+    const title = buildPropertyTitle(prop);
+    const location = buildLocationString(prop.location);
+    const searchLower = searchTerm.toLowerCase();
+    
+    return title.toLowerCase().includes(searchLower) || 
+           location.toLowerCase().includes(searchLower);
+  });
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-NG", {
@@ -146,7 +159,7 @@ export default function FeaturedPage() {
       <div>
         <input
           type="text"
-          placeholder="Search by title or location..."
+          placeholder="Search by location or property type..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500"
@@ -174,6 +187,10 @@ export default function FeaturedPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filteredProperties.map((property) => {
               const isFeatured = featuredIds.has(property._id);
+              const locationString = buildLocationString(property.location);
+              const titleString = buildPropertyTitle(property);
+              const imageUrl = property.pictures?.[0];
+
               return (
                 <div
                   key={property._id}
@@ -185,12 +202,16 @@ export default function FeaturedPage() {
                   onClick={() => handleToggleFeatured(property._id)}
                 >
                   {/* Image */}
-                  {property.images && property.images.length > 0 && (
+                  {imageUrl && (
                     <div className="relative h-40 bg-gray-200 rounded-t-lg overflow-hidden">
                       <img
-                        src={property.images[0]}
-                        alt={property.title}
+                        src={imageUrl}
+                        alt={titleString}
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          // Fallback for broken images
+                          (e.target as HTMLImageElement).style.display = "none";
+                        }}
                       />
                       {isFeatured && (
                         <div className="absolute top-2 right-2 bg-amber-500 text-white rounded-full p-2">
@@ -204,33 +225,33 @@ export default function FeaturedPage() {
                   <div className="p-4 space-y-3">
                     <div>
                       <h3 className="font-semibold text-[#09391C] text-lg mb-1 line-clamp-2">
-                        {property.title}
+                        {titleString}
                       </h3>
-                      <p className="text-gray-600 text-sm mb-2">{property.location}</p>
+                      <p className="text-gray-600 text-sm mb-2">{locationString}</p>
                     </div>
 
                     {/* Details */}
-                    <div className="flex items-center justify-between py-2 border-t border-gray-200">
-                      <div>
+                    <div className="flex items-center justify-between py-2 border-t border-gray-200 gap-2">
+                      <div className="flex-1">
                         <p className="text-xs text-gray-500 mb-1">Price</p>
-                        <p className="font-bold text-[#09391C]">{formatCurrency(property.price)}</p>
+                        <p className="font-bold text-[#09391C] text-sm">{formatCurrency(property.price)}</p>
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <p className="text-xs text-gray-500 mb-1">Type</p>
-                        <p className="font-semibold text-gray-700">{property.type}</p>
+                        <p className="font-semibold text-gray-700 text-sm">{property.briefType}</p>
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <p className="text-xs text-gray-500 mb-1">Status</p>
                         <span
                           className={`inline-block px-2 py-1 text-xs font-medium rounded ${
-                            property.status === "approved"
+                            property.isApproved
                               ? "bg-green-100 text-green-700"
                               : property.status === "pending"
                               ? "bg-yellow-100 text-yellow-700"
                               : "bg-red-100 text-red-700"
                           }`}
                         >
-                          {property.status}
+                          {property.isApproved ? "Approved" : property.status || "Pending"}
                         </span>
                       </div>
                     </div>
@@ -238,7 +259,7 @@ export default function FeaturedPage() {
                     {/* Checkbox */}
                     <div className="flex items-center gap-2 pt-2 border-t border-gray-200">
                       <div
-                        className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                        className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all flex-shrink-0 ${
                           isFeatured
                             ? "bg-amber-500 border-amber-500"
                             : "border-gray-300 bg-white"
