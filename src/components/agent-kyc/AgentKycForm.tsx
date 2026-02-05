@@ -42,7 +42,7 @@ const kycValidationSchema = Yup.object({
   ).min(1, "At least one form of identification is required"),
   agentLicenseNumber: Yup.string().optional().min(3, "License number must be at least 3 characters"),
   profileBio: Yup.string().optional().max(500, "Bio cannot exceed 500 characters"),
-  specializations: Yup.array().of(Yup.string()).min(1, "Pick at least one specialization").max(5, "Maximum 5 specializations allowed"),
+  specializations: Yup.array().of(Yup.string()).min(1, "Pick at least one specialization"),
   languagesSpoken: Yup.array().of(Yup.string()).min(1, "Pick at least one language"),
   servicesOffered: Yup.array().of(Yup.string()).min(1, "Pick at least one service"),
   address: Yup.object({
@@ -438,13 +438,8 @@ const AgentKycForm: React.FC = () => {
     value: string,
   ) => {
     const current = (formik.values[field] as string[]) || [];
-    const requiresMinimum = ["specializations", "languagesSpoken", "servicesOffered", "regionOfOperation"].includes(field as string);
 
     if (current.includes(value)) {
-      // Prevent deselecting if it's a required field with only 1 item
-      if (requiresMinimum && current.length === 1) {
-        return;
-      }
       const next = current.filter((v) => v !== value);
       formik.setFieldValue(field, next);
     } else {
@@ -545,41 +540,8 @@ const AgentKycForm: React.FC = () => {
 
   const handleSubmitButtonClick = async () => {
     if (currentStep === steps.length - 1) {
-      // Validate entire form before submission
-      const errors = await formik.validateForm();
-      
-      // Check if there are any errors in required fields
-      const hasRequiredErrors = 
-        errors.meansOfId || 
-        errors.specializations || 
-        errors.languagesSpoken || 
-        errors.servicesOffered || 
-        errors.address || 
-        errors.regionOfOperation;
-
-      if (!hasRequiredErrors && isFormValidForSubmission()) {
-        await formik.submitForm();
-      } else {
-        // Mark all required fields as touched to show validation errors
-        const meansOfIdTouched = formik.values.meansOfId.map(() => ({
-          name: true,
-          docImg: true,
-        }));
-
-        formik.setTouched({
-          meansOfId: meansOfIdTouched as any,
-          specializations: true as any,
-          languagesSpoken: true as any,
-          servicesOffered: true as any,
-          address: {
-            street: true,
-            homeNo: true,
-            state: true,
-            localGovtArea: true,
-          },
-          regionOfOperation: true as any,
-        }, true);
-      }
+      // Always submit when on the last step, no validation required
+      await formik.submitForm();
     }
   };
 
@@ -1042,7 +1004,7 @@ const AgentKycForm: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleSubmitButtonClick}
-                  disabled={isSubmitting || !isFormValidForSubmission()}
+                  disabled={isSubmitting}
                   className="px-8 py-2 bg-gradient-to-r from-[#0B572B] to-[#8DDB90] text-white font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? "Submitting..." : "Submit KYC"}
