@@ -37,7 +37,7 @@ declare global {
 
 const Register = () => {
   const isLoading = useLoading();
-  const { setUser } = useUserContext(); // Removed 'user' as it's not directly used here
+  const { user, setUser } = useUserContext();
   const { isContactUsClicked } = usePageContext();
   const [isDisabled, setIsDisabled] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
@@ -52,6 +52,13 @@ const Register = () => {
   const [overlayVisible, setOverlayVisible] = useState(false);
   const [socialProcessing, setSocialProcessing] = useState(false);
   const [overlayMessage, setOverlayMessage] = useState<string>("");
+
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    if (user) {
+      router.replace("/dashboard");
+    }
+  }, [user, router]);
 
   // Memoized callback for password toggle (for InputField)
   const togglePasswordVisibility = useCallback(() => {
