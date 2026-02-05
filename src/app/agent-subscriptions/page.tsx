@@ -38,7 +38,7 @@ export default function AgentSubscriptionsPage() {
   const [transactions, setTransactions] = useState<SubscriptionTransaction[]>([]);
   const [selectedTransaction, setSelectedTransaction] = useState<SubscriptionTransaction | null>(null);
   const activeSubscriptionFromProfile = (user as any)?.activeSubscription as
-    | { _id: string; plan: string; status: string; startDate?: string; endDate?: string; subscriptionType?: string }
+    | { _id: string; plan: { _id: string; name: string; code: string }; status: string; startDate?: string; endDate?: string; subscriptionType?: string }
     | undefined;
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'subscriptions' | 'plans' | 'transactions'>('subscriptions');
@@ -60,6 +60,7 @@ export default function AgentSubscriptionsPage() {
   const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   const urlTab = (searchParams.get('tab') || undefined) as ("subscriptions" | "plans" | "transactions") | undefined;
 
+  console.log(activeSubscriptionFromProfile, "all user data")
  
   // Apply URL tab if provided
   useEffect(() => {
@@ -353,7 +354,7 @@ export default function AgentSubscriptionsPage() {
           {activeSubscriptionFromProfile && (
             <div className="rounded-lg border border-green-200 bg-green-50 p-4">
               <div className="text-sm text-green-800">
-                Active subscription: <span className="font-semibold">{activeSubscriptionFromProfile.plan || activeSubscriptionFromProfile.subscriptionType}</span>
+                Active subscription: <span className="font-semibold">{activeSubscriptionFromProfile.plan.name}</span>
               </div>
               <div className="text-xs text-green-700">
                 {activeSubscriptionFromProfile.startDate && <>Start: {new Date(activeSubscriptionFromProfile.startDate).toLocaleDateString()} • </>}
@@ -480,28 +481,6 @@ export default function AgentSubscriptionsPage() {
                               <div className="text-xs text-gray-600">Ref: {txnRef} • {txnStatus}</div>
                             </div>
 
-                            {subscription.status === 'active' && !isFreePlan && (
-                              <button
-                                onClick={() => {
-                                  setSelectedSubscription(subscription);
-                                  setShowRenewalModal(true);
-                                }}
-                                className="w-full bg-green-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-                              >
-                                <RefreshCw size={16} />
-                                Renew Subscription
-                              </button>
-                            )}
-
-                            {subscription.status === 'expired' && (
-                              <button
-                                onClick={() => setActiveTab('plans')}
-                                className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-                              >
-                                <Plus size={16} />
-                                Subscribe Again
-                              </button>
-                            )}
                           </div>
                         );
                       })}
