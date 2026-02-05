@@ -19,18 +19,18 @@ interface VerificationResponse {
 // This is the core logic component that uses useSearchParams
 const VerifyAccountComponent: React.FC = () => {
   const router = useRouter();
-  const { user } = useUserContext();
+  const { user, isInitialized } = useUserContext();
   const searchParams = useSearchParams(); // This hook requires Suspense
   const [status, setStatus] = useState<VerificationStatus>("loading");
   const [message, setMessage] = useState<string>("");
   const [countdown, setCountdown] = useState<number>(5);
 
-  // Redirect authenticated users to dashboard
+  // Redirect authenticated users to dashboard (only after user context is initialized)
   useEffect(() => {
-    if (user) {
+    if (isInitialized && user) {
       router.replace("/dashboard");
     }
-  }, [user, router]);
+  }, [user, isInitialized, router]);
 
   useEffect(() => {
     const token = searchParams?.get("token");
