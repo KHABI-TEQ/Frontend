@@ -21,7 +21,7 @@ import { useRouter } from "next/navigation";
 const VerifyResetRequest = () => {
   const isLoading = useLoading();
   const { isContactUsClicked } = usePageContext();
-  const { user } = useUserContext();
+  const { user, isInitialized } = useUserContext();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [isResending, setIsResending] = useState(false);
@@ -29,13 +29,13 @@ const VerifyResetRequest = () => {
   const [isVerifying, setIsVerifying] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // Redirect authenticated users to dashboard
+  // Redirect authenticated users to dashboard (only after user context is initialized)
   useEffect(() => {
-    if (user) {
+    if (isInitialized && user) {
       router.replace("/dashboard");
       return;
     }
-  }, [user, router]);
+  }, [user, isInitialized, router]);
 
   useEffect(() => {
     const resetEmail = localStorage.getItem("resetEmail");
