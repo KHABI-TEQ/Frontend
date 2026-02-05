@@ -28,7 +28,7 @@ import InputField from "@/components/common/InputField";
 const ResetPassword = () => {
   const isLoading = useLoading();
   const { isContactUsClicked } = usePageContext();
-  const { user } = useUserContext();
+  const { user, isInitialized } = useUserContext();
   const router = useRouter();
   const params = useSearchParams();
   const [showPassword, setShowPassword] = useState<boolean>(false);
@@ -45,13 +45,13 @@ const ResetPassword = () => {
     setShowConfirmPassword((prev) => !prev);
   }, []);
 
-  // Redirect authenticated users to dashboard
+  // Redirect authenticated users to dashboard (only after user context is initialized)
   useEffect(() => {
-    if (user) {
+    if (isInitialized && user) {
       router.replace("/dashboard");
       return;
     }
-  }, [user, router]);
+  }, [user, isInitialized, router]);
 
   useEffect(() => {
     // Check if we have the reset code and email from verification step
