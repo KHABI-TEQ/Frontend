@@ -16,6 +16,7 @@ import { useFormik } from "formik";
 import Button from "@/components/general-components/button";
 import Link from "next/link";
 import { usePageContext } from "@/context/page-context";
+import { useUserContext } from "@/context/user-context";
 import { POST_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import toast from "react-hot-toast";
@@ -27,6 +28,7 @@ import InputField from "@/components/common/InputField";
 const ResetPassword = () => {
   const isLoading = useLoading();
   const { isContactUsClicked } = usePageContext();
+  const { user } = useUserContext();
   const router = useRouter();
   const params = useSearchParams();
   const [showPassword, setShowPassword] = useState<boolean>(false);
@@ -37,11 +39,19 @@ const ResetPassword = () => {
   const togglePasswordVisibility = useCallback(() => {
       setShowPassword((prev) => !prev);
     }, []);
-  
+
   // Memoized callback for confirm password toggle (for InputField)
   const toggleConfirmPasswordVisibility = useCallback(() => {
     setShowConfirmPassword((prev) => !prev);
   }, []);
+
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    if (user) {
+      router.replace("/dashboard");
+      return;
+    }
+  }, [user, router]);
 
   useEffect(() => {
     // Check if we have the reset code and email from verification step
