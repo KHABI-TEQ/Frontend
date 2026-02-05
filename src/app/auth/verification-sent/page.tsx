@@ -18,7 +18,7 @@ import { useRouter } from "next/navigation";
 const VerificationSent = () => {
   const isLoading = useLoading();
   const { isContactUsClicked } = usePageContext();
-  const { user } = useUserContext();
+  const { user, isInitialized } = useUserContext();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [userType, setUserType] = useState<"Agent" | "Landowners" | null>(null);
@@ -27,13 +27,13 @@ const VerificationSent = () => {
   const isAgent = userType === "Agent";
   const isLandowner = userType === "Landowners";
 
-  // Redirect authenticated users to dashboard
+  // Redirect authenticated users to dashboard (only after user context is initialized)
   useEffect(() => {
-    if (user) {
+    if (isInitialized && user) {
       router.replace("/dashboard");
       return;
     }
-  }, [user, router]);
+  }, [user, isInitialized, router]);
 
   useEffect(() => {
     const userEmail = localStorage.getItem("email");
