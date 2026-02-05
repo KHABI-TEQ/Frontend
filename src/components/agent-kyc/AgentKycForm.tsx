@@ -52,14 +52,21 @@ const kycValidationSchema = Yup.object({
     localGovtArea: Yup.string().required("Local government area is required"),
   }),
   regionOfOperation: Yup.array().of(Yup.string()).min(1, "Select at least one region"),
-  achievements: Yup.array().optional(),
+  achievements: Yup.array().of(
+    Yup.object({
+      title: Yup.string().optional(),
+      description: Yup.string().optional(),
+      dateAwarded: Yup.string().optional(),
+      fileUrl: Yup.string().optional(),
+    })
+  ).optional(),
 });
 
 const steps = [
   { key: "identity", title: "Identity Documents" },
   { key: "professional", title: "Professional Info" },
   { key: "location", title: "Address & Regions" },
-  { key: "portfolio", title: "Achievements" },
+  { key: "portfolio", title: "Achievements (Optional)" },
 ] as const;
 
 const isImage = (url?: string) => !!url && /(\.png|\.jpg|\.jpeg|\.gif|\.webp)$/i.test(url);
@@ -89,6 +96,8 @@ const AgentKycForm: React.FC = () => {
       agentType: "Individual",
     },
     validationSchema: kycValidationSchema,
+    validateOnChange: true,
+    validateOnBlur: true,
     onSubmit: async (values) => {
       await handleSubmit(values);
     },
@@ -300,6 +309,11 @@ const AgentKycForm: React.FC = () => {
       }
     }
 
+    // Step 3 (portfolio/achievements) is optional, so always return true
+    if (currentStep === 3) {
+      return true;
+    }
+
     return true;
   };
 
@@ -335,7 +349,41 @@ const AgentKycForm: React.FC = () => {
       );
     }
 
+    // Step 3 (portfolio/achievements) is optional, always valid
+    if (currentStep === 3) {
+      return true;
+    }
+
     return true;
+  };
+
+  // Check if all required fields are valid for final submission
+  const isFormValidForSubmission = (): boolean => {
+    const errors = formik.errors;
+    
+    // Check step 0: Identity
+    const step0Valid = !errors.meansOfId &&
+      formik.values.meansOfId.length > 0 &&
+      formik.values.meansOfId.every(
+        (doc) => !!doc.name && doc.docImg.length > 0
+      );
+
+    // Check step 1: Professional
+    const step1Valid = formik.values.specializations.length > 0 &&
+      formik.values.languagesSpoken.length > 0 &&
+      formik.values.servicesOffered.length > 0;
+
+    // Check step 2: Location
+    const step2Valid = !errors.address &&
+      !errors.regionOfOperation &&
+      !!formik.values.address.street &&
+      !!formik.values.address.homeNo &&
+      !!formik.values.address.state &&
+      !!formik.values.address.localGovtArea &&
+      formik.values.regionOfOperation.length > 0;
+
+    // Step 3 is optional, doesn't affect validity
+    return step0Valid && step1Valid && step2Valid;
   };
 
 
@@ -497,7 +545,36 @@ const AgentKycForm: React.FC = () => {
 
   const handleSubmitButtonClick = async () => {
     if (currentStep === steps.length - 1) {
-      await formik.submitForm();
+      // Validate entire form before submission
+      const errors = await formik.validateForm();
+      
+      // Check if there are any errors in required fields
+      const hasRequiredErrors = 
+        errors.meansOfId || 
+        errors.specializations || 
+        errors.languagesSpoken || 
+        errors.servicesOffered || 
+        errors.address || 
+        errors.regionOfOperation;
+
+      if (!hasRequiredErrors && isFormValidForSubmission()) {
+        await formik.submitForm();
+      } else {
+        // Mark all required fields as touched to show validation errors
+        formik.setTouched({
+          meansOfId: true,
+          specializations: true,
+          languagesSpoken: true,
+          servicesOffered: true,
+          address: {
+            street: true,
+            homeNo: true,
+            state: true,
+            localGovtArea: true,
+          },
+          regionOfOperation: true,
+        }, true);
+      }
     }
   };
 
@@ -509,7 +586,7 @@ const AgentKycForm: React.FC = () => {
         message={
           isUploading
             ? "Your file is being uploaded. Please hold on..."
-            : "We’re processing your KYC submission. This may take a moment..."
+            : "We're processing your KYC submission. This may take a moment..."
         }
         iconColor="#8DDB90"
       />
@@ -850,11 +927,17 @@ const AgentKycForm: React.FC = () => {
               <div className="space-y-6">
                 <div className="flex items-center gap-3 border-b border-gray-200 pb-4">
                   <Award className="text-[#0B572B]" size={24} />
-                  <h2 className="text-xl font-semibold text-[#0C1E1B]">Achievements</h2>
+                  <h2 className="text-xl font-semibold text-[#0C1E1B]">Achievements (Optional)</h2>
+                  <span className="ml-auto text-sm text-gray-500 italic">This section is optional</span>
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                  <p className="text-sm text-blue-800">
+                    <strong>Note:</strong> Adding achievements is optional. You can skip this section and submit your KYC, or add your achievements to strengthen your profile.
+                  </p>
                 </div>
 
                 <div className="space-y-4">
-                  <h3 className="font-semibold text-[#0C1E1B]">Achievements (Optional)</h3>
                   {(formik.values.achievements || []).map((ach, index) => (
                     <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-3">
                       <div className="flex justify-between">
@@ -954,7 +1037,7 @@ const AgentKycForm: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleSubmitButtonClick}
-                  disabled={isSubmitting || !formik.isValid}
+                  disabled={isSubmitting || !isFormValidForSubmission()}
                   className="px-8 py-2 bg-gradient-to-r from-[#0B572B] to-[#8DDB90] text-white font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? "Submitting..." : "Submit KYC"}
