@@ -66,7 +66,7 @@ docs/PREFERENCE_MODULE_DOCUMENTATION/
 | **Read Time** | 8-10 hours |
 
 ## Quick Start (5 Minutes)
-
+ 
 ### 1. Copy Implementation Files
 ```bash
 # Copy 5 files to your project
