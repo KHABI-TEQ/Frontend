@@ -68,18 +68,43 @@ export default function PreferencesRequestsPage() {
       if (response?.success && response?.data) {
         const prefsArray = Array.isArray(response.data) ? response.data : [];
 
-        // Validate and sanitize preferences data
-        const validPreferences = prefsArray.map((pref: any) => ({
-          ...pref,
-          location: pref.location && typeof pref.location === 'object' ? pref.location : undefined
-        }));
+        // Transform and sanitize preferences data to match expected structure
+        const validPreferences = prefsArray.map((pref: any) => {
+          // Extract contact info from either contactInfo object or buyer object
+          const contactInfo = pref.contactInfo || {};
+          const buyer = pref.buyer || {};
+          
+          // Parse full name if available
+          const fullName = contactInfo.fullName || '';
+          const nameParts = fullName.split(' ');
+          const firstName = contactInfo.firstName || nameParts[0] || '';
+          const lastName = contactInfo.lastName || nameParts.slice(1).join(' ') || '';
+
+          return {
+            ...pref,
+            // Map contact fields
+            firstName: firstName,
+            lastName: lastName,
+            email: contactInfo.email || buyer.email || pref.email,
+            phoneNumber: contactInfo.phoneNumber || buyer.phoneNumber || pref.phoneNumber,
+            
+            // Map property type
+            propertyType: pref.preferenceType || pref.preferenceMode || pref.propertyType,
+            
+            // Ensure location is an object
+            location: pref.location && typeof pref.location === 'object' ? pref.location : undefined,
+            
+            // Budget is already in the correct structure
+            budget: pref.budget
+          };
+        });
 
         setPreferences(validPreferences);
 
         // Set pagination info
         if (response.pagination) {
           const pagination = response.pagination as any;
-          setTotalPages(pagination.pages || 1);
+          setTotalPages(pagination.totalPages || pagination.pages || 1);
           setTotalItems(pagination.total || validPreferences.length);
         } else {
           setTotalPages(1);
@@ -138,14 +163,21 @@ export default function PreferencesRequestsPage() {
         parts.push(location.state.trim());
       }
 
-      // Add local government areas
+      // Add local government areas with their specific areas
       if (location.lgasWithAreas && Array.isArray(location.lgasWithAreas) && location.lgasWithAreas.length > 0) {
-        const lgaNames = location.lgasWithAreas
+        const lgaDetails = location.lgasWithAreas
           .filter((lga: any) => lga && typeof lga === 'object' && lga.lgaName)
-          .map((lga: any) => String(lga.lgaName).trim())
-          .filter((name: string) => name.length > 0)
-          .join(", ");
-        if (lgaNames) parts.push(lgaNames);
+          .map((lga: any) => {
+            const lgaName = String(lga.lgaName).trim();
+            if (lga.areas && Array.isArray(lga.areas) && lga.areas.length > 0) {
+              const areas = lga.areas.join(', ');
+              return `${lgaName} (${areas})`;
+            }
+            return lgaName;
+          })
+          .filter((detail: string) => detail.length > 0)
+          .join("; ");
+        if (lgaDetails) parts.push(lgaDetails);
       } else if (location.localGovernmentAreas && Array.isArray(location.localGovernmentAreas) && location.localGovernmentAreas.length > 0) {
         const lgaNames = location.localGovernmentAreas
           .map((lga: any) => String(lga).trim())
@@ -154,8 +186,8 @@ export default function PreferencesRequestsPage() {
         if (lgaNames) parts.push(lgaNames);
       }
 
-      // Add custom location
-      if (location.customLocation && typeof location.customLocation === 'string') {
+      // Add custom location only if it's not empty
+      if (location.customLocation && typeof location.customLocation === 'string' && location.customLocation.trim()) {
         parts.push(location.customLocation.trim());
       }
 
@@ -250,7 +282,7 @@ export default function PreferencesRequestsPage() {
             onChange={(e) => handleFilterChange(e.target.value)}
             className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
           >
-            <option value="">All Property Types</option>
+            <option value="">All Preference Types</option>
             <option value="buy">Buy</option>
             <option value="rent">Rent</option>
             <option value="shortlet">Shortlet</option>
@@ -290,7 +322,7 @@ export default function PreferencesRequestsPage() {
                     <th className="text-left px-6 py-3 font-semibold text-gray-700">Name</th>
                     <th className="text-left px-6 py-3 font-semibold text-gray-700">Email</th>
                     <th className="text-left px-6 py-3 font-semibold text-gray-700">Phone</th>
-                    <th className="text-left px-6 py-3 font-semibold text-gray-700">Property Type</th>
+                    <th className="text-left px-6 py-3 font-semibold text-gray-700">Preference Type</th>
                     <th className="text-left px-6 py-3 font-semibold text-gray-700">Budget Range</th>
                     <th className="text-left px-6 py-3 font-semibold text-gray-700">Location</th>
                     <th className="text-left px-6 py-3 font-semibold text-gray-700">Submitted</th>
@@ -314,7 +346,7 @@ export default function PreferencesRequestsPage() {
                         <span className="text-gray-600">{pref.phoneNumber || "—"}</span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                        <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium capitalize">
                           {pref.propertyType || "—"}
                         </span>
                       </td>
