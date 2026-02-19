@@ -48,6 +48,7 @@ const userProtectedRoutes = [
   "/transactions",
   "/agent-subscriptions",
   "/agent-kyc",
+  "/agent-broadcast",
   "/public-access-page"
 ];
 

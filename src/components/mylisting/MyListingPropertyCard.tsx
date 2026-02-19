@@ -42,37 +42,34 @@ const MyListingPropertyCard: React.FC<MyListingPropertyCardProps> = ({
 }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const actionBtnRef = useRef<HTMLButtonElement | null>(null);
   const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
-  const MENU_WIDTH = 220; // px
+  const actionBtnRef = useRef<HTMLButtonElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const MENU_WIDTH = 220;
 
-  const computeAndSetMenuPos = () => {
-    const btn = actionBtnRef.current;
-    if (!btn) return;
-    const rect = btn.getBoundingClientRect();
-    const top = rect.bottom + window.scrollY + 6;
-    // Prefer right-aligned to the button, clamp within viewport
-    const desiredLeft = rect.right + window.scrollX - MENU_WIDTH;
-    const minLeft = 8 + window.scrollX;
-    const maxLeft = window.scrollX + window.innerWidth - MENU_WIDTH - 8;
-    const left = Math.max(minLeft, Math.min(maxLeft, desiredLeft));
-    setMenuPos({ top, left });
+  const handleToggleMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!showDropdown) {
+      const btn = actionBtnRef.current;
+      if (btn) {
+        const rect = btn.getBoundingClientRect();
+        setMenuPos({
+          top: rect.bottom + 6,
+          left: Math.max(8, Math.min(window.innerWidth - MENU_WIDTH - 8, rect.right - MENU_WIDTH)),
+        });
+      }
+      setShowDropdown(true);
+    } else {
+      setShowDropdown(false);
+    }
   };
 
   useEffect(() => {
-    if (!showDropdown) return;
-    const updatePos = () => computeAndSetMenuPos();
-    updatePos();
-    window.addEventListener("resize", updatePos);
-    window.addEventListener("scroll", updatePos, true);
-    return () => {
-      window.removeEventListener("resize", updatePos);
-      window.removeEventListener("scroll", updatePos, true);
-    };
-  }, [showDropdown]);
-
-  useEffect(() => {
-    if (!showDropdown) return;
+    if (!showDropdown) {
+      setMenuPos(null);
+      return;
+    }
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setShowDropdown(false);
     };
@@ -84,10 +81,8 @@ const MyListingPropertyCard: React.FC<MyListingPropertyCardProps> = ({
       ) {
         return;
       }
-      // Close if clicking outside the portal menu
-      if (!document.getElementById("listing-action-menu")) return;
-      const menu = document.getElementById("listing-action-menu");
-      if (menu && !menu.contains(target)) setShowDropdown(false);
+      const menuEl = menuRef.current || document.getElementById(`listing-menu-${property._id}`);
+      if (menuEl && !menuEl.contains(target)) setShowDropdown(false);
     };
     document.addEventListener("keydown", onKey);
     document.addEventListener("mousedown", onClick);
@@ -95,7 +90,7 @@ const MyListingPropertyCard: React.FC<MyListingPropertyCardProps> = ({
       document.removeEventListener("keydown", onKey);
       document.removeEventListener("mousedown", onClick);
     };
-  }, [showDropdown]);
+  }, [showDropdown, property._id]);
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -164,10 +159,10 @@ const MyListingPropertyCard: React.FC<MyListingPropertyCardProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="property-card bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden group hover:shadow-lg transition-all duration-300 h-full flex flex-col"
+      className="property-card bg-white rounded-xl shadow-sm border border-gray-200 overflow-visible group hover:shadow-lg transition-all duration-300 h-full flex flex-col"
     >
       {/* Image Section */}
-      <div className="image-slider relative h-48 bg-gray-100">
+      <div className="image-slider relative h-48 bg-gray-100 overflow-hidden rounded-t-xl">
         {images.length > 0 && (
           <>
             <Image
@@ -250,76 +245,73 @@ const MyListingPropertyCard: React.FC<MyListingPropertyCardProps> = ({
           </div>
         )}
 
-        {/* Actions Dropdown */}
-        <div className="absolute top-3 right-3">
+        {/* Actions Dropdown - z-50 so button is above image/nav and clickable */}
+        <div className="absolute top-3 right-3 z-50">
           <div className="relative">
             <button
               ref={actionBtnRef}
-              onClick={() => {
-                if (!showDropdown) computeAndSetMenuPos();
-                setShowDropdown((v) => !v);
-              }}
+              type="button"
+              onClick={handleToggleMenu}
               aria-haspopup="menu"
               aria-expanded={showDropdown}
-              className="bg-white/90 hover:bg-white p-2 rounded-full shadow-sm transition-colors"
+              className="bg-white/90 hover:bg-white p-2 rounded-full shadow-sm transition-colors border border-gray-200"
             >
               <MoreVertical size={16} className="text-gray-600" />
             </button>
 
             {showDropdown && menuPos && createPortal(
               <motion.div
-                id="listing-action-menu"
-                initial={{ opacity: 0, y: -6 }}
+                ref={menuRef}
+                id={`listing-menu-${property._id}`}
+                role="menu"
+                initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.12 }}
-                className="bg-white border border-gray-200 rounded-lg shadow-2xl"
-                style={{ position: "fixed", top: menuPos.top, left: menuPos.left, zIndex: 100000, width: MENU_WIDTH }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.15 }}
+                className="bg-white border border-gray-200 rounded-lg shadow-xl py-1 min-w-[220px]"
+                style={{
+                  position: "fixed",
+                  top: menuPos.top,
+                  left: menuPos.left,
+                  width: MENU_WIDTH,
+                  zIndex: 100000,
+                }}
               >
-                <div className="py-1">
+                <button
+                  type="button"
+                  onClick={() => { onView(); setShowDropdown(false); }}
+                  className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                >
+                  <Eye size={14} />
+                  View Listing
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { onEdit(); setShowDropdown(false); }}
+                  className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                >
+                  <Edit size={14} />
+                  Edit Property
+                </button>
+                {!["pending", "deleted", "rejected", "hold", "flagged"].includes(property.status) && (
                   <button
-                    onClick={() => {
-                      onView();
-                      setShowDropdown(false);
-                    }}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                    type="button"
+                    onClick={() => { onChangeStatus(); setShowDropdown(false); }}
+                    className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                   >
-                    <Eye size={14} />
-                    View Listing
+                    {property.isAvailable ? <ToggleLeft size={14} /> : <ToggleRight size={14} />}
+                    {property.isAvailable ? "Unpublish (mark unavailable)" : "Publish (mark available)"}
                   </button>
-                  <button
-                    onClick={() => {
-                      onEdit();
-                      setShowDropdown(false);
-                    }}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                  >
-                    <Edit size={14} />
-                    Edit Property
-                  </button>
-                  {!["pending", "deleted", "rejected", "hold", "flagged"].includes(property.status) && (
-                    <button
-                      onClick={() => {
-                        onChangeStatus();
-                        setShowDropdown(false);
-                      }}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                    >
-                      {property.isAvailable ? <ToggleLeft size={14} /> : <ToggleRight size={14} />}
-                      {property.isAvailable ? "Mark Unavailable" : "Mark Available"}
-                    </button>
-                  )}
-                  <hr className="my-1" />
-                  <button
-                    onClick={() => {
-                      onDelete();
-                      setShowDropdown(false);
-                    }}
-                    className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                  >
-                    <Trash2 size={14} />
-                    Delete Property
-                  </button>
-                </div>
+                )}
+                <hr className="my-1 border-gray-100" />
+                <button
+                  type="button"
+                  onClick={() => { onDelete(); setShowDropdown(false); }}
+                  className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                >
+                  <Trash2 size={14} />
+                  Delete Property
+                </button>
               </motion.div>,
               document.body
             )}

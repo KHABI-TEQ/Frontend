@@ -121,6 +121,22 @@ interface StatsResponse {
 }
 
 const STATUS_CONFIG = {
+  pending_approval: {
+    label: "Pending Your Response",
+    color: "bg-amber-500",
+    textColor: "text-amber-800",
+    bgColor: "bg-amber-100",
+    borderColor: "border-amber-200",
+    icon: AlertCircleIcon,
+  },
+  agent_rejected: {
+    label: "Rejected",
+    color: "bg-red-500",
+    textColor: "text-red-800",
+    bgColor: "bg-red-100",
+    borderColor: "border-red-200",
+    icon: XCircleIcon,
+  },
   pending_transaction: {
     label: "Pending Transaction",
     color: "bg-[#8DDB90]",
@@ -249,6 +265,12 @@ export default function MyInspectionRequestsPage() {
   const [reviewNote, setReviewNote] = useState<string>("");
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
+  // Inspection respond (accept/reject) modal
+  const [respondInspection, setRespondInspection] = useState<InspectionData | null>(null);
+  const [respondAction, setRespondAction] = useState<"accept" | "reject">("accept");
+  const [respondNote, setRespondNote] = useState("");
+  const [isSubmittingRespond, setIsSubmittingRespond] = useState(false);
+
   const fetchInspections = useCallback(
     async (page = 1, showLoading = true) => {
       if (showLoading) setIsLoading(true);
@@ -329,6 +351,35 @@ export default function MyInspectionRequestsPage() {
       fetchBookings(1);
     }
   }, [user, activeTab, fetchInspections, fetchBookings, fetchStats]);
+
+  const respondToInspectionRequest = useCallback(
+    async (inspectionId: string, action: "accept" | "reject", note?: string) => {
+      if (!token) {
+        toast.error("Not authenticated");
+        return;
+      }
+      setIsSubmittingRespond(true);
+      try {
+        const url = `${URLS.BASE}${URLS.accountInspectionRespond(inspectionId)}`;
+        const payload = { action, ...(note && note.trim() ? { note: note.trim() } : {}) };
+        const res = await POST_REQUEST<unknown>(url, payload, token);
+        if (res?.success) {
+          toast.success(action === "accept" ? "Inspection accepted. Buyer will receive the payment link." : "Inspection rejected. Buyer has been notified.");
+          setRespondInspection(null);
+          setRespondNote("");
+          fetchInspections(currentPage, false);
+          fetchStats();
+        } else {
+          toast.error((res?.message as string) || res?.error || "Failed to submit response");
+        }
+      } catch (error: unknown) {
+        toast.error((error as Error)?.message || "Failed to submit response");
+      } finally {
+        setIsSubmittingRespond(false);
+      }
+    },
+    [token, fetchInspections, fetchStats, currentPage]
+  );
 
   const respondToBookingRequest = useCallback(async (bookingId: string, responseVal: "available" | "unavailable", note?: string) => {
     if (!token) { toast.error("Not authenticated"); return; }
@@ -668,7 +719,7 @@ export default function MyInspectionRequestsPage() {
                   const altTitle = buildLocationTitle(inspection.property?.location)
 
                   return (
-                    <motion.div key={inspection.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }} className={`bg-white border border-gray-100 rounded-xl overflow-visible hover:border-gray-300 transition-all duration-200 ${viewMode === "list" ? "flex" : ""}`}>
+                    <motion.div key={inspection.id || (inspection as any)._id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }} className={`bg-white border border-gray-100 rounded-xl overflow-visible hover:border-gray-300 transition-all duration-200 ${viewMode === "list" ? "flex" : ""}`}>
                       {viewMode === "grid" && inspection.property?.image && (
                         <div className="h-48 relative overflow-hidden">
                           <img src={inspection.property.image} alt={altTitle || "Property"} className="w-full h-full object-cover" />
@@ -761,8 +812,14 @@ export default function MyInspectionRequestsPage() {
                         )}
 
                         <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-200">
-                          {inspection.pendingResponseFrom === "seller" && (
-                            <button onClick={() => router.push(`/secure-seller-response/${inspection.owner}/${inspection.id}`)} className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">Respond</button>
+                          {(inspection.status === "pending_approval" || inspection.inspectionStatus === "pending_approval") && (
+                            <>
+                              <button onClick={() => { setRespondInspection(inspection); setRespondAction("accept"); setRespondNote(""); }} className="inline-flex items-center gap-2 px-4 py-2 bg-[#8DDB90] text-white rounded-lg hover:bg-[#7BC87F] transition-colors text-sm font-medium">Accept</button>
+                              <button onClick={() => { setRespondInspection(inspection); setRespondAction("reject"); setRespondNote(""); }} className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium">Reject</button>
+                            </>
+                          )}
+                          {inspection.pendingResponseFrom === "seller" && inspection.status !== "pending_approval" && inspection.inspectionStatus !== "pending_approval" && (
+                            <button onClick={() => router.push(`/secure-seller-response/${inspection.owner}/${inspection.id || (inspection as any)._id}`)} className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">Respond</button>
                           )}
 
                           {inspection.property && (
@@ -1100,6 +1157,53 @@ export default function MyInspectionRequestsPage() {
                   className={`px-5 py-2 rounded-lg text-white ${reviewResponse === "available" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-red-600 hover:bg-red-700"} disabled:opacity-60`}
                 >
                   {isSubmittingReview ? "Submitting..." : "Submit"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Inspection Accept/Reject Modal */}
+      <AnimatePresence>
+        {respondInspection && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+            onClick={() => !isSubmittingRespond && setRespondInspection(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.98, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.98, opacity: 0 }}
+              className="bg-white rounded-xl max-w-md w-full p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between mb-4">
+                <h3 className="text-xl font-semibold text-[#09391C]">
+                  {respondAction === "accept" ? "Accept" : "Reject"} Inspection Request
+                </h3>
+                <button disabled={isSubmittingRespond} onClick={() => setRespondInspection(null)} className="text-gray-500 hover:text-gray-700 disabled:opacity-50">✕</button>
+              </div>
+              <p className="text-sm text-[#5A5D63] mb-4">
+                {respondAction === "accept"
+                  ? "The buyer will receive a payment link. You can add an optional note."
+                  : "The buyer will be notified. You can add an optional reason."}
+              </p>
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Note (optional)</label>
+                <textarea value={respondNote} onChange={(e) => setRespondNote(e.target.value)} rows={3} placeholder={respondAction === "reject" ? "Reason for rejection (optional)" : "Message for buyer (optional)"} className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#8DDB90] focus:border-transparent" />
+              </div>
+              <div className="flex justify-end gap-3">
+                <button disabled={isSubmittingRespond} onClick={() => setRespondInspection(null)} className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50">Cancel</button>
+                <button
+                  disabled={isSubmittingRespond}
+                  onClick={() => respondToInspectionRequest(respondInspection.id || (respondInspection as any)._id, respondAction, respondNote)}
+                  className={`px-5 py-2 rounded-lg text-white disabled:opacity-60 ${respondAction === "accept" ? "bg-[#8DDB90] hover:bg-[#7BC87F]" : "bg-red-600 hover:bg-red-700"}`}
+                >
+                  {isSubmittingRespond ? "Submitting..." : respondAction === "accept" ? "Accept" : "Reject"}
                 </button>
               </div>
             </motion.div>

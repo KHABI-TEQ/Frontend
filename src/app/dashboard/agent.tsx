@@ -24,6 +24,7 @@ import {
   Gift,
   Copy,
   Link as LinkIcon,
+  Mail as MailIcon,
 } from "lucide-react";
 import Loading from "@/components/loading-component/loading";
 
@@ -216,6 +217,13 @@ export default function AgentDashboard() {
             >
               <PlusIcon size={20} />
               Agent Marketplace
+            </Link>
+            <Link
+              href="/agent-broadcast"
+              className="bg-white hover:bg-gray-50 text-[#09391C] border border-[#8DDB90] px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
+            >
+              <MailIcon size={20} />
+              <span className="hidden sm:inline">Broadcast</span>
             </Link>
           </div>
         </div>
@@ -441,6 +449,21 @@ export default function AgentDashboard() {
               </h2>
             </div>
             <div className="p-4 sm:p-6 space-y-4">
+              <Link
+                href="/agent-broadcast"
+                className="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 p-4 rounded-lg font-medium flex items-center gap-3 transition-colors group"
+              >
+                <div className="p-2 bg-indigo-500 bg-opacity-20 rounded-lg">
+                  <MailIcon size={20} className="text-indigo-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold">Broadcast to Subscribers</h3>
+                  <p className="text-sm text-indigo-700/90">
+                    Send an email to all your DealSite subscribers
+                  </p>
+                </div>
+              </Link>
+
               <Link
                 href="/post-property"
                 className="w-full bg-[#8DDB90] hover:bg-[#7BC87F] text-white p-4 rounded-lg font-medium flex items-center gap-3 transition-colors group"

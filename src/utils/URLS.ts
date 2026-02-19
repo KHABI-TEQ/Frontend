@@ -63,9 +63,13 @@ export const URLS = {
    * Account endpoints
    */
   accountInspectionBaseUrl: "/account/my-inspections",
+  /** POST /account/my-inspections/:inspectionId/respond { action: "accept" | "reject", note?: string } */
+  accountInspectionRespond: (inspectionId: string) => `/account/my-inspections/${inspectionId}/respond`,
   accountBookingsBaseUrl: "/account/my-bookings",
   accountPropertyBaseUrl: "/account/properties", // Create, edit, delete, getOne
   fetchDashboardStats: "/account/dashboard",
+  /** POST /account/agent/broadcast { subject, body } - email all subscribers */
+  agentBroadcast: "/account/agent/broadcast",
   submitKyc: "/account/submitKyc",
 
   /**

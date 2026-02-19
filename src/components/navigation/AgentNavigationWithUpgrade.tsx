@@ -18,6 +18,7 @@ import {
   CreditCard,
   TrendingUp,
   Shield,
+  Mail,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -63,6 +64,12 @@ const AgentNavigationWithUpgrade: React.FC = () => {
       href: "/my-inspection-requests",
       icon: CheckCircle,
       requiresVerified: true,
+    },
+    {
+      id: "broadcast",
+      label: "Broadcast to Subscribers",
+      href: "/agent-broadcast",
+      icon: Mail,
     },
     {
       id: "profile",
