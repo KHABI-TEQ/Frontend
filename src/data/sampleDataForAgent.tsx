@@ -113,28 +113,45 @@ export const briefData = Array.from({ length: 7 }, (_, i) => ({
 //   }
 // };
 
-// Updated completeTransactionData with actual locations
+// Updated completeTransactionData with actual locations (DataProps-compatible for Brief/ShowTable)
+const toLocation = (state: string, lga: string) => ({
+  state,
+  localGovernment: lga,
+  area: '',
+});
+
 export const completeTransactionData = [
   {
     date: '12/12/2024',
+    createdAt: '12/12/2024',
     propertyType: 'Residential',
-    location: `Lagos, ${getRandomCity('LA')}`, // Random city in Lagos
+    location: toLocation('Lagos', getRandomCity('LA')),
+    actualLocation: toLocation('Lagos', getRandomCity('LA')),
     propertyPrice: 200000000,
+    price: 200000000,
     amountSold: 200000000,
+    docOnProperty: [] as { docName: string; isProvided: boolean; _id: string }[],
   },
   {
     date: '09/12/2024',
+    createdAt: '09/12/2024',
     propertyType: 'Residential',
-    location: `Lagos, ${getRandomCity('LA')}`, // Random city in Lagos
+    location: toLocation('Lagos', getRandomCity('LA')),
+    actualLocation: toLocation('Lagos', getRandomCity('LA')),
     propertyPrice: 200000000,
+    price: 200000000,
     amountSold: 200000000,
+    docOnProperty: [] as { docName: string; isProvided: boolean; _id: string }[],
   },
   {
     date: '12/12/2024',
+    createdAt: '12/12/2024',
     propertyType: 'Residential',
-    location: `Abuja, ${getRandomCity('FC')}`, // Random city in Abuja
+    location: toLocation('Abuja', getRandomCity('FC')),
+    actualLocation: toLocation('Abuja', getRandomCity('FC')),
     propertyPrice: 200000000,
+    price: 200000000,
     amountSold: 200000000,
+    docOnProperty: [] as { docName: string; isProvided: boolean; _id: string }[],
   },
-  // Add more entries as needed
 ];
