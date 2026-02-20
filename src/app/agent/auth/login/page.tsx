@@ -88,7 +88,7 @@ const Login = () => {
                 Cookies.set('token', (response as any).token);
                 setUser((response as any).user);
 
-                if (!response.user.phoneNumber) router.push('/agent/onboard');
+                if (!(response as any).user.phoneNumber) router.push('/agent/onboard');
                 else router.push('/agent/briefs');
 
                 return 'Sign in successful';
