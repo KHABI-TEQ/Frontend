@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { URLS } from "@/utils/URLS";
 import { GET_REQUEST } from "@/utils/requests";
 import Cookies from "js-cookie";
-import { useUserContext } from "@/context/user-context";
+import { useUserContext, normalizeUser } from "@/context/user-context";
 import toast from "react-hot-toast";
 
 const EmailVerification = () => {
@@ -26,7 +26,7 @@ const EmailVerification = () => {
 					const data = response?.data as any;
 					if (response && data?.token) {
 						Cookies.set("token", data.token);
-						setUser(data);
+						setUser(normalizeUser(data));
 
 						// Redirect based on user type
 						if (data?.userType === "Landowners") {

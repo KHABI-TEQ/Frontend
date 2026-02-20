@@ -69,6 +69,13 @@ export interface User {
   };
 }
 
+/** Ensures API/partial user has required User fields (e.g. accountApproved) before setUser. */
+export function normalizeUser(partial: Partial<User> | Record<string, unknown> | null): User | null {
+  if (partial == null) return null;
+  const p = partial as Record<string, unknown>;
+  return { accountApproved: Boolean(p.accountApproved), ...p } as User;
+}
+
 interface UserContextType {
   user: User | null;
   setUser: (user: User | null) => void;

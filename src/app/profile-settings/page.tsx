@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useUserContext } from "@/context/user-context";
+import { useUserContext, normalizeUser } from "@/context/user-context";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import {
@@ -154,7 +154,7 @@ export default function ProfileSettingsPage() {
         if (response.data.success) {
           const updatedProfile = { ...userProfile, ...values };
           setUserProfile(updatedProfile as UserProfile);
-          setUser({ ...user, ...values } as any);
+          setUser(normalizeUser({ ...user, ...values }));
           toast.success("Profile updated successfully");
         } else {
           throw new Error(response.data.message || "Failed to update profile");
@@ -247,7 +247,7 @@ export default function ProfileSettingsPage() {
       if (updateResponse.data.success) {
         const updatedProfile = { ...userProfile, profileImage: imageUrl };
         setUserProfile(updatedProfile as UserProfile);
-        setUser({ ...user, profile_picture: imageUrl } as any);
+        setUser(normalizeUser({ ...user, profile_picture: imageUrl }));
 
         setProfileImageFile(null);
         setProfileImagePreview(null);

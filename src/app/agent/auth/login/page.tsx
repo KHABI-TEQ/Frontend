@@ -19,7 +19,7 @@ import googleIcon from '@/svgs/googleIcon.svg';
 import facebookIcon from '@/svgs/facebookIcon.svg';
 import Link from 'next/link';
 import { usePageContext } from '@/context/page-context';
-import { useUserContext } from '@/context/user-context';
+import { useUserContext, normalizeUser } from '@/context/user-context';
 import { POST_REQUEST } from '@/utils/requests';
 import { URLS } from '@/utils/URLS';
 import toast from 'react-hot-toast';
@@ -86,7 +86,7 @@ const Login = () => {
               if ((response as any)?.user?.id) {
                 toast.success('Sign in successful');
                 Cookies.set('token', (response as any).token);
-                setUser((response as any).user);
+                setUser(normalizeUser((response as any).user));
 
                 if (!(response as any).user.phoneNumber) router.push('/agent/onboard');
                 else router.push('/agent/briefs');
@@ -127,16 +127,7 @@ const Login = () => {
           console.log('response', res);
           console.log('response Data', res.data);
 
-          const user = {
-            id: res.id,
-            email: res.email,
-            password: res.password,
-            lastName: res.lastName,
-            firstName: res.firstName,
-            phoneNumber: res.phoneNumber,
-          };
-
-          setUser(user);
+          setUser(normalizeUser(res));
 
           if (!res.phoneNumber) router.push('/agent/onboard');
           else router.push('/agent/briefs');

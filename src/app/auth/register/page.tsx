@@ -16,7 +16,7 @@ import googleIcon from "@/svgs/googleIcon.svg";
 import facebookIcon from "@/svgs/facebookIcon.svg";
 import Link from "next/link";
 import { usePageContext } from "@/context/page-context";
-import { useUserContext } from "@/context/user-context";
+import { useUserContext, normalizeUser } from "@/context/user-context";
 import { POST_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import toast from "react-hot-toast";
@@ -190,7 +190,7 @@ const Register = () => {
 
         if (response.success) {
           Cookies.set("token", (response.data as any).token);
-          setUser((response.data as any).user);
+          setUser(normalizeUser((response.data as any).user));
 
           toast.success("Authentication successful via Google!");
 
@@ -265,7 +265,7 @@ const Register = () => {
 
                   if (result.success) {
                     Cookies.set("token", (result.data as any).token);
-                    setUser((result.data as any).user);
+                    setUser(normalizeUser((result.data as any).user));
 
                     toast.success("Authentication successful via Facebook!");
  

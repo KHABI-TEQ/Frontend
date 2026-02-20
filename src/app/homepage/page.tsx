@@ -21,7 +21,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { URLS } from '@/utils/URLS';
 import { GET_REQUEST } from '@/utils/requests';
 import Cookies from 'js-cookie';
-import { useUserContext } from '@/context/user-context';
+import { useUserContext, normalizeUser } from '@/context/user-context';
 
 const Homepage = () => {
   //Simulating the loading page
@@ -49,15 +49,8 @@ const Homepage = () => {
               firstName: string;
               phoneNumber: string;
             };
-            // const user = {
-            //   id: (response as any).id,
-            //   email: (response as any).email,
-            //   name: (response as any).name,
-            //   phoneNumber: (response as any).phone,
-            //   role: (response as any).role,
-            // };
 
-            setUser(user);
+            setUser(normalizeUser(user));
             router.push('/agent/onboard');
           }
         });

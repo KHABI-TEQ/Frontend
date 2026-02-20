@@ -27,7 +27,7 @@ import {
 import { getCookie } from "cookies-next";
 import Select from "react-select";
 import customStyles from "@/styles/inputStyle";
-import { useUserContext } from "@/context/user-context";
+import { useUserContext, normalizeUser } from "@/context/user-context";
 import { getStates, getLGAsByState, getAreasByStateLGA } from "@/utils/location-utils";
 import PendingKycReview from "@/components/agent-kyc/PendingKycReview";
 import ProcessingRequest from "../loading-component/ProcessingRequest";
@@ -214,7 +214,7 @@ const AgentKycForm: React.FC = () => {
         return;
       }
 
-      setUser({
+      setUser(normalizeUser({
         _id: user?._id ?? "",
         id: user?.id,
         email: user?.email,
@@ -512,13 +512,13 @@ const AgentKycForm: React.FC = () => {
             <div className="flex items-center justify-center gap-3">
               <button
                 onClick={() => {
-                  setUser({
+                  setUser(normalizeUser({
                     ...(user as any),
                     agentData: {
                       ...(user as any)?.agentData,
                       kycStatus: "none",
                     },
-                  });
+                  }));
                 }}
                 className="px-6 py-2 bg-green-600 text-white rounded-lg"
               >

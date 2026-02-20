@@ -19,7 +19,7 @@ import googleIcon from '@/svgs/googleIcon.svg';
 import facebookIcon from '@/svgs/facebookIcon.svg';
 import Link from 'next/link';
 import { usePageContext } from '@/context/page-context';
-import { useUserContext } from '@/context/user-context';
+import { useUserContext, normalizeUser } from '@/context/user-context';
 import axios from 'axios';
 import { POST_REQUEST } from '@/utils/requests';
 import { URLS } from '@/utils/URLS';
@@ -90,7 +90,7 @@ const Register = () => {
             console.log('response from signup', response);
             if ((response as any).id) {
               toast.success('Registration successful');
-              setUser((response as any).user);
+              setUser(normalizeUser((response as any).user));
               localStorage.setItem('fullname', `${formik.values.firstName} ${formik.values.lastName}`);
               localStorage.setItem('email', `${formik.values.email}`);
               localStorage.setItem('phoneNumber', `${String(formik.values.phone)}`);
@@ -133,16 +133,17 @@ const Register = () => {
       const url = URLS.BASE + URLS.agent + URLS.googleSignup;
 
       await POST_REQUEST(url, { code: codeResponse.code }).then(async (response) => {
-        if ((response as unknown as { id: string }).id) {
-          Cookies.set('token', (response as unknown as { token: string }).token);
-          console.log('response', response);
-          setUser((response as any).user);
+        const res = response as any;
+        if (res.id) {
+          Cookies.set('token', res.token);
+          console.log('response', res);
+          setUser(normalizeUser(res.user));
           toast.success('Registration successful');
           router.push('/agent/onboard');
         }
-        console.log(response);
-        if (response.error) {
-          toast.error(response.error);
+        console.log(res);
+        if (res.error) {
+          toast.error(res.error);
         }
         // toast.error(response.message);
       });

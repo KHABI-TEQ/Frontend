@@ -22,7 +22,7 @@ import { encodeRedirectTarget, resolveRedirectTarget } from "@/utils/authRedirec
 // Hooks & Context
 import { useLoading } from "@/hooks/useLoading";
 import { usePageContext } from "@/context/page-context";
-import { useUserContext } from "@/context/user-context";
+import { useUserContext, normalizeUser } from "@/context/user-context";
 
 // Utilities & Assets
 import { POST_REQUEST } from "@/utils/requests";
@@ -90,7 +90,7 @@ const Login: FC = () => {
     const userPayload = response.data.user;
 
     Cookies.set("token", response.data.token);
-    setUser(userPayload);
+    setUser(normalizeUser(userPayload));
 
     setOverlayMessage("Loading your dashboard...");
     setOverlayVisible(true);
@@ -162,7 +162,7 @@ const Login: FC = () => {
 
         if (response.success) {
           Cookies.set("token", (response.data as any).token);
-          setUser((response.data as any).user);
+          setUser(normalizeUser((response.data as any).user));
 
           toast.success("Authentication successful via Google!");
 
@@ -248,7 +248,7 @@ const Login: FC = () => {
 
                   if (result.success) {
                     Cookies.set("token", (result.data as any).token);
-                    setUser((result.data as any).user);
+                    setUser(normalizeUser((result.data as any).user));
 
                     toast.success("Authentication successful via Facebook!");
 
