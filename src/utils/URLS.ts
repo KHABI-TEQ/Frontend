@@ -87,6 +87,39 @@ export const URLS = {
   authVerifyAccount: "/auth/verifyAccount",
 
   /**
+   * Agent auth (used by agent login/register pages)
+   */
+  agent: "/agent",
+  agentLogin: "/agent/auth/login",
+  agentSignup: "/agent/auth/register",
+  requestPasswordReset: "/auth/resetPasswordRequest",
+  googleLogin: "/auth/googleAuth",
+  googleSignup: "/auth/googleAuth",
+  resetPassword: "/auth/resetPassword",
+  verifyEmail: "/auth/verifyAccount",
+
+  /**
+   * Agent briefs / requests (used by overview, RquestsTable, etc.)
+   */
+  getAllRequests: "/requests",
+  confirmAvailability: "/confirm-availability",
+
+  /**
+   * Agent briefs creation / fetch
+   */
+  agentCreateBrief: "/agent/briefs/create",
+  agentfetchTotalBriefs: "/agent/briefs",
+  landLordCreateBrief: "/landlord/briefs/create",
+  buyersSearchBrief: "/briefs/search",
+  buyersFetchBriefs: "/briefs",
+
+  /**
+   * Inspection slots
+   */
+  allAvailableSLots: "/inspections/slots",
+  scheduleInspection: "/inspections/schedule",
+
+  /**
    * Subscription Endpoints
    */
   subscriptionBaseUrl: "/subscriptions",
