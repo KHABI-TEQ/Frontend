@@ -120,29 +120,30 @@ const Login = () => {
       const url = URLS.BASE + URLS.agent + URLS.googleLogin;
 
       await POST_REQUEST(url, { code: codeResponse.code }).then(async (response) => {
-        if (response.id) {
+        const res = response as any;
+        if (res.id) {
           toast.success('Sign in successful');
-          Cookies.set('token', (response as unknown as { token: string }).token);
-          console.log('response', response);
-          console.log('response Data', response.data);
+          Cookies.set('token', res.token);
+          console.log('response', res);
+          console.log('response Data', res.data);
 
-          const user = response as unknown as {
-            id: string;
-            email: string;
-            password: string;
-            lastName: string;
-            firstName: string;
-            phoneNumber: string;
+          const user = {
+            id: res.id,
+            email: res.email,
+            password: res.password,
+            lastName: res.lastName,
+            firstName: res.firstName,
+            phoneNumber: res.phoneNumber,
           };
 
           setUser(user);
 
-          if (!response.phoneNumber) router.push('/agent/onboard');
+          if (!res.phoneNumber) router.push('/agent/onboard');
           else router.push('/agent/briefs');
         }
-        console.log('response', response);
-        if (response.error) {
-          toast.error(response.error);
+        console.log('response', res);
+        if (res.error) {
+          toast.error(res.error);
         }
       });
     },
