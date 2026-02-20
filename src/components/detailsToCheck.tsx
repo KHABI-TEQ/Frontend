@@ -79,7 +79,13 @@ const DetailsToCheck: FC<DetailsToCheckProps> = ({
           {/**Location and Property Features */}
           <Container
             heading='Location'
-            title={`${detailsToCheck.actualLocation?.state}, ${detailsToCheck.actualLocation?.localGovernment}, ${detailsToCheck.actualLocation?.area}`}
+            title={
+              detailsToCheck.actualLocation
+                ? `${detailsToCheck.actualLocation.state}, ${detailsToCheck.actualLocation.localGovernment}, ${detailsToCheck.actualLocation.area}`
+                : detailsToCheck.location
+                  ? `${detailsToCheck.location.state}, ${detailsToCheck.location.localGovernment}, ${detailsToCheck.location.area}`
+                  : ''
+            }
           />
           <Container
             heading='Property Features'
@@ -93,7 +99,7 @@ const DetailsToCheck: FC<DetailsToCheckProps> = ({
           />
 
           {/**Date Created and Document  */}
-          <Container heading='Date Created' title={detailsToCheck.date} />
+          <Container heading='Date Created' title={detailsToCheck.date ?? detailsToCheck.createdAt ?? ''} />
           <Container
             heading='Document'
             containsList={true}
@@ -137,12 +143,16 @@ const DetailsToCheck: FC<DetailsToCheckProps> = ({
                     price: detailsToCheck.propertyPrice,
                     propertyType: detailsToCheck.propertyType,
                     selectedState: {
-                      value: detailsToCheck.location,
+                      value:
+                        typeof detailsToCheck.location === 'object'
+                          ? `${detailsToCheck.location.state}, ${detailsToCheck.location.localGovernment}`
+                          : String(detailsToCheck.location ?? ''),
                       label: '',
                     },
                     selectedCity: { value: '', label: '' },
                     usageOptions: ['C of Document', 'Lorem ipsum'],
                     documents: ['C of Document', 'Lorem ipsum'],
+                    docOnProperty: [],
                     noOfBedroom: '5',
                     additionalFeatures: '',
                   });

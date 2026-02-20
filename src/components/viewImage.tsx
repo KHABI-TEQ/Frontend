@@ -9,7 +9,7 @@ import cancelIcon from '@/svgs/cancelIcon.svg';
 import { usePageContext } from '@/context/page-context';
 import { StaticImport } from 'next/dist/shared/lib/get-img-props';
 
-const ViewImage = ({ imageData }: { imageData: StaticImport[] }) => {
+const ViewImage = ({ imageData }: { imageData: (StaticImport | string)[] }) => {
   const [scrollPosition, setScrollPosition] = useState(0);
   const { setViewImage, viewImage } = usePageContext();
   const ref = useRef<HTMLDivElement>(null);

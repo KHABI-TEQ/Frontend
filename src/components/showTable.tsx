@@ -33,19 +33,22 @@ const ShowTable: React.FC<ShowTableProps> = ({
           {data.map((item, idx: number) => (
             <tr className='w-full flex' key={idx}>
               <td className='text-[14px] leading-[22.4px] font-normal font-archivo text-[#181336]'>
-                {item.date.split('T')[0]}
+                {(item.date ?? item.createdAt ?? '').toString().split('T')[0]}
               </td>
               <td className='text-[14px] leading-[22.4px] font-normal font-archivo text-[#181336]'>
                 {item.propertyType}
               </td>
               <td className='text-[14px] text-left leading-[22.4px] font-normal font-archivo text-[#181336]'>
-                {item.actualLocation?.state},
-                {item.actualLocation?.localGovernment}
+                {item.actualLocation
+                  ? `${item.actualLocation.state}, ${item.actualLocation.localGovernment}`
+                  : item.location
+                    ? `${item.location.state}, ${item.location.localGovernment}`
+                    : ''}
               </td>
               <td className='text-[14px] leading-[22.4px] font-normal font-archivo text-[#181336]'>
                 N {Number(item.propertyPrice).toLocaleString()}
               </td>
-              {item.document?.length !== 0 ? (
+              {(item.document !== undefined && item.document?.length !== 0) || (item.docOnProperty?.length ?? 0) > 0 ? (
                 // <td className='text-[14px] leading-[22.4px] font-normal font-archivo text-[#181336]'>
                 //   {item.document.split('').splice(0, 14).join('') + '...'}
                 // </td>

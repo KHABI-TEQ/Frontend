@@ -137,7 +137,7 @@ const PropertyReference = ({
       },
     };
 
-    setPropertyReference(payload);
+    setPropertyReference({ type: 'rental', payload: payload as Record<string, unknown> });
     setRentPage({ submitPreference: true, isSubmitForInspectionClicked: false });
   };
 

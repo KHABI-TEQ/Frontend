@@ -38,6 +38,12 @@ export interface DataProps {
   }[];
   briefType?: string;
   statusLabel?: string;
+
+  /** Display fields used by tables (date, actualLocation, document, amountSold) */
+  date?: string;
+  actualLocation?: { state: string; localGovernment: string; area: string };
+  document?: string;
+  amountSold?: number | string;
 }
 
 export interface UserAgentDataProps {

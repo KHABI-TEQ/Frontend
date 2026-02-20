@@ -35,9 +35,9 @@ const RequestsTable: FC<TableProps> = ({ data }) => {
     await POST_REQUEST(url, { requestId: id, isAvailable }, Cookies.get('token'))
       .then((result) => {
         if (result.success) {
-          toast.success(result.message);
+          toast.success(result.message ?? 'Success');
         } else {
-          toast.error(result.error);
+          toast.error(result.error ?? 'Request failed');
         }
       })
       .catch((err) => {

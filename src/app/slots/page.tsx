@@ -34,8 +34,8 @@ const SlotsPage = () => {
     // Fetch slots from API
     const fetchSlots = async () => {
       const url = URLS.BASE + URLS.allAvailableSLots;
-      const data = await GET_REQUEST(url);
-      setSlots(data.slots);
+      const res = await GET_REQUEST<{ slots?: Slot[] }>(url);
+      setSlots((res.data?.slots ?? []) as Slot[]);
     };
     fetchSlots();
   }, []);

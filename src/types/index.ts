@@ -166,6 +166,19 @@ export interface MediaItem {
   alt?: string;
 }
 
+// Brief type (used by buy page / property reference)
+export type BriefType = {
+  id: string;
+  _id: string;
+  name: string;
+  propertyType: string;
+  price: number;
+  propertyFeatures: { noOfBedrooms: string };
+  location: { state: string; localGovernment: string };
+  docOnProperty: { _id: string; docName: string }[];
+  usageOptions?: [];
+};
+
 // Search and filter utility types
 export type SortDirection = "asc" | "desc";
 export type FilterOperator =

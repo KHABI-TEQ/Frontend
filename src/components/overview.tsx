@@ -80,9 +80,11 @@ const Overview = () => {
   const [detailsToCheck, setDetailsToCheck] = useState<DataProps>({
     date: '12/12/2024',
     propertyType: 'Residential',
-    location: 'Lagos, Ikeja',
+    location: { state: 'Lagos', localGovernment: 'Ikeja', area: '' },
     propertyPrice: '200,000,000',
     document: 'C of o, recepit,...',
+    docOnProperty: [],
+    price: 0,
   });
 
   useEffect(() => {
@@ -97,8 +99,8 @@ const Overview = () => {
    if(selectedOption === 'Inspection Requests'){
      (async () => {
        const url = URLS.BASE + URLS.agent + URLS.getAllRequests;
-       await GET_REQUEST(url, Cookies.get('token')).then((data) => {
-         if (data.success) {
+       await GET_REQUEST<RequestData[]>(url, Cookies.get('token')).then((data) => {
+         if (data.success && data.data) {
            setAllRequests(data.data);
          } else {
            setAllRequests([]);
@@ -360,7 +362,9 @@ const Table: FC<TableProps> = ({ data, setShowFullDetails, setDetailsToCheck, de
                   {item.propertyType}
                 </td>
                 <td className='text-[14px] text-left leading-[22.4px] font-normal font-archivo text-[#181336]'>
-                  {item.location}
+                  {typeof item.location === 'object'
+                    ? `${item.location.state}, ${item.location.localGovernment}`
+                    : String(item.location ?? '')}
                 </td>
                 <td className='text-[14px] leading-[22.4px] font-normal font-archivo text-[#181336]'>
                   N {Number(item.propertyPrice).toLocaleString()}
