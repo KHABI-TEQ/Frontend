@@ -30,6 +30,11 @@ type BriefDataProps = {
   createdAt: string;
 };
 
+type AgentBriefsResponse = {
+  sellProperties?: BriefDataProps[];
+  rentProperties?: BriefDataProps[];
+};
+
 const Form2 = () => {
   const { isContactUsClicked, isModalOpened } = usePageContext();
   const { selectedNav } = usePageContext();
@@ -98,11 +103,11 @@ const Form2 = () => {
           toast.error('Failed to get data');
           return setIsLoading(false);
         }
-        const data = response.data;
+        const data = (response.data ?? {}) as AgentBriefsResponse;
         console.log(data);
         const combinedProperties = [
-          ...(data?.sellProperties || []),
-          ...(data?.rentProperties || []),
+          ...(data.sellProperties ?? []),
+          ...(data.rentProperties ?? []),
         ].map(
           ({
             docOnProperty,

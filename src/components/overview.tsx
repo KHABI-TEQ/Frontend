@@ -34,6 +34,11 @@ interface RequestData {
   inspectionTime: string;
 }
 
+type AgentPropertiesData = {
+  sellProperties?: unknown[];
+  rentProperties?: unknown[];
+};
+
 const Overview = () => {
   const [briefs, setBriefs] = useState({
     totalBrief: 0,
@@ -119,9 +124,9 @@ const Overview = () => {
             message: 'Failed to get data',
           });
         }
-        const data = response.data;
+        const data = (response.data ?? {}) as AgentPropertiesData;
         console.log(data);
-        const combinedProperties = [...(data?.sellProperties || []), ...(data?.rentProperties || [])];
+        const combinedProperties = [...(data.sellProperties ?? []), ...(data.rentProperties ?? [])];
         setIsLoadingDetails({
           isLoading: false,
           message: 'Data Loaded',
