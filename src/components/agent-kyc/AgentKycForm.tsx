@@ -238,7 +238,7 @@ const AgentKycForm: React.FC = () => {
         doc: user?.doc,
         individualAgent: user?.individualAgent,
         companyAgent: user?.companyAgent,
-      });
+      }));
 
     } catch (error) {
       // Error handled, validation messages will be shown via formik
