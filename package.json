@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "cross-env NODE_ENV=development next dev",
+    "dev": "next dev --webpack",
+    "dev:clean": "node -e \"try{require('fs').rmSync('.next',{recursive:true,force:true});console.log('Cleared .next');}catch(e){}\" && next dev --webpack",
     "dev:analyze": "NODE_ENV=development ANALYZE=true next dev",
     "build": "next build",
     "build:analyze": "ANALYZE=true next build",
@@ -46,7 +47,6 @@
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19",
     "critters": "^0.0.23",
-    "cross-env": "^7.0.3",
     "eslint": "^9",
     "eslint-config-next": "15.1.3",
     "postcss": "^8",
