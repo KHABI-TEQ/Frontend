@@ -23,6 +23,7 @@ import { encodeRedirectTarget, resolveRedirectTarget } from "@/utils/authRedirec
 import { useLoading } from "@/hooks/useLoading";
 import { usePageContext } from "@/context/page-context";
 import { useUserContext, normalizeUser } from "@/context/user-context";
+import { useGoogleOAuthConfig } from "@/context/google-oauth-context";
 
 // Utilities & Assets
 import { POST_REQUEST } from "@/utils/requests";
@@ -39,6 +40,74 @@ declare global {
     FB: any;
     fbAsyncInit: () => void;
   }
+}
+
+/** Only rendered when Google OAuth is configured; uses useGoogleLogin so must be inside GoogleOAuthProvider. */
+function GoogleLoginButton({
+  setOverlayMessage,
+  setOverlayVisible,
+  resolvedRedirectTarget,
+  setUser,
+  router,
+  isDisabled,
+}: {
+  setOverlayMessage: (m: string) => void;
+  setOverlayVisible: (v: boolean) => void;
+  resolvedRedirectTarget: string | null;
+  setUser: (u: any) => void;
+  router: ReturnType<typeof useRouter>;
+  isDisabled: boolean;
+}) {
+  const googleLogin = useGoogleLogin({
+    flow: "auth-code",
+    onSuccess: async (codeResponse) => {
+      setOverlayMessage("Signing in with Google...");
+      setOverlayVisible(true);
+      try {
+        const url = URLS.BASE + URLS.authGoogle;
+        const response = await POST_REQUEST(url, { idToken: codeResponse.code });
+
+        if (response.success) {
+          Cookies.set("token", (response.data as any).token);
+          setUser(normalizeUser((response.data as any).user));
+
+          toast.success("Authentication successful via Google!");
+
+          const redirectUrl = resolvedRedirectTarget || sessionStorage.getItem("redirectAfterLogin");
+          if (redirectUrl) {
+            try {
+              sessionStorage.removeItem("redirectAfterLogin");
+            } catch {}
+            setOverlayVisible(false);
+            router.push(redirectUrl);
+            return;
+          }
+
+          setOverlayVisible(false);
+          router.push("/dashboard");
+        } else if (response.error) {
+          toast.error(response.error);
+        } else {
+          toast.error("Google authentication failed. Please try again.");
+        }
+      } catch (error) {
+        console.error("Google login error:", error);
+        toast.error("Google sign-in failed, please try again!");
+      } finally {
+        setOverlayVisible(false);
+      }
+    },
+    onError: () => toast.error("Google sign-in was cancelled or failed."),
+  });
+
+  return (
+    <RegisterWith
+      icon={googleIcon}
+      text="Continue with Google"
+      onClick={googleLogin}
+      isDisabled={isDisabled}
+    />
+  );
 }
 
 const Login: FC = () => {
@@ -151,47 +220,7 @@ const Login: FC = () => {
     },
   });
 
-  const googleLogin = useGoogleLogin({
-    flow: "auth-code",
-    onSuccess: async (codeResponse) => {
-      setOverlayMessage("Signing in with Google...");
-      setOverlayVisible(true);
-      try {
-        const url = URLS.BASE + URLS.authGoogle;
-        const response = await POST_REQUEST(url, { idToken: codeResponse.code });
-
-        if (response.success) {
-          Cookies.set("token", (response.data as any).token);
-          setUser(normalizeUser((response.data as any).user));
-
-          toast.success("Authentication successful via Google!");
-
-          const redirectUrl = resolvedRedirectTarget || sessionStorage.getItem('redirectAfterLogin');
-          if (redirectUrl) {
-            try { sessionStorage.removeItem('redirectAfterLogin'); } catch {}
-            setOverlayVisible(false);
-            router.push(redirectUrl);
-            return;
-          }
-
-          setOverlayVisible(false);
-          router.push("/dashboard");
-
-        } else if (response.error) {
-          toast.error(response.error);
-        } else {
-          toast.error("Google authentication failed. Please try again.");
-        }
-
-      } catch (error) {
-        console.error("Google login error:", error);
-        toast.error("Google sign-in failed, please try again!");
-      } finally {
-        setOverlayVisible(false);
-      }
-    },
-    onError: () => toast.error("Google sign-in was cancelled or failed."),
-  });
+  const { isConfigured: googleOAuthConfigured } = useGoogleOAuthConfig();
 
   // ✅ MODIFIED useEffect for Facebook SDK initialization
   useEffect(() => {
@@ -359,12 +388,23 @@ const Login: FC = () => {
 
           {/* Social Logins */}
           <div className="flex w-full justify-center lg:flex-row flex-col gap-[15px]">
-            <RegisterWith
-              icon={googleIcon}
-              text="Continue with Google"
-              onClick={googleLogin}
-              isDisabled={overlayVisible}
-            />
+            {googleOAuthConfigured ? (
+              <GoogleLoginButton
+                setOverlayMessage={setOverlayMessage}
+                setOverlayVisible={setOverlayVisible}
+                resolvedRedirectTarget={resolvedRedirectTarget}
+                setUser={setUser}
+                router={router}
+                isDisabled={overlayVisible}
+              />
+            ) : (
+              <RegisterWith
+                icon={googleIcon}
+                text="Continue with Google (not configured)"
+                onClick={() => toast.error("Google sign-in is not configured for this environment.")}
+                isDisabled={true}
+              />
+            )}
             {/* ✅ MODIFIED RegisterWith for Facebook to show loading state and be disabled */}
             <RegisterWith
               icon={facebookIcon}

@@ -2,7 +2,6 @@ import './globals.css';
 import { roboto, archivo } from '@/styles/font';
 import { Toaster } from 'react-hot-toast';
 import Body from '@/components/general-components/body';
-import { GoogleOAuthProvider } from '@react-oauth/google';
 import { lazy, Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import ClientProviders from '@/components/providers/ClientProviders';
@@ -37,36 +36,32 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
 return (
-    <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || 'google-client-id-not-configured'}>
-      <ClientProviders>
-        <html lang="en" suppressHydrationWarning>
-          <body
-            className={`${roboto.variable} ${archivo.variable} antialiased`}
-          >
-            <div id="promo-top-placeholder"> </div>
-            <HeaderFooterWrapper>
-              <Body>{children}</Body>
-            </HeaderFooterWrapper>
-            <Suspense fallback={null}>
-              <PromoMount slot="header" targetId="promo-top-placeholder" className="w-full overflow-hidden bg-transparent mb-4" height="h-20" />
-            </Suspense>
-            <Suspense fallback={null}>
-              <GlobalPropertyActionsFAB />
-            </Suspense>
-            <Suspense fallback={null}>
-              <SubscriptionFeaturesClient />
-            </Suspense>
-            <Suspense fallback={null}>
-              <WhatsAppChatWidget />
-            </Suspense>
-            <WebVitalsInitializer />
-            <Toaster />
-            <Suspense fallback={null}>
-              <ChunkErrorHandler />
-            </Suspense>
-          </body>
-        </html>
-      </ClientProviders>
-    </GoogleOAuthProvider>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${roboto.variable} ${archivo.variable} antialiased`}>
+        <ClientProviders>
+          <div id="promo-top-placeholder"> </div>
+          <HeaderFooterWrapper>
+            <Body>{children}</Body>
+          </HeaderFooterWrapper>
+          <Suspense fallback={null}>
+            <PromoMount slot="header" targetId="promo-top-placeholder" className="w-full overflow-hidden bg-transparent mb-4" height="h-20" />
+          </Suspense>
+          <Suspense fallback={null}>
+            <GlobalPropertyActionsFAB />
+          </Suspense>
+          <Suspense fallback={null}>
+            <SubscriptionFeaturesClient />
+          </Suspense>
+          <Suspense fallback={null}>
+            <WhatsAppChatWidget />
+          </Suspense>
+          <WebVitalsInitializer />
+          <Toaster />
+          <Suspense fallback={null}>
+            <ChunkErrorHandler />
+          </Suspense>
+        </ClientProviders>
+      </body>
+    </html>
   );
 }
