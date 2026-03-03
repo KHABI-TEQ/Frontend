@@ -11,7 +11,7 @@ import Block from "@/components/access/Block";
 interface CombinedAuthGuardProps {
   children: ReactNode;
   requireAuth?: boolean;
-  allowedUserTypes?: ("Agent" | "Landowners" | "FieldAgent")[];
+  allowedUserTypes?: ("Agent" | "Landowners" | "FieldAgent" | "Developer")[];
   redirectTo?: string;
   // Kept for backward-compatibility but ignored
   requireAgentOnboarding?: boolean;
@@ -37,6 +37,7 @@ export const CombinedAuthGuard: React.FC<CombinedAuthGuardProps> = ({
   const { user, isLoading, isInitialized } = useUserContext();
 
   const isAgent = user?.userType === "Agent";
+  const isDeveloper = user?.userType === "Developer";
   const kycStatus = user && isAgent
     ? ((user as any)?.agentData?.kycStatus as "none" | "pending" | "in_review" | "approved" | "rejected" | undefined)
     : undefined;
@@ -63,21 +64,27 @@ export const CombinedAuthGuard: React.FC<CombinedAuthGuardProps> = ({
     );
   }
 
-  if (
-    requireAuth &&
-    user &&
-    allowedUserTypes.length > 0 &&
-    !allowedUserTypes.includes(user.userType as "Agent" | "Landowners" | "FieldAgent" || "Agent")
-  ) {
-    return (
-      <Block
-        title="Access Denied"
-        message="Your account type does not have permission to view this page."
-        actionHref="/dashboard"
-        actionLabel="Go to Dashboard"
-        icon={<Shield size={32} className="text-[#8DDB90]" />}
-      />
-    );
+  if (requireAuth && user && allowedUserTypes.length > 0) {
+    const raw =
+      (user as { userType?: string }).userType ??
+      (typeof window !== "undefined" ? localStorage.getItem("userType") : null) ??
+      "";
+    const normalized = String(raw).trim().toLowerCase();
+    const allowedLower = allowedUserTypes.map((t) => t.toLowerCase());
+    const isAllowed =
+      allowedLower.includes(normalized) ||
+      (normalized === "landowner" && allowedLower.includes("landowners"));
+    if (!isAllowed) {
+      return (
+        <Block
+          title="Access Denied"
+          message="Your account type does not have permission to view this page."
+          actionHref="/dashboard"
+          actionLabel="Go to Dashboard"
+          icon={<Shield size={32} className="text-[#8DDB90]" />}
+        />
+      );
+    }
   }
 
   // KYC restriction: if required, only allow Agents with approved KYC
@@ -95,10 +102,10 @@ export const CombinedAuthGuard: React.FC<CombinedAuthGuardProps> = ({
     );
   }
 
-  // Subscription restriction: only applies to Agents
-  if (requireActiveSubscription && isAgent) {
-    // Special rule: If KYC not approved, ask to submit KYC before subscribing
-    if (!kycApproved) {
+  // Subscription restriction: applies to Agents and Developers (per backend)
+  if (requireActiveSubscription && (isAgent || isDeveloper)) {
+    // Agents only: KYC must be approved before subscribing
+    if (isAgent && !kycApproved) {
       return (
         <Block
           title="KYC Required Before Subscribing"
@@ -110,14 +117,16 @@ export const CombinedAuthGuard: React.FC<CombinedAuthGuardProps> = ({
           icon={<CheckCircle2 size={32} className="text-[#8DDB90]" />}
         />
       );
-    } 
+    }
 
     if (!hasActiveSubscription) {
       return (
         <Block
           title="Active Subscription Required"
           message={
-            "This page requires an active agent subscription. Choose a plan to continue."
+            isDeveloper
+              ? "Developers need an active subscription to post properties. Subscribe to a plan to continue."
+              : "This page requires an active agent subscription. Choose a plan to continue."
           }
           actionHref="/agent-subscriptions?tab=plans"
           actionLabel="View Plans"

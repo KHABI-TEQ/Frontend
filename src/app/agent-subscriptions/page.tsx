@@ -73,10 +73,14 @@ export default function AgentSubscriptionsPage() {
     }
   }, [urlTab, setActiveTab]);
 
-  // Redirect non-agents
+  // Allow Agents and Developers (both need subscription to post)
   useEffect(() => {
-    if (user && user.userType !== 'Agent') {
-      toast.error('Access denied. This page is only for agents.');
+    if (!user) return;
+    const raw = (user as { userType?: string }).userType ?? (typeof window !== 'undefined' ? localStorage.getItem('userType') : null) ?? '';
+    const typeLower = String(raw).trim().toLowerCase();
+    const allowed = typeLower === 'agent' || typeLower === 'developer';
+    if (!allowed) {
+      toast.error('Access denied. This page is for agents and developers.');
       router.push('/dashboard');
     }
   }, [user, router]);
@@ -171,7 +175,10 @@ export default function AgentSubscriptionsPage() {
   useEffect(() => {
     const boot = async () => {
       setLoading(false);
-      if (!user || user.userType !== 'Agent') return;
+      const raw = user ? (user as { userType?: string }).userType ?? (typeof window !== 'undefined' ? localStorage.getItem('userType') : null) ?? '' : '';
+      const typeLower = String(raw).trim().toLowerCase();
+      const isAgentOrDeveloper = typeLower === 'agent' || typeLower === 'developer';
+      if (!user || !isAgentOrDeveloper) return;
       if (activeTab === 'subscriptions') await fetchSubscriptions(1);
       if (activeTab === 'plans') await fetchPlans();
       if (activeTab === 'transactions') await fetchTransactions();
@@ -285,8 +292,10 @@ export default function AgentSubscriptionsPage() {
     setIsProcessingSubscribe(true);
     try {
       const planCode = selectedPlanCodeForSub;
-  
-      const payload = { planCode, autoRenewal } as any;
+      const rawType = (user as { userType?: string })?.userType ?? (typeof window !== 'undefined' ? localStorage.getItem('userType') : null) ?? '';
+      const canonicalType = rawType.trim().toLowerCase() === 'developer' ? 'Developer' : 'Agent';
+
+      const payload = { planCode, autoRenewal, userType: canonicalType } as any;
       const res = await POST_REQUEST<any>(`${URLS.BASE}/account/subscriptions/makeSub`, payload, token);
       if ((res as any)?.success && (res as any)?.data?.paymentUrl) {
         toast.success('Redirecting to payment...');
@@ -295,28 +304,41 @@ export default function AgentSubscriptionsPage() {
         toast.success((res as any)?.message || 'Subscription initiated');
         setShowSubscribeModal(false);
       } else {
-        toast.error((res as any)?.message || 'Failed to initiate subscription');
+        let errMsg = (res as any)?.message || (res as any)?.error || 'Failed to initiate subscription';
+        if (/only registered agents can create subscription/i.test(String(errMsg))) {
+          errMsg = 'Subscriptions are for Agents and Developers. The server may not yet allow Developer accounts—please contact support.';
+        }
+        toast.error(errMsg);
       }
     } catch (e: any) {
-      toast.error(e?.message || 'Failed to initiate subscription');
+      let errMsg = e?.message || 'Failed to initiate subscription';
+      if (/only registered agents can create subscription/i.test(String(errMsg))) {
+        errMsg = 'Subscriptions are for Agents and Developers. The server may not yet allow Developer accounts—please contact support.';
+      }
+      toast.error(errMsg);
     } finally {
       setIsProcessingSubscribe(false);
     }
   };
 
-  if (user?.userType !== 'Agent') {
+  const userTypeRaw = user ? (user as { userType?: string }).userType ?? (typeof window !== 'undefined' ? localStorage.getItem('userType') : null) ?? '' : '';
+  const userTypeLower = String(userTypeRaw).trim().toLowerCase();
+  const isAgentOrDeveloper = userTypeLower === 'agent' || userTypeLower === 'developer';
+  if (user && !isAgentOrDeveloper) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Access Denied</h2>
-          <p className="text-gray-600">This page is only accessible to agents.</p>
+          <p className="text-gray-600">This page is for agents and developers.</p>
         </div>
       </div>
     );
   }
 
   const kycApproved = (user as any)?.agentData?.kycStatus === 'approved';
+  const isDeveloper = userTypeLower === 'developer';
+  const requireKycForSubscription = isAgentOrDeveloper && !isDeveloper;
 
   if (loading) {
     return (
@@ -404,11 +426,11 @@ export default function AgentSubscriptionsPage() {
 
         {(activeTab === 'subscriptions' || activeTab === 'plans') && (
           <>
-          {!kycApproved ? (
+          {requireKycForSubscription && !kycApproved ? (
             <Block
               title="KYC Verification Required"
               message={
-                "You must complete your onboarding and be approved before you can post properties."
+                "You must complete your onboarding and be approved before you can subscribe."
               }
               actionHref="/agent-kyc"
               actionLabel="Submit KYC"

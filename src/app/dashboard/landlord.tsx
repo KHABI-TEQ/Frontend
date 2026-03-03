@@ -195,30 +195,30 @@ export default function LandlordDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 sm:px-6 py-6">
-          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 font-display">
+        <div className="container mx-auto px-4 sm:px-6 py-6 max-w-full">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 min-w-0">
+            <div className="min-w-0">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 font-display truncate">
                 Welcome back, {user.firstName}!
               </h1>
               <p className="text-gray-600 mt-2">
                 Manage your property portfolio and track performance
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-                            <Link
+            <div className="flex flex-col sm:flex-row gap-3 flex-shrink-0 flex-wrap">
+              <Link
                 href="/post-property"
-                className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-5 py-2.5 sm:px-6 sm:py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all duration-200 shadow-lg hover:shadow-xl text-sm sm:text-base"
               >
                 <PlusIcon size={20} />
                 List New Property
               </Link>
               <Link
                 href="/my-listings"
-                className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
+                className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 px-5 py-2.5 sm:px-6 sm:py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors text-sm sm:text-base"
               >
                 <HomeIcon size={20} />
                 My Listings
@@ -228,7 +228,7 @@ export default function LandlordDashboard() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 sm:px-6 py-8">
+      <div className="container mx-auto px-4 sm:px-6 py-8 max-w-full">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {statCards.map((card, index) => {

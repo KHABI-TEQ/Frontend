@@ -23,6 +23,7 @@ import toast from "react-hot-toast";
 import { useRouter, useSearchParams } from "next/navigation";
 import Cookies from "js-cookie";
 import { useGoogleLogin } from "@react-oauth/google";
+import { useGoogleOAuthConfig } from "@/context/google-oauth-context";
 import CustomToast from "@/components/general-components/CustomToast";
 import OverlayPreloader from "@/components/general-components/OverlayPreloader";
 // The InputField component from common/ should be used, not a local one
@@ -33,6 +34,70 @@ declare global {
     FB: any;
     fbAsyncInit: () => void;
   }
+}
+
+/** Only rendered when Google OAuth is configured; uses useGoogleLogin so must be inside GoogleOAuthProvider. */
+function GoogleRegisterButton({
+  userType,
+  referralCode,
+  setUser,
+  setSocialProcessing,
+  setOverlayMessage,
+  router,
+  isDisabled,
+}: {
+  userType: string;
+  referralCode: string;
+  setUser: (u: any) => void;
+  setSocialProcessing: (v: boolean) => void;
+  setOverlayMessage: (m: string) => void;
+  router: ReturnType<typeof useRouter>;
+  isDisabled: boolean;
+}) {
+  const googleLogin = useGoogleLogin({
+    flow: "auth-code",
+    onSuccess: async (codeResponse: any) => {
+      if (!userType) {
+        toast.error("Please select account type first.");
+        return;
+      }
+      setOverlayMessage("Signing up with Google...");
+      setSocialProcessing(true);
+      try {
+        const url = URLS.BASE + URLS.authGoogle;
+        const response = await POST_REQUEST(url, {
+          idToken: codeResponse.code,
+          userType,
+          ...(referralCode ? { referralCode } : {}),
+        });
+        if (response.success) {
+          Cookies.set("token", (response.data as any).token);
+          setUser(normalizeUser((response.data as any).user));
+          toast.success("Authentication successful via Google!");
+          setSocialProcessing(false);
+          router.push("/dashboard");
+        } else if (response.error) {
+          toast.error(response.error);
+        } else {
+          toast.error("Google authentication failed. Please try again.");
+        }
+      } catch (error: any) {
+        console.error("Google signup error:", error);
+        toast.error(error.message || "Google registration failed!");
+      } finally {
+        setSocialProcessing(false);
+      }
+    },
+    onError: (errorResponse: any) => toast.error(errorResponse.message || "Google sign-up was cancelled or failed."),
+  });
+  return (
+    <RegisterWith
+      icon={googleIcon}
+      text="Continue with Google"
+      onClick={googleLogin}
+      isDisabled={isDisabled}
+    />
+  );
 }
 
 const Register = () => {
@@ -113,17 +178,20 @@ const Register = () => {
   validationSchema,
   onSubmit: async (values) => {
     setIsDisabled(true);
+    setIsSuccess(false);
     try {
       const url = URLS.BASE + URLS.authRegister;
 
       await toast.promise(
         (async () => {
-          const { phone, confirmPassword, ...payload } = values;
-
           const response = await POST_REQUEST(url, {
-            ...payload,
-            phoneNumber: String(values.phone),
+            firstName: values.firstName,
+            lastName: values.lastName,
+            email: values.email,
+            password: values.password,
             userType: values.userType,
+            phoneNumber: String(values.phone),
+            address: { state: "", city: "", street: "" },
             ...(values.referralCode ? { referralCode: values.referralCode } : {}),
           });
 
@@ -153,7 +221,29 @@ const Register = () => {
 
             return "Registration successful";
           } else {
-            throw new Error(response.error || "Registration failed");
+            const res = response as any;
+            if (process.env.NODE_ENV === "development") {
+              console.warn("Registration API error (full response):", JSON.stringify(res, null, 2));
+            }
+            const parts: string[] = [];
+            if (res.message) parts.push(res.message);
+            if (res.error && res.error !== res.message) parts.push(res.error);
+            if (res.data?.message) parts.push(res.data.message);
+            if (res.data?.error && res.data.error !== res.data?.message) parts.push(res.data.error);
+            const errList = res.errors ?? res.data?.errors;
+            if (Array.isArray(errList) && errList.length > 0) {
+              const msgs = errList.map((e: any) => e.msg ?? e.message ?? (typeof e === "string" ? e : e.error)).filter(Boolean);
+              if (msgs.length) parts.push(msgs.join(". "));
+            } else if (errList && typeof errList === "object" && !Array.isArray(errList)) {
+              const flat = Object.entries(errList).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`).join("; ");
+              if (flat) parts.push(flat);
+            }
+            let fullMsg = parts.length ? parts.join(" — ") : "Registration failed.";
+            const isGenericValidationError = fullMsg === "Validation error" || (fullMsg === "Validation error — Validation error");
+            if (isGenericValidationError && values.userType === "Developer") {
+              fullMsg = "Developer registration isn’t supported by the server yet. Please register as Landlord or Agent, or contact support to enable Developer accounts.";
+            }
+            throw new Error(fullMsg);
           }
         })(),
         {
@@ -164,55 +254,14 @@ const Register = () => {
       );
     } catch (error) {
       console.error("Registration error:", error);
+    } finally {
       setIsDisabled(false);
       setIsSuccess(false);
     }
   },
 });
 
-  const googleLogin = useGoogleLogin({
-    flow: "auth-code",
-    onSuccess: async (codeResponse: any) => {
-      if (!formik.values.userType) {
-        toast.error("Please select account type first.");
-        return;
-      }
-
-      setOverlayMessage("Signing up with Google...");
-      setSocialProcessing(true);
-      try {
-        const url = URLS.BASE + URLS.authGoogle;
-        const response = await POST_REQUEST(url, {
-          idToken: codeResponse.code,
-          userType: formik.values.userType,
-          ...(formik.values.referralCode ? { referralCode: formik.values.referralCode } : {}),
-        });
-
-        if (response.success) {
-          Cookies.set("token", (response.data as any).token);
-          setUser(normalizeUser((response.data as any).user));
-
-          toast.success("Authentication successful via Google!");
-
-          setSocialProcessing(false);
-          router.push("/dashboard");
-
-        } else if (response.error) {
-          toast.error(response.error);
-        } else {
-          toast.error("Google authentication failed. Please try again.");
-        }
-
-
-      } catch (error: any) {
-        console.error("Google signup error:", error);
-        toast.error(error.message || "Google registration failed!");
-      } finally {
-        setSocialProcessing(false);
-      }
-    },
-    onError: (errorResponse: any) => toast.error(errorResponse.message || "Google sign-up was cancelled or failed."),
-  });
+  const { isConfigured: googleOAuthConfigured } = useGoogleOAuthConfig();
 
   // Initialize Facebook SDK
   useEffect(() => {
@@ -316,10 +365,10 @@ const Register = () => {
           {/* Account Type Selection */}
           <div className="w-full flex flex-col gap-[15px] lg:px-[60px]">
             <span className="text-base leading-[25.6px] font-medium text-[#1E1E1E]">
-              Are you a Landlord or Agent?
+              What type of account do you want?
             </span>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-stretch">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
               {/* Landlord Radio Button */}
               <label className="relative cursor-pointer group h-full">
                 <input
@@ -407,6 +456,50 @@ const Register = () => {
                   </div>
                 </div>
               </label>
+
+              {/* Developer Radio Button */}
+              <label className="relative cursor-pointer group h-full">
+                <input
+                  type="radio"
+                  name="userType"
+                  value="Developer"
+                  checked={formik.values.userType === "Developer"}
+                  onChange={formik.handleChange}
+                  disabled={isDisabled}
+                  className="sr-only peer"
+                />
+                <div className="bg-white h-full border-2 border-gray-200 rounded-xl p-6 transition-all duration-300 hover:border-[#8DDB90] hover:shadow-lg hover:transform hover:scale-[1.02] peer-checked:border-[#8DDB90] peer-checked:bg-gradient-to-br peer-checked:from-[#8DDB90]/10 peer-checked:to-[#8DDB90]/5 peer-checked:shadow-lg peer-checked:transform peer-checked:scale-[1.02] peer-disabled:opacity-50 peer-disabled:cursor-not-allowed">
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col">
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <div className="flex gap-2 items-center">
+                          <div className="w-8 h-8 bg-[#8DDB90]/20 rounded-lg flex items-center justify-center">
+                            <svg
+                              className="w-4 h-4 text-[#09391C]"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                            </svg>
+                          </div>
+                          <span className="text-lg font-semibold text-[#09391C]">
+                            Developer
+                          </span>
+                        </div>
+                        <div className="relative">
+                          <div className="w-6 h-6 rounded-full border-2 border-gray-300 transition-all duration-300 flex items-center justify-center peer-checked:border-[#8DDB90] peer-checked:bg-[#8DDB90] peer-checked:shadow-sm">
+                            <div className="w-3 h-3 rounded-full bg-white opacity-0 transition-all duration-300 peer-checked:opacity-100 scale-0 peer-checked:scale-100"></div>
+                          </div>
+                          <div className="absolute inset-0 w-6 h-6 rounded-full bg-[#8DDB90] opacity-0 transition-all duration-300 peer-checked:opacity-20 animate-pulse"></div>
+                        </div>
+                      </div>
+                      <span className="text-sm text-[#5A5D63] leading-relaxed">
+                        Real estate developer with DealSite and subscription.
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </label>
             </div>
 
             {formik.touched.userType && formik.errors.userType && (
@@ -431,12 +524,24 @@ const Register = () => {
               </div>
 
               <div className="flex justify-center gap-[15px]">
-                <RegisterWith
-                  icon={googleIcon}
-                  text="Continue with Google"
-                  onClick={googleLogin}
-                  isDisabled={isDisabled || socialProcessing}
-                />
+                {googleOAuthConfigured ? (
+                  <GoogleRegisterButton
+                    userType={formik.values.userType}
+                    referralCode={formik.values.referralCode ?? ""}
+                    setUser={setUser}
+                    setSocialProcessing={setSocialProcessing}
+                    setOverlayMessage={setOverlayMessage}
+                    router={router}
+                    isDisabled={isDisabled || socialProcessing}
+                  />
+                ) : (
+                  <RegisterWith
+                    icon={googleIcon}
+                    text="Continue with Google (not configured)"
+                    onClick={() => toast.error("Google sign-in is not configured for this environment.")}
+                    isDisabled={true}
+                  />
+                )}
                 <RegisterWith
                   icon={facebookIcon}
                   text="Continue with Facebook"

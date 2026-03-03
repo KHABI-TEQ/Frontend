@@ -18,7 +18,8 @@ import {
   CheckCircle,
   Clock,
   XCircle,
-  Star
+  Star,
+  Handshake,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
@@ -399,6 +400,16 @@ const MyListingPropertyCard: React.FC<MyListingPropertyCardProps> = ({
                 </span>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Request to market count (KHABITEQ marketplace listings – Publisher view) */}
+        {typeof property.requestToMarketCount === "number" && (
+          <div className="flex items-center gap-1 text-sm text-[#09391C] mb-2">
+            <Handshake size={14} className="text-[#8DDB90]" />
+            <span className="font-medium">
+              {property.requestToMarketCount} agent{property.requestToMarketCount !== 1 ? "s have" : " has"} requested to market
+            </span>
           </div>
         )}
 

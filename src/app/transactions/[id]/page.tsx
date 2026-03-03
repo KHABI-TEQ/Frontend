@@ -77,7 +77,7 @@ export default function TransactionReceiptPage() {
   }
 
   return (
-    <CombinedAuthGuard requireAuth={true} allowedUserTypes={["Agent", "Landowners"]} requireAgentOnboarding={true} requireAgentApproval={true}>
+    <CombinedAuthGuard requireAuth={true} allowedUserTypes={["Agent", "Landowners", "Developer"]} requireAgentOnboarding={false} requireAgentApproval={false}>
       <div className="min-h-screen bg-gray-50 py-10 px-4 print:bg-white">
         <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-sm border border-gray-200 p-6 print:shadow-none print:border-0">
           <div className="flex items-start justify-between mb-6">

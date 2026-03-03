@@ -25,6 +25,7 @@ import {
   Copy,
   Link as LinkIcon,
   Mail as MailIcon,
+  LogOut as LogOutIcon,
 } from "lucide-react";
 import Loading from "@/components/loading-component/loading";
 
@@ -58,7 +59,7 @@ interface DashboardStats {
 
 export default function AgentDashboard() {
   const router = useRouter();
-  const { user } = useUserContext();
+  const { user, logout } = useUserContext();
   // Briefs state will now be directly from stats.newPendingBriefs for "Recent Briefs" section
   const [stats, setStats] = useState<DashboardStats>({
     totalBriefs: 0,
@@ -99,10 +100,18 @@ export default function AgentDashboard() {
       );
 
       if (dashboardResponse?.data) {
+        const raw = dashboardResponse.data as any;
         setStats({
-          ...(dashboardResponse.data as any),
-          // Ensure newPendingBriefs is an array, default to empty if not present
-          newPendingBriefs: (dashboardResponse.data as any).newPendingBriefs || [],
+          totalBriefs: Number(raw.totalBriefs ?? 0),
+          totalActiveBriefs: Number(raw.totalActiveBriefs ?? 0),
+          totalInactiveBriefs: Number(raw.totalInactiveBriefs ?? 0),
+          completedDeals: Number(raw.completedDeals ?? 0),
+          totalViews: Number(raw.totalViews ?? 0),
+          totalInspectionRequests: Number(raw.totalInspectionRequests ?? 0),
+          totalCompletedInspectionRequests: Number(raw.totalCompletedInspectionRequests ?? 0),
+          newPendingBriefs: Array.isArray(raw.newPendingBriefs) ? raw.newPendingBriefs : [],
+          averageRating: Number(raw.averageRating ?? 0),
+          totalCommission: Number(raw.totalCommission ?? 0),
         });
       }
     } catch (error) {
@@ -155,28 +164,28 @@ export default function AgentDashboard() {
   const statCards = [
     {
       title: "Total Briefs",
-      value: stats.totalBriefs,
+      value: stats.totalBriefs ?? 0,
       icon: BriefcaseIcon,
       color: "bg-blue-500",
       textColor: "text-blue-600",
     },
     {
       title: "Active Briefs",
-      value: stats.totalActiveBriefs, // Changed to totalActiveBriefs from stats
+      value: stats.totalActiveBriefs ?? 0,
       icon: TrendingUpIcon,
       color: "bg-green-500",
       textColor: "text-green-600",
     },
     {
       title: "Completed Deals",
-      value: stats.completedDeals,
+      value: stats.completedDeals ?? 0,
       icon: CheckCircleIcon,
       color: "bg-yellow-500",
       textColor: "text-yellow-600",
     },
     {
       title: "Total Views",
-      value: `${stats.totalViews}`,
+      value: `${stats.totalViews ?? 0}`,
       icon: Eye,
       color: "bg-purple-500",
       textColor: "text-purple-600",
@@ -184,19 +193,31 @@ export default function AgentDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#EEF1F1] py-4 sm:py-8">
-      <div className="container mx-auto px-4 sm:px-6">
+    <div className="min-h-screen bg-[#EEF1F1] py-4 sm:py-8 overflow-x-hidden">
+      <div className="container mx-auto px-4 sm:px-6 max-w-full">
+        {/* Log out: top-right compact link (same as Developer/Landlord) */}
+        <div className="flex justify-end mb-2">
+          <button
+            type="button"
+            onClick={() => logout(() => router.push("/auth/login"))}
+            className="text-gray-600 hover:text-gray-900 text-sm font-medium flex items-center gap-1.5 transition-colors py-1.5 px-2 -my-1.5 -mx-2 rounded hover:bg-gray-100"
+            title="Sign out"
+          >
+            <LogOutIcon size={18} />
+            Log out
+          </button>
+        </div>
         {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-[#09391C] font-display">
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-8 min-w-0">
+          <div className="min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#09391C] font-display truncate">
               Welcome back, Agent {user.firstName}!
             </h1>
             <p className="text-[#5A5D63] mt-2">
               Manage your briefs and track your real estate performance
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 sm:items-center flex-shrink-0 flex-wrap">
             <Link
               href="/my-listings"
               className="bg-[#8DDB90] hover:bg-[#7BC87F] text-white px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
@@ -217,6 +238,13 @@ export default function AgentDashboard() {
             >
               <PlusIcon size={20} />
               Agent Marketplace
+            </Link>
+            <Link
+              href="/lasrera-marketplace"
+              className="bg-white hover:bg-gray-50 text-[#09391C] border border-[#8DDB90] px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
+            >
+              <PlusIcon size={20} />
+              <span className="hidden sm:inline">Publisher</span> Properties
             </Link>
             <Link
               href="/agent-broadcast"
@@ -303,20 +331,20 @@ export default function AgentDashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 sm:gap-6">
             <div className="text-center">
               <div className="text-2xl sm:text-3xl font-bold text-[#8DDB90] mb-2">
-                ₦{stats.totalCommission.toLocaleString()}
+                ₦{(stats.totalCommission ?? 0).toLocaleString()}
               </div>
               <p className="text-sm sm:text-base text-[#5A5D63]">Total Commission</p>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center mb-2">
                 <StarIcon size={20} className="text-yellow-500 fill-current sm:w-6 sm:h-6" />
-                <span className="text-2xl sm:text-3xl font-bold text-[#09391C] ml-2">{stats.averageRating}</span>
+                <span className="text-2xl sm:text-3xl font-bold text-[#09391C] ml-2">{stats.averageRating ?? 0}</span>
               </div>
               <p className="text-sm sm:text-base text-[#5A5D63]">Average Rating</p>
             </div>
             <div className="text-center">
               <div className="text-2xl sm:text-3xl font-bold text-[#09391C] mb-2">
-                {stats.totalBriefs > 0 ? Math.round((stats.completedDeals / stats.totalBriefs) * 100) : 0}%
+                {(stats.totalBriefs ?? 0) > 0 ? Math.round(((stats.completedDeals ?? 0) / (stats.totalBriefs ?? 1)) * 100) : 0}%
               </div>
               <p className="text-sm sm:text-base text-[#5A5D63]">Success Rate</p>
             </div>
@@ -326,7 +354,7 @@ export default function AgentDashboard() {
                 <code className="font-mono text-[#09391C] text-sm">{referral.code || "—"}</code>
                 <button onClick={async () => { try { const url = `${window.location.origin}/auth/register?ref=${referral.code}`; await navigator.clipboard.writeText(url); toast.success("Referral link copied"); } catch { toast.error("Copy failed"); } }} className="p-1.5 rounded bg-gray-50 hover:bg-gray-100" aria-label="Copy referral link"><Copy size={14} /></button>
               </div>
-              <div className="mt-2 text-xs text-[#5A5D63]">{referral.totalReferred} referred • ₦{referral.earnings.toLocaleString()}</div>
+              <div className="mt-2 text-xs text-[#5A5D63]">{referral.totalReferred} referred • ₦{(referral.earnings ?? 0).toLocaleString()}</div>
             </div>
           </div>
         </div>
@@ -381,7 +409,7 @@ export default function AgentDashboard() {
               </div>
             </div>
 
-            {stats.newPendingBriefs.length === 0 ? (
+            {(stats.newPendingBriefs ?? []).length === 0 ? (
               <div className="p-8 text-center">
                 <BriefcaseIcon
                   size={32}
@@ -403,7 +431,7 @@ export default function AgentDashboard() {
               </div>
             ) : (
               <div className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
-                {stats.newPendingBriefs.slice(0, 5).map((brief, index) => (
+                {(stats.newPendingBriefs ?? []).slice(0, 5).map((brief, index) => (
                   <motion.div
                     key={brief._id}
                     initial={{ opacity: 0, x: -20 }}
@@ -490,6 +518,21 @@ export default function AgentDashboard() {
                   <h3 className="font-semibold">Browse Marketplace</h3>
                   <p className="text-sm text-[#5A5D63]">
                     Find new opportunities
+                  </p>
+                </div>
+              </Link>
+
+              <Link
+                href="/lasrera-marketplace"
+                className="w-full bg-white hover:bg-gray-50 text-[#09391C] border border-[#8DDB90] p-4 rounded-lg font-medium flex items-center gap-3 transition-colors group"
+              >
+                <div className="p-2 bg-[#8DDB90] bg-opacity-10 rounded-lg">
+                  <BriefcaseIcon size={20} className="text-[#8DDB90]" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold">Publisher Properties</h3>
+                  <p className="text-sm text-[#5A5D63]">
+                    Request to market Landlord & Developer listings
                   </p>
                 </div>
               </Link>

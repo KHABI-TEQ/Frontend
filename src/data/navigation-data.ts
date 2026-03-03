@@ -65,6 +65,11 @@ export const mainNavigationData: NavigationItem[] = [
         url: "/agent-marketplace",
         isClicked: false,
       },
+      {
+        name: "Publisher Properties (Request to Market)",
+        url: "/lasrera-marketplace",
+        isClicked: false,
+      },
     ],
   },
   {
@@ -140,6 +145,11 @@ export const agentNavigationData: NavigationItem[] = [
       {
         name: "Agent Market Place",
         url: "/agent-marketplace",
+        isClicked: false,
+      },
+      {
+        name: "Publisher Properties (Request to Market)",
+        url: "/lasrera-marketplace",
         isClicked: false,
       },
     ],

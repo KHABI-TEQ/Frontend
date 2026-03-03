@@ -4,7 +4,8 @@ import React, { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { CheckCircle, XCircle, Loader2, Mail } from "lucide-react";
-import { useUserContext } from "@/context/user-context";
+import Cookies from "js-cookie";
+import { useUserContext, normalizeUser } from "@/context/user-context";
 import { GET_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 
@@ -19,7 +20,7 @@ interface VerificationResponse {
 // This is the core logic component that uses useSearchParams
 const VerifyAccountComponent: React.FC = () => {
   const router = useRouter();
-  const { user, isInitialized } = useUserContext();
+  const { user, setUser, isInitialized } = useUserContext();
   const searchParams = useSearchParams(); // This hook requires Suspense
   const [status, setStatus] = useState<VerificationStatus>("loading");
   const [message, setMessage] = useState<string>("");
@@ -62,6 +63,9 @@ const VerifyAccountComponent: React.FC = () => {
       const response: VerificationResponse = await GET_REQUEST(url);
 
       if (response.success) {
+        const data = (response as any).data;
+        if (data?.token) Cookies.set("token", data.token);
+        if (data?.user && setUser) setUser(normalizeUser(data.user));
         setStatus("success");
         setMessage(response.message || "Account verified successfully!");
       } else {

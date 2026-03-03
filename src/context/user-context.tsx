@@ -27,7 +27,7 @@ export interface User {
   lastName?: string;
   phoneNumber?: string;
   selectedRegion?: string[];
-  userType?: "Agent" | "Landowners" | "FieldAgent";
+  userType?: "Agent" | "Landowners" | "FieldAgent" | "Developer";
   accountId?: string;
   profile_picture?: string;
   referralCode?: string;
@@ -69,11 +69,27 @@ export interface User {
   };
 }
 
-/** Ensures API/partial user has required User fields (e.g. accountApproved) before setUser. */
+const CANONICAL_USER_TYPES = ["Agent", "Landowners", "FieldAgent", "Developer"] as const;
+type CanonicalUserType = (typeof CANONICAL_USER_TYPES)[number];
+
+function toCanonicalUserType(value: unknown): User["userType"] | undefined {
+  if (value == null) return undefined;
+  const s = String(value).trim();
+  if (!s) return undefined;
+  const lower = s.toLowerCase();
+  if (lower === "developer") return "Developer";
+  if (lower === "agent") return "Agent";
+  if (lower === "landowners" || lower === "landowner") return "Landowners";
+  if (lower === "fieldagent" || lower === "field_agent") return "FieldAgent";
+  return CANONICAL_USER_TYPES.includes(s as CanonicalUserType) ? (s as CanonicalUserType) : undefined;
+}
+
+/** Ensures API/partial user has required User fields (e.g. accountApproved) and canonical userType before setUser. */
 export function normalizeUser(partial: Partial<User> | Record<string, unknown> | null): User | null {
   if (partial == null) return null;
   const p = partial as Record<string, unknown>;
-  return { accountApproved: Boolean(p.accountApproved), ...p } as User;
+  const userType = toCanonicalUserType(p.userType ?? p.user_type) ?? (p.userType as User["userType"]);
+  return { accountApproved: Boolean(p.accountApproved), ...p, userType } as User;
 }
 
 interface UserContextType {
@@ -121,8 +137,19 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       const response = await GET_REQUEST(url, token);
 
       const data = response?.data as any;
-      if (response?.success && data?.user?.id) {
-        setUserState(data.user); // ✅ correctly set user
+      const userPayload = data?.user ?? data; // some APIs return { data: { user } }, others { data: { id, userType, ... } }
+      if (response?.success && (userPayload?.id || userPayload?._id)) {
+        const normalized = normalizeUser(userPayload);
+        if (normalized && typeof window !== "undefined") {
+          try {
+            if (!normalized.userType) {
+              const stored = localStorage.getItem("userType");
+              if (stored) (normalized as Record<string, unknown>).userType = stored.trim();
+            }
+            if (normalized.userType) localStorage.setItem("userType", normalized.userType);
+          } catch {}
+        }
+        setUserState(normalized ?? userPayload);
       } else if (
         typeof response?.message === "string" &&
         (response.message.toLowerCase().includes("unauthorized") ||

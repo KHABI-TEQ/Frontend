@@ -58,33 +58,45 @@ export const URLS = {
    * Secure Negotition Base Url
    */
   inspectionBaseUrl: "/inspections",
+  /** Reopen expired inspection - try "reopen" first; backend may use "reOpen" */
+  inspectionReopen: (inspectionId: string) => `/inspections/${inspectionId}/reopen`,
+  inspectionReopenCamel: (inspectionId: string) => `/inspections/${inspectionId}/reOpen`,
 
   /**
    * Account endpoints
    */
   accountInspectionBaseUrl: "/account/my-inspections",
-  /** POST /account/my-inspections/:inspectionId/respond { action: "accept" | "reject", note?: string } */
+  /** GET /account/my-inspections/:inspectionId — single inspection (guide §8.2) */
+  accountMyInspectionGetOne: (inspectionId: string) => `/account/my-inspections/${inspectionId}`,
+  /** POST /account/my-inspections/:inspectionId/respond { action: "accept" | "reject", note?: string, inspectionFee?: number } (guide §8.3) */
   accountInspectionRespond: (inspectionId: string) => `/account/my-inspections/${inspectionId}/respond`,
   accountBookingsBaseUrl: "/account/my-bookings",
-  accountPropertyBaseUrl: "/account/properties", // Create, edit, delete, getOne
+  accountPropertyBaseUrl: "/account/properties",
+  /** POST /account/properties/create (guide: listingScope for KHABITEQ marketplace, e.g. lasrera_marketplace) */
+  accountPropertyCreate: "/account/properties/create",
+  /** PATCH /account/properties/:propertyId/edit */
+  accountPropertyEdit: (propertyId: string) => `/account/properties/${propertyId}/edit`,
   fetchDashboardStats: "/account/dashboard",
   /** POST /account/agent/broadcast { subject, body } - email all subscribers */
   agentBroadcast: "/account/agent/broadcast",
   submitKyc: "/account/submitKyc",
 
   /**
-   * Auth Endpoints
+   * Auth Endpoints (see docs/FRONTEND_API_GUIDE.md)
    */
   authLogin: "/auth/login",
   authRegister: "/auth/register",
   authGoogle: "/auth/googleAuth",
   authFacebook: "/auth/facebookAuth",
+  authVerifyAccount: "/auth/verifyAccount",
+  authResendVerificationToken: "/auth/resendVerificationToken",
+  authResetPasswordRequest: "/auth/resetPasswordRequest",
   authVerifyPasswordResetCode: "/auth/verifyPasswordResetCode",
+  authResetPassword: "/auth/resetPassword",
+  /** @deprecated use authResendVerificationToken */
+  authResendVerficationToken: "/auth/resendVerificationToken",
   authResendResetPasswordToken: "/auth/resendPasswordCode",
   authRequestResetPassword: "/auth/resetPasswordRequest",
-  authResendVerficationToken: "/auth/resendVerificationToken",
-  authResetPassword: "/auth/resetPassword",
-  authVerifyAccount: "/auth/verifyAccount",
 
   /**
    * Agent auth (used by agent login/register pages)
@@ -158,6 +170,29 @@ export const URLS = {
    * System Settings Endpoints
    */
   getSystemSettings: "/getSystemSettings",
+
+  /**
+   * KHABITEQ Market Place (see docs/FRONTEND_API_GUIDE.md §3)
+   */
+  lasreraMarketplaceProperties: "/lasrera-marketplace/properties",
+
+  /**
+   * Request To Market (Agents request; Publishers accept/reject) (guide §4)
+   */
+  requestToMarketCreate: "/account/request-to-market",
+  requestToMarketList: "/account/request-to-market",
+  requestToMarketRespond: (requestId: string) => `/account/request-to-market/${requestId}/respond`,
+
+  /**
+   * Transaction registration (public/DealSite) (guide §5–6)
+   */
+  transactionRegistrationBase: "/transaction-registration",
+  transactionRegistrationTypes: "/transaction-registration/types",
+  transactionRegistrationGuidelines: "/transaction-registration/guidelines",
+  transactionRegistrationSearch: "/transaction-registration/search",
+  transactionRegistrationCheck: "/transaction-registration/check",
+  transactionRegistrationEgisValidate: "/transaction-registration/egis-validate",
+  transactionRegistrationRegister: "/transaction-registration/register",
 
   /**
    * Deal Site / Public Access Page Endpoints

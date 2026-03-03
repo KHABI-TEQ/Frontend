@@ -53,11 +53,11 @@ const MyListingPage = () => {
     limit: 12,
   });
 
+  const userId = user?._id ?? user?.id;
   useEffect(() => {
-    if (user) {
-      fetchProperties();
-    }
-  }, [user]);
+    if (!userId) return;
+    fetchProperties();
+  }, [userId]);
 
   const fetchProperties = async (filters?: SearchFilters) => {
     if (filters) {
@@ -279,7 +279,7 @@ const MyListingPage = () => {
   return (
     <CombinedAuthGuard
       requireAuth={true} // User must be logged in
-      allowedUserTypes={["Agent", "Landowners"]} // Only these user types can access
+      allowedUserTypes={["Agent", "Landowners", "Developer"]}
       requireAgentOnboarding={false}
       requireAgentApproval={false}
       agentCustomMessage="You must complete onboarding and be approved before you view posted properties."

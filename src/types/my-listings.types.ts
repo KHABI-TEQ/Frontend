@@ -59,6 +59,8 @@ export interface Property {
   createdAt: string;
   updatedAt: string;
   __v: number;
+  /** For KHABITEQ marketplace listings: number of agents who have requested to market this property (publisher view). */
+  requestToMarketCount?: number;
 }
 
 export interface PaginationData {

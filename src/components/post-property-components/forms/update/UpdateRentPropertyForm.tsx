@@ -198,15 +198,13 @@ const UpdateRentPropertyForm: React.FC<UpdateRentPropertyFormProps> = ({
       return;
     }
 
-    if (user.userType === "Landowners") {
-      return;
-    }
+    const raw = (user as { userType?: string }).userType;
+    const stored = typeof window !== "undefined" ? localStorage.getItem("userType") : null;
+    const effectiveType = (raw || stored || "").trim().toLowerCase();
+    const canEdit = ["landowners", "landowner", "developer", "agent"].includes(effectiveType);
+    if (canEdit) return;
 
-    if (user.userType === "Agent") {
-      return;
-    }
-
-    toast.error("You need to be a landowner or agent to update properties");
+    toast.error("You need to be a landowner, agent, or developer to update properties");
     router.push("/dashboard");
   }, [user, router]);
 
@@ -413,7 +411,7 @@ const UpdateRentPropertyForm: React.FC<UpdateRentPropertyFormProps> = ({
   return (
     <CombinedAuthGuard
       requireAuth={true}
-      allowedUserTypes={["Agent", "Landowners"]}
+      allowedUserTypes={["Agent", "Landowners", "Developer"]}
       requireAgentOnboarding={false}
       requireAgentApproval={false}
       agentCustomMessage="You must complete onboarding and be approved before you can update properties."

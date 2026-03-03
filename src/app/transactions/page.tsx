@@ -91,9 +91,9 @@ const TransactionsPage = () => {
   return (
     <CombinedAuthGuard
       requireAuth={true}
-      allowedUserTypes={["Agent", "Landowners"]}
-      requireAgentOnboarding={true}
-      requireAgentApproval={true}
+      allowedUserTypes={["Agent", "Landowners", "Developer"]}
+      requireAgentOnboarding={user?.userType === "Agent"}
+      requireAgentApproval={user?.userType === "Agent"}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">

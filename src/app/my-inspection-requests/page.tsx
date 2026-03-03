@@ -57,9 +57,17 @@ interface Property {
   features?: string[];
 }
  
+/** From API guide §8: DealSite inspections can have optional inspection fee when accepting. */
+interface ReceiverMode {
+  type?: string;
+  dealSiteID?: string;
+}
+
 interface InspectionData {
   id: string;
+  _id?: string;
   property: Property | null;
+  propertyId?: Property | { _id?: string };
   inspectionDate: string | null;
   inspectionTime: string | null;
   inspectionType: string;
@@ -79,6 +87,8 @@ interface InspectionData {
   source?: string;
   requestSource?: string;
   origin?: string;
+  /** DealSite vs main app; when type === "dealSite" show badge and optional fee note on accept. */
+  receiverMode?: ReceiverMode;
 }
 
 interface BookingData {
@@ -265,25 +275,40 @@ export default function MyInspectionRequestsPage() {
   const [reviewNote, setReviewNote] = useState<string>("");
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
-  // Inspection respond (accept/reject) modal
+  // Inspection respond (accept/reject) modal (§8.3: optional inspectionFee 1000–50000 on accept)
   const [respondInspection, setRespondInspection] = useState<InspectionData | null>(null);
   const [respondAction, setRespondAction] = useState<"accept" | "reject">("accept");
   const [respondNote, setRespondNote] = useState("");
+  const [respondInspectionFee, setRespondInspectionFee] = useState<string>("");
   const [isSubmittingRespond, setIsSubmittingRespond] = useState(false);
 
+  const INSPECTION_FEE_MIN = 1000;
+  const INSPECTION_FEE_MAX = 50000;
+
   const fetchInspections = useCallback(
-    async (page = 1, showLoading = true) => {
+    async (page = 1, showLoading = true, filterOverrides?: Partial<typeof filters>) => {
       if (showLoading) setIsLoading(true);
       if (!showLoading) setIsRefreshing(true);
 
       try {
-        const url = `${URLS.BASE + URLS.accountInspectionBaseUrl}/fetchAll?page=${page}&limit=10`;
+        const q = new URLSearchParams();
+        q.set("page", String(page));
+        q.set("limit", "10");
+        const f = filterOverrides ?? filters;
+        if (f.status?.trim()) q.set("status", f.status.trim());
+        if (f.inspectionType?.trim()) q.set("inspectionType", f.inspectionType.trim());
+        if (f.inspectionMode?.trim()) q.set("inspectionMode", f.inspectionMode.trim());
+        const url = `${URLS.BASE + URLS.accountInspectionBaseUrl}/fetchAll?${q.toString()}`;
         const response = await GET_REQUEST(url, token);
 
         if (response?.success) {
-          setInspections(Array.isArray(response.data) ? (response.data as any) : []);
+          const list = Array.isArray(response.data) ? (response.data as InspectionData[]) : [];
+          list.forEach((item) => {
+            if (item && !item.id && (item as any)._id) (item as InspectionData).id = (item as any)._id;
+          });
+          setInspections(list);
           setTotalPages((response.pagination as any)?.totalPages || 1);
-          setTotalCount((response.pagination as any)?.total || ((response.data as any)?.length || 0));
+          setTotalCount((response.pagination as any)?.total ?? list.length);
           setCurrentPage((response.pagination as any)?.page || page);
         } else {
           throw new Error(response?.message || "Failed to fetch inspections");
@@ -297,7 +322,7 @@ export default function MyInspectionRequestsPage() {
         setIsRefreshing(false);
       }
     },
-    [token]
+    [token, filters.status, filters.inspectionType, filters.inspectionMode]
   );
 
   const fetchBookings = useCallback(
@@ -353,24 +378,48 @@ export default function MyInspectionRequestsPage() {
   }, [user, activeTab, fetchInspections, fetchBookings, fetchStats]);
 
   const respondToInspectionRequest = useCallback(
-    async (inspectionId: string, action: "accept" | "reject", note?: string) => {
+    async (
+      inspectionId: string,
+      action: "accept" | "reject",
+      note?: string,
+      inspectionFee?: number
+    ) => {
       if (!token) {
         toast.error("Not authenticated");
         return;
       }
+      if (action === "accept" && inspectionFee != null) {
+        if (inspectionFee < INSPECTION_FEE_MIN || inspectionFee > INSPECTION_FEE_MAX) {
+          toast.error(`Inspection fee must be between ₦${INSPECTION_FEE_MIN.toLocaleString()} and ₦${INSPECTION_FEE_MAX.toLocaleString()}.`);
+          return;
+        }
+      }
       setIsSubmittingRespond(true);
       try {
         const url = `${URLS.BASE}${URLS.accountInspectionRespond(inspectionId)}`;
-        const payload = { action, ...(note && note.trim() ? { note: note.trim() } : {}) };
-        const res = await POST_REQUEST<unknown>(url, payload, token);
+        const payload: { action: string; note?: string; inspectionFee?: number } = {
+          action,
+          ...(note && note.trim() ? { note: note.trim() } : {}),
+        };
+        if (action === "accept" && inspectionFee != null && inspectionFee >= INSPECTION_FEE_MIN && inspectionFee <= INSPECTION_FEE_MAX) {
+          payload.inspectionFee = inspectionFee;
+        }
+        const res = await POST_REQUEST<{ success?: boolean; message?: string; data?: { status?: string; paymentUrl?: string; inspectionFee?: number } }>(url, payload, token);
         if (res?.success) {
-          toast.success(action === "accept" ? "Inspection accepted. Buyer will receive the payment link." : "Inspection rejected. Buyer has been notified.");
+          if (action === "accept" && res.data?.paymentUrl) {
+            toast.success("Inspection accepted. A payment link has been sent to the buyer's email.");
+          } else if (action === "accept") {
+            toast.success("Inspection accepted. The buyer has been notified.");
+          } else {
+            toast.success("Inspection rejected. Buyer has been notified.");
+          }
           setRespondInspection(null);
           setRespondNote("");
+          setRespondInspectionFee("");
           fetchInspections(currentPage, false);
           fetchStats();
         } else {
-          toast.error((res?.message as string) || res?.error || "Failed to submit response");
+          toast.error((res?.message as string) || (res as any)?.error || "Failed to submit response");
         }
       } catch (error: unknown) {
         toast.error((error as Error)?.message || "Failed to submit response");
@@ -480,7 +529,7 @@ export default function MyInspectionRequestsPage() {
 
  
   return (
-    <CombinedAuthGuard requireAuth={true} allowedUserTypes={["Agent", "Landowners"]} requireAgentOnboarding={false} requireAgentApproval={false} requireActiveSubscription={user?.userType === "Agent"} agentCustomMessage="You must complete onboarding and be approved before you view inspection requests.">
+    <CombinedAuthGuard requireAuth={true} allowedUserTypes={["Agent", "Landowners", "Developer"]} requireAgentOnboarding={false} requireAgentApproval={false} requireActiveSubscription={user?.userType === "Agent"} agentCustomMessage="You must complete onboarding and be approved before you view inspection requests.">
       <div className="min-h-screen bg-[#EEF1F1]">
         <div className="container mx-auto px-4 sm:px-6 max-w-7xl py-8">
           <div className="mb-8">
@@ -745,7 +794,10 @@ export default function MyInspectionRequestsPage() {
                               <span>Inspection Request</span>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2 ml-4">
+                          <div className="flex items-center gap-2 ml-4 flex-wrap">
+                            {(inspection.receiverMode?.type === "dealSite" || (inspection as any).receiverMode?.type === "dealSite") && (
+                              <span className="px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 border border-indigo-200">DealSite</span>
+                            )}
                             {viewMode === "grid" && (
                               <>
                                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusConfig.bgColor} ${statusConfig.textColor} border ${statusConfig.borderColor}`}>
@@ -812,15 +864,47 @@ export default function MyInspectionRequestsPage() {
                         )}
 
                         <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-200">
-                          {(inspection.status === "pending_approval" || inspection.inspectionStatus === "pending_approval") && (
-                            <>
-                              <button onClick={() => { setRespondInspection(inspection); setRespondAction("accept"); setRespondNote(""); }} className="inline-flex items-center gap-2 px-4 py-2 bg-[#8DDB90] text-white rounded-lg hover:bg-[#7BC87F] transition-colors text-sm font-medium">Accept</button>
-                              <button onClick={() => { setRespondInspection(inspection); setRespondAction("reject"); setRespondNote(""); }} className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium">Reject</button>
-                            </>
-                          )}
-                          {inspection.pendingResponseFrom === "seller" && inspection.status !== "pending_approval" && inspection.inspectionStatus !== "pending_approval" && (
-                            <button onClick={() => router.push(`/secure-seller-response/${inspection.owner}/${inspection.id || (inspection as any)._id}`)} className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">Respond</button>
-                          )}
+                          {(() => {
+                            const statusLabel = statusConfig.label;
+                            const isInspectionApproved =
+                              statusLabel === "Inspection Approved" ||
+                              inspection.status === "inspection_approved" ||
+                              inspection.inspectionStatus === "inspection_approved";
+                            const terminal = ["inspection_approved", "completed", "cancelled", "agent_rejected", "confirmed"];
+                            const isTerminal = terminal.includes(String(inspection.status)) || terminal.includes(String(inspection.inspectionStatus));
+                            const showAcceptRejectUpdate =
+                              !isInspectionApproved &&
+                              ((inspection.pendingResponseFrom === "seller" && !isTerminal) ||
+                                statusLabel === "Pending Your Response" ||
+                                statusLabel === "Pending" ||
+                                statusLabel === "New Request" ||
+                                inspection.status === "pending_approval" ||
+                                inspection.inspectionStatus === "pending_approval" ||
+                                inspection.status === "pending" ||
+                                inspection.inspectionStatus === "pending" ||
+                                inspection.status === "new" ||
+                                inspection.inspectionStatus === "new");
+                            const showRespond =
+                              !isInspectionApproved &&
+                              inspection.pendingResponseFrom === "seller" &&
+                              !showAcceptRejectUpdate &&
+                              inspection.status !== "inspection_approved" &&
+                              inspection.inspectionStatus !== "inspection_approved";
+                            return (
+                              <>
+                                {showAcceptRejectUpdate && (
+                                  <>
+                                    <button onClick={() => { setRespondInspection(inspection); setRespondAction("accept"); setRespondNote(""); setRespondInspectionFee(""); }} className="inline-flex items-center gap-2 px-4 py-2 bg-[#8DDB90] text-white rounded-lg hover:bg-[#7BC87F] transition-colors text-sm font-medium">Accept</button>
+                                    <button onClick={() => { setRespondInspection(inspection); setRespondAction("reject"); setRespondNote(""); setRespondInspectionFee(""); }} className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium">Reject</button>
+                                    <button onClick={() => router.push(`/secure-seller-response/${inspection.owner}/${inspection.id || (inspection as any)._id}`)} className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">Update schedule</button>
+                                  </>
+                                )}
+                                {showRespond && (
+                                  <button onClick={() => router.push(`/secure-seller-response/${inspection.owner}/${inspection.id || (inspection as any)._id}`)} className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">Respond</button>
+                                )}
+                              </>
+                            );
+                          })()}
 
                           {inspection.property && (
                             <button onClick={() => router.push(`/property/buy/${inspection.property!.id || inspection.property!._id}`)} className="inline-flex items-center gap-2 px-4 py-2 bg-white text-[#09391C] border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
@@ -1164,7 +1248,7 @@ export default function MyInspectionRequestsPage() {
         )}
       </AnimatePresence>
 
-      {/* Inspection Accept/Reject Modal */}
+      {/* Inspection Accept/Reject Modal (§8.3: optional inspectionFee ₦1,000–₦50,000 on accept) */}
       <AnimatePresence>
         {respondInspection && (
           <motion.div
@@ -1189,9 +1273,30 @@ export default function MyInspectionRequestsPage() {
               </div>
               <p className="text-sm text-[#5A5D63] mb-4">
                 {respondAction === "accept"
-                  ? "The buyer will receive a payment link. You can add an optional note."
+                  ? "You can add an optional note. Optionally set an inspection fee (₦1,000–₦50,000); if set, the buyer will receive a payment link."
                   : "The buyer will be notified. You can add an optional reason."}
               </p>
+              {respondAction === "accept" && (respondInspection.receiverMode?.type === "dealSite" || (respondInspection as any).receiverMode?.type === "dealSite") && (
+                <p className="text-sm text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-2 mb-4">
+                  DealSite request: You can optionally set an inspection fee (₦1,000–₦50,000). If set, the buyer will receive a payment link.
+                </p>
+              )}
+              {respondAction === "accept" && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Inspection fee (₦) — optional</label>
+                  <input
+                    type="number"
+                    min={INSPECTION_FEE_MIN}
+                    max={INSPECTION_FEE_MAX}
+                    step={1000}
+                    placeholder={`${INSPECTION_FEE_MIN.toLocaleString()} – ${INSPECTION_FEE_MAX.toLocaleString()}`}
+                    value={respondInspectionFee}
+                    onChange={(e) => setRespondInspectionFee(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#8DDB90] focus:border-transparent"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Leave empty for no fee. Valid range: ₦1,000 – ₦50,000.</p>
+                </div>
+              )}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Note (optional)</label>
                 <textarea value={respondNote} onChange={(e) => setRespondNote(e.target.value)} rows={3} placeholder={respondAction === "reject" ? "Reason for rejection (optional)" : "Message for buyer (optional)"} className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#8DDB90] focus:border-transparent" />
@@ -1200,7 +1305,15 @@ export default function MyInspectionRequestsPage() {
                 <button disabled={isSubmittingRespond} onClick={() => setRespondInspection(null)} className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50">Cancel</button>
                 <button
                   disabled={isSubmittingRespond}
-                  onClick={() => respondToInspectionRequest(respondInspection.id || (respondInspection as any)._id, respondAction, respondNote)}
+                  onClick={() => {
+                    const feeRaw = respondInspectionFee.trim() ? parseInt(respondInspectionFee, 10) : undefined;
+                    const fee = feeRaw != null && !Number.isNaN(feeRaw) ? feeRaw : undefined;
+                    if (respondAction === "accept" && fee != null && (fee < INSPECTION_FEE_MIN || fee > INSPECTION_FEE_MAX)) {
+                      toast.error(`Inspection fee must be between ₦${INSPECTION_FEE_MIN.toLocaleString()} and ₦${INSPECTION_FEE_MAX.toLocaleString()}.`);
+                      return;
+                    }
+                    respondToInspectionRequest(respondInspection.id || (respondInspection as any)._id, respondAction, respondNote, fee);
+                  }}
                   className={`px-5 py-2 rounded-lg text-white disabled:opacity-60 ${respondAction === "accept" ? "bg-[#8DDB90] hover:bg-[#7BC87F]" : "bg-red-600 hover:bg-red-700"}`}
                 >
                   {isSubmittingRespond ? "Submitting..." : respondAction === "accept" ? "Accept" : "Reject"}

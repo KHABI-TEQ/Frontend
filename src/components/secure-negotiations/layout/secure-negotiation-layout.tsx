@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import { useSecureNegotiation } from "@/context/secure-negotiations-context";
 import { motion } from "framer-motion";
 import { FiShield, FiRefreshCw } from "react-icons/fi";
@@ -15,6 +17,7 @@ const SecureNegotiationLayout: React.FC<SecureNegotiationLayoutProps> = ({
   children,
   userType,
 }) => {
+  const router = useRouter();
   const { state, refreshData, reopenInspection } = useSecureNegotiation();
   const { details, loadingStates, isExpired, stage, pendingResponseFrom } =
     state;
@@ -57,9 +60,15 @@ const SecureNegotiationLayout: React.FC<SecureNegotiationLayoutProps> = ({
   const handleReopenInspection = async () => {
     setIsReopening(true);
     try {
-      await reopenInspection();
+      const result = await reopenInspection();
+      if (result?.success) {
+        toast.success("Inspection reopened. The 48-hour timer has been reset.");
+      } else {
+        toast.error((result as any)?.message ?? (result as any)?.error ?? "Failed to reopen inspection.");
+      }
     } catch (error) {
       console.error("Failed to reopen inspection:", error);
+      toast.error((error as Error)?.message ?? "Failed to reopen inspection.");
     } finally {
       setIsReopening(false);
     }
@@ -72,6 +81,7 @@ const SecureNegotiationLayout: React.FC<SecureNegotiationLayoutProps> = ({
         <ExpiryModal
           onReopen={handleReopenInspection}
           isReopening={isReopening}
+          onClose={() => router.back()}
         />
       )}
 

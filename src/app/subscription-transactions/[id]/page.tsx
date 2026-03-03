@@ -35,10 +35,14 @@ export default function SubscriptionTransactionDetailsPage() {
 
   const transactionId = params.id as string;
 
-  // Redirect non-agents
+  // Allow Agents and Developers
   useEffect(() => {
-    if (user && user.userType !== 'Agent') {
-      toast.error('Access denied. This page is only for agents.');
+    if (!user) return;
+    const raw = (user as { userType?: string }).userType ?? (typeof window !== 'undefined' ? localStorage.getItem('userType') : null) ?? '';
+    const typeLower = String(raw).trim().toLowerCase();
+    const allowed = typeLower === 'agent' || typeLower === 'developer';
+    if (!allowed) {
+      toast.error('Access denied. This page is for agents and developers.');
       router.push('/dashboard');
     }
   }, [user, router]);
@@ -64,7 +68,10 @@ export default function SubscriptionTransactionDetailsPage() {
   };
 
   useEffect(() => {
-    if (user && user.userType === 'Agent' && transactionId) {
+    const raw = user ? (user as { userType?: string }).userType ?? (typeof window !== 'undefined' ? localStorage.getItem('userType') : null) ?? '' : '';
+    const typeLower = String(raw).trim().toLowerCase();
+    const isAgentOrDeveloper = typeLower === 'agent' || typeLower === 'developer';
+    if (user && isAgentOrDeveloper && transactionId) {
       fetchTransactionDetails();
     }
   }, [user, transactionId]);
@@ -108,13 +115,16 @@ export default function SubscriptionTransactionDetailsPage() {
     // Implementation for retrying failed payments
   };
 
-  if (user?.userType !== 'Agent') {
+  const raw = user ? (user as { userType?: string }).userType ?? (typeof window !== 'undefined' ? localStorage.getItem('userType') : null) ?? '' : '';
+  const typeLower = String(raw).trim().toLowerCase();
+  const isAgentOrDeveloper = typeLower === 'agent' || typeLower === 'developer';
+  if (user && !isAgentOrDeveloper) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Access Denied</h2>
-          <p className="text-gray-600">This page is only accessible to agents.</p>
+          <p className="text-gray-600">This page is for agents and developers.</p>
         </div>
       </div>
     );

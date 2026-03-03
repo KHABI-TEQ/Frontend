@@ -156,10 +156,22 @@ const Login: FC = () => {
   }, [resolvedRedirectTarget]);
 
   const handleAuthSuccess = useCallback((response: any) => {
-    const userPayload = response.data.user;
+    const data = response?.data ?? response;
+    const userPayload = data?.user ?? data;
+    const token = data?.token;
 
-    Cookies.set("token", response.data.token);
-    setUser(normalizeUser(userPayload));
+    if (token) Cookies.set("token", token);
+    let user = normalizeUser(userPayload);
+    if (user && typeof window !== "undefined") {
+      try {
+        if (!user.userType) {
+          const stored = localStorage.getItem("userType");
+          if (stored) user = { ...user, userType: stored.trim() as "Agent" | "Landowners" | "FieldAgent" | "Developer" };
+        }
+        if (user.userType) localStorage.setItem("userType", user.userType);
+      } catch {}
+    }
+    setUser(user);
 
     setOverlayMessage("Loading your dashboard...");
     setOverlayVisible(true);
@@ -192,23 +204,39 @@ const Login: FC = () => {
  
         await toast.promise(
           (async () => {
-
-            const response = await POST_REQUEST(url, values);
+            let response: any;
+            try {
+              response = await POST_REQUEST(url, values);
+            } catch (err) {
+              const raw = (err as Error)?.message || "Login failed";
+              const msg =
+                /failed to fetch|network error|request timed out|network request failed|load failed/i.test(String(raw))
+                  ? "Unable to reach the server. Check your connection and try again."
+                  : raw;
+              throw new Error(msg);
+            }
 
             if (response.success) {
               handleAuthSuccess(response);
               return "Login successful";
             } else {
-              throw new Error(response.error || "Login failed");
+              const raw = (response as any).error || (response as any).message || "Login failed";
+              const msg =
+                /failed to fetch|network error|request timed out|network request failed|load failed/i.test(String(raw))
+                  ? "Unable to reach the server. Check your connection and try again."
+                  : raw;
+              throw new Error(msg);
             }
           })(),
           {
             loading: "Logging in...",
             success: "Login successful!",
             error: (error: any) => {
-              console.log(error, "Login Error");
-              // Assuming error object from POST_REQUEST has a message property
-              return error.message || "Sign In failed, please try again!"; 
+              const m = error?.message || "Sign in failed, please try again!";
+              if (/failed to fetch|network error|request timed out|network request failed|load failed/i.test(String(m))) {
+                return "Unable to reach the server. Check your connection and try again.";
+              }
+              return m;
             },
           }
         );

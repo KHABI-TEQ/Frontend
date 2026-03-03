@@ -10,7 +10,7 @@ const JointVenturePage = () => {
   return (
     <CombinedAuthGuard
           requireAuth={true}
-          allowedUserTypes={["Agent", "Landowners"]}
+          allowedUserTypes={["Agent", "Landowners", "Developer"]}
           requireAgentOnboarding={false}
           requireAgentApproval={false}
           requireKycApproved={true}

@@ -616,19 +616,14 @@ export const SecureNegotiationProvider: React.FC<{ children: ReactNode }> = ({
     [state.pendingResponseFrom, state.isExpired],
   );
 
-  // Reopen inspection method (keeping for backward compatibility)
+  // Reopen inspection: backend expects GET /inspections/:id/reOpen (see KHABI-TEQ/Backend inspectionRouter.ts)
   const reopenInspection = useCallback(async () => {
     if (state.userId && state.inspectionId && state.currentUserType) {
+      const token = Cookies.get("token") ?? state.accessToken ?? undefined;
       try {
-        const response = await PUT_REQUEST(
-          `${URLS.BASE + URLS.inspectionBaseUrl}/${state.inspectionId}/reOpen`,
-          {
-            userType: state.currentUserType,
-          },
-        );
-
+        const url = `${URLS.BASE}${URLS.inspectionReopenCamel(state.inspectionId)}`;
+        const response = await GET_REQUEST(url, token);
         if (response?.success) {
-          // Refetch data to get updated state
           await fetchNegotiationDetails(
             state.userId,
             state.inspectionId,
@@ -636,7 +631,6 @@ export const SecureNegotiationProvider: React.FC<{ children: ReactNode }> = ({
           );
           setExpiredStatus(false);
         }
-
         return response;
       } catch (error) {
         console.error("Failed to reopen inspection:", error);

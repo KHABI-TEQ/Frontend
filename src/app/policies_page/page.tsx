@@ -788,7 +788,7 @@ const POLICIES_DATA: PolicyData[] = [
         title: 'Taxes & Compliance',
         items: [
           { text: 'All commissions and service fees are subject to applicable Nigerian taxes (VAT, WHT, stamp duties, etc.).' },
-          { text: 'This policy complies with Nigerian property regulations, including LASRERA where applicable.' },
+          { text: 'This policy complies with Nigerian property regulations, including KHABITEQ where applicable.' },
         ],
       },
       {

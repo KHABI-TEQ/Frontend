@@ -26,8 +26,8 @@ const UpdatePropertyRedirect = () => {
         }
 
         // Check user permissions
-        if (user.userType !== "Landowners" && user.userType !== "Agent") {
-          toast.error("You need to be a landowner or agent to update properties");
+        if (user.userType !== "Landowners" && user.userType !== "Agent" && user.userType !== "Developer") {
+          toast.error("You need to be a landowner, agent, or developer to update properties");
           router.push("/dashboard");
           return;
         }

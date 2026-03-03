@@ -186,15 +186,13 @@ const ShortletPropertyForm: React.FC<ShortletPropertyFormProps> = ({
       return;
     }
 
-    if (user.userType === "Landowners") {
-      return;
-    }
+    const raw = (user as { userType?: string }).userType;
+    const stored = typeof window !== "undefined" ? localStorage.getItem("userType") : null;
+    const effectiveType = (raw || stored || "").trim().toLowerCase();
+    const canPost = ["landowners", "landowner", "developer", "agent"].includes(effectiveType);
+    if (canPost) return;
 
-    if (user.userType === "Agent") {
-      return;
-    }
-
-    toast.error("You need to be a landowner or agent to post properties");
+    toast.error("You need to be a landowner, agent, or developer to post properties");
     router.push("/dashboard");
   }, [user, router]);
 
@@ -338,7 +336,9 @@ const ShortletPropertyForm: React.FC<ShortletPropertyFormProps> = ({
         }
       }
 
+      const listingScope = user?.userType === "Agent" ? "agent_listing" : "lasrera_marketplace";
       const payload = {
+        listingScope,
         propertyType: "shortlet",
         propertyCategory: propertyData.propertyCategory,
         propertyCondition: propertyData.propertyCondition,
@@ -403,7 +403,7 @@ const ShortletPropertyForm: React.FC<ShortletPropertyFormProps> = ({
       };
 
       const response = await POST_REQUEST(
-        `${URLS.BASE}${URLS.accountPropertyBaseUrl}/create`,
+        `${URLS.BASE}${URLS.accountPropertyCreate}`,
         payload,
         Cookies.get("token"),
       );
@@ -413,8 +413,10 @@ const ShortletPropertyForm: React.FC<ShortletPropertyFormProps> = ({
         resetForm();
         setShowSuccessModal(true);
       } else {
-        const errorMessage =
-          (response as any)?.error || "Failed to submit property";
+        let errorMessage = (response as any)?.error || (response as any)?.message || "Failed to submit property";
+        if (typeof errorMessage === "string" && /landowner or agent/i.test(errorMessage)) {
+          errorMessage = "Only landowner, agent, or developer accounts can post. Developers and agents need an active subscription.";
+        }
         toast.error(errorMessage);
       }
     } catch (error) {
@@ -451,10 +453,10 @@ const ShortletPropertyForm: React.FC<ShortletPropertyFormProps> = ({
   return (
     <CombinedAuthGuard
       requireAuth={true}
-      allowedUserTypes={["Agent", "Landowners"]}
+      allowedUserTypes={["Agent", "Landowners", "Developer"]}
       requireAgentOnboarding={false}
       requireAgentApproval={false}
-      requireActiveSubscription={user?.userType === "Agent"} // Only Agents need subscription, not Landowners
+      requireActiveSubscription={user?.userType === "Agent" || user?.userType === "Developer"}
       agentCustomMessage="You must complete onboarding and be approved before you can post properties."
     >
       <Preloader isVisible={isSubmitting} message="Submitting Property..." />

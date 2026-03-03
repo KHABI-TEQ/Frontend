@@ -49,7 +49,7 @@ const VerificationSent = () => {
   const handleResendVerification = async () => {
     setIsResending(true);
     try {
-      const url = URLS.BASE + URLS.authResendVerficationToken;
+      const url = URLS.BASE + URLS.authResendVerificationToken;
 
       await toast.promise(
         POST_REQUEST(url, { email }).then((response) => {

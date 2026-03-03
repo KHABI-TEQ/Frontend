@@ -79,19 +79,17 @@ const PostPropertyPage = () => {
       router.push("/auth/login");
       return;
     }
- 
-    // Allow Landowners to access directly
-    if (user.userType === "Landowners") {
-      return;
-    }
+    const raw = (user as { userType?: string }).userType;
+    const stored = typeof window !== "undefined" ? localStorage.getItem("userType") : null;
+    const effectiveType = (raw || stored || "").trim().toLowerCase();
+    const canPost =
+      effectiveType === "landowners" ||
+      effectiveType === "landowner" ||
+      effectiveType === "developer" ||
+      effectiveType === "agent";
+    if (canPost) return;
 
-    // For Agents, the AgentAccessBarrier will handle the onboarding and approval checks
-    if (user.userType === "Agent") {
-      return;
-    }
-
-    // User is neither landowner nor agent
-    toast.error("You need to be a landowner or agent to post properties");
+    toast.error("You need to be a landowner, agent, or developer to post properties");
     router.push("/dashboard");
   }, [user, router]);
 
@@ -112,7 +110,7 @@ const PostPropertyPage = () => {
   return (
     <CombinedAuthGuard
       requireAuth={true}
-      allowedUserTypes={["Agent", "Landowners"]}
+      allowedUserTypes={["Agent", "Landowners", "Developer"]}
       requireAgentOnboarding={false}
       requireAgentApproval={false}
       requireKycApproved={true}

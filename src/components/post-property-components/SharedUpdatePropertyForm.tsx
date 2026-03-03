@@ -32,7 +32,7 @@ import {
   step4ValidationSchema,
 } from "@/utils/validation/post-property-validation";
 import CombinedAuthGuard from "@/logic/combinedAuthGuard";
-import { PUT_REQUEST } from "@/utils/requests";
+import { PATCH_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import Breadcrumb from "@/components/extrals/Breadcrumb";
 
@@ -403,18 +403,13 @@ const SharedUpdatePropertyForm: React.FC<SharedUpdatePropertyFormProps> = ({
       return;
     }
 
-    // Allow Landowners to access directly
-    if (user.userType === "Landowners") {
-      return;
-    }
+    const raw = (user as { userType?: string }).userType;
+    const stored = typeof window !== "undefined" ? localStorage.getItem("userType") : null;
+    const effectiveType = (raw || stored || "").trim().toLowerCase();
+    const canEdit = ["landowners", "landowner", "developer", "agent"].includes(effectiveType);
+    if (canEdit) return;
 
-    // For Agents, the AgentAccessBarrier will handle the onboarding and approval checks
-    if (user.userType === "Agent") {
-      return;
-    }
-
-    // User is neither landowner nor agent
-    toast.error("You need to be a landowner or agent to update properties");
+    toast.error("You need to be a landowner, agent, or developer to update properties");
     router.push("/dashboard");
   }, [user, router]);
 
@@ -654,9 +649,9 @@ const SharedUpdatePropertyForm: React.FC<SharedUpdatePropertyFormProps> = ({
           : undefined,
       };
 
-      // 5. Submit to API
-      const url = `${URLS.BASE}${URLS.accountPropertyBaseUrl}/${propertyId}/edit`;
-      const response = await PUT_REQUEST(url, payload, Cookies.get("token"));
+      // 5. Submit to API (guide: PATCH /account/properties/:propertyId/edit)
+      const url = `${URLS.BASE}${URLS.accountPropertyEdit(propertyId)}`;
+      const response = await PATCH_REQUEST(url, payload, Cookies.get("token"));
     
       if (response.success) {
         toast.success("Property updated successfully!");
@@ -726,7 +721,7 @@ const SharedUpdatePropertyForm: React.FC<SharedUpdatePropertyFormProps> = ({
   return (
     <CombinedAuthGuard
       requireAuth={true}
-      allowedUserTypes={["Agent", "Landowners"]}
+      allowedUserTypes={["Agent", "Landowners", "Developer"]}
       requireAgentOnboarding={true}
       requireAgentApproval={true}
       agentCustomMessage="You must complete onboarding and be approved before you can update properties."
