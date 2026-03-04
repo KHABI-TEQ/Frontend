@@ -404,7 +404,7 @@ export default function MyInspectionRequestsPage() {
         if (action === "accept" && inspectionFee != null && inspectionFee >= INSPECTION_FEE_MIN && inspectionFee <= INSPECTION_FEE_MAX) {
           payload.inspectionFee = inspectionFee;
         }
-        const res = await POST_REQUEST<{ success?: boolean; message?: string; data?: { status?: string; paymentUrl?: string; inspectionFee?: number } }>(url, payload, token);
+        const res = await POST_REQUEST<{ status?: string; paymentUrl?: string; inspectionFee?: number }>(url, payload, token);
         if (res?.success) {
           if (action === "accept" && res.data?.paymentUrl) {
             toast.success("Inspection accepted. A payment link has been sent to the buyer's email.");

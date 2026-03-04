@@ -34,7 +34,7 @@ interface UserProfile {
   address?: string;
   accountId?: string;
   profileImage?: string;
-  userType: "Agent" | "Landowners" | "FieldAgent";
+  userType: "Agent" | "Landowners" | "FieldAgent" | "Developer";
   accountApproved?: boolean;
   createdAt: string;
 }
@@ -106,7 +106,7 @@ export default function ProfileSettingsPage() {
         phoneNumber: user.phoneNumber || "",
         address: user.address?.street || "",
         profileImage: user.profile_picture,
-        userType: user.userType || "Agent",
+        userType: (user.userType || "Agent") as UserProfile["userType"],
         accountApproved: user.accountApproved || false,
         createdAt: user.createdAt || new Date().toISOString(),
         accountId: user.accountId || "",
@@ -396,6 +396,8 @@ export default function ProfileSettingsPage() {
                 ? "Landowner Account"
                 : user.userType === "FieldAgent"
                 ? "Field Agent Account"
+                : user.userType === "Developer"
+                ? "Developer Account"
                 : ""}
             </div>
           </div>

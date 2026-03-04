@@ -144,7 +144,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           try {
             if (!normalized.userType) {
               const stored = localStorage.getItem("userType");
-              if (stored) (normalized as Record<string, unknown>).userType = stored.trim();
+              if (stored) (normalized as unknown as Record<string, unknown>).userType = stored.trim();
             }
             if (normalized.userType) localStorage.setItem("userType", normalized.userType);
           } catch {}

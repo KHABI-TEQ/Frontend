@@ -35,7 +35,7 @@ export default function Dashboard() {
 
   if (!user) return null;
 
-  const effectiveType = getEffectiveUserType(user as Record<string, unknown>);
+  const effectiveType = getEffectiveUserType(user as unknown as Record<string, unknown>);
   const typeLower = effectiveType?.toLowerCase() ?? "";
 
   useEffect(() => {
