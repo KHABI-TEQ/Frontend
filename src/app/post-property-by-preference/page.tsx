@@ -716,7 +716,24 @@ const PostPropertyByPreference = () => {
       else if (propertyData.propertyType === "shortlet") briefType = "Shortlet";
       else if (propertyData.propertyType === "jv") briefType = "Joint Venture";
  
-      // 4. Prepare property payload
+      // 4. Standard agent commission fields (Sale, Rent, JV, Shortlet)
+      const commissionFields = ["sell", "rent", "jv", "shortlet"].includes(
+        propertyData.propertyType
+      )
+        ? {
+            agentCommissionPercent: Math.min(
+              5,
+              Math.max(0, propertyData.agentCommissionPercent ?? 5)
+            ),
+            agentCommissionAmount: Math.round(
+              (extractNumericValue(propertyData.price) *
+                Math.min(5, Math.max(0, propertyData.agentCommissionPercent ?? 5))) /
+                100
+            ),
+          }
+        : {};
+
+      // 5. Prepare property payload
       const payload = {
         propertyType: propertyData.propertyType,
         propertyCategory: propertyData.propertyCategory,
@@ -764,17 +781,7 @@ const PostPropertyByPreference = () => {
         videos: uploadedVideoUrls,
         isTenanted: normalizeIsTenantedForApi(propertyData.isTenanted),
         holdDuration: normalizeHoldDurationForApi(propertyData.holdDuration),
-        // Standard agent commission (Sale, Rent, JV, Shortlet)
-        ...(["sell", "rent", "jv", "shortlet"].includes(propertyData.propertyType)
-          ? {
-              agentCommissionPercent: Math.min(5, Math.max(0, propertyData.agentCommissionPercent ?? 5)),
-              agentCommissionAmount: Math.round(
-                (extractNumericValue(propertyData.price) *
-                  Math.min(5, Math.max(0, propertyData.agentCommissionPercent ?? 5))) /
-                100,
-            }
-          : {}),
-        // Add preference reference
+        ...commissionFields,
         matchingPreferenceId: preferenceId,
         // Shortlet specific fields
         availability: propertyData.availability
@@ -806,7 +813,7 @@ const PostPropertyByPreference = () => {
           : undefined,
       };
 
-      // 5. Submit to API
+      // 6. Submit to API
       const response = await POST_REQUEST(
         `${URLS.BASE}/account/preferences/${preferenceId}/properties`,
         payload,

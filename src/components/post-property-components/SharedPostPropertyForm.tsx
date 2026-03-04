@@ -487,7 +487,24 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
       else if (propertyData.propertyType === "shortlet") briefType = "Shortlet";
       else if (propertyData.propertyType === "jv") briefType = "Joint Venture";
 
-      // 4. Prepare property payload (backend: POST /account/properties/create)
+      // 4. Standard agent commission (Sale, Rent, JV, Shortlet)
+      const commissionFields = ["sell", "rent", "jv", "shortlet"].includes(
+        propertyData.propertyType
+      )
+        ? {
+            agentCommissionPercent: Math.min(
+              5,
+              Math.max(0, propertyData.agentCommissionPercent ?? 5)
+            ),
+            agentCommissionAmount: Math.round(
+              (extractNumericValue(propertyData.price) *
+                Math.min(5, Math.max(0, propertyData.agentCommissionPercent ?? 5))) /
+                100
+            ),
+          }
+        : {};
+
+      // 5. Prepare property payload (backend: POST /account/properties/create)
       const listingScope =
         user?.userType === "Agent"
           ? "agent_listing"
@@ -540,16 +557,7 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
         videos: uploadedVideoUrls,
         isTenanted: normalizeIsTenantedForApi(propertyData.isTenanted),
         holdDuration: normalizeHoldDurationForApi(propertyData.holdDuration),
-        // Standard agent commission (Sale, Rent, JV, Shortlet): % and amount payable by Developer/Landlord to Agent
-        ...(["sell", "rent", "jv", "shortlet"].includes(propertyData.propertyType)
-          ? {
-              agentCommissionPercent: Math.min(5, Math.max(0, propertyData.agentCommissionPercent ?? 5)),
-              agentCommissionAmount: Math.round(
-                (extractNumericValue(propertyData.price) *
-                  Math.min(5, Math.max(0, propertyData.agentCommissionPercent ?? 5))) /
-                100,
-            }
-          : {}),
+        ...commissionFields,
         // Shortlet specific fields
         availability: propertyData.availability
           ? {
@@ -580,7 +588,7 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
           : undefined,
       };
 
-      // 5. Submit to API
+      // 6. Submit to API
       const response = await POST_REQUEST(
         `${URLS.BASE}${URLS.accountPropertyCreate}`,
         payload,
