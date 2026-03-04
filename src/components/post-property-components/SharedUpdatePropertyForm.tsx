@@ -7,6 +7,7 @@ import * as Yup from "yup";
 import { useUserContext } from "@/context/user-context";
 import { usePostPropertyContext } from "@/context/post-property-context";
 import { extractNumericValue } from "@/utils/price-helpers";
+import { normalizeHoldDurationForApi, normalizeIsTenantedForApi } from "@/utils/post-property-payload";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import api from "@/utils/axiosConfig";
@@ -617,8 +618,8 @@ const SharedUpdatePropertyForm: React.FC<SharedUpdatePropertyFormProps> = ({
         addtionalInfo: propertyData.additionalInfo,
         pictures: uploadedImageUrls,
         videos: uploadedVideoUrls,
-        isTenanted: propertyData.isTenanted,
-        holdDuration: propertyData.holdDuration,
+        isTenanted: normalizeIsTenantedForApi(propertyData.isTenanted),
+        holdDuration: normalizeHoldDurationForApi(propertyData.holdDuration),
         // Shortlet specific fields
         availability: propertyData.availability
           ? {

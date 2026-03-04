@@ -269,10 +269,26 @@ Include in the request body:
 | Field         | Type   | Required | Description |
 |---------------|--------|----------|-------------|
 | listingScope  | string | No       | Use `"lasrera_marketplace"` to publish only to LASRERA Market Place. Default `"agent_listing"`. Only **Landowners** and **Developer** can set `"lasrera_marketplace"`; Agents are forced to `agent_listing`. |
+| **agentCommissionPercent** | number | For Sale/Rent/JV/Shortlet (Landlord/Developer): recommended | Standard agent commission % (0–5). Landlord: frontend sends 5. Developer: frontend sends 0–5 (user-editable). Backend must persist; used for request-to-market and display. |
+| **agentCommissionAmount**  | number | For Sale/Rent/JV/Shortlet (Landlord/Developer): recommended | Agent commission in Naira: `round(price * agentCommissionPercent / 100)`. Backend must persist; returned in property and request-to-market responses. |
 
 Plus all other required property fields (propertyType, propertyCategory, price, location, etc.) as per existing property schema.
 
-**Edit property:** `PATCH /account/properties/:propertyId/edit` — same rules; only Landowners/Developer can set or keep `listingScope: "lasrera_marketplace"`.
+**Edit property:** `PATCH /account/properties/:propertyId/edit` — same rules; only Landowners/Developer can set or keep `listingScope: "lasrera_marketplace"`. Request body may include **agentCommissionPercent** and **agentCommissionAmount**; backend should accept and persist them when provided.
+
+**Property read responses (sync with backend):** Any endpoint that returns a **property** (e.g. `GET /account/properties/fetchAll`, `GET /account/properties/:propertyId/getOne`, or property embedded in another response) must include **agentCommissionPercent** and **agentCommissionAmount** on the property object when they are stored, so the frontend can display them and use them in request-to-market flows. If not yet set, backend may omit them or return `null`/`undefined`.
+
+**Agent commission — payload and response sync (summary):**
+
+| Context | Sent in payload | Returned in response |
+|---------|------------------|------------------------|
+| **Create/Edit property** | `agentCommissionPercent` (0–5), `agentCommissionAmount` (Naira) | — |
+| **Property (fetchAll, getOne, or embedded)** | — | Property object: `agentCommissionPercent`, `agentCommissionAmount` when stored |
+| **Create request-to-market (4.1)** | — | `data.agentCommissionAmount` = property’s stored value |
+| **List requests (4.2)** | — | Each item: `agentCommissionAmount` (frontend uses ₦50,000 if missing) |
+| **Respond accept (4.3)** | — | `data.agentCommissionAmount` = property’s stored value |
+
+Backend should derive all returned commission amounts from the **property’s stored** `agentCommissionPercent` / `agentCommissionAmount` so values stay consistent.
 
 ---
 
@@ -301,10 +317,12 @@ Only **Agents** can create a request. **Publishers** (Landlord or Developer who 
     "requestId": "...",
     "propertyId": "...",
     "status": "pending",
-    "marketingFeeNaira": 50000
+    "agentCommissionAmount": 50000
   }
 }
 ```
+
+- **`data.agentCommissionAmount`** — Must be the **property’s stored agent commission amount** (the Naira value from the property’s `agentCommissionAmount` set at create). Backend must not use a fixed value; use the property’s stored value so request-to-market and list responses stay in sync. Backend may also return **`marketingFeeNaira`** (same value) for backward compatibility; frontend prefers `agentCommissionAmount` for display.
 
 **Errors:**
 
@@ -336,11 +354,11 @@ Only **Agents** can create a request. **Publishers** (Landlord or Developer who 
   "data": [
     {
       "_id": "...",
-      "propertyId": { "_id": "...", "location": {...}, "price": ..., "briefType": "...", "pictures": [...], "listingScope": "...", ... },
+      "propertyId": { "_id": "...", "location": {...}, "price": ..., "briefType": "...", "pictures": [...], "listingScope": "...", "agentCommissionAmount": ... },
       "requestedByAgentId": { "firstName": "...", "lastName": "...", "fullName": "...", "email": "..." },
       "publisherId": { "firstName": "...", "lastName": "...", "fullName": "...", "email": "..." },
       "status": "pending" | "accepted" | "rejected",
-      "marketingFeeNaira": 50000,
+      "agentCommissionAmount": 50000,
       "rejectedReason": "...",
       "acceptedAt": "...",
       "rejectedAt": "...",
@@ -355,6 +373,12 @@ Only **Agents** can create a request. **Publishers** (Landlord or Developer who 
   }
 }
 ```
+
+**Response fields for display (sync with backend):**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| **agentCommissionAmount** | number | Agent commission amount (Naira) for this request, from the property’s stored `agentCommissionAmount`. Returned on each list item (and optionally on nested `propertyId`) so the frontend can show “Agent commission: ₦X”. If the backend omits it, the frontend displays **₦50,000** as fallback. |
 
 ---
 
@@ -387,15 +411,17 @@ When the Agent has a Paystack sub-account, the backend creates a split payment a
 ```json
 {
   "success": true,
-  "message": "Request accepted. The property is now visible on the agent's public page. A payment link has been sent to your email to pay the marketing fee to the agent.",
+  "message": "Request accepted. The property is now visible on the agent's public page. A payment link has been sent to your email to pay the agent commission to the agent.",
   "data": {
     "status": "accepted",
     "propertyId": "...",
-    "marketingFeeNaira": 50000,
+    "agentCommissionAmount": 50000,
     "paymentUrl": "https://checkout.paystack.com/..."
   }
 }
 ```
+
+- **`data.agentCommissionAmount`** — Must be the **property’s stored agent commission amount** (same value as in list and create-request responses), so the frontend can display the amount the Publisher pays to the Agent. Keeps payload and responses in sync with the property’s `agentCommissionPercent` / `agentCommissionAmount`.
 
 If no payment link could be generated (e.g. Agent has no sub-account), `data.paymentUrl` may be undefined and the message will ask the Publisher to arrange payment directly with the Agent.
 

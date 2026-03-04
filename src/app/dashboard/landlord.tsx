@@ -223,6 +223,13 @@ export default function LandlordDashboard() {
                 <HomeIcon size={20} />
                 My Listings
               </Link>
+              <Link
+                href="/my-request-to-market"
+                className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 px-5 py-2.5 sm:px-6 sm:py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors text-sm sm:text-base"
+              >
+                <BriefcaseIcon size={20} />
+                Requests for my properties
+              </Link>
             </div>
           </div>
         </div>

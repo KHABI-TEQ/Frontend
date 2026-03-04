@@ -70,6 +70,8 @@ export interface PropertyData {
   isLegalOwner: boolean;
   ownershipDocuments: string[];
   isTenanted: string;
+  /** Standard agent commission % (0–5). Default 5. For Sale: Landlord fixed 5%; Developer can set 0–5%. */
+  agentCommissionPercent?: number;
 
   // Additional Fields
   description: string;
@@ -179,6 +181,7 @@ const initialPropertyData: PropertyData = {
   isLegalOwner: false,
   ownershipDocuments: [],
   isTenanted: "",
+  agentCommissionPercent: undefined,
   description: "",
   additionalInfo: "",
   availability: {
@@ -351,6 +354,7 @@ export function PostPropertyProvider({ children }: { children: ReactNode }) {
       isLegalOwner: property.areYouTheOwner || false,
       ownershipDocuments: property.ownershipDocuments || [],
       isTenanted: property.isTenanted || "",
+      agentCommissionPercent: property.agentCommissionPercent ?? 5,
       description: property.description || "",
       additionalInfo: property.addtionalInfo || "",
       videos: property.videos || [],

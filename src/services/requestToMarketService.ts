@@ -7,6 +7,25 @@ import { GET_REQUEST, POST_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import Cookies from "js-cookie";
 
+/** Fallback agent commission (Naira) for display when backend does not return agentCommissionAmount. */
+export const DEFAULT_AGENT_COMMISSION_DISPLAY_NAIRA = 50000;
+
+export interface RequestToMarketListItem {
+  _id: string;
+  propertyId?: { _id?: string; location?: unknown; price?: number; briefType?: string; pictures?: string[]; [k: string]: unknown };
+  requestedByAgentId?: { firstName?: string; lastName?: string; fullName?: string; email?: string; [k: string]: unknown };
+  publisherId?: { firstName?: string; lastName?: string; fullName?: string; email?: string; [k: string]: unknown };
+  status?: "pending" | "accepted" | "rejected";
+  marketingFeeNaira?: number;
+  /** Agent commission amount (Naira) for display; use DEFAULT_AGENT_COMMISSION_DISPLAY_NAIRA if not returned. */
+  agentCommissionAmount?: number;
+  rejectedReason?: string;
+  acceptedAt?: string;
+  rejectedAt?: string;
+  createdAt?: string;
+  [k: string]: unknown;
+}
+
 function token() {
   return Cookies.get("token") ?? undefined;
 }
@@ -26,7 +45,7 @@ export const requestToMarketService = {
     if (params?.page != null) q.set("page", String(params.page));
     if (params?.limit != null) q.set("limit", String(params.limit));
     const url = `${URLS.BASE}${URLS.requestToMarketList}${q.toString() ? `?${q.toString()}` : ""}`;
-    return GET_REQUEST<{ success: boolean; data: unknown[]; pagination?: { total: number; page: number; limit: number; totalPages: number } }>(
+    return GET_REQUEST<{ success: boolean; data: RequestToMarketListItem[]; pagination?: { total: number; page: number; limit: number; totalPages: number } }>(
       url,
       token()
     );

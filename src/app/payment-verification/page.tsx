@@ -5,6 +5,7 @@ import { Check, X, Loader2 } from 'lucide-react';
 import { GET_REQUEST } from '@/utils/requests';
 import { URLS } from '@/utils/URLS';
 import toast from 'react-hot-toast';
+import { REDIRECT_AFTER_SUBSCRIPTION_KEY } from '@/logic/combinedAuthGuard';
 
 const PaymentVerificationPage = () => {
   const router = useRouter();
@@ -51,10 +52,20 @@ const PaymentVerificationPage = () => {
         setVerificationData(response.data);
         const trxType = (response.data as any)?.transaction?.transactionType;
 
-        // Subscription: immediately redirect to dashboard (no receipt)
+        // Subscription: redirect to intended page (e.g. /post-property/outright-sales) if stored, else dashboard
         if (trxType === 'subscription') {
-          toast.success('Payment verified. Redirecting to dashboard...');
-          router.push('/dashboard');
+          let redirectPath = '/dashboard';
+          if (typeof window !== 'undefined') {
+            try {
+              const stored = sessionStorage.getItem(REDIRECT_AFTER_SUBSCRIPTION_KEY);
+              if (stored && typeof stored === 'string' && stored.startsWith('/') && !stored.startsWith('//')) {
+                redirectPath = stored;
+                sessionStorage.removeItem(REDIRECT_AFTER_SUBSCRIPTION_KEY);
+              }
+            } catch {}
+          }
+          toast.success(redirectPath !== '/dashboard' ? 'Payment verified. Taking you to post property...' : 'Payment verified. Redirecting to dashboard...');
+          router.push(redirectPath);
           return;
         }
 

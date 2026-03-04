@@ -1,12 +1,16 @@
 "use client";
 
 import React, { ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { useUserContext } from "@/context/user-context";
 import Loading from "@/components/loading-component/loading";
 import { motion } from "framer-motion";
 import { Shield, CreditCard, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import Block from "@/components/access/Block";
+
+/** Key used to redirect user back after subscription payment (e.g. to /post-property/outright-sales). */
+export const REDIRECT_AFTER_SUBSCRIPTION_KEY = "redirectAfterSubscription";
   
 interface CombinedAuthGuardProps {
   children: ReactNode;
@@ -34,6 +38,7 @@ export const CombinedAuthGuard: React.FC<CombinedAuthGuardProps> = ({
   requireKycApproved = false,
   // ignored legacy props
 }) => {
+  const pathname = usePathname();
   const { user, isLoading, isInitialized } = useUserContext();
 
   const isAgent = user?.userType === "Agent";
@@ -120,6 +125,12 @@ export const CombinedAuthGuard: React.FC<CombinedAuthGuardProps> = ({
     }
 
     if (!hasActiveSubscription) {
+      // Remember where they wanted to go so payment-verification can redirect back (e.g. /post-property/outright-sales)
+      if (pathname && typeof window !== "undefined") {
+        try {
+          sessionStorage.setItem(REDIRECT_AFTER_SUBSCRIPTION_KEY, pathname);
+        } catch {}
+      }
       return (
         <Block
           title="Active Subscription Required"

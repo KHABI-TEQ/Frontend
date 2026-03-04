@@ -299,12 +299,20 @@ export default function DeveloperDashboard() {
                       {totalBriefs} total listing{totalBriefs !== 1 ? "s" : ""}
                     </p>
                   </div>
-                  <Link
-                    href="/my-listings"
-                    className="text-blue-600 hover:text-blue-700 font-medium text-sm"
-                  >
-                    View All
-                  </Link>
+                  <div className="flex items-center gap-3">
+                    <Link
+                      href="/my-request-to-market"
+                      className="text-[#8DDB90] hover:text-[#7BC87F] font-medium text-sm"
+                    >
+                      Requests for my properties
+                    </Link>
+                    <Link
+                      href="/my-listings"
+                      className="text-blue-600 hover:text-blue-700 font-medium text-sm"
+                    >
+                      View All
+                    </Link>
+                  </div>
                 </div>
               </div>
               {displayProperties.length === 0 ? (

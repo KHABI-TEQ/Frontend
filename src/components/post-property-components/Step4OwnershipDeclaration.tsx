@@ -6,6 +6,7 @@ import { useFormikContext } from "formik";
 import { usePostPropertyContext } from "@/context/post-property-context";
 import { useUserContext } from "@/context/user-context";
 import { step4ValidationSchema } from "@/utils/validation/post-property-validation";
+import { extractNumericValue, formatPriceForDisplay } from "@/utils/price-helpers";
 import Input from "@/components/general-components/Input";
 import RadioCheck from "@/components/general-components/radioCheck";
 import EnhancedCheckbox from "@/components/general-components/EnhancedCheckbox";
@@ -20,6 +21,8 @@ import { selectShowCommissionFee } from "@/store/subscriptionFeaturesSlice";
 import "react-phone-number-input/style.css";
 import "@/styles/phone-input.css";
 import { StepProps } from "@/types/post-property.types";
+
+const STANDARD_AGENT_COMMISSION_PERCENT_MAX = 5;
 
 
 
@@ -82,11 +85,26 @@ const Step4OwnershipDeclaration: React.FC<StepProps> = () => {
     updatePropertyData("isLegalOwner", isOwner);
   };
 
-  const getUserType: any = (): "landowner" | "agent" => {
-    return user?.userType === "Agent" ? "agent" : "landowner";
+  const getUserType: () => "landowner" | "agent" | "developer" = () => {
+    if (user?.userType === "Agent") return "agent";
+    if (user?.userType === "Developer") return "developer";
+    return "landowner";
   };
 
   const showCommissionFee = useAppSelector(selectShowCommissionFee);
+  const userType = getUserType();
+
+  // Default agent commission to 5% for Sale, Rent, JV, Shortlet when poster is Landlord or Developer
+  const hasAgentCommission = ["sell", "rent", "jv", "shortlet"].includes(propertyData.propertyType);
+  useEffect(() => {
+    if (
+      hasAgentCommission &&
+      (userType === "landowner" || userType === "developer") &&
+      (propertyData.agentCommissionPercent === undefined || propertyData.agentCommissionPercent === null)
+    ) {
+      updatePropertyData("agentCommissionPercent", STANDARD_AGENT_COMMISSION_PERCENT_MAX);
+    }
+  }, [propertyData.propertyType, userType, propertyData.agentCommissionPercent, hasAgentCommission]);
 
   const getCommissionRate = (): number | null => {
     const userType = getUserType();
@@ -146,6 +164,16 @@ const Step4OwnershipDeclaration: React.FC<StepProps> = () => {
     return "";
   };
 
+  const getPriceLabel = (briefType: string): string => {
+    switch (briefType) {
+      case "sell": return "sale price";
+      case "rent": return "rental value";
+      case "jv": return "transaction value";
+      case "shortlet": return "property value";
+      default: return "property price";
+    }
+  };
+
   const getCommissionDetails = () => {
     const userType = getUserType();
     const briefType = propertyData.propertyType;
@@ -153,61 +181,89 @@ const Step4OwnershipDeclaration: React.FC<StepProps> = () => {
     if (!briefType) return { title: "", details: [] };
 
     const commissionRate = getCommissionRate();
+    const priceValue = extractNumericValue(propertyData.price);
+    const agentPercent = propertyData.agentCommissionPercent ?? STANDARD_AGENT_COMMISSION_PERCENT_MAX;
+    const agentAmount = priceValue * agentPercent / 100;
+    const priceLabel = getPriceLabel(briefType);
+    const agentCommissionLine = `• Standard agent commission: ${agentPercent}% of ${priceLabel} (${formatPriceForDisplay(agentAmount)}) payable to the Agent.`;
 
     if (briefType === "jv") {
-      return {
-        title: "COMMISSION AGREEMENT - Joint Venture",
-        details:
-          userType === "landowner"
-            ? [
-                "For Landlords:",
-                "• Khabiteq earns a fixed 10% of the transaction value upon deal closure.",
-              ]
-            : [
-                "For Agents:",
-                "• Choose commission type:",
-                "○ Mandate: Agent has direct authorization from the owner → Khabiteq earns 50% of agent's commission",
-              ],
-      };
+      const baseDetails =
+        userType === "landowner"
+          ? [
+              "For Landlords:",
+              "• Khabiteq earns a fixed 10% of the transaction value upon deal closure.",
+            ]
+          : [
+              "For Agents:",
+              "• Choose commission type:",
+              "○ Mandate: Agent has direct authorization from the owner → Khabiteq earns 50% of agent's commission",
+            ];
+      if (userType === "landowner" || userType === "developer") {
+        return {
+          title: "COMMISSION AGREEMENT - Joint Venture",
+          details: [...baseDetails, agentCommissionLine],
+        };
+      }
+      return { title: "COMMISSION AGREEMENT - Joint Venture", details: baseDetails };
     }
 
     if (briefType === "rent") {
-      return {
-        title: "COMMISSION AGREEMENT - Rent",
-        details:
-          userType === "landowner"
-            ? [
-                "For Landlords:",
-                "• Khabiteq commission is fixed at 10% of the final rental deal value",
-              ]
-            : ["For Agents:", "• No commission is deducted by Khabiteq"],
-      };
+      const baseDetails =
+        userType === "landowner"
+          ? [
+              "For Landlords:",
+              "• Khabiteq commission is fixed at 10% of the final rental deal value",
+            ]
+          : ["For Agents:", "• No commission is deducted by Khabiteq"];
+      if (userType === "landowner" || userType === "developer") {
+        return {
+          title: "COMMISSION AGREEMENT - Rent",
+          details: [...baseDetails, agentCommissionLine],
+        };
+      }
+      return { title: "COMMISSION AGREEMENT - Rent", details: baseDetails };
     }
 
     if (briefType === "sell") {
+      if (userType === "landowner" || userType === "developer") {
+        return {
+          title: "COMMISSION AGREEMENT - Sale",
+          details:
+            userType === "landowner"
+              ? [
+                  "For Landlords:",
+                  "• Khabiteq commission is fixed at 10% of the sale price.",
+                  agentCommissionLine,
+                ]
+              : [
+                  "For Developers:",
+                  "• Khabiteq commission is fixed at 10% of the sale price.",
+                  agentCommissionLine,
+                ],
+        };
+      }
       return {
         title: "COMMISSION AGREEMENT - Sale",
-        details:
-          userType === "landowner"
-            ? [
-                "For Landlords:",
-                "• Khabiteq commission is fixed at 10% of the sale price.",
-              ]
-            : [
-                "For Agents:",
-                "• Choose commission model:",
-                "• Mandate – Agent has direct mandate from the owner (Khabiteq earns 50% of agent's commission)",
-              ],
+        details: [
+          "For Agents:",
+          "• Choose commission model:",
+          "• Mandate – Agent has direct mandate from the owner (Khabiteq earns 50% of agent's commission)",
+        ],
       };
     }
 
     if (briefType === "shortlet") {
-      return {
-        title: "COMMISSION AGREEMENT - Shortlet",
-        details: [
-          "• Khabiteq earns 7% of the total value generated from this transaction as commission when the deal is closed",
-        ],
-      };
+      const baseDetails = [
+        "• Khabiteq earns 7% of the total value generated from this transaction as commission when the deal is closed",
+      ];
+      if (userType === "landowner" || userType === "developer") {
+        return {
+          title: "COMMISSION AGREEMENT - Shortlet",
+          details: [...baseDetails, agentCommissionLine],
+        };
+      }
+      return { title: "COMMISSION AGREEMENT - Shortlet", details: baseDetails };
     }
 
     return { title: "", details: [] };
@@ -312,6 +368,61 @@ const Step4OwnershipDeclaration: React.FC<StepProps> = () => {
               </div>
             </div>
 
+            {/* Standard agent commission (Sale, Rent, JV, Shortlet – Landlord/Developer only) */}
+            {hasAgentCommission &&
+              (userType === "landowner" || userType === "developer") && (
+              <div className="bg-[#F8F9FA] border border-[#DEE2E6] rounded-lg p-4 mb-4">
+                <h4 className="font-semibold text-[#09391C] mb-2">
+                  Standard agent commission (payable to the Agent)
+                </h4>
+                {userType === "landowner" ? (
+                  <p className="text-sm text-[#5A5D63]">
+                    Fixed at 5% of {getPriceLabel(propertyData.propertyType)} ={" "}
+                    {formatPriceForDisplay(
+                      (extractNumericValue(propertyData.price) * 5) / 100
+                    )}
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-[#5A5D63]">
+                      Agent commission % (max 5%, you may set lower)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={STANDARD_AGENT_COMMISSION_PERCENT_MAX}
+                      step={0.5}
+                      value={
+                        propertyData.agentCommissionPercent ??
+                        STANDARD_AGENT_COMMISSION_PERCENT_MAX
+                      }
+                      onChange={(e) => {
+                        const raw = parseFloat(e.target.value);
+                        const clamped = Number.isNaN(raw)
+                          ? STANDARD_AGENT_COMMISSION_PERCENT_MAX
+                          : Math.min(
+                              STANDARD_AGENT_COMMISSION_PERCENT_MAX,
+                              Math.max(0, raw)
+                            );
+                        handleFieldChange("agentCommissionPercent", clamped);
+                      }}
+                      className="w-full max-w-[120px] p-2 border border-[#C7CAD0] rounded-md focus:ring-2 focus:ring-[#8DDB90] focus:border-[#8DDB90] text-[14px]"
+                    />
+                    <p className="text-sm text-[#5A5D63]">
+                      ={" "}
+                      {formatPriceForDisplay(
+                        (extractNumericValue(propertyData.price) *
+                          (propertyData.agentCommissionPercent ??
+                            STANDARD_AGENT_COMMISSION_PERCENT_MAX)) /
+                          100
+                      )}{" "}
+                      payable to the Agent
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Agreement Statement */}
             <div className="bg-[#E4EFE7] border border-[#8DDB90] rounded-lg p-4">
               <h4 className="font-semibold text-[#09391C] mb-2">
@@ -363,6 +474,26 @@ const Step4OwnershipDeclaration: React.FC<StepProps> = () => {
               <p>
                 <span className="font-medium">Commission Rate:</span>{" "}
                 {commissionRate}%
+              </p>
+            )}
+            {hasAgentCommission &&
+              (userType === "landowner" || userType === "developer") && (
+              <p>
+                <span className="font-medium">Standard agent commission:</span>{" "}
+                {userType === "landowner"
+                  ? "5"
+                  : propertyData.agentCommissionPercent ??
+                    STANDARD_AGENT_COMMISSION_PERCENT_MAX}
+                % (
+                {formatPriceForDisplay(
+                  (extractNumericValue(propertyData.price) *
+                    (userType === "landowner"
+                      ? 5
+                      : propertyData.agentCommissionPercent ??
+                        STANDARD_AGENT_COMMISSION_PERCENT_MAX)) /
+                    100
+                )}{" "}
+                to Agent)
               </p>
             )}
             <p>

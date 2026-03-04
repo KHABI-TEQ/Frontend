@@ -9,6 +9,7 @@ import { usePostPropertyContext } from "@/context/post-property-context";
 import type { PropertyData } from "@/context/post-property-context";
 import { POST_REQUEST, GET_REQUEST } from "@/utils/requests";
 import { extractNumericValue } from "@/utils/price-helpers";
+import { normalizeHoldDurationForApi, normalizeIsTenantedForApi } from "@/utils/post-property-payload";
 import { URLS } from "@/utils/URLS";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
@@ -761,8 +762,18 @@ const PostPropertyByPreference = () => {
         addtionalInfo: propertyData.additionalInfo,
         pictures: uploadedImageUrls,
         videos: uploadedVideoUrls,
-        isTenanted: propertyData.isTenanted,
-        holdDuration: propertyData.holdDuration,
+        isTenanted: normalizeIsTenantedForApi(propertyData.isTenanted),
+        holdDuration: normalizeHoldDurationForApi(propertyData.holdDuration),
+        // Standard agent commission (Sale, Rent, JV, Shortlet)
+        ...(["sell", "rent", "jv", "shortlet"].includes(propertyData.propertyType)
+          ? {
+              agentCommissionPercent: Math.min(5, Math.max(0, propertyData.agentCommissionPercent ?? 5)),
+              agentCommissionAmount: Math.round(
+                (extractNumericValue(propertyData.price) *
+                  Math.min(5, Math.max(0, propertyData.agentCommissionPercent ?? 5))) /
+                100,
+            }
+          : {}),
         // Add preference reference
         matchingPreferenceId: preferenceId,
         // Shortlet specific fields
