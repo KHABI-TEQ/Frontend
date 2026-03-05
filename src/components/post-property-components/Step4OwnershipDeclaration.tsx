@@ -135,26 +135,23 @@ const Step4OwnershipDeclaration: React.FC<StepProps> = () => {
 
     if (briefType === "jv") {
       if (userType === "landowner") {
-        return `I, ${userName}, agree that Khabiteq Realty shall earn 10% of the total value generated from this transaction.`;
-      } else {
-        return `I, ${userName}, agree that Khabiteq Realty shall earn 50% of my commission on this transaction.`;
+        return "";
       }
+      return `I, ${userName}, agree that Khabiteq Realty shall earn 50% of my commission on this transaction.`;
     }
 
     if (briefType === "rent") {
       if (userType === "landowner") {
-        return `I, ${userName}, agree that Khabiteq Realty shall earn 10% of the total value generated from this transaction as commission when the deal is closed.`;
-      } else {
-        return `I understand that Khabiteq does not collect commission on agent rental deals.`;
+        return "";
       }
+      return `I understand that Khabiteq does not collect commission on agent rental deals.`;
     }
 
     if (briefType === "sell") {
-      if (userType === "landowner") {
-        return `I, ${userName}, agree that Khabiteq Realty shall earn 10% of the total value generated from this transaction as commission when the deal is closed.`;
-      } else {
-        return `I, ${userName}, agree that Khabiteq Realty shall earn 50% of the total commission accrued to me when the deal is closed.`;
+      if (userType === "landowner" || userType === "developer") {
+        return "";
       }
+      return `I, ${userName}, agree that Khabiteq Realty shall earn 50% of the total commission accrued to me when the deal is closed.`;
     }
 
     if (briefType === "shortlet") {
@@ -190,10 +187,7 @@ const Step4OwnershipDeclaration: React.FC<StepProps> = () => {
     if (briefType === "jv") {
       const baseDetails =
         userType === "landowner"
-          ? [
-              "For Landlords:",
-              "• Khabiteq earns a fixed 10% of the transaction value upon deal closure.",
-            ]
+          ? ["For Landlords:"]
           : [
               "For Agents:",
               "• Choose commission type:",
@@ -211,10 +205,7 @@ const Step4OwnershipDeclaration: React.FC<StepProps> = () => {
     if (briefType === "rent") {
       const baseDetails =
         userType === "landowner"
-          ? [
-              "For Landlords:",
-              "• Khabiteq commission is fixed at 10% of the final rental deal value",
-            ]
+          ? ["For Landlords:"]
           : ["For Agents:", "• No commission is deducted by Khabiteq"];
       if (userType === "landowner" || userType === "developer") {
         return {
@@ -231,16 +222,8 @@ const Step4OwnershipDeclaration: React.FC<StepProps> = () => {
           title: "COMMISSION AGREEMENT - Sale",
           details:
             userType === "landowner"
-              ? [
-                  "For Landlords:",
-                  "• Khabiteq commission is fixed at 10% of the sale price.",
-                  agentCommissionLine,
-                ]
-              : [
-                  "For Developers:",
-                  "• Khabiteq commission is fixed at 10% of the sale price.",
-                  agentCommissionLine,
-                ],
+              ? ["For Landlords:", agentCommissionLine]
+              : ["For Developers:", agentCommissionLine],
         };
       }
       return {
@@ -423,15 +406,17 @@ const Step4OwnershipDeclaration: React.FC<StepProps> = () => {
               </div>
             )}
 
-            {/* Agreement Statement */}
-            <div className="bg-[#E4EFE7] border border-[#8DDB90] rounded-lg p-4">
-              <h4 className="font-semibold text-[#09391C] mb-2">
-                Agreement Statement
-              </h4>
-              <p className="text-sm text-[#1E1E1E] leading-relaxed">
-                {getCommissionAgreementText()}
-              </p>
-            </div>
+            {/* Agreement Statement (hidden when text removed for Landlord/Developer) */}
+            {getCommissionAgreementText() && (
+              <div className="bg-[#E4EFE7] border border-[#8DDB90] rounded-lg p-4">
+                <h4 className="font-semibold text-[#09391C] mb-2">
+                  Agreement Statement
+                </h4>
+                <p className="text-sm text-[#1E1E1E] leading-relaxed">
+                  {getCommissionAgreementText()}
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -470,12 +455,6 @@ const Step4OwnershipDeclaration: React.FC<StepProps> = () => {
               <span className="font-medium">Legal Owner:</span>{" "}
               {propertyData.isLegalOwner ? "Yes" : "Authorized Representative"}
             </p>
-            {commissionRate !== null && (
-              <p>
-                <span className="font-medium">Commission Rate:</span>{" "}
-                {commissionRate}%
-              </p>
-            )}
             {hasAgentCommission &&
               (userType === "landowner" || userType === "developer") && (
               <p>

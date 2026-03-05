@@ -307,7 +307,10 @@ export default function AgentDashboard() {
           const freeDays = 7;
           return (
             <div className="space-y-3 mb-4">
- 
+              <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg text-sm">
+                <strong>Property posting:</strong> You can post your first 2 properties without a subscription. A subscription is required from the 3rd property onward.
+              </div>
+
               {!isKycApproved && (
                 <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-lg">
                   <div>Enjoy free {freeDays} days premium by completing your agent KYC verification.</div>

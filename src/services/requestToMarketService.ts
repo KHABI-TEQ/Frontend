@@ -52,7 +52,7 @@ export const requestToMarketService = {
   },
 
   respond: (requestId: string, action: "accept" | "reject", rejectedReason?: string) =>
-    POST_REQUEST<{ success: boolean; data?: { status: string; paymentUrl?: string } }>(
+    POST_REQUEST<{ success: boolean; message?: string; data?: { status: string; propertyId?: string; agentCommissionAmount?: number; paymentUrl?: string } }>(
       URLS.BASE + URLS.requestToMarketRespond(requestId),
       { action, ...(action === "reject" && rejectedReason ? { rejectedReason } : {}) },
       token()

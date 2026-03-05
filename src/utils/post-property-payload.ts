@@ -19,6 +19,16 @@ export function normalizeIsTenantedForApi(
 }
 
 /**
+ * Backend returns 403 with this message when user has 2+ properties and no subscription.
+ * Used to show subscription CTA and avoid overriding the message.
+ */
+export function isFreeLimitPropertyError(message: string | undefined | null): boolean {
+  if (!message || typeof message !== "string") return false;
+  const m = message.toLowerCase();
+  return (m.includes("free limit") || m.includes("2 properties")) && m.includes("subscribe");
+}
+
+/**
  * API does not allow empty holdDuration. Use "0" when not provided.
  */
 export function normalizeHoldDurationForApi(

@@ -33,6 +33,8 @@ export interface LasreraMarketplaceProperty {
   requestToMarketCount?: number;
   /** True when the current user (agent) has already requested to market this property. */
   currentUserHasRequested?: boolean;
+  /** Agent commission amount (Naira) for this property; shown to Agents before requesting to market. */
+  agentCommissionAmount?: number;
 }
 
 export const lasreraMarketplaceService = {

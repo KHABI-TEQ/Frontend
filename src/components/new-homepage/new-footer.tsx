@@ -2,7 +2,8 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { archivo } from '@/styles/font';
+// Use stable Tailwind class to avoid hydration mismatch (archivo.variable can differ server vs client)
+const footerFontClass = 'font-[var(--font-archivo)]';
 import { motion } from 'framer-motion';
 import { useSocialLinskSettings } from '@/hooks/useSystemSettings';
 import khabiTeqIcon from '@/svgs/white-khabi-teq.svg';
@@ -221,12 +222,12 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
                 alt='Khabiteq Logo'
                 className='mb-6'
               />
-              <p className={`text-[#D6DDEB] text-base leading-relaxed mb-6 max-w-md ${archivo.variable}`}>
+              <p className={`text-[#D6DDEB] text-base leading-relaxed mb-6 max-w-md ${footerFontClass}`}>
                 Simplifying real estate transactions in Nigeria. Buy, sell, rent, and manage properties with ease through Khabi-Teq&apos;s trusted platform. Verified agents, secure transactions, and transparent deals.
               </p>
               {/* Quick Actions */}
               <div className='space-y-3'>
-                <h4 className={`text-white font-semibold text-lg mb-4 ${archivo.variable}`}>
+                <h4 className={`text-white font-semibold text-lg mb-4 ${footerFontClass}`}>
                   Quick Actions
                 </h4>
                 {quickActions.map((action, index) => (
@@ -248,7 +249,7 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
               viewport={{ once: true }}>
-              <h3 className={`text-white font-semibold text-lg mb-6 ${archivo.variable}`}>
+              <h3 className={`text-white font-semibold text-lg mb-6 ${footerFontClass}`}>
                 Explore
               </h3>
               <div className='space-y-4'>
@@ -256,7 +257,7 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
                   <Link
                     key={index}
                     href={link.url}
-                    className={`block text-[#D6DDEB] hover:text-white transition-colors duration-300 text-base ${archivo.variable}`}>
+                    className={`block text-[#D6DDEB] hover:text-white transition-colors duration-300 text-base ${footerFontClass}`}>
                     {link.name}
                   </Link>
                 ))}
@@ -271,7 +272,7 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
               viewport={{ once: true }}>
-              <h3 className={`text-white font-semibold text-lg mb-6 ${archivo.variable}`}>
+              <h3 className={`text-white font-semibold text-lg mb-6 ${footerFontClass}`}>
                 Services
               </h3>
               <div className='space-y-4'>
@@ -279,7 +280,7 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
                   <Link
                     key={index}
                     href={link.url}
-                    className={`block text-[#D6DDEB] hover:text-white transition-colors duration-300 text-base ${archivo.variable}`}>
+                    className={`block text-[#D6DDEB] hover:text-white transition-colors duration-300 text-base ${footerFontClass}`}>
                     {link.name}
                   </Link>
                 ))}
@@ -311,7 +312,7 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
           className='bg-white/5 rounded-2xl p-4 sm:p-6 md:p-8 mb-12'>
           <div className='grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-center'>
             <div>
-              <h4 className={`text-white font-bold text-lg sm:text-xl mb-2 ${archivo.variable}`}>
+              <h4 className={`text-white font-bold text-lg sm:text-xl mb-2 ${footerFontClass}`}>
                 Stay Updated with Property Deals
               </h4>
               <p className="text-[#D6DDEB] text-sm sm:text-base">
@@ -347,7 +348,7 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
               transition={{ duration: 0.6, delay: 0.5 }}
               viewport={{ once: true }}
               className='text-center sm:text-left'>
-              <p className={`text-gray-400 text-xs sm:text-sm ${archivo.variable}`}>
+              <p className={`text-gray-400 text-xs sm:text-sm ${footerFontClass}`}>
                 © {new Date().getFullYear()} Khabiteq Realty Limited. All rights reserved.
               </p>
             </motion.div>

@@ -8,10 +8,11 @@ import { useUserContext } from "@/context/user-context";
 import { usePostPropertyContext } from "@/context/post-property-context";
 import { POST_REQUEST } from "@/utils/requests";
 import { extractNumericValue } from "@/utils/price-helpers";
-import { normalizeHoldDurationForApi, normalizeIsTenantedForApi } from "@/utils/post-property-payload";
+import { normalizeHoldDurationForApi, normalizeIsTenantedForApi, isFreeLimitPropertyError } from "@/utils/post-property-payload";
 import { URLS } from "@/utils/URLS";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
+import Link from "next/link";
 
 // Components
 import Stepper from "@/components/post-property-components/Stepper";
@@ -156,6 +157,8 @@ const RentPropertyForm: React.FC<RentPropertyFormProps> = ({
   } = usePostPropertyContext();
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showFreeLimitBanner, setShowFreeLimitBanner] = useState(false);
+  const [freeLimitMessage, setFreeLimitMessage] = useState<string | null>(null);
 
   // Set property type on component mount
   useEffect(() => {
@@ -376,7 +379,10 @@ const RentPropertyForm: React.FC<RentPropertyFormProps> = ({
         setShowSuccessModal(true);
       } else {
         let errorMessage = (response as any)?.error || (response as any)?.message || "Failed to submit property";
-        if (typeof errorMessage === "string" && /landowner or agent/i.test(errorMessage)) {
+        if (typeof errorMessage === "string" && isFreeLimitPropertyError(errorMessage)) {
+          setFreeLimitMessage(errorMessage);
+          setShowFreeLimitBanner(true);
+        } else if (typeof errorMessage === "string" && /landowner or agent/i.test(errorMessage)) {
           errorMessage = "Only landowner, agent, or developer accounts can post. Developers and agents need an active subscription.";
         }
         toast.error(errorMessage);
@@ -418,12 +424,21 @@ const RentPropertyForm: React.FC<RentPropertyFormProps> = ({
       allowedUserTypes={["Agent", "Landowners", "Developer"]}
       requireAgentOnboarding={false}
       requireAgentApproval={false}
-      requireActiveSubscription={user?.userType === "Agent" || user?.userType === "Developer"}
+      requireActiveSubscription={false}
       agentCustomMessage="You must complete onboarding and be approved before you can post properties."
     >
       <Preloader isVisible={isSubmitting} message="Submitting Property..." />
       <div className="min-h-screen bg-[#EEF1F1] py-4 md:py-8">
         <div className="container mx-auto px-4 md:px-6">
+          {showFreeLimitBanner && freeLimitMessage && (
+            <div className="mb-4 flex items-center justify-between gap-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-800">
+              <p className="text-sm">{freeLimitMessage}</p>
+              <div className="flex flex-shrink-0 items-center gap-2">
+                <Link href="/agent-subscriptions?tab=plans" className="rounded bg-amber-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-700">View Plans</Link>
+                <button type="button" onClick={() => { setShowFreeLimitBanner(false); setFreeLimitMessage(null); }} className="text-amber-600 hover:text-amber-800" aria-label="Dismiss">×</button>
+              </div>
+            </div>
+          )}
           <Breadcrumb items={breadcrumbItems} />
           
           <div className="text-center mb-6 md:mb-8">

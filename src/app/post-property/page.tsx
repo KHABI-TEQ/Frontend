@@ -58,7 +58,7 @@ const propertyTypes: PropertyTypeCard[] = [
 
 const PostPropertyPage = () => {
   const router = useRouter();
-  const { user } = useUserContext();
+  const { user, isInitialized } = useUserContext();
   const isAgent = user?.userType === "Agent";
   const listingsEntry = useAppSelector(selectFeatureEntry(FEATURE_KEYS.LISTINGS));
   const quotaText = listingsEntry
@@ -75,6 +75,7 @@ const PostPropertyPage = () => {
   }, []);
 
   useEffect(() => {
+    if (!isInitialized) return;
     if (!user) {
       router.push("/auth/login");
       return;
@@ -91,7 +92,7 @@ const PostPropertyPage = () => {
 
     toast.error("You need to be a landowner, agent, or developer to post properties");
     router.push("/dashboard");
-  }, [user, router]);
+  }, [user, router, isInitialized]);
 
   const breadcrumbItems = [
     { label: "Home", href: "/" },
@@ -103,7 +104,11 @@ const PostPropertyPage = () => {
     router.push(route);
   };
 
+  if (!isInitialized) {
+    return <Loading />;
+  }
   if (!user) {
+    if (typeof window !== "undefined") router.replace("/auth/login");
     return <Loading />;
   }
 

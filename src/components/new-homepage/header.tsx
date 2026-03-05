@@ -40,6 +40,30 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
   const pathName = usePathname();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const { user, logout } = useUserContext();
+
+  // Show "Publisher Properties (Request to Market)" only for logged-in Agents
+  useEffect(() => {
+    const base =
+      user?.userType === "Agent"
+        ? mainNavigationData.map((item) => {
+            if (item.name === "Agent" && item.subItems) {
+              return {
+                ...item,
+                subItems: [
+                  ...item.subItems,
+                  {
+                    name: "Publisher Properties (Request to Market)",
+                    url: "/lasrera-marketplace",
+                    isClicked: false,
+                  },
+                ],
+              };
+            }
+            return item;
+          })
+        : mainNavigationData;
+    setNavigationState(base);
+  }, [user?.userType]);
   const { unreadCount, fetchNotifications } = useNotifications();
   const [isNotificationModalOpened, setIsNotificationModalOpened] =
     useState<boolean>(false);

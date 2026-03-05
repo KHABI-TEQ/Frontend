@@ -65,11 +65,6 @@ export const mainNavigationData: NavigationItem[] = [
         url: "/agent-marketplace",
         isClicked: false,
       },
-      {
-        name: "Publisher Properties (Request to Market)",
-        url: "/lasrera-marketplace",
-        isClicked: false,
-      },
     ],
   },
   {

@@ -9,10 +9,11 @@ import { usePostPropertyContext } from "@/context/post-property-context";
 import type { PropertyData } from "@/context/post-property-context";
 import { POST_REQUEST, GET_REQUEST } from "@/utils/requests";
 import { extractNumericValue } from "@/utils/price-helpers";
-import { normalizeHoldDurationForApi, normalizeIsTenantedForApi } from "@/utils/post-property-payload";
+import { normalizeHoldDurationForApi, normalizeIsTenantedForApi, isFreeLimitPropertyError } from "@/utils/post-property-payload";
 import { URLS } from "@/utils/URLS";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
+import Link from "next/link";
 
 // Components
 import Stepper from "@/components/post-property-components/Stepper";
@@ -346,6 +347,8 @@ const PostPropertyByPreference = () => {
   } = usePostPropertyContext();
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showFreeLimitBanner, setShowFreeLimitBanner] = useState(false);
+  const [freeLimitMessage, setFreeLimitMessage] = useState<string | null>(null);
   const [preference, setPreference] = useState<Preference | null>(null);
   const [isLoadingPreference, setIsLoadingPreference] = useState(true);
   const [preferenceError, setPreferenceError] = useState<string | null>(null);
@@ -826,7 +829,11 @@ const PostPropertyByPreference = () => {
         setShowSuccessModal(true);
       } else {
         const errorMessage =
-          (response as any)?.error || "Failed to submit property";
+          (response as any)?.error || (response as any)?.message || "Failed to submit property";
+        if (typeof errorMessage === "string" && isFreeLimitPropertyError(errorMessage)) {
+          setFreeLimitMessage(errorMessage);
+          setShowFreeLimitBanner(true);
+        }
         toast.error(errorMessage);
       }
     } catch (error) {
@@ -922,7 +929,7 @@ const PostPropertyByPreference = () => {
         allowedUserTypes={["Agent"]}
         requireAgentOnboarding={false}
         requireAgentApproval={false}
-        requireActiveSubscription={true}
+        requireActiveSubscription={false}
         agentCustomMessage="You must complete onboarding and be approved before you can post properties."
       >
         <FeatureGate featureKeys={[FEATURE_KEYS.AGENT_MARKETPLACE]}>
@@ -960,13 +967,22 @@ const PostPropertyByPreference = () => {
       allowedUserTypes={["Agent"]}
       requireAgentOnboarding={false}
       requireAgentApproval={false}
-      requireActiveSubscription={true}
+      requireActiveSubscription={false}
       agentCustomMessage="You must complete onboarding and be approved before you can post properties."
     >
       <FeatureGate featureKeys={[FEATURE_KEYS.AGENT_MARKETPLACE]}>
         <Preloader isVisible={isSubmitting} message="Submitting Property..." />
         <div className="min-h-screen bg-[#EEF1F1] py-4 md:py-8">
           <div className="container mx-auto px-4 md:px-6">
+            {showFreeLimitBanner && freeLimitMessage && (
+              <div className="mb-4 flex items-center justify-between gap-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-800">
+                <p className="text-sm">{freeLimitMessage}</p>
+                <div className="flex flex-shrink-0 items-center gap-2">
+                  <Link href="/agent-subscriptions?tab=plans" className="rounded bg-amber-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-700">View Plans</Link>
+                  <button type="button" onClick={() => { setShowFreeLimitBanner(false); setFreeLimitMessage(null); }} className="text-amber-600 hover:text-amber-800" aria-label="Dismiss">×</button>
+                </div>
+              </div>
+            )}
             <Breadcrumb items={breadcrumbItems} />
 
             <div className="text-center mb-6 md:mb-8">

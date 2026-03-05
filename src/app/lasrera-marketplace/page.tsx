@@ -206,6 +206,9 @@ export default function LasreraMarketplacePage() {
                           ₦{prop.price.toLocaleString()}
                         </p>
                       )}
+                      <p className="text-sm font-medium text-[#09391C] mb-2">
+                        Agent commission: ₦{typeof prop.agentCommissionAmount === "number" ? prop.agentCommissionAmount.toLocaleString() : "0"}
+                      </p>
                       {typeof prop.requestToMarketCount === "number" && prop.requestToMarketCount > 0 && (
                         <p className="text-xs text-[#5A5D63] mb-3">
                           {prop.requestToMarketCount} agent{prop.requestToMarketCount !== 1 ? "s have" : " has"} requested to market
