@@ -55,7 +55,7 @@ export default function AgentBroadcastPage() {
   return (
     <CombinedAuthGuard
       requireAuth={true}
-      allowedUserTypes={["Agent", "Landowners"]}
+      allowedUserTypes={["Agent", "Landowners", "Developer"]}
       requireAgentOnboarding={false}
       requireAgentApproval={false}
       requireActiveSubscription={user?.userType === "Agent"}

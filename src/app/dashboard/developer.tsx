@@ -64,6 +64,8 @@ export default function DeveloperDashboard() {
   const { user } = useUserContext();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [recentProperties, setRecentProperties] = useState<RecentProperty[]>([]);
+  /** Total property count from /account/properties/fetchAll (used when dashboard stats are 0) */
+  const [propertiesTotalFromApi, setPropertiesTotalFromApi] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [referral, setReferral] = useState({ code: "", totalReferred: 0, points: 0, earnings: 0 });
 
@@ -171,19 +173,24 @@ export default function DeveloperDashboard() {
     }
   };
 
-  /** Fetch recent properties (all statuses) so auto-approved listings appear on the dashboard. */
+  /** Fetch recent properties (all statuses) and total count for accurate dashboard metrics. */
   const fetchRecentProperties = async () => {
     try {
       const url = `${URLS.BASE}/account/properties/fetchAll?page=1&limit=5`;
       const response = await GET_REQUEST(url, Cookies.get("token"));
-      if (response?.success && Array.isArray(response.data)) {
-        setRecentProperties((response.data as RecentProperty[]).slice(0, 5));
+      const raw = response as { success?: boolean; data?: unknown[]; pagination?: { total?: number } };
+      if (raw?.success && Array.isArray(raw.data)) {
+        setRecentProperties((raw.data as RecentProperty[]).slice(0, 5));
+        const total = raw.pagination?.total ?? raw.data.length;
+        setPropertiesTotalFromApi(typeof total === "number" ? total : raw.data.length);
       } else {
         setRecentProperties([]);
+        setPropertiesTotalFromApi(null);
       }
     } catch (error) {
       console.error("Failed to fetch recent properties:", error);
       setRecentProperties([]);
+      setPropertiesTotalFromApi(null);
     }
   };
 
@@ -195,8 +202,8 @@ export default function DeveloperDashboard() {
     return null;
   }
 
-  const totalBriefs = dashboardData?.totalBriefs ?? 0;
-  const totalActiveBriefs = dashboardData?.totalActiveBriefs ?? 0;
+  const totalBriefs = Math.max(dashboardData?.totalBriefs ?? 0, propertiesTotalFromApi ?? 0);
+  const totalActiveBriefs = Math.max(dashboardData?.totalActiveBriefs ?? 0, propertiesTotalFromApi ?? 0);
   const totalViews = dashboardData?.totalViews ?? 0;
   const totalInspectionRequests = dashboardData?.totalInspectionRequests ?? 0;
   const completedDeals = dashboardData?.completedDeals ?? 0;
@@ -212,17 +219,17 @@ export default function DeveloperDashboard() {
   return (
     <div className="min-h-screen bg-[#EEF1F1] py-4 sm:py-8 overflow-x-hidden">
       <div className="container mx-auto px-4 sm:px-6 max-w-full">
-        {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-8 min-w-0">
-          <div className="min-w-0">
-            <h1 className="text-2xl sm:text-3xl font-bold text-[#09391C] font-display truncate">
+        {/* Header: welcome on its own row so it always displays fully; buttons on next row(s) */}
+        <div className="flex flex-col gap-4 mb-8">
+          <div className="w-full">
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#09391C] font-display">
               Welcome back, Developer {user.firstName ?? "Developer"}!
             </h1>
             <p className="text-[#5A5D63] mt-2">
               Manage your developments, properties, and real estate activity
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 sm:items-center flex-shrink-0 flex-wrap">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 sm:items-center flex-wrap">
             <Link
               href="/my-listings"
               className="bg-[#8DDB90] hover:bg-[#7BC87F] text-white px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
@@ -242,8 +249,7 @@ export default function DeveloperDashboard() {
               className="bg-white hover:bg-gray-50 text-[#09391C] border border-[#8DDB90] px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
             >
               <BriefcaseIcon size={20} />
-              <span className="hidden sm:inline">Requests for my properties</span>
-              <span className="sm:hidden">Requests</span>
+              Agent Requests
             </Link>
             <Link
               href="/agent-broadcast"

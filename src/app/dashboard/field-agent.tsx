@@ -236,7 +236,7 @@ export default function FieldAgentDashboard() {
                   Field Agent Dashboard
                 </h1>
                 <p className="text-gray-600 mt-1">
-                  Welcome back, {user?.firstName} {user?.lastName}
+                  Welcome back, Field Agent {user?.firstName} {user?.lastName}!
                 </p>
               </div>
               <div className="flex items-center space-x-4">

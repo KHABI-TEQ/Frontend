@@ -11,7 +11,8 @@ import { requestToMarketService } from "@/services/requestToMarketService";
 import { buildLocationTitle } from "@/utils/helpers";
 import toast from "react-hot-toast";
 import Loading from "@/components/loading-component/loading";
-import { ArrowLeft, MapPin, Tag, Handshake, CheckCircle } from "lucide-react";
+import { ArrowLeft, MapPin, Tag, Handshake, CheckCircle, X } from "lucide-react";
+import PropertyLocationMap from "@/components/property/PropertyLocationMap";
 
 export default function LasreraMarketplacePage() {
   const { user } = useUserContext();
@@ -21,6 +22,8 @@ export default function LasreraMarketplacePage() {
   const [totalPages, setTotalPages] = useState(1);
   const [requestingId, setRequestingId] = useState<string | null>(null);
   const [filters, setFilters] = useState({ briefType: "", state: "", minPrice: "", maxPrice: "" });
+  /** Property selected for "Verify address on map" modal (agent can confirm location before requesting to market) */
+  const [propertyForMap, setPropertyForMap] = useState<LasreraMarketplaceProperty | null>(null);
 
   const isAgent = user?.userType === "Agent";
 
@@ -196,10 +199,19 @@ export default function LasreraMarketplacePage() {
                     <div className="p-4">
                       <h2 className="font-semibold text-[#09391C] line-clamp-2 mb-1">{title}</h2>
                       {prop.location && (
-                        <p className="flex items-center gap-1 text-sm text-[#5A5D63] mb-2">
+                        <p className="flex items-center gap-1 text-sm text-[#5A5D63] mb-1">
                           <MapPin size={14} />
                           {buildLocationTitle(prop.location) || "—"}
                         </p>
+                      )}
+                      {prop.location && (buildLocationTitle(prop.location) || "").trim() && (
+                        <button
+                          type="button"
+                          onClick={() => setPropertyForMap(prop)}
+                          className="text-xs text-[#09391C] hover:text-[#8DDB90] font-medium underline mb-2"
+                        >
+                          Verify address on map
+                        </button>
                       )}
                       {typeof prop.price === "number" && (
                         <p className="text-lg font-semibold text-[#8DDB90] mb-2">
@@ -271,6 +283,91 @@ export default function LasreraMarketplacePage() {
               </div>
             )}
           </>
+        )}
+
+        {/* Verify address on map modal — agent can confirm location before requesting to market */}
+        {propertyForMap && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+            onClick={() => setPropertyForMap(null)}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="map-modal-title"
+          >
+            <div
+              className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                <h2 id="map-modal-title" className="text-lg font-semibold text-[#09391C]">
+                  Verify property address
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setPropertyForMap(null)}
+                  className="p-2 rounded-lg hover:bg-gray-100 text-[#5A5D63]"
+                  aria-label="Close"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="p-4">
+                <p className="text-sm text-[#5A5D63] mb-4">
+                  Confirm this address on the map before requesting to market. If the location looks correct, you can request to market below.
+                </p>
+                {propertyForMap.location &&
+                (propertyForMap.location.state ||
+                  propertyForMap.location.localGovernment ||
+                  propertyForMap.location.area) ? (
+                  <PropertyLocationMap
+                    location={{
+                      state: propertyForMap.location.state,
+                      localGovernment: propertyForMap.location.localGovernment,
+                      area: propertyForMap.location.area,
+                      streetAddress: propertyForMap.location.streetAddress,
+                    }}
+                    propertyTitle={buildLocationTitle(propertyForMap.location) || "Property"}
+                  />
+                ) : (
+                  <div className="py-8 text-center text-[#5A5D63]">
+                    <MapPin className="mx-auto mb-2 text-gray-400" size={32} />
+                    <p>Location information not available for this property.</p>
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-3 p-4 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => setPropertyForMap(null)}
+                  className="px-4 py-2.5 border border-gray-300 rounded-lg text-[#09391C] font-medium hover:bg-gray-50"
+                >
+                  Close
+                </button>
+                {isAgent &&
+                  propertyForMap &&
+                  !propertyForMap.currentUserHasRequested && (
+                    <button
+                      type="button"
+                      disabled={requestingId === propertyForMap._id}
+                      onClick={() => {
+                        handleRequestToMarket(propertyForMap._id);
+                        setPropertyForMap(null);
+                      }}
+                      className="px-4 py-2.5 bg-[#09391C] text-white rounded-lg font-medium hover:bg-[#0d4a24] disabled:opacity-50 flex items-center gap-2"
+                    >
+                      {requestingId === propertyForMap._id ? (
+                        "Submitting..."
+                      ) : (
+                        <>
+                          <Handshake size={18} />
+                          Request To Market
+                        </>
+                      )}
+                    </button>
+                  )}
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

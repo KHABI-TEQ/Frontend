@@ -8,6 +8,7 @@ This document is for **frontend developers and Cursor agents** working on the fr
 - **Inspection flow** (buyer requests; Agent/Developer accepts or rejects; optional inspection fee ₦1,000–₦50,000 and payment link — see **Section 8**)
 - **Transaction registration fee by price** (₦100k / ₦150k bands)
 - **Onboarding**: Registration, email verification, login, social sign-up/login
+- **AI-assisted form filling**: Optional OpenAI-powered suggestions for **property** and **preference** forms (see **Section 10**)
 
 Use your configured **API base URL** https://khabiteq-realty.onrender.com/api as the prefix for all paths below. Paths are relative to that base.
 
@@ -269,26 +270,10 @@ Include in the request body:
 | Field         | Type   | Required | Description |
 |---------------|--------|----------|-------------|
 | listingScope  | string | No       | Use `"lasrera_marketplace"` to publish only to LASRERA Market Place. Default `"agent_listing"`. Only **Landowners** and **Developer** can set `"lasrera_marketplace"`; Agents are forced to `agent_listing`. |
-| **agentCommissionPercent** | number | For Sale/Rent/JV/Shortlet (Landlord/Developer): recommended | Standard agent commission % (0–5). Landlord: frontend sends 5. Developer: frontend sends 0–5 (user-editable). Backend must persist; used for request-to-market and display. |
-| **agentCommissionAmount**  | number | For Sale/Rent/JV/Shortlet (Landlord/Developer): recommended | Agent commission in Naira: `round(price * agentCommissionPercent / 100)`. Backend must persist; returned in property and request-to-market responses. |
 
 Plus all other required property fields (propertyType, propertyCategory, price, location, etc.) as per existing property schema.
 
-**Edit property:** `PATCH /account/properties/:propertyId/edit` — same rules; only Landowners/Developer can set or keep `listingScope: "lasrera_marketplace"`. Request body may include **agentCommissionPercent** and **agentCommissionAmount**; backend should accept and persist them when provided.
-
-**Property read responses (sync with backend):** Any endpoint that returns a **property** (e.g. `GET /account/properties/fetchAll`, `GET /account/properties/:propertyId/getOne`, or property embedded in another response) must include **agentCommissionPercent** and **agentCommissionAmount** on the property object when they are stored, so the frontend can display them and use them in request-to-market flows. If not yet set, backend may omit them or return `null`/`undefined`.
-
-**Agent commission — payload and response sync (summary):**
-
-| Context | Sent in payload | Returned in response |
-|---------|------------------|------------------------|
-| **Create/Edit property** | `agentCommissionPercent` (0–5), `agentCommissionAmount` (Naira) | — |
-| **Property (fetchAll, getOne, or embedded)** | — | Property object: `agentCommissionPercent`, `agentCommissionAmount` when stored |
-| **Create request-to-market (4.1)** | — | `data.agentCommissionAmount` = property’s stored value |
-| **List requests (4.2)** | — | Each item: `agentCommissionAmount` (frontend uses ₦50,000 if missing) |
-| **Respond accept (4.3)** | — | `data.agentCommissionAmount` = property’s stored value |
-
-Backend should derive all returned commission amounts from the **property’s stored** `agentCommissionPercent` / `agentCommissionAmount` so values stay consistent.
+**Edit property:** `PATCH /account/properties/:propertyId/edit` — same rules; only Landowners/Developer can set or keep `listingScope: "lasrera_marketplace"`.
 
 ---
 
@@ -321,8 +306,6 @@ Only **Agents** can create a request. **Publishers** (Landlord or Developer who 
   }
 }
 ```
-
-- **`data.agentCommissionAmount`** — Must be the **property’s stored agent commission amount** (the Naira value from the property’s `agentCommissionAmount` set at create). Backend must not use a fixed value; use the property’s stored value so request-to-market and list responses stay in sync. Backend may also return **`marketingFeeNaira`** (same value) for backward compatibility; frontend prefers `agentCommissionAmount` for display.
 
 **Errors:**
 
@@ -374,12 +357,6 @@ Only **Agents** can create a request. **Publishers** (Landlord or Developer who 
 }
 ```
 
-**Response fields for display (sync with backend):**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| **agentCommissionAmount** | number | Agent commission amount (Naira) for this request, from the property’s stored `agentCommissionAmount`. Returned on each list item (and optionally on nested `propertyId`) so the frontend can show “Agent commission: ₦X”. If the backend omits it, the frontend displays **₦50,000** as fallback. |
-
 ---
 
 ### 4.3 Respond to request (Publisher only)
@@ -421,14 +398,82 @@ When the Agent has a Paystack sub-account, the backend creates a split payment a
 }
 ```
 
-- **`data.agentCommissionAmount`** — Must be the **property’s stored agent commission amount** (same value as in list and create-request responses), so the frontend can display the amount the Publisher pays to the Agent. Keeps payload and responses in sync with the property’s `agentCommissionPercent` / `agentCommissionAmount`.
-
 If no payment link could be generated (e.g. Agent has no sub-account), `data.paymentUrl` may be undefined and the message will ask the Publisher to arrange payment directly with the Agent.
 
 **Errors:**
 
 - 403 — Only the property publisher can respond.
 - 400 — Request already responded to; or invalid `action`.
+
+---
+
+### 4.4 Publisher (Landlord/Developer) dashboard: how to show Accept/Reject and payment
+
+After a Landlord or Developer receives the email that an Agent has requested to market their property, they need to see the request in the dashboard and use **Accept** or **Reject**, then pay the agent commission if they accept. The frontend should implement the following flow.
+
+#### Step 1: Show “Request To Market” requests in the dashboard
+
+- **Who:** Logged-in user is **Landowners** or **Developer** (Publisher).
+- **API:** `GET /account/request-to-market?role=publisher&status=pending`  
+  (Optionally omit `status` to show all, or use `status=pending` to show only requests awaiting response.)
+- **Auth:** Bearer token (account auth).
+
+The response `data` array contains one object per request. Each object includes:
+
+- **`_id`** — Request ID (use this for the respond API).
+- **`status`** — e.g. `"pending"`, `"accepted"`, `"rejected"`.
+- **`propertyId`** — Property details (location, price, briefType, pictures, etc.).
+- **`requestedByAgentId`** — Agent details (firstName, lastName, fullName, email).
+- **`agentCommissionAmount`** — Amount in Naira the Publisher will pay the Agent if they accept.
+
+**UI suggestion:** Add a “Request To Market” or “Marketplace requests” section in the Publisher’s dashboard (e.g. under Account or a dedicated “Requests” page). List each **pending** request with property summary, agent name, and **agentCommissionAmount**. For each pending request, show two actions: **Accept** and **Reject**.
+
+#### Step 2: Accept or Reject (where the buttons go)
+
+- **Accept:** Call `POST /account/request-to-market/:requestId/respond` with body `{ "action": "accept" }`. Use the request’s **`_id`** as `requestId` in the URL.
+- **Reject:** Call `POST /account/request-to-market/:requestId/respond` with body `{ "action": "reject", "rejectedReason": "optional reason" }` (same `requestId`).
+
+So the **Accept** and **Reject** buttons are tied to each row/card in the list from Step 1; on click, the frontend calls this respond endpoint with that request’s `_id`.
+
+#### Step 3: After Accept — how the Publisher pays the agent commission
+
+When the Publisher clicks **Accept**, the backend:
+
+- Marks the request as accepted and links the property to the Agent.
+- If **agentCommissionAmount > 0** and the Agent has a Paystack sub-account, it creates a payment link and sends it to the **Publisher’s email** and also returns it in the API response.
+
+**Respond (accept) success response (200):**
+
+```json
+{
+  "success": true,
+  "message": "Request accepted. The property is now visible on the agent's public page. A payment link has been sent to your email to pay the agent commission to the agent.",
+  "data": {
+    "status": "accepted",
+    "propertyId": "...",
+    "agentCommissionAmount": 50000,
+    "paymentUrl": "https://checkout.paystack.com/..."
+  }
+}
+```
+
+- **If `data.paymentUrl` is present:** Show a clear call-to-action on the same screen (or a success modal): e.g. **“Pay agent commission: ₦X”** with a button that opens **`data.paymentUrl`** in the same tab or a new tab. The Publisher completes payment on Paystack’s page; no payment form is needed in your app.
+- **If `data.paymentUrl` is missing** (e.g. Agent has no sub-account): Show the message that they should arrange payment directly with the Agent (and optionally show `data.agentCommissionAmount` and the Agent’s contact from the original request list).
+
+So the Publisher “sees” the accept/reject buttons by listing pending requests (Step 1) and calling the respond API (Step 2); they “make the payment” by using the **paymentUrl** returned when they accept (Step 3), either from the dashboard or from the link in the email.
+
+### 4.5 Agent: verify property address on map (frontend-only)
+
+Before requesting to market a publisher property, the **Agent** can confirm the property address on a map to ensure it exists and is correct.
+
+**Implementation (current):**
+
+- **Purely frontend.** On the KHABITEQ Market Place page (`/lasrera-marketplace`), each property card shows a **"Verify address on map"** link. Clicking it opens a modal with the property location displayed in an **embedded Google Map** (iframe with `maps.google.com?q=<address>`). No Google Places or Geocoding API key is required for this; the address string (state, LGA, area, street if available) from the listing is passed to the map embed.
+- The agent can close the modal or, after confirming the location, click **"Request To Market"** in the same modal to submit the request.
+
+**Optional backend enhancement:**
+
+- If you want **server-side address validation** (e.g. ensure the address resolves to a real place via Google Geocoding API), that would be a **backend** integration: the backend would call the Geocoding API and optionally store normalized coordinates or a validation flag. The frontend would continue to show the map; any "verified" badge or stricter validation would come from the backend response.
 
 ---
 
@@ -711,12 +756,56 @@ After submission, the buyer receives emails when the Agent/Developer **accepts**
 
 ---
 
+## 10. AI-assisted form filling (OpenAI)
+
+Users can **optionally** describe what they want in natural language; the backend uses OpenAI to return **suggested form fields** that the frontend can pre-fill. The user should always be able to review and edit the suggestion before submitting. Submission still goes through the normal property or preference APIs and is validated as usual.
+
+### 10.1 When to use
+
+- **Property form** — When an **Agent**, **Landlord**, or **Developer** is posting a property (or brief), offer a "Describe your property" / "Fill with AI" option. They type or speak (speech-to-text on frontend) a short description; the frontend calls the suggest-property endpoint and merges the returned object into the form.
+- **Preference form** — When a **Buyer** (or visitor) is submitting a property preference (buy, rent, shortlet, joint venture), offer a "Describe what you're looking for" / "Fill with AI" option. They describe in natural language; the frontend calls the suggest-preference endpoint and merges the result into the preference form.
+
+### 10.2 Suggest property form (Agent, Landlord, Developer)
+
+**Endpoint:** `POST /account/ai/suggest-property`  
+**Auth:** Bearer token (account).  
+**Allowed user types:** `Agent`, `Landowners`, `Developer`. Others receive `403 Forbidden`.
+
+**Request body (JSON):** `{ "userInput": "string" }` — natural-language description of the property.
+
+**Success response (200):** `{ "success": true, "message": "...", "data": { ... } }`. The `data` object contains suggested fields (e.g. `propertyType`, `propertyCategory`, `location`, `price`, `description`, `features`, etc.). Merge into your form; validation happens on actual submit via `POST /account/properties/create`.
+
+**Errors:** 400 — missing/invalid `userInput`. 403 — user not Agent/Landlord/Developer. 503 — OpenAI not configured.
+
+**Note:** If the backend returns **404 Not Found**, the endpoint is not yet implemented. The frontend shows: *"AI suggestions are not available yet. Please fill in the form manually."* Backend should implement `POST /account/ai/suggest-property` (e.g. under the `/account` router) so "Fill with AI" works.
+
+### 10.3 Suggest preference form (Buyer / Public)
+
+**Endpoint:** `POST /ai/suggest-preference`  
+**Auth:** None (public).
+
+**Request body (JSON):** `{ "userInput": "string" }` — natural-language description of what the buyer is looking for.
+
+**Success response (200):** `{ "success": true, "message": "...", "data": { ... } }`. The `data` object contains suggested preference fields (e.g. `preferenceType`, `preferenceMode`, `location`, `budget`, `propertyDetails`, `features`). Merge into the preference form; user submits via `POST /preferences/submit`.
+
+**Errors:** 400 — missing/invalid `userInput`. 503 — AI service not configured.
+
+### 10.4 Implementation tips
+
+1. **UI** — Add a text area or voice input (browser speech-to-text) and a "Fill with AI" button.
+2. **Flow** — Call the endpoint with the user's description; on success, merge `data` into form state (e.g. only empty fields, or show a "Review AI suggestion" step).
+3. **Errors** — On 503, keep manual form available; do not block the user. On 400, show the error message.
+4. **Backend config** — Backend needs `OPENAI_API_KEY`. Optional: `OPENAI_MODEL` (default `gpt-4o-mini`).
+
+---
+
 ## 9. Quick reference — base paths and auth
 
 | Area | Base path | Auth |
 |------|-----------|------|
 | Auth (register, login, verify, social) | `/auth` | None for these endpoints |
-| Account (profile, properties, my-inspections, request-to-market, dealSite, subscriptions) | `/account` | Bearer token (account) |
+| Account (profile, properties, my-inspections, request-to-market, dealSite, subscriptions, **ai/suggest-property**) | `/account` | Bearer token (account) |
+| **AI suggest preference** | `/ai/suggest-preference` | None (public) |
 | LASRERA Market Place list | `/lasrera-marketplace/properties` | None (optional Bearer for currentUserHasRequested) |
 | DealSite public (e.g. inspection request) | `/deal-site/:publicSlug/...` | None |
 | Transaction registration (types, guidelines, search, check, register) | `/transaction-registration` | None (public) |

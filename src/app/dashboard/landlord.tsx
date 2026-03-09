@@ -55,17 +55,27 @@ export default function LandlordDashboard() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(
     null,
   );
+  /** Total property count from /account/properties/fetchAll (used when dashboard stats are 0) */
+  const [propertiesTotalFromApi, setPropertiesTotalFromApi] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState("all");
 
   useEffect(() => {
-    fetchDashboardData();
+    if (!user?._id && !user?.id) return;
+    const load = async () => {
+      setIsLoading(true);
+      try {
+        await fetchDashboardData();
+        await fetchPropertiesCount();
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    load();
   }, [user, router]);
 
   const fetchDashboardData = async () => {
     try {
-      setIsLoading(true);
-
       const response = await GET_REQUEST(
         `${URLS.BASE}/account/dashboard`,
         Cookies.get("token"),
@@ -81,8 +91,23 @@ export default function LandlordDashboard() {
       console.error("Failed to fetch dashboard data:", error);
       toast.error("Failed to load dashboard data");
       setDashboardData(null);
-    } finally {
-      setIsLoading(false);
+    }
+  };
+
+  /** Fetch property count so dashboard metrics match actual listings when /account/dashboard returns 0. */
+  const fetchPropertiesCount = async () => {
+    try {
+      const url = `${URLS.BASE}/account/properties/fetchAll?page=1&limit=5`;
+      const response = await GET_REQUEST(url, Cookies.get("token"));
+      const raw = response as { success?: boolean; data?: unknown[]; pagination?: { total?: number } };
+      if (raw?.success && Array.isArray(raw.data)) {
+        const total = raw.pagination?.total ?? raw.data.length;
+        setPropertiesTotalFromApi(typeof total === "number" ? total : raw.data.length);
+      } else {
+        setPropertiesTotalFromApi(null);
+      }
+    } catch {
+      setPropertiesTotalFromApi(null);
     }
   };
 
@@ -94,10 +119,13 @@ export default function LandlordDashboard() {
     return null;
   }
 
+  const totalProperties = Math.max(dashboardData?.totalBriefs ?? 0, propertiesTotalFromApi ?? 0);
+  const activeListings = Math.max(dashboardData?.totalActiveBriefs ?? 0, propertiesTotalFromApi ?? 0);
+
   const statCards = [
     {
       title: "Total Properties",
-      value: dashboardData?.totalBriefs || 0,
+      value: totalProperties,
       icon: HomeIcon,
       color: "bg-gradient-to-r from-blue-500 to-blue-600",
       textColor: "text-blue-600",
@@ -107,7 +135,7 @@ export default function LandlordDashboard() {
     },
     {
       title: "Active Listings",
-      value: dashboardData?.totalActiveBriefs || 0,
+      value: activeListings,
       icon: TrendingUpIcon,
       color: "bg-gradient-to-r from-green-500 to-green-600",
       textColor: "text-green-600",
@@ -202,7 +230,7 @@ export default function LandlordDashboard() {
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 min-w-0">
             <div className="min-w-0">
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 font-display truncate">
-                Welcome back, {user.firstName}!
+                Welcome back, Landlord {user.firstName}!
               </h1>
               <p className="text-gray-600 mt-2">
                 Manage your property portfolio and track performance
@@ -228,7 +256,7 @@ export default function LandlordDashboard() {
                 className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 px-5 py-2.5 sm:px-6 sm:py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors text-sm sm:text-base"
               >
                 <BriefcaseIcon size={20} />
-                Requests for my properties
+                Agent Requests
               </Link>
             </div>
           </div>

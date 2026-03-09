@@ -23,7 +23,7 @@ export interface LasreraMarketplaceProperty {
   propertyType?: string;
   propertyCategory?: string;
   price?: number;
-  location?: { state?: string; localGovernment?: string; area?: string };
+  location?: { state?: string; localGovernment?: string; area?: string; streetAddress?: string };
   additionalFeatures?: Record<string, unknown>;
   pictures?: string[];
   description?: string;

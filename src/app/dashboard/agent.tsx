@@ -73,6 +73,8 @@ export default function AgentDashboard() {
     averageRating: 0,
     totalCommission: 0,
   });
+  /** Total property count from /account/properties/fetchAll (used when dashboard stats are 0) */
+  const [propertiesTotalFromApi, setPropertiesTotalFromApi] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [referral, setReferral] = useState({ code: "", totalReferred: 0, points: 0, earnings: 0 });
 
@@ -84,18 +86,40 @@ export default function AgentDashboard() {
   }, [user]);
 
   useEffect(() => {
-    fetchDashboardData();
-    fetchReferralData();
+    if (!user?._id && !user?.id) return;
+    const load = async () => {
+      setIsLoading(true);
+      try {
+        await fetchDashboardData();
+        await fetchPropertiesCount();
+        await fetchReferralData();
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    load();
   }, [user, router]);
+
+  const fetchPropertiesCount = async () => {
+    try {
+      const url = `${URLS.BASE}/account/properties/fetchAll?page=1&limit=5`;
+      const response = await GET_REQUEST(url, Cookies.get("token"));
+      const raw = response as { success?: boolean; data?: unknown[]; pagination?: { total?: number } };
+      if (raw?.success && Array.isArray(raw.data)) {
+        const total = raw.pagination?.total ?? raw.data.length;
+        setPropertiesTotalFromApi(typeof total === "number" ? total : raw.data.length);
+      } else {
+        setPropertiesTotalFromApi(null);
+      }
+    } catch {
+      setPropertiesTotalFromApi(null);
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {
-      setIsLoading(true);
-
-      // Assuming there's a single dashboard endpoint that returns all these stats
-      // Replace URLS.fetchDashboardStats with your actual dashboard stats endpoint
       const dashboardResponse = await GET_REQUEST(
-        `${URLS.BASE}${URLS.fetchDashboardStats}`, // This URL needs to be defined in URLS.ts
+        `${URLS.BASE}${URLS.fetchDashboardStats}`,
         Cookies.get("token"),
       );
 
@@ -117,8 +141,6 @@ export default function AgentDashboard() {
     } catch (error) {
       console.error("Failed to fetch dashboard data:", error);
       toast.error("Failed to load dashboard data");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -161,17 +183,20 @@ export default function AgentDashboard() {
     return null;
   }
 
+  const totalBriefs = Math.max(stats.totalBriefs ?? 0, propertiesTotalFromApi ?? 0);
+  const totalActiveBriefs = Math.max(stats.totalActiveBriefs ?? 0, propertiesTotalFromApi ?? 0);
+
   const statCards = [
     {
       title: "Total Briefs",
-      value: stats.totalBriefs ?? 0,
+      value: totalBriefs,
       icon: BriefcaseIcon,
       color: "bg-blue-500",
       textColor: "text-blue-600",
     },
     {
       title: "Active Briefs",
-      value: stats.totalActiveBriefs ?? 0,
+      value: totalActiveBriefs,
       icon: TrendingUpIcon,
       color: "bg-green-500",
       textColor: "text-green-600",
@@ -207,17 +232,17 @@ export default function AgentDashboard() {
             Log out
           </button>
         </div>
-        {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-8 min-w-0">
-          <div className="min-w-0">
-            <h1 className="text-2xl sm:text-3xl font-bold text-[#09391C] font-display truncate">
+        {/* Header: welcome on its own row so it always displays fully; buttons on next row(s) */}
+        <div className="flex flex-col gap-4 mb-8">
+          <div className="w-full">
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#09391C] font-display">
               Welcome back, Agent {user.firstName}!
             </h1>
             <p className="text-[#5A5D63] mt-2">
               Manage your briefs and track your real estate performance
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 sm:items-center flex-shrink-0 flex-wrap">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 sm:items-center flex-wrap">
             <Link
               href="/my-listings"
               className="bg-[#8DDB90] hover:bg-[#7BC87F] text-white px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"

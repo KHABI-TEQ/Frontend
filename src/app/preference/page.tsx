@@ -35,6 +35,9 @@ import {
   ShortletPreferencePayload,
 } from "@/types/preference-form";
 import { POST_REQUEST } from "@/utils/requests";
+import AiFillBlock from "@/components/ai-form-fill/AiFillBlock";
+import { suggestPreference } from "@/services/aiFormService";
+import { mergeSuggestPreferenceIntoForm } from "@/utils/aiSuggestPreferenceMerge";
 
 // Preference type configurations - memoized to prevent recreation
 const PREFERENCE_CONFIGS = {
@@ -862,6 +865,27 @@ const PreferenceFormContent: React.FC = () => {
           transition={{ delay: 0.4, duration: 0.6 }}
         >
           {renderPreferenceTypeSelector}
+        </motion.div>
+
+        {/* AI-assisted form fill (Buyer/Public) — FRONTEND_API_GUIDE.md §10 */}
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.45, duration: 0.5 }}
+          className="mb-6 sm:mb-8"
+        >
+          <AiFillBlock
+            title="Describe what you're looking for"
+            placeholder="e.g. 2-bedroom flat in Victoria Island, Lagos, to rent, budget 3–5 million per year, with parking"
+            buttonLabel="Fill with AI"
+            onSuggest={async (userInput) => {
+              const res = await suggestPreference(userInput);
+              if (!res.success) throw new Error(res.message);
+              if (!res.data) return;
+              const merged = mergeSuggestPreferenceIntoForm(res.data);
+              updateFormData(merged as any, true);
+            }}
+          />
         </motion.div>
 
         {/* Step Progress */}

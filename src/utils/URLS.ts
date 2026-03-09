@@ -195,6 +195,14 @@ export const URLS = {
   transactionRegistrationRegister: "/transaction-registration/register",
 
   /**
+   * AI-assisted form filling (OpenAI) — see FRONTEND_API_GUIDE.md §10
+   */
+  /** POST /account/ai/suggest-property — Agent, Landlord, Developer; Bearer token */
+  aiSuggestProperty: "/account/ai/suggest-property",
+  /** POST /ai/suggest-preference — Public (no auth) */
+  aiSuggestPreference: "/ai/suggest-preference",
+
+  /**
    * Deal Site / Public Access Page Endpoints
    */
   dealSiteDetails: "/account/dealSite/details",

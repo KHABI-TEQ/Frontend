@@ -39,6 +39,9 @@ import Breadcrumb from "@/components/extrals/Breadcrumb";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { decrementFeature, selectShowCommissionFee, selectFeatureEntry } from "@/store/subscriptionFeaturesSlice";
 import { FEATURE_KEYS } from "@/hooks/useFeatureGate";
+import AiFillBlock from "@/components/ai-form-fill/AiFillBlock";
+import { suggestProperty } from "@/services/aiFormService";
+import { mergeSuggestPropertyIntoForm } from "@/utils/aiSuggestPropertyMerge";
 
 interface SharedPostPropertyFormProps {
   propertyType: "sell" | "rent" | "jv" | "shortlet";
@@ -261,6 +264,7 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
     setShowPropertySummary,
     getUserType,
     updatePropertyData,
+    setPropertyData,
   } = usePostPropertyContext();
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -704,6 +708,29 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
               <Stepper steps={steps} />
             </div>
           )}
+
+          {/* AI-assisted form fill (Agent, Landlord, Developer) — FRONTEND_API_GUIDE.md §10 */}
+          {!showPropertySummary && !showCommissionModal && currentStep === 0 && (() => {
+            const raw = (user as { userType?: string })?.userType ?? "";
+            const u = String(raw).trim().toLowerCase();
+            const canUseAi = u === "agent" || u === "landowners" || u === "landowner" || u === "developer";
+            return canUseAi ? (
+              <div className="mb-6">
+                <AiFillBlock
+                  title="Describe your property"
+                  placeholder="e.g. 3-bedroom semi-detached in Lekki, Lagos, for sale, 85 million, with parking and generator"
+                  buttonLabel="Fill with AI"
+                  onSuggest={async (userInput) => {
+                    const res = await suggestProperty(userInput, Cookies.get("token") ?? "");
+                    if (!res.success) throw new Error(res.message);
+                    if (!res.data) return;
+                    const merged = mergeSuggestPropertyIntoForm(propertyData, res.data);
+                    setPropertyData({ ...propertyData, ...merged });
+                  }}
+                />
+              </div>
+            ) : null;
+          })()}
 
           {/* Main Content with Formik */}
           <Formik

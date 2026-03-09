@@ -36,6 +36,9 @@ import {
 import CombinedAuthGuard from "@/logic/combinedAuthGuard";
 import AgreementModal from "@/components/post-property-components/AgreementModal";
 import Breadcrumb from "@/components/extrals/Breadcrumb";
+import AiFillBlock from "@/components/ai-form-fill/AiFillBlock";
+import { suggestProperty } from "@/services/aiFormService";
+import { mergeSuggestPropertyIntoForm } from "@/utils/aiSuggestPropertyMerge";
 
 interface OutrightSalesPropertyFormProps {
   pageTitle: string;
@@ -150,6 +153,7 @@ const OutrightSalesPropertyForm: React.FC<OutrightSalesPropertyFormProps> = ({
     currentStep,
     setCurrentStep,
     propertyData,
+    setPropertyData,
     images,
     isSubmitting,
     setIsSubmitting,
@@ -468,6 +472,23 @@ const OutrightSalesPropertyForm: React.FC<OutrightSalesPropertyFormProps> = ({
           {!showPropertySummary && !showCommissionModal && (
             <div className="mb-6 md:mb-8 overflow-x-auto">
               <Stepper steps={steps} />
+            </div>
+          )}
+
+          {!showPropertySummary && !showCommissionModal && currentStep === 0 && (
+            <div className="mb-6">
+              <AiFillBlock
+                title="Describe your property"
+                placeholder="e.g. 3-bedroom semi-detached in Lekki, Lagos, for sale, 85 million, with parking and generator"
+                buttonLabel="Fill with AI"
+                onSuggest={async (userInput) => {
+                  const res = await suggestProperty(userInput, Cookies.get("token") ?? "");
+                  if (!res.success) throw new Error(res.message);
+                  if (!res.data) return;
+                  const merged = mergeSuggestPropertyIntoForm(propertyData, res.data);
+                  setPropertyData({ ...propertyData, ...merged });
+                }}
+              />
             </div>
           )}
 
