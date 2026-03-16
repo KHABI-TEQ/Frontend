@@ -337,12 +337,17 @@ const OutrightSalesPropertyForm: React.FC<OutrightSalesPropertyFormProps> = ({
       }
 
       const listingScope = user?.userType === "Agent" ? "agent_listing" : "lasrera_marketplace";
+      const isLand = propertyData.propertyCategory === "Land";
       const payload = {
         listingScope,
         propertyType: "sell",
         propertyCategory: propertyData.propertyCategory,
-        propertyCondition: propertyData.propertyCondition,
-        typeOfBuilding: propertyData.typeOfBuilding,
+        ...(isLand
+          ? {}
+          : {
+              propertyCondition: propertyData.propertyCondition ?? "",
+              typeOfBuilding: propertyData.typeOfBuilding ?? "",
+            }),
         features: propertyData.features,
         docOnProperty: propertyData.documents.map((doc) => ({
           docName: doc,

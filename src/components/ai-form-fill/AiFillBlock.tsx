@@ -33,6 +33,10 @@ export default function AiFillBlock({
   const [showConvertingMessage, setShowConvertingMessage] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const convertingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Index of the last result we've already appended (avoids duplicate text when onresult re-fires with same results). */
+  const lastProcessedResultIndexRef = useRef(0);
+  /** Accumulated speech while listening; only written to input when user clicks Stop. */
+  const pendingTranscriptRef = useRef<string[]>([]);
 
   const handleSubmit = useCallback(async () => {
     const trimmed = input.trim();
@@ -62,6 +66,8 @@ export default function AiFillBlock({
       }
       recognitionRef.current = null;
     }
+    lastProcessedResultIndexRef.current = 0;
+    pendingTranscriptRef.current = [];
     setListening(false);
     const SpeechRecognitionAPI =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -74,18 +80,16 @@ export default function AiFillBlock({
     recognition.interimResults = true;
     recognition.lang = "en-NG";
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      const transcript = Array.from(event.results)
-        .filter((r) => r.isFinal)
-        .map((r) => r[0].transcript)
-        .join(" ");
-      if (transcript) {
-        setInput((prev) => (prev ? `${prev} ${transcript}` : transcript));
-        setShowConvertingMessage(false);
-        if (convertingTimeoutRef.current) {
-          clearTimeout(convertingTimeoutRef.current);
-          convertingTimeoutRef.current = null;
+      const results = Array.from(event.results);
+      const startIndex = lastProcessedResultIndexRef.current;
+      for (let i = startIndex; i < results.length; i++) {
+        const r = results[i];
+        if (r.isFinal && r.length > 0) {
+          const t = r[0].transcript?.trim();
+          if (t) pendingTranscriptRef.current.push(t);
         }
       }
+      lastProcessedResultIndexRef.current = results.length;
     };
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       const error = (event as SpeechRecognitionErrorEvent).error;
@@ -107,8 +111,9 @@ export default function AiFillBlock({
     };
     recognition.onend = () => {
       // If we didn't call stop() (ref still set), browser ended the session (e.g. silence).
-      // Restart so it keeps listening until you click Stop.
+      // Restart so it keeps listening until you click Stop. Don't reset pendingTranscriptRef.
       if (recognitionRef.current) {
+        lastProcessedResultIndexRef.current = 0;
         try {
           recognitionRef.current.start();
         } catch {
@@ -135,6 +140,15 @@ export default function AiFillBlock({
       }
     } finally {
       setListening(false);
+    }
+    const pending = pendingTranscriptRef.current;
+    pendingTranscriptRef.current = [];
+    lastProcessedResultIndexRef.current = 0;
+    if (pending.length > 0) {
+      const transcript = pending.join(" ").trim();
+      if (transcript) {
+        setInput((prev) => (prev ? `${prev} ${transcript}` : transcript));
+      }
     }
     setShowConvertingMessage(true);
     if (convertingTimeoutRef.current) clearTimeout(convertingTimeoutRef.current);
