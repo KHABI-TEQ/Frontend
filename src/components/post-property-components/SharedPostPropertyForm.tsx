@@ -39,9 +39,8 @@ import Breadcrumb from "@/components/extrals/Breadcrumb";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { decrementFeature, selectShowCommissionFee, selectFeatureEntry } from "@/store/subscriptionFeaturesSlice";
 import { FEATURE_KEYS } from "@/hooks/useFeatureGate";
-import AiFillBlock from "@/components/ai-form-fill/AiFillBlock";
-import { suggestProperty } from "@/services/aiFormService";
-import { mergeSuggestPropertyIntoForm } from "@/utils/aiSuggestPropertyMerge";
+import PropertyPostModeSelector from "@/components/post-property-components/PropertyPostModeSelector";
+import PropertyAiConversationFlow from "@/components/post-property-components/PropertyAiConversationFlow";
 
 interface SharedPostPropertyFormProps {
   propertyType: "sell" | "rent" | "jv" | "shortlet";
@@ -265,6 +264,7 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
     getUserType,
     updatePropertyData,
     setPropertyData,
+    postingMode,
   } = usePostPropertyContext();
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -703,36 +703,25 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
           </div>
 
           {/* Stepper */}
-          {!showPropertySummary && !showCommissionModal && (
+          {!showPropertySummary && !showCommissionModal && !(postingMode === "ai" && currentStep === 0) && (
             <div className="mb-6 md:mb-8 overflow-x-auto">
               <Stepper steps={steps} />
             </div>
           )}
 
-          {/* AI-assisted form fill (Agent, Landlord, Developer) — FRONTEND_API_GUIDE.md §10 */}
-          {!showPropertySummary && !showCommissionModal && currentStep === 0 && (() => {
-            const raw = (user as { userType?: string })?.userType ?? "";
-            const u = String(raw).trim().toLowerCase();
-            const canUseAi = u === "agent" || u === "landowners" || u === "landowner" || u === "developer";
-            return canUseAi ? (
-              <div className="mb-6">
-                <AiFillBlock
-                  title="Describe your property"
-                  placeholder="e.g. 3-bedroom semi-detached in Lekki, Lagos, for sale, 85 million, with parking and generator"
-                  buttonLabel="Fill with AI"
-                  onSuggest={async (userInput) => {
-                    const res = await suggestProperty(userInput, Cookies.get("token") ?? "");
-                    if (!res.success) throw new Error(res.message);
-                    if (!res.data) return;
-                    const merged = mergeSuggestPropertyIntoForm(propertyData, res.data);
-                    setPropertyData({ ...propertyData, ...merged });
-                  }}
-                />
-              </div>
-            ) : null;
-          })()}
+          {!showPropertySummary && !showCommissionModal && postingMode === null && (
+            <div className="mb-6 md:mb-8">
+              <PropertyPostModeSelector />
+            </div>
+          )}
 
-          {/* Main Content with Formik */}
+          {!showPropertySummary && !showCommissionModal && postingMode === "ai" && currentStep === 0 && (
+            <div className="mb-6 md:mb-8">
+              <PropertyAiConversationFlow briefTypeLabel="property" imageStepIndex={2} />
+            </div>
+          )}
+
+          {!showPropertySummary && !showCommissionModal && (postingMode === "manual" || (postingMode === "ai" && currentStep > 0)) && (
           <Formik
             initialValues={propertyData}
             validationSchema={getValidationSchema(currentStep, propertyData as unknown as Record<string, unknown>)}
@@ -823,6 +812,7 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
               </Form>
             )}
           </Formik>
+          )}
 
           {/* Commission Modal */}
           <AgreementModal
@@ -841,6 +831,7 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
           <SuccessModal
             isOpen={showSuccessModal}
             onClose={() => setShowSuccessModal(false)}
+            userType={user?.userType as "Agent" | "Developer" | "Landlord" | undefined}
           />
         </div>
       </div>

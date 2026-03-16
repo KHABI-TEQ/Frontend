@@ -1,10 +1,10 @@
 /** @format */
 
 "use client";
-import React, { useState, useCallback, useMemo, memo, Suspense } from "react";
+import React, { useState, useCallback, useMemo, memo, Suspense, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-hot-toast";
 import {
   PreferenceFormProvider,
@@ -35,9 +35,8 @@ import {
   ShortletPreferencePayload,
 } from "@/types/preference-form";
 import { POST_REQUEST } from "@/utils/requests";
-import AiFillBlock from "@/components/ai-form-fill/AiFillBlock";
-import { suggestPreference } from "@/services/aiFormService";
-import { mergeSuggestPreferenceIntoForm } from "@/utils/aiSuggestPreferenceMerge";
+import PreferenceModeSelector from "@/components/preference-form/PreferenceModeSelector";
+import PreferenceAiConversationFlow from "@/components/preference-form/PreferenceAiConversationFlow";
 
 // Preference type configurations - memoized to prevent recreation
 const PREFERENCE_CONFIGS = {
@@ -198,7 +197,8 @@ const SuccessModal = memo(
                 </h3>
                 <p className="text-gray-600 mb-6">
                   Thank you for submitting your property preference. We&apos;ll
-                  start matching you with suitable properties right away.
+                  start matching you with suitable properties right away. Your preference
+                  will appear for agents on the Agent Marketplace once it has been approved.
                 </p>
               </div>
 
@@ -348,14 +348,48 @@ const StepProgressIndicator = memo(
 StepProgressIndicator.displayName = "StepProgressIndicator";
 
 // Form content component
+const VALID_PREFERENCE_TYPES = ["buy", "rent", "shortlet", "joint-venture"] as const;
+
 const PreferenceFormContent: React.FC = () => {
   const router = useRouter();
-  const { state, updateFormData, resetForm, goToStep, dispatch, isFormValid } =
-    usePreferenceForm();
+  const searchParams = useSearchParams();
+  const {
+    state,
+    updateFormData,
+    resetForm,
+    goToStep,
+    dispatch,
+    isFormValid,
+    preferenceEntryMode,
+    preferenceAiFlowStep,
+    registerOnSubmittedFromAi,
+  } = usePreferenceForm();
 
   const [selectedPreferenceType, setSelectedPreferenceType] =
     useState<keyof typeof PREFERENCE_CONFIGS>("buy");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  // When user submits from AI summary, show the same success modal
+  useEffect(() => {
+    registerOnSubmittedFromAi(() => setShowSuccessModal(true));
+    return () => registerOnSubmittedFromAi(null);
+  }, [registerOnSubmittedFromAi]);
+
+  // Sync initial preference type from URL (e.g. /preference?type=rent opens Rent)
+  useEffect(() => {
+    const type = searchParams.get("type");
+    if (type && VALID_PREFERENCE_TYPES.includes(type as typeof VALID_PREFERENCE_TYPES[number])) {
+      const key = type as keyof typeof PREFERENCE_CONFIGS;
+      setSelectedPreferenceType(key);
+      dispatch({ type: "RESET_FORM" });
+      updateFormData(
+        { preferenceType: PREFERENCE_CONFIGS[key].preferenceType },
+        true,
+      );
+      goToStep(0);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount for initial type
+  }, []);
 
   // Handle preference type change - memoized to prevent recreation
   const handlePreferenceTypeChange = useCallback(
@@ -723,7 +757,7 @@ const PreferenceFormContent: React.FC = () => {
     setShowSuccessModal(false);
     // Reset form data immediately without confirmation
     dispatch({ type: "RESET_FORM" });
-    router.push("/market-place");
+    router.push("/");
   }, [dispatch, router]);
 
   // Render preference type selector - memoized to prevent recreation
@@ -829,7 +863,7 @@ const PreferenceFormContent: React.FC = () => {
                 d="M11 17l-5-5m0 0l5-5m-5 5h12"
               />
             </motion.svg>
-            <span>Back to Marketplace</span>
+            <span>Back</span>
           </motion.button>
 
           <motion.div
@@ -858,6 +892,33 @@ const PreferenceFormContent: React.FC = () => {
           </motion.div>
         </motion.div>
 
+        {/* Mode selector: Use AI or Fill form manually (AI_VS_MANUAL_FORM_IMPLEMENTATION_GUIDE) */}
+        {preferenceEntryMode === null && (
+          <motion.div
+            initial={{ y: 30, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.4, duration: 0.6 }}
+            className="mb-6 sm:mb-8"
+          >
+            <PreferenceModeSelector />
+          </motion.div>
+        )}
+
+        {/* AI conversation flow (when user chose Use AI and not yet continued to form) */}
+        {preferenceEntryMode === "ai" && preferenceAiFlowStep !== null && (
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.35, duration: 0.5 }}
+            className="mb-6 sm:mb-8"
+          >
+            <PreferenceAiConversationFlow />
+          </motion.div>
+        )}
+
+        {/* Manual form: type selector, steps, and form (when manual or after AI summary → Continue to form) */}
+        {(preferenceEntryMode === "manual" || (preferenceEntryMode === "ai" && preferenceAiFlowStep === null)) && (
+          <>
         {/* Preference Type Selector */}
         <motion.div
           initial={{ y: 30, opacity: 0 }}
@@ -865,27 +926,6 @@ const PreferenceFormContent: React.FC = () => {
           transition={{ delay: 0.4, duration: 0.6 }}
         >
           {renderPreferenceTypeSelector}
-        </motion.div>
-
-        {/* AI-assisted form fill (Buyer/Public) — FRONTEND_API_GUIDE.md §10 */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.45, duration: 0.5 }}
-          className="mb-6 sm:mb-8"
-        >
-          <AiFillBlock
-            title="Describe what you're looking for"
-            placeholder="e.g. 2-bedroom flat in Victoria Island, Lagos, to rent, budget 3–5 million per year, with parking"
-            buttonLabel="Fill with AI"
-            onSuggest={async (userInput) => {
-              const res = await suggestPreference(userInput);
-              if (!res.success) throw new Error(res.message);
-              if (!res.data) return;
-              const merged = mergeSuggestPreferenceIntoForm(res.data);
-              updateFormData(merged as any, true);
-            }}
-          />
         </motion.div>
 
         {/* Step Progress */}
@@ -979,6 +1019,8 @@ const PreferenceFormContent: React.FC = () => {
 
         {/* Debug Panel - Show current form data in development only */}
         {debugPanel}
+          </>
+        )}
       </div>
 
       {/* Success Modal */}

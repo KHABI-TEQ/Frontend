@@ -7,6 +7,20 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --font-roboto: "Roboto", sans-serif;
+  --font-archivo: "Archivo", sans-serif;
+  --font-epilogue: "Epilogue", sans-serif;
+}
+
+/* Classes that set font CSS variables (used by layout body); fonts loaded via link in layout */
+.font-roboto-var {
+  --font-roboto: "Roboto", sans-serif;
+}
+.font-archivo-var {
+  --font-archivo: "Archivo", sans-serif;
+}
+.font-epilogue-var {
+  --font-epilogue: "Epilogue", sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -45,6 +59,10 @@ body {
 
 .font-archivo {
   font-family: var(--font-archivo), sans-serif;
+}
+
+.font-epilogue {
+  font-family: var(--font-epilogue), sans-serif;
 }
 
 @font-face {

@@ -963,8 +963,8 @@ const ProductDetailsPage = () => {
               if (typeof window !== 'undefined' && window.history.length > 1) {
                 router.back();
               } else {
-                // Fallback to market-place if no history
-                router.push('/market-place');
+                // Fallback to home if no history
+                router.push('/');
               }
             }}
             className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
@@ -987,8 +987,8 @@ const ProductDetailsPage = () => {
                 if (typeof window !== 'undefined' && window.history.length > 1) {
                   router.back();
                 } else {
-                  // Fallback to market-place if no history
-                  router.push('/market-place');
+                  // Fallback to home if no history
+                  router.push('/');
                 }
               }}
               className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"

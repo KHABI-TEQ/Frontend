@@ -48,6 +48,21 @@ export function mergeSuggestPropertyIntoForm(
   if (!empty(apiData.addtionalInfo)) out.additionalInfo = toStr(apiData.addtionalInfo);
   if (Array.isArray(apiData.features) && apiData.features.length > 0) out.features = apiData.features as string[];
 
+  const docs = apiData.documents ?? apiData.docOnProperty;
+  if (Array.isArray(docs) && docs.length > 0) {
+    out.documents = docs.map((d) => (typeof d === "string" ? d : (d as { docName?: string })?.docName ?? "")).filter(Boolean);
+  }
+
+  const landSize = apiData.landSize as { measurementType?: string; size?: number } | undefined;
+  if (landSize) {
+    if (!empty(landSize.measurementType)) out.measurementType = toStr(landSize.measurementType);
+    if (landSize.size != null && typeof landSize.size === "number" && !Number.isNaN(landSize.size)) {
+      out.landSize = String(landSize.size);
+    }
+  }
+  if (!empty(apiData.measurementType)) out.measurementType = toStr(apiData.measurementType);
+  if (!empty(apiData.landSize) && typeof apiData.landSize === "string") out.landSize = toStr(apiData.landSize);
+
   if (loc) {
     if (!empty(loc.state) && empty(current.state)) {
       out.state = { value: toStr(loc.state), label: toStr(loc.state) };

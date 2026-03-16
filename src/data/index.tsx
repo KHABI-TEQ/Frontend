@@ -23,25 +23,21 @@ export const navData: {
     isClicked: true,
   },
   {
-    name: 'Marketplace',
-    url: '/market-place',
+    name: 'Client',
+    url: '/preference',
     isClicked: false,
     additionalLinks: [ 
       {
         name: 'Buy',
-        url: '/market-place',
-      },
-      {
-        name: 'Sell',
-        url: '/my-listings',
+        url: '/preference?type=buy',
       },
       {
         name: 'Rent',
-        url: '/market-place',
+        url: '/preference?type=rent',
       },
       {
         name: 'Joint Venture',
-        url: '/market-place',
+        url: '/preference?type=joint-venture',
       },
     ],
   },
@@ -56,8 +52,12 @@ export const navData: {
     isClicked: false,
     additionalLinks: [ 
       {
-        name: 'Market Place',
-        url: '/agent/market-place',
+        name: 'Sell',
+        url: '/my-listings',
+      },
+      {
+        name: 'Agent Market Place',
+        url: '/agent-marketplace',
       },
     ],
   },
@@ -90,25 +90,21 @@ export const agentnavData: {
     isClicked: true,
   },
   {
-    name: 'Marketplace',
-    url: '/market-place',
+    name: 'Client',
+    url: '/preference',
     isClicked: false,
     additionalLinks: [
       {
-        name: 'list a property',
-        url: '/my-listings',
-      },
-      {
         name: 'Buy a property',
-        url: '/market-place',
+        url: '/preference?type=buy',
       },
       {
         name: 'Rent a property',
-        url: '/market-place',
+        url: '/preference?type=rent',
       },
       {
         name: 'Joint Venture',
-        url: '/market-place',
+        url: '/preference?type=joint-venture',
       },
     ],
   },
@@ -126,6 +122,16 @@ export const agentnavData: {
     name: 'Agent',
     url: '/dashboard',
     isClicked: false,
+    additionalLinks: [
+      {
+        name: 'Sell',
+        url: '/my-listings',
+      },
+      {
+        name: 'Agent Market Place',
+        url: '/agent-marketplace',
+      },
+    ],
   },
   {
     name: 'Policies',
@@ -154,7 +160,7 @@ export const exploreData: { name: string; url: string; isClicked: boolean }[] =
     },
     {
       name: 'Buy a property',
-      url: '/market-place',
+      url: '/preference',
       isClicked: false,
     },
     {
@@ -172,11 +178,11 @@ export const exploreData: { name: string; url: string; isClicked: boolean }[] =
 export const servicesData: { name: string; url: string }[] = [
   {
     name: 'Property Sales',
-    url: '/market-place',
+    url: '/preference',
   },
   {
     name: 'Property Rental',
-    url: '/market-place',
+    url: '/preference',
   },
   {
     name: 'Agent Partnership Program',

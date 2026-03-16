@@ -51,7 +51,7 @@ const ContinueInspectionPage = () => {
     if (!initialLoad && selectedProperties.length === 0) {
       // Add a small delay to prevent immediate redirect during navigation
       const timer = setTimeout(() => {
-        router.push("/market-place");
+        router.push("/");
       }, 500);
       return () => clearTimeout(timer);
     }
@@ -170,7 +170,7 @@ const ContinueInspectionPage = () => {
   const handleRequestAgain = () => {
     setShowSuccessModal(false);
     clearAllSelections();
-    router.push("/market-place");
+    router.push("/");
   };
 
   const handleWaitForReply = () => {
@@ -196,8 +196,8 @@ const ContinueInspectionPage = () => {
             Please select properties from the marketplace to continue with inspection.
           </p>
           <Button
-            onClick={() => router.push("/market-place")}
-            value="Go to Marketplace"
+            onClick={() => router.push("/preference")}
+            value="Submit Property Preference"
             className="px-6 py-3 bg-[#8DDB90] text-white rounded-lg font-medium hover:bg-[#76c77a] transition-colors"
           />
         </div>
@@ -319,7 +319,7 @@ const ContinueInspectionPage = () => {
                 onRemove={handleRemoveProperty}
                 onClearNegotiatedPrice={handleClearNegotiatedPrice}
                 onClearLOIDocument={handleClearLOIDocument}
-                onAddProperty={() => router.push("/market-place")}
+                onAddProperty={() => router.push("/preference")}
                 onPropertyClick={handlePropertyClick}
                 negotiatedPrices={negotiatedPrices}
                 loiDocuments={loiDocuments}
@@ -329,10 +329,10 @@ const ContinueInspectionPage = () => {
               {selectedProperties.length > 0 && (
                 <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
                   <button
-                    onClick={() => router.push("/market-place")}
+                    onClick={() => router.push("/preference")}
                     className="px-6 py-3 border border-[#E9EBEB] text-[#5A5D63] rounded-lg font-medium hover:bg-gray-50 transition-colors"
                   >
-                    Back to Marketplace
+                    Back to Preference
                   </button>
                   <Button
                     onClick={handleProceedToDateTime}

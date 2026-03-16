@@ -88,8 +88,7 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
   const quickActions = [
     { name: 'Submit Property Preference', url: '/preference' },
     { name: 'Join as an Agent', url: '/agent-kyc' },
-    { name: 'Verify Documents', url: '/document-verification' },
-    { name: 'Browse Properties', url: '/market-place' }
+    { name: 'Verify Documents', url: '/document-verification' }
   ];
 
   const [email, setEmail] = useState('');

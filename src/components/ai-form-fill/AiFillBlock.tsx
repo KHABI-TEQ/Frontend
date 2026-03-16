@@ -54,6 +54,15 @@ export default function AiFillBlock({
 
   const startVoice = useCallback(() => {
     if (typeof window === "undefined") return;
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch {
+        // ignore if already stopped or in error state
+      }
+      recognitionRef.current = null;
+    }
+    setListening(false);
     const SpeechRecognitionAPI =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognitionAPI) {
@@ -71,22 +80,27 @@ export default function AiFillBlock({
         .join(" ");
       if (transcript) {
         setInput((prev) => (prev ? `${prev} ${transcript}` : transcript));
+        setShowConvertingMessage(false);
+        if (convertingTimeoutRef.current) {
+          clearTimeout(convertingTimeoutRef.current);
+          convertingTimeoutRef.current = null;
+        }
       }
     };
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       const error = (event as SpeechRecognitionErrorEvent).error;
+      recognitionRef.current = null;
+      setListening(false);
       if (error === "aborted") return;
       if (error === "no-speech") {
-        // Don't stop or toast: onend will fire and we'll restart so it keeps waiting for you
         return;
       }
-      setListening(false);
       if (error === "not-allowed") {
         toast.error("Microphone access denied. Allow the mic and try again.");
         return;
       }
       if (error === "network") {
-        toast.error("Network error. Check your connection and try again.");
+        toast.error("Voice needs a stable internet connection. You can type your description below instead.");
         return;
       }
       toast.error("Voice input failed. Try typing instead.");
@@ -110,17 +124,24 @@ export default function AiFillBlock({
   }, []);
 
   const stopVoice = useCallback(() => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-      recognitionRef.current = null;
+    try {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch {
+          // ignore if already stopped or in error state
+        }
+        recognitionRef.current = null;
+      }
+    } finally {
+      setListening(false);
     }
-    setListening(false);
     setShowConvertingMessage(true);
     if (convertingTimeoutRef.current) clearTimeout(convertingTimeoutRef.current);
     convertingTimeoutRef.current = setTimeout(() => {
       setShowConvertingMessage(false);
       convertingTimeoutRef.current = null;
-    }, 2500);
+    }, 4000);
   }, []);
 
   useEffect(() => {
@@ -135,6 +156,10 @@ export default function AiFillBlock({
         @keyframes ai-fill-bar {
           0%, 100% { transform: scaleY(0.4); }
           50% { transform: scaleY(1); }
+        }
+        @keyframes ai-converting-glow {
+          0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.2); }
+          50% { opacity: 1; box-shadow: 0 0 12px 2px rgba(34, 197, 94, 0.25); }
         }
       `}</style>
       <div className="mb-2 flex items-center gap-2 text-[#09391C]">
@@ -199,9 +224,16 @@ export default function AiFillBlock({
           </div>
         </div>
         {showConvertingMessage && (
-          <p className="mt-2 text-sm text-[#5A5D63] italic">
-            Converting your speech to text…
-          </p>
+          <div
+            className="mt-3 flex items-center gap-3 rounded-xl border border-[#8DDB90]/50 bg-gradient-to-r from-[#f0fdf4] to-[#dcfce7] px-4 py-3"
+            style={{ animation: "ai-converting-glow 1.5s ease-in-out infinite" }}
+          >
+            <Loader2 className="h-6 w-6 flex-shrink-0 animate-spin text-[#16a34a]" aria-hidden />
+            <div>
+              <p className="font-medium text-[#09391C]">Converting your speech to text…</p>
+              <p className="text-xs text-[#5A5D63] mt-0.5">This may take a moment</p>
+            </div>
+          </div>
         )}
         <button
           type="button"

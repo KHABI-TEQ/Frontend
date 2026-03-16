@@ -10,7 +10,7 @@ const PublicProfileFallback: React.FC<{ message?: string }> = ({ message }) => {
         <p className="text-[#5A5D63] mb-6">{message || 'The public profile you are looking for does not exist or the link is invalid.'}</p>
         <div className="flex items-center justify-center gap-3">
           <Link href="/" className="px-4 py-2 bg-[#8DDB90] text-white rounded-lg">Go Home</Link>
-          <Link href="/market-place" className="px-4 py-2 border border-gray-200 rounded-lg">Browse Properties</Link>
+          <Link href="/preference" className="px-4 py-2 border border-gray-200 rounded-lg">Submit Property Preference</Link>
         </div>
       </div>
     </div>

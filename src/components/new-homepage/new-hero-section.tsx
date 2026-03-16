@@ -499,27 +499,17 @@ const NewHeroSection = () => {
             Khabiteq connects buyers, tenants, developers, and verified agents with speed, transparency, and trust.
           </motion.p>
 
-          {/* CTA Buttons */}
+          {/* Single CTA — "Browse Properties" removed; only preference submission */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
             className='flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center max-w-lg mx-auto px-4 sm:px-0'>
-            
-            {/* Primary CTA */}
             <Link href="/preference" className='w-full sm:w-auto'>
               <Button
                 green={true}
                 className='w-full sm:w-auto min-h-[48px] sm:min-h-[56px] px-4 sm:px-6 md:px-8 py-3 sm:py-4 text-sm sm:text-base md:text-lg font-bold text-white bg-[#8DDB90] hover:bg-[#7BC87F] transition-all duration-300 transform hover:scale-105 shadow-lg text-center flex items-center justify-center whitespace-nowrap'>
                 <span className="block leading-tight">Submit Your Property Preference</span>
-              </Button>
-            </Link>
-
-            {/* Secondary CTA */}
-            <Link href="/market-place" className='w-full sm:w-auto'>
-              <Button
-                className='w-full sm:w-auto min-h-[48px] sm:min-h-[56px] px-4 sm:px-6 md:px-8 py-3 sm:py-4 text-sm sm:text-base md:text-lg font-bold text-white border-2 border-white hover:bg-white hover:text-[#0B423D] transition-all duration-300 text-center flex items-center justify-center whitespace-nowrap'>
-                <span className="block leading-tight">Browse Properties</span>
               </Button>
             </Link>
           </motion.div>

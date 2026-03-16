@@ -543,6 +543,8 @@ const UpdateRentPropertyForm: React.FC<UpdateRentPropertyFormProps> = ({
               setShowSuccessModal(false);
               router.push("/my-listings");
             }}
+            isUpdate={true}
+            userType={user?.userType as "Agent" | "Developer" | "Landlord" | undefined}
           />
         </div>
       </div>

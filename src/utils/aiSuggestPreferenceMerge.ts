@@ -61,6 +61,24 @@ export function mergeSuggestPreferenceIntoForm(
   if (apiData.propertyDetails && typeof apiData.propertyDetails === "object") {
     out.propertyDetails = apiData.propertyDetails;
   }
+  if (apiData.developmentDetails && typeof apiData.developmentDetails === "object") {
+    out.developmentDetails = apiData.developmentDetails;
+  }
+  if (apiData.bookingDetails && typeof apiData.bookingDetails === "object") {
+    out.bookingDetails = apiData.bookingDetails;
+  }
   if (apiData.additionalNotes) out.additionalNotes = toStr(apiData.additionalNotes);
+  if (apiData.nearbyLandmark) out.nearbyLandmark = toStr(apiData.nearbyLandmark);
+
+  const contact = apiData.contactInfo as Record<string, unknown> | undefined;
+  if (contact && (contact.email || contact.phoneNumber || contact.fullName)) {
+    out.contactInfo = {
+      ...contact,
+      fullName: toStr(contact.fullName),
+      email: toStr(contact.email),
+      phoneNumber: toStr(contact.phoneNumber),
+      ...(contact.whatsappNumber != null && { whatsappNumber: toStr(contact.whatsappNumber) }),
+    };
+  }
   return out;
 }

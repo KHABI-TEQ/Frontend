@@ -3,7 +3,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import Link from 'next/link';
 import { GET_REQUEST } from '@/utils/requests';
 import { URLS } from '@/utils/URLS';
 import { EnhancedGlobalPropertyCard, createPropertyCardData } from '@/components/common/property-cards';
@@ -175,20 +174,6 @@ const FeaturedPropertiesSection = () => {
             <p className='text-gray-600 mb-4'>No featured properties available at the moment.</p>
           </div>
         )}
-
-        {/* View More Button */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
-          viewport={{ once: true }}
-          className='text-center mt-12'>
-          <Link href="/market-place">
-            <button className='bg-white border-2 border-[#8DDB90] text-[#8DDB90] hover:bg-[#8DDB90] hover:text-white px-8 py-4 rounded-full font-bold transition-all duration-300 shadow-lg hover:shadow-xl'>
-              View More Properties
-            </button>
-          </Link>
-        </motion.div>
       </div>
     </section>
   );

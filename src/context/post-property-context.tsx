@@ -112,6 +112,17 @@ export interface PropertyData {
   videos?: PropertyVideo[];
 }
 
+export type PostingMode = "ai" | "manual" | null;
+
+export interface AiConversationMessage {
+  role: "user" | "assistant";
+  content: string;
+  /** Suggested data from AI (assistant only) */
+  data?: Record<string, unknown>;
+  /** Fields still missing (assistant only) */
+  missingFields?: string[];
+}
+
 interface PostPropertyContextType {
   currentStep: number;
   setCurrentStep: (step: number) => void;
@@ -138,6 +149,18 @@ interface PostPropertyContextType {
   setShowPropertySummary: (show: boolean) => void;
   getUserCommissionRate: () => number;
   getUserType: () => "landowner" | "agent";
+  /** "ai" | "manual" | null. When null, user has not yet chosen. */
+  postingMode: PostingMode;
+  setPostingMode: Dispatch<SetStateAction<PostingMode>>;
+  /** Messages in the AI conversation flow */
+  aiConversationMessages: AiConversationMessage[];
+  setAiConversationMessages: Dispatch<SetStateAction<AiConversationMessage[]>>;
+  /** Latest suggested data from AI (readable summary + used when continuing to image upload) */
+  aiCollectedData: Record<string, unknown> | null;
+  setAiCollectedData: Dispatch<SetStateAction<Record<string, unknown> | null>>;
+  /** "conversation" | "summary". When "summary", show data summary then "Continue to image upload". */
+  aiFlowStep: "conversation" | "summary" | null;
+  setAiFlowStep: Dispatch<SetStateAction<"conversation" | "summary" | null>>;
 }
 
 const PostPropertyContext = createContext<PostPropertyContextType | undefined>(
@@ -217,6 +240,10 @@ export function PostPropertyProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [showCommissionModal, setShowCommissionModal] = useState(false);
   const [showPropertySummary, setShowPropertySummary] = useState(false);
+  const [postingMode, setPostingMode] = useState<PostingMode>(null);
+  const [aiConversationMessages, setAiConversationMessages] = useState<AiConversationMessage[]>([]);
+  const [aiCollectedData, setAiCollectedData] = useState<Record<string, unknown> | null>(null);
+  const [aiFlowStep, setAiFlowStep] = useState<"conversation" | "summary" | null>(null);
 
   const updatePropertyData = (
     field: keyof PropertyData | "resetFormExcept" | "resetFieldsAfterCategory" | "initializePropertyType",
@@ -311,6 +338,10 @@ export function PostPropertyProvider({ children }: { children: ReactNode }) {
     setIsSubmitting(false);
     setShowCommissionModal(false);
     setShowPropertySummary(false);
+    setPostingMode(null);
+    setAiConversationMessages([]);
+    setAiCollectedData(null);
+    setAiFlowStep(null);
   };
 
   const populatePropertyData = (property: any) => {
@@ -428,6 +459,14 @@ export function PostPropertyProvider({ children }: { children: ReactNode }) {
     setShowPropertySummary,
     getUserCommissionRate,
     getUserType,
+    postingMode,
+    setPostingMode,
+    aiConversationMessages,
+    setAiConversationMessages,
+    aiCollectedData,
+    setAiCollectedData,
+    aiFlowStep,
+    setAiFlowStep,
   };
 
   return (

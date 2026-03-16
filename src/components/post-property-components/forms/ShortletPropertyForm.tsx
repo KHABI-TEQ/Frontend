@@ -36,9 +36,8 @@ import {
 import CombinedAuthGuard from "@/logic/combinedAuthGuard";
 import AgreementModal from "@/components/post-property-components/AgreementModal";
 import Breadcrumb from "@/components/extrals/Breadcrumb";
-import AiFillBlock from "@/components/ai-form-fill/AiFillBlock";
-import { suggestProperty } from "@/services/aiFormService";
-import { mergeSuggestPropertyIntoForm } from "@/utils/aiSuggestPropertyMerge";
+import PropertyPostModeSelector from "@/components/post-property-components/PropertyPostModeSelector";
+import PropertyAiConversationFlow from "@/components/post-property-components/PropertyAiConversationFlow";
 
 interface ShortletPropertyFormProps {
   pageTitle: string;
@@ -168,6 +167,7 @@ const ShortletPropertyForm: React.FC<ShortletPropertyFormProps> = ({
     showPropertySummary,
     setShowPropertySummary,
     updatePropertyData,
+    postingMode,
   } = usePostPropertyContext();
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -499,29 +499,33 @@ const ShortletPropertyForm: React.FC<ShortletPropertyFormProps> = ({
             </p>
           </div>
 
-          {!showPropertySummary && !showCommissionModal && (
+          {!showPropertySummary && !showCommissionModal && !(postingMode === "ai" && currentStep === 0) && (
             <div className="mb-6 md:mb-8 overflow-x-auto">
               <Stepper steps={steps} />
             </div>
           )}
 
-          {!showPropertySummary && !showCommissionModal && currentStep === 0 && (
-            <div className="mb-6">
-              <AiFillBlock
-                title="Describe your property"
-                placeholder="e.g. 3-bedroom semi-detached in Lekki, Lagos, for sale, 85 million, with parking and generator"
-                buttonLabel="Fill with AI"
-                onSuggest={async (userInput) => {
-                  const res = await suggestProperty(userInput, Cookies.get("token") ?? "");
-                  if (!res.success) throw new Error(res.message);
-                  if (!res.data) return;
-                  const merged = mergeSuggestPropertyIntoForm(propertyData, res.data);
-                  setPropertyData({ ...propertyData, ...merged });
-                }}
-              />
+          {showPropertySummary && !showCommissionModal && (
+            <div className="mb-6 md:mb-8">
+              <div className="bg-white rounded-xl shadow-sm p-4 md:p-8">
+                <EnhancedPropertySummary />
+              </div>
             </div>
           )}
 
+          {!showPropertySummary && !showCommissionModal && postingMode === null && (
+            <div className="mb-6 md:mb-8">
+              <PropertyPostModeSelector />
+            </div>
+          )}
+
+          {!showPropertySummary && !showCommissionModal && postingMode === "ai" && currentStep === 0 && (
+            <div className="mb-6 md:mb-8">
+              <PropertyAiConversationFlow briefTypeLabel="Shortlet" imageStepIndex={2} />
+            </div>
+          )}
+
+          {!showPropertySummary && !showCommissionModal && (postingMode === "manual" || (postingMode === "ai" && currentStep > 0)) && (
           <Formik
             initialValues={propertyData}
             validationSchema={getValidationSchema(currentStep, propertyData as unknown as Record<string, unknown>)}
@@ -605,6 +609,7 @@ const ShortletPropertyForm: React.FC<ShortletPropertyFormProps> = ({
               </Form>
             )}
           </Formik>
+          )}
 
           <AgreementModal
             open={showCommissionModal}
@@ -621,6 +626,7 @@ const ShortletPropertyForm: React.FC<ShortletPropertyFormProps> = ({
           <SuccessModal
             isOpen={showSuccessModal}
             onClose={() => setShowSuccessModal(false)}
+            userType={user?.userType as "Agent" | "Developer" | "Landlord" | undefined}
           />
         </div>
       </div>

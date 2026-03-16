@@ -20,7 +20,6 @@ const publicRoutes = [
   "/auth/forgot-password/reset",
   "/auth/verification-sent",
   "/agent-marketplace",
-  "/market-place",
   "/landlord",
   "/agent",
   "/referral",
@@ -59,6 +58,11 @@ export function middleware(request: NextRequest) {
   // Skip middleware for API routes and static files
   if (pathname.startsWith("/api") || pathname.startsWith("/_next")) {
     return NextResponse.next();
+  }
+
+  // Redirect /market-place to home (route removed from app)
+  if (pathname === "/market-place" || pathname.startsWith("/market-place/")) {
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   // Redirect old agent auth routes to new consolidated auth

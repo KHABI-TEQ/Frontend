@@ -775,7 +775,7 @@ const UpdatePreferenceFormContent: React.FC = () => {
   // Handle go to marketplace - memoized to prevent recreation
   const handleGoToMarketplace = useCallback(() => {
     setShowSuccessModal(false);
-    router.push("/market-place");
+    router.push("/");
   }, [router]);
 
   // Render preference type selector - memoized to prevent recreation

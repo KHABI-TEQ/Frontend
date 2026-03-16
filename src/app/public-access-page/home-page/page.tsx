@@ -541,7 +541,7 @@ export default function HomePageSettings() {
                       type="text"
                       value={formData.ctaLink}
                       onChange={(e) => handleInputChange("ctaLink", e.target.value)}
-                      placeholder="/market-place"
+                      placeholder="/preference"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200"
                     />
                   </div>

@@ -14,9 +14,9 @@ export const PROMOTIONS: Promotion[] = [
     id: 'promo-top-1',
     slot: 'top-header',
     imageUrl: '/placeholder-property.svg',
-    link: '/market-place',
+    link: '/preference',
     active: true,
-    pages: ['/', '/market-place'],
+    pages: ['/'],
     weight: 10,
   },
   {
@@ -41,9 +41,9 @@ export const PROMOTIONS: Promotion[] = [
     id: 'promo-market-1',
     slot: 'marketplace-top',
     imageUrl: '/vercel.svg',
-    link: '/market-place?tab=buy',
+    link: '/preference',
     active: true,
-    pages: ['/market-place'],
+    pages: ['/'],
     weight: 9,
   },
 ];

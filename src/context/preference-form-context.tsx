@@ -209,10 +209,29 @@ function preferenceFormReducer(
   }
 }
 
+// AI flow types for preference (align with AI_VS_MANUAL_FORM_IMPLEMENTATION_GUIDE)
+export type PreferenceEntryMode = "ai" | "manual" | null;
+export interface PreferenceAiMessage {
+  role: "user" | "assistant";
+  content: string;
+  data?: Record<string, unknown>;
+  missingFields?: string[];
+}
+
 // Context type
 interface PreferenceFormContextType {
   state: PreferenceFormState;
   dispatch: React.Dispatch<PreferenceFormAction>;
+
+  // AI vs manual entry (preference submission flow)
+  preferenceEntryMode: PreferenceEntryMode;
+  setPreferenceEntryMode: React.Dispatch<React.SetStateAction<PreferenceEntryMode>>;
+  preferenceAiFlowStep: "conversation" | "summary" | null;
+  setPreferenceAiFlowStep: React.Dispatch<React.SetStateAction<"conversation" | "summary" | null>>;
+  preferenceAiMessages: PreferenceAiMessage[];
+  setPreferenceAiMessages: React.Dispatch<React.SetStateAction<PreferenceAiMessage[]>>;
+  preferenceAiCollectedData: Record<string, unknown> | null;
+  setPreferenceAiCollectedData: React.Dispatch<React.SetStateAction<Record<string, unknown> | null>>;
 
   // Helper functions
   goToStep: (step: number) => void;
@@ -234,6 +253,10 @@ interface PreferenceFormContextType {
   getValidationErrorsForField: (fieldName: string) => ValidationError[];
   resetForm: () => void;
   triggerValidation: (step?: number) => void;
+  /** Called by AI flow after successful submit; page registers a callback (e.g. show success modal) via registerOnSubmittedFromAi */
+  triggerSubmittedFromAi: () => void;
+  /** Register a callback to run when preference is submitted from AI summary (e.g. show success modal). Pass null to unregister. */
+  registerOnSubmittedFromAi: (fn: (() => void) | null) => void;
 }
 
 // Create context
@@ -250,6 +273,20 @@ export const PreferenceFormProvider: React.FC<{ children: ReactNode }> = ({
     undefined,
     createInitialState, // Lazy initial state
   );
+
+  // AI vs manual entry state (preference submission)
+  const [preferenceEntryMode, setPreferenceEntryMode] = React.useState<PreferenceEntryMode>(null);
+  const [preferenceAiFlowStep, setPreferenceAiFlowStep] = React.useState<"conversation" | "summary" | null>(null);
+  const [preferenceAiMessages, setPreferenceAiMessages] = React.useState<PreferenceAiMessage[]>([]);
+  const [preferenceAiCollectedData, setPreferenceAiCollectedData] = React.useState<Record<string, unknown> | null>(null);
+
+  const onSubmittedFromAiCallbackRef = useRef<(() => void) | null>(null);
+  const registerOnSubmittedFromAi = useCallback((fn: (() => void) | null) => {
+    onSubmittedFromAiCallbackRef.current = fn;
+  }, []);
+  const triggerSubmittedFromAi = useCallback(() => {
+    onSubmittedFromAiCallbackRef.current?.();
+  }, []);
 
   // Use ref to track if we're already updating to prevent loops
   const isUpdatingRef = useRef(false);
@@ -895,8 +932,12 @@ export const PreferenceFormProvider: React.FC<{ children: ReactNode }> = ({
   );
 
   const resetForm = useCallback(() => {
-    // Reset form data immediately without confirmation
+    // Reset form data and AI flow state
     dispatch({ type: "RESET_FORM" });
+    setPreferenceEntryMode(null);
+    setPreferenceAiFlowStep(null);
+    setPreferenceAiMessages([]);
+    setPreferenceAiCollectedData(null);
   }, []);
 
   // Manual validation - removed automatic validation to prevent infinite loops
@@ -915,6 +956,14 @@ export const PreferenceFormProvider: React.FC<{ children: ReactNode }> = ({
     () => ({
       state,
       dispatch,
+      preferenceEntryMode,
+      setPreferenceEntryMode,
+      preferenceAiFlowStep,
+      setPreferenceAiFlowStep,
+      preferenceAiMessages,
+      setPreferenceAiMessages,
+      preferenceAiCollectedData,
+      setPreferenceAiCollectedData,
       goToStep,
       goToNextStep,
       goToPreviousStep,
@@ -928,14 +977,18 @@ export const PreferenceFormProvider: React.FC<{ children: ReactNode }> = ({
       getValidationErrorsForField,
       resetForm,
       triggerValidation,
+      triggerSubmittedFromAi,
+      registerOnSubmittedFromAi,
     }),
     [
-      // Only include state properties that actually change
       state.currentStep,
       state.formData,
       state.isSubmitting,
       state.validationErrors,
-      // Functions are stable now
+      preferenceEntryMode,
+      preferenceAiFlowStep,
+      preferenceAiMessages,
+      preferenceAiCollectedData,
       updateFormData,
       validateStep,
       isStepValid,
@@ -946,6 +999,8 @@ export const PreferenceFormProvider: React.FC<{ children: ReactNode }> = ({
       getValidationErrorsForField,
       resetForm,
       triggerValidation,
+      triggerSubmittedFromAi,
+      registerOnSubmittedFromAi,
       goToStep,
       goToNextStep,
       goToPreviousStep,

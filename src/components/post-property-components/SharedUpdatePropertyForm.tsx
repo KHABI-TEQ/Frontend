@@ -863,6 +863,7 @@ const SharedUpdatePropertyForm: React.FC<SharedUpdatePropertyFormProps> = ({
             isOpen={showSuccessModal}
             onClose={() => setShowSuccessModal(false)}
             isUpdate={true}
+            userType={user?.userType as "Agent" | "Developer" | "Landlord" | undefined}
           />
         </div>
       </div>

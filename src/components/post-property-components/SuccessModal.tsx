@@ -6,20 +6,28 @@ import { CheckCircle, X, Home, Eye } from "lucide-react";
 import Button from "@/components/general-components/button";
 import { useRouter } from "next/navigation";
 
+type PublisherUserType = "Developer" | "Landlord";
+type SuccessModalUserType = "Agent" | PublisherUserType;
+
 interface SuccessModalProps {
   isOpen: boolean;
   onClose: () => void;
   isUpdate?: boolean; // New prop to differentiate between create and update
-} 
+  /** User type for dynamic success message. Pass from user context (e.g. user?.userType). */
+  userType?: SuccessModalUserType | string | null;
+}
 
 const SuccessModal: React.FC<SuccessModalProps> = ({
   isOpen,
   onClose,
   isUpdate = false,
+  userType,
 }) => {
   const router = useRouter();
+  const isPublisher = userType === "Developer" || userType === "Landlord";
+  const isAgent = userType === "Agent";
 
-    const handleReturnDashboard = () => {
+  const handleReturnDashboard = () => {
     router.push("/dashboard");
     onClose();
   };
@@ -30,6 +38,45 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
   };
 
   if (!isOpen) return null;
+
+  const getSubtitle = () => {
+    if (isUpdate) return "Your property listing has been updated with the latest information";
+    if (isPublisher) return "Your property is now live and ready for potential buyers and Agents Request to Marketing.";
+    if (isAgent) return "Your property is now live and ready for potential buyers.";
+    return "Your property is now live and ready for potential buyers.";
+  };
+
+  const getWhatHappensNext = () => {
+    if (isUpdate) {
+      return (
+        <>
+          <li>• Your updated property details are now live</li>
+          <li>• Changes will be visible to potential buyers immediately</li>
+          <li>• Existing inquiries will see the updated information</li>
+          <li>• You&apos;ll continue receiving notifications for new inquiries</li>
+        </>
+      );
+    }
+    if (isPublisher) {
+      return (
+        <>
+          <li>• Your property is automatically approved</li>
+          <li>• It will appear in search results</li>
+          <li>• You&apos;ll receive notifications for inquiries</li>
+          <li>• Potential buyers can schedule inspections</li>
+          <li>• Potential Agents will request for Inspection</li>
+        </>
+      );
+    }
+    return (
+      <>
+        <li>• Your property is automatically approved</li>
+        <li>• It will appear in search results</li>
+        <li>• You&apos;ll receive notifications for inquiries</li>
+        <li>• Potential buyers can schedule inspections.</li>
+      </>
+    );
+  };
 
   return (
     <AnimatePresence>
@@ -64,42 +111,24 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
               >
                 <CheckCircle size={32} className="text-[#8DDB90]" />
               </motion.div>
-                            <h2 className="text-2xl font-bold text-white mb-1">
+              <h2 className="text-2xl font-bold text-white mb-1">
                 {isUpdate ? "Property Updated Successfully!" : "Property Listed Successfully!"}
               </h2>
               <p className="text-white text-opacity-90">
-                {isUpdate
-                  ? "Your property listing has been updated with the latest information"
-                  : "Your property is now live and ready for potential buyers"
-                }
+                {getSubtitle()}
               </p>
             </div>
           </div>
 
           {/* Content */}
           <div className="p-6">
-         
             {/* What happens next */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
               <h4 className="font-semibold text-blue-800 mb-2">
                 What happens next?
               </h4>
               <ul className="text-sm text-blue-700 space-y-1">
-                {isUpdate ? (
-                  <>
-                    <li>• Your updated property details are now live</li>
-                    <li>• Changes will be visible to potential buyers immediately</li>
-                    <li>• Existing inquiries will see the updated information</li>
-                    <li>• You&apos;ll continue receiving notifications for new inquiries</li>
-                  </>
-                ) : (
-                  <>
-                    <li>• Your property will be reviewed within 24 hours</li>
-                    <li>• Once approved, it will appear in search results</li>
-                    <li>• You&apos;ll receive notifications for inquiries</li>
-                    <li>• Potential buyers can schedule inspections</li>
-                  </>
-                )}
+                {getWhatHappensNext()}
               </ul>
             </div>
 

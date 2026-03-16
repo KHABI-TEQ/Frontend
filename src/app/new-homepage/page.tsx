@@ -2,7 +2,6 @@
 
 "use client";
 import React, { Fragment, Suspense, lazy } from "react";
-import dynamic from "next/dynamic";
 import Loading from "@/components/loading-component/loading";
 import { useLoading } from "@/hooks/useLoading";
 import { useHomePageSettings } from "@/hooks/useSystemSettings";
@@ -10,15 +9,7 @@ import ErrorBoundary from "@/components/general-components/ErrorBoundary";
 import EmailVerification from "@/components/EmailVerification";
 import DevelopmentNotice from "@/components/general-components/DevelopmentNotice";
 import KeyFeaturesSection from "@/components/new-homepage/key-features-section";
-
-// Optimize Hero Section: Dynamic import with loading fallback
-const NewHeroSection = dynamic(
-  () => import("@/components/new-homepage/new-hero-section"),
-  {
-    loading: () => <div className="w-full h-96 bg-gray-100 animate-pulse rounded-lg" />,
-    ssr: true // Keep SSR for SEO
-  }
-);
+import NewHeroSection from "@/components/new-homepage/new-hero-section";
 
 // Non-critical: Lazy load lower sections
 const ValuePropositionSection = lazy(() => import("@/components/new-homepage/value-proposition-section"));

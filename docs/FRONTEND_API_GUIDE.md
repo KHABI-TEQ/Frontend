@@ -790,7 +790,20 @@ Users can **optionally** describe what they want in natural language; the backen
 
 **Errors:** 400 — missing/invalid `userInput`. 503 — AI service not configured.
 
-### 10.4 Implementation tips
+### 10.4 Preference submission and Agent Marketplace visibility
+
+- **Submit:** The frontend submits preferences via `POST /preferences/submit`. On success, the user sees a success modal.
+- **Agent Marketplace:** The `/agent-marketplace` page lists buyer preferences for agents. It fetches **only approved preferences** via `GET /preferences/getApprovedForAgent?page=1&limit=12` (with optional `search`, `preferenceMode`, `documentType`, `propertyCondition`).
+
+**Backend instructions (preference approval and matching):**
+
+1. **On `POST /preferences/submit`:** After saving the new preference, the backend should:
+   - **Match** the preference against existing **submitted briefs** (property listings) from **Agents**, **Landlords**, or **Developers** (e.g. by `preferenceType`/listing type, location, budget range, property details, and/or features).
+   - **Auto-approve** the preference so that it is returned by `GET /preferences/getApprovedForAgent` and appears on the Agent Marketplace for agents to see and respond to.
+2. Matching criteria are at the backend’s discretion (e.g. same state/LGA, overlapping budget, same property type). The frontend does not perform matching; it only displays preferences returned as approved and allows agents to submit matching properties via the existing flow.
+3. If the backend does not auto-approve, newly submitted preferences will **not** appear on the Agent Marketplace until they are approved by some other process; the frontend success message already states that the preference “will appear for agents once it has been approved.”
+
+### 10.5 Implementation tips
 
 1. **UI** — Add a text area or voice input (browser speech-to-text) and a "Fill with AI" button.
 2. **Flow** — Call the endpoint with the user's description; on success, merge `data` into form state (e.g. only empty fields, or show a "Review AI suggestion" step).
