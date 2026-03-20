@@ -1,14 +1,73 @@
 "use client";
 
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import { usePreferenceForm } from "@/context/preference-form-context";
 import { suggestPreference } from "@/services/aiFormService";
 import AiFillBlock from "@/components/ai-form-fill/AiFillBlock";
 import { mergeSuggestPreferenceIntoForm } from "@/utils/aiSuggestPreferenceMerge";
+import { pickAiComplimentPrefix } from "@/utils/aiComplimentPrefix";
 import { buildPreferencePayload } from "@/utils/buildPreferencePayload";
 import { POST_REQUEST } from "@/utils/requests";
+import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
 import toast from "react-hot-toast";
-import { ArrowLeft, MessageSquare, Bot, Loader2, CheckCircle } from "lucide-react";
+import { ArrowLeft, MessageSquare, Bot, Loader2, CheckCircle, Volume2, VolumeX } from "lucide-react";
+
+function fieldLabelOnly(field: string): string {
+  return field.replace(/\s*\([^)]*\)\s*$/, "").trim() || field;
+}
+
+/** One short format per missing line — for display and TTS (no long explanations). */
+function getShortFormatForPreferenceField(field: string): string {
+  const s = field.toLowerCase();
+  const rules: { test: (x: string) => boolean; format: string }[] = [
+    { test: (x) => x.includes("check-in"), format: "YYYY-MM-DD" },
+    { test: (x) => x.includes("check-out"), format: "YYYY-MM-DD" },
+    { test: (x) => x.includes("number of guests") || x.includes("guests"), format: "positive number" },
+    { test: (x) => x.includes("travel type"), format: "e.g. solo | couple | family | business" },
+    { test: (x) => x.includes("company name"), format: "company legal name" },
+    { test: (x) => x.includes("contact person"), format: "full name" },
+    { test: (x) => x.includes("measurement unit") && x.includes("jv"), format: "plot | sqm | hectares" },
+    { test: (x) => x.includes("jv type"), format: "Equity Split | Lease-to-Build | Development Partner" },
+    { test: (x) => x.includes("development type") && x.includes("jv"), format: "comma list e.g. Mini Flats" },
+    { test: (x) => x.includes("preferred sharing"), format: "e.g. 60-40" },
+    { test: (x) => x.includes("minimum title"), format: "comma list e.g. C of O, Survey plan" },
+    { test: (x) => x.includes("land size") && x.includes("jv"), format: "number e.g. 500" },
+    { test: (x) => x.includes("max price must be greater"), format: "max greater than min, Naira numbers" },
+    { test: (x) => x.includes("min price"), format: "Naira number no commas e.g. 10000000" },
+    { test: (x) => x.includes("max price"), format: "Naira number no commas e.g. 50000000" },
+    { test: (x) => x.includes("additional notes") || x.includes("special requirements"), format: "short text" },
+    { test: (x) => x.includes("landmark"), format: "short text" },
+    { test: (x) => x.includes("document type"), format: "comma list C of O Survey plan etc" },
+    { test: (x) => x.includes("lease term"), format: "e.g. 1 Year | 6 Months" },
+    { test: (x) => x.includes("property condition"), format: "new | renovated | fairly used …" },
+    { test: (x) => x.includes("building type"), format: "detached | duplex | block of flats …" },
+    { test: (x) => x.includes("property type") && x.includes("shortlet"), format: "studio | apartment …" },
+    { test: (x) => x.includes("number of bedrooms") || (x.includes("bedrooms") && x.includes("required")), format: "integer e.g. 3" },
+    { test: (x) => x.includes("number of bathrooms"), format: "integer" },
+    { test: (x) => x.includes("property type"), format: "land | residential | commercial …" },
+    { test: (x) => x.includes("email") && x.includes("phone"), format: "email or 080… phone" },
+    { test: (x) => x.includes("phone number") || (x.includes("phone") && x.includes("required")), format: "080… or +234…" },
+    { test: (x) => x.includes("email") && x.includes("required"), format: "you@example.com" },
+    { test: (x) => x.includes("full name"), format: "First Last" },
+    { test: (x) => x.includes("area name") || x.includes("custom location"), format: "area or custom place text" },
+    { test: (x) => x.includes("at least one lga") || x.includes("lga or area name"), format: "LGA or area name" },
+    { test: (x) => x.includes("location state") || x.includes("lga or area"), format: "state + LGA or area" },
+    { test: (x) => x.includes("location") && x.includes("state"), format: "Lagos + LGA + area" },
+    { test: (x) => x.includes("preference type"), format: "buy | rent | shortlet | joint venture" },
+    { test: (x) => x.includes("features") || x.includes("amenities"), format: "comma list parking security water …" },
+  ];
+  const hit = rules.find((r) => r.test(s));
+  return hit ? hit.format : "short text or number";
+}
+
+/** Returns plain text suitable for TTS from an assistant message (Web Speech API — SpeechSynthesis). */
+function getSpeakableAssistantText(msg: { content: string; missingFields?: string[] }): string {
+  if (!msg.missingFields?.length) return msg.content;
+  const lines = msg.missingFields.map(
+    (f) => `${fieldLabelOnly(f)}. Format: ${getShortFormatForPreferenceField(f)}`,
+  );
+  return `${msg.content} Still need: ${lines.join(". ")}`;
+}
 
 function isMeaningful(value: unknown): boolean {
   if (value === undefined || value === null) return false;
@@ -16,54 +75,6 @@ function isMeaningful(value: unknown): boolean {
   if (typeof value === "number") return !Number.isNaN(value) && value >= 0;
   if (Array.isArray(value)) return value.length > 0;
   return false;
-}
-
-/**
- * Returns the exact format expected for each missing category so the AI can process the response.
- * Use simple text only; no apostrophes or special characters. Shown when suggesting missing fields.
- */
-function getFormatHintForMissingFields(missingFields: string[]): string {
-  if (missingFields.length === 0) return "";
-  const parts: string[] = [];
-  const has = (...keywords: string[]) =>
-    missingFields.some((f) => keywords.some((k) => f.toLowerCase().includes(k)));
-
-  if (has("preference type")) {
-    parts.push("preference type: write exactly one of buy, rent, shortlet, joint venture");
-  }
-  if (has("location", "state", "lga", "area", "local government", "custom location")) {
-    parts.push("location: state: Lagos, LGA: Ikeja, area: Lekki or customLocation: near Chevron (state and at least one LGA or area, no special characters)");
-  }
-  if (has("budget", "price", "naira", "min", "max")) {
-    parts.push("budget: minPrice: 10000000, maxPrice: 50000000 (both numbers in Naira, no commas or spaces in the number)");
-  }
-  if (has("contact", "email", "phone", "your name")) {
-    parts.push("contact: email: you@example.com, phone: 08012345678, name: Your Full Name (phone must start with 0 or 234)");
-  }
-  if (has("company name", "contact person") || (has("joint") && has("contact"))) {
-    parts.push("JV contact: companyName: Company Ltd, contactPerson: John Doe, email: x@y.com, phone: 08012345678");
-  }
-  if (has("property type", "bedrooms", "bathrooms", "building", "condition", "lease")) {
-    parts.push("property: propertyType: residential or commercial or land, bedrooms: 3, bathrooms: 2, buildingType: detached, propertyCondition: new, leaseTerm: 1 Year (use exact words)");
-  }
-  if (has("document type")) {
-    parts.push("document types: at least one e.g. C of O, Survey plan, Governors consent (no apostrophes)");
-  }
-  if (has("check-in", "check-out", "guests", "shortlet")) {
-    parts.push("shortlet: checkInDate: 2025-04-01, checkOutDate: 2025-04-05, numberOfGuests: 2, travelType: family (dates as YYYY-MM-DD)");
-  }
-  if (has("land size", "development", "sharing", "title", "JV") && !has("contact")) {
-    parts.push("JV details: minLandSize: 500, measurementUnit: sqm, developmentTypes: Mini Flats, preferredSharingRatio: 60-40, minimumTitleRequirements: C of O (no apostrophes)");
-  }
-  if (has("features", "amenities")) {
-    parts.push("features: list separated by commas e.g. parking, security, water, generator");
-  }
-  if (has("additional notes", "landmark")) {
-    parts.push("notes or landmark: e.g. near Chevron, quiet estate");
-  }
-
-  if (parts.length === 0) return "";
-  return " Expected format so we can process your reply: " + parts.join("; ") + ".";
 }
 
 /**
@@ -391,11 +402,19 @@ export default function PreferenceAiConversationFlow() {
 
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  /** Default on: speak each assistant reply automatically; user can mute via toggle or stop via speaker icon. */
+  const [playRepliesAloud, setPlayRepliesAloud] = useState(true);
+  const prevMessageCountRef = useRef(0);
+  const { speak, stop, speaking } = useSpeechSynthesis({ lang: "en-NG", rate: 0.95 });
 
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, []);
+  // Auto-play latest assistant reply when TTS is enabled (Web Speech API — SpeechSynthesis).
+  useEffect(() => {
+    const n = preferenceAiMessages.length;
+    if (n > prevMessageCountRef.current && preferenceAiMessages[n - 1]?.role === "assistant" && playRepliesAloud) {
+      speak(getSpeakableAssistantText(preferenceAiMessages[n - 1] as { content: string; missingFields?: string[] }));
+    }
+    prevMessageCountRef.current = n;
+  }, [preferenceAiMessages, playRepliesAloud, speak]);
 
   const handleSend = useCallback(
     async (textOverride: string) => {
@@ -406,7 +425,6 @@ export default function PreferenceAiConversationFlow() {
       }
       setLoading(true);
       setPreferenceAiMessages((prev) => [...prev, { role: "user", content: trimmed }]);
-      scrollToBottom();
 
       try {
         const accumulated = [...preferenceAiMessages, { role: "user", content: trimmed }]
@@ -422,7 +440,6 @@ export default function PreferenceAiConversationFlow() {
               content: res.message || "Could not get suggestions. Please try again or add more detail.",
             },
           ]);
-          scrollToBottom();
           return;
         }
         let data = (res.data || {}) as Record<string, unknown>;
@@ -444,28 +461,25 @@ export default function PreferenceAiConversationFlow() {
           data = { ...data, contactInfo: mergedContact };
         }
         const missingFields = getMissingFieldsFromPreferenceData(data);
-        const formatHint = getFormatHintForMissingFields(missingFields);
         const hasMissing = missingFields.length > 0;
-        const _suffixPref = hasMissing ? "" : " I have enough to build your preference. If everything looks good, click \"I'm done\" below to see the summary and continue to the form.";
-        const assistantContent = hasMissing ? "Here's what I have so far:" : "Here's what I have so far:" + _suffixPref;
+        const praise = pickAiComplimentPrefix();
+        const assistantContent = hasMissing ? praise : `${praise}\n\nReady. Tap I'm done for summary.`;
         setPreferenceAiCollectedData(data);
         setPreferenceAiMessages((prev) => [
           ...prev,
-          { role: "assistant", content: assistantContent, data, missingFields: hasMissing ? missingFields : undefined, formatHint: hasMissing ? formatHint : undefined },
+          { role: "assistant", content: assistantContent, data, missingFields: hasMissing ? missingFields : undefined },
         ]);
-        scrollToBottom();
       } catch (e) {
         toast.error((e as Error)?.message || "Something went wrong.");
         setPreferenceAiMessages((prev) => [
           ...prev,
           { role: "assistant", content: "Something went wrong. Please try again or add more detail." },
         ]);
-        scrollToBottom();
       } finally {
         setLoading(false);
       }
     },
-    [preferenceAiMessages, setPreferenceAiMessages, setPreferenceAiCollectedData, scrollToBottom]
+    [preferenceAiMessages, setPreferenceAiMessages, setPreferenceAiCollectedData]
   );
 
   const handleSuggest = useCallback(
@@ -618,6 +632,22 @@ export default function PreferenceAiConversationFlow() {
         Tip: If voice input fails (e.g. network), type your description instead.
       </p>
 
+      <label className="flex items-start gap-2 text-sm text-[#5A5D63] cursor-pointer">
+        <input
+          type="checkbox"
+          checked={playRepliesAloud}
+          onChange={(e) => {
+            setPlayRepliesAloud(e.target.checked);
+            if (!e.target.checked) stop();
+          }}
+          className="mt-1 rounded border-gray-300 text-[#8DDB90] focus:ring-[#8DDB90]"
+        />
+        <span>
+          <span className="block font-medium text-[#09391C]">Play AI replies aloud</span>
+          <span className="block text-xs text-[#5A5D63] mt-0.5">On by default. Tap the speaker icon on a reply to stop playback.</span>
+        </span>
+      </label>
+
       {loading && (
         <div className="flex items-center gap-3 rounded-lg border border-[#8DDB90]/50 bg-[#f0fdf4] px-4 py-3 text-sm text-[#09391C]">
           <Loader2 className="h-5 w-5 flex-shrink-0 animate-spin text-[#8DDB90]" aria-hidden />
@@ -635,8 +665,19 @@ export default function PreferenceAiConversationFlow() {
               className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
             >
               {msg.role === "assistant" && (
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#8DDB90]/20 flex items-center justify-center">
-                  <Bot className="h-4 w-4 text-[#09391C]" />
+                <div className="flex flex-col gap-1 items-center">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#8DDB90]/20 flex items-center justify-center">
+                    <Bot className="h-4 w-4 text-[#09391C]" />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => (speaking ? stop() : speak(getSpeakableAssistantText(msg as { content: string; missingFields?: string[] })))}
+                    className="p-1 rounded text-[#5A5D63] hover:bg-[#8DDB90]/20 hover:text-[#09391C]"
+                    title={speaking ? "Stop playback" : "Play reply aloud"}
+                    aria-label={speaking ? "Stop playback" : "Play reply aloud"}
+                  >
+                    {speaking ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                  </button>
                 </div>
               )}
               <div
@@ -644,25 +685,26 @@ export default function PreferenceAiConversationFlow() {
                   msg.role === "user" ? "bg-[#09391C] text-white" : "bg-gray-100 text-[#09391C]"
                 }`}
               >
-                {msg.role === "assistant" && (msg as { missingFields?: string[]; formatHint?: string }).missingFields?.length ? (
+                {msg.role === "assistant" && (msg as { missingFields?: string[] }).missingFields?.length ? (
                   <>
-                    <p>{msg.content}</p>
-                    <p className="font-medium mt-2">I still need:</p>
-                    <ul className="list-disc list-inside mt-1 space-y-0.5 ml-1">
+                    <p className="mb-2 whitespace-pre-line">{msg.content}</p>
+                    <p className="text-xs font-semibold text-[#5A5D63] uppercase tracking-wide mb-1.5">Still need</p>
+                    <ul className="space-y-2 text-sm">
                       {(msg as { missingFields: string[] }).missingFields.map((f, j) => (
-                        <li key={j}>{f}</li>
+                        <li key={j} className="border-l-2 border-[#8DDB90]/60 pl-2">
+                          <span className="font-medium text-[#09391C]">{fieldLabelOnly(f)}</span>
+                          <span className="text-[#5A5D63]"> — {getShortFormatForPreferenceField(f)}</span>
+                        </li>
                       ))}
                     </ul>
-                    <p className="mt-2">Please provide these so we can match you with the right properties.{(msg as { formatHint?: string }).formatHint}</p>
                   </>
                 ) : (
-                  msg.content
+                  <span className="whitespace-pre-line">{msg.content}</span>
                 )}
               </div>
             </div>
           ))
         )}
-        <div ref={messagesEndRef} />
       </div>
 
       <div className="flex flex-col gap-3">

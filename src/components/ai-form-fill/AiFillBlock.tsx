@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import { Sparkles, Mic, Loader2 } from "lucide-react";
+import { Sparkles, Mic, Loader2, Send } from "lucide-react";
 import toast from "react-hot-toast";
+import { playSpeechEndBeep } from "@/utils/playSpeechEndBeep";
 
 export interface AiFillBlockProps {
   /** Main label, e.g. "Describe your property" or "Describe what you're looking for" */
@@ -19,6 +20,30 @@ export interface AiFillBlockProps {
   maxHeight?: string;
 }
 
+/** Rebuild full utterance from all results each event — avoids repeating / duplicating partials. */
+function getSessionTranscriptFromResults(results: SpeechRecognitionResultList): { final: string; interim: string } {
+  let final = "";
+  let interim = "";
+  for (let i = 0; i < results.length; i++) {
+    const r = results[i];
+    const t = r[0]?.transcript?.trim() ?? "";
+    if (!t) continue;
+    if (r.isFinal) {
+      final = final ? `${final} ${t}` : t;
+    } else {
+      interim = interim ? `${interim} ${t}` : t;
+    }
+  }
+  return { final, interim };
+}
+
+function combineBaseAndUtterance(base: string, utterance: string): string {
+  const u = utterance.trim();
+  if (!u) return base;
+  const b = base.trimEnd();
+  return b ? `${b} ${u}` : u;
+}
+
 export default function AiFillBlock({
   title,
   placeholder,
@@ -28,15 +53,33 @@ export default function AiFillBlock({
   maxHeight = "120px",
 }: AiFillBlockProps) {
   const [input, setInput] = useState("");
+  const canSend = input.trim().length > 0;
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
-  const [showConvertingMessage, setShowConvertingMessage] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const convertingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  /** Index of the last result we've already appended (avoids duplicate text when onresult re-fires with same results). */
-  const lastProcessedResultIndexRef = useRef(0);
-  /** Accumulated speech while listening; only written to input when user clicks Stop. */
-  const pendingTranscriptRef = useRef<string[]>([]);
+  /** Textarea snapshot when current mic session started — new speech appends after this. */
+  const voiceBaseRef = useRef("");
+  /** Latest combined final+interim for this utterance (so onend can sync). */
+  const latestUtteranceRef = useRef("");
+  /** Avoid double beep if both onerror(aborted) and onend run. */
+  const endBeepPlayedRef = useRef(false);
+  /** One finish path per mic session (onend + onerror can both fire). */
+  const sessionActiveRef = useRef(false);
+
+  const playEndBeepOnce = useCallback(() => {
+    if (endBeepPlayedRef.current) return;
+    endBeepPlayedRef.current = true;
+    playSpeechEndBeep();
+  }, []);
+
+  const finishRecognitionSession = useCallback(() => {
+    if (!sessionActiveRef.current) return;
+    sessionActiveRef.current = false;
+    recognitionRef.current = null;
+    setListening(false);
+    setInput(combineBaseAndUtterance(voiceBaseRef.current, latestUtteranceRef.current));
+    playEndBeepOnce();
+  }, [playEndBeepOnce]);
 
   const handleSubmit = useCallback(async () => {
     const trimmed = input.trim();
@@ -58,17 +101,19 @@ export default function AiFillBlock({
 
   const startVoice = useCallback(() => {
     if (typeof window === "undefined") return;
+    endBeepPlayedRef.current = false;
+    sessionActiveRef.current = true;
+    latestUtteranceRef.current = "";
     if (recognitionRef.current) {
       try {
         recognitionRef.current.stop();
       } catch {
-        // ignore if already stopped or in error state
+        // ignore
       }
       recognitionRef.current = null;
     }
-    lastProcessedResultIndexRef.current = 0;
-    pendingTranscriptRef.current = [];
-    setListening(false);
+    voiceBaseRef.current = input.trimEnd();
+
     const SpeechRecognitionAPI =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognitionAPI) {
@@ -76,29 +121,29 @@ export default function AiFillBlock({
       return;
     }
     const recognition = new SpeechRecognitionAPI() as SpeechRecognition;
-    recognition.continuous = true;
+    /** One utterance per start: stops when you pause — text updates live; beep on end. Tap mic again to add more. */
+    recognition.continuous = false;
     recognition.interimResults = true;
     recognition.lang = "en-NG";
+    recognition.maxAlternatives = 1;
+
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      const results = Array.from(event.results);
-      const startIndex = lastProcessedResultIndexRef.current;
-      for (let i = startIndex; i < results.length; i++) {
-        const r = results[i];
-        if (r.isFinal && r.length > 0) {
-          const t = r[0].transcript?.trim();
-          if (t) pendingTranscriptRef.current.push(t);
-        }
-      }
-      lastProcessedResultIndexRef.current = results.length;
+      const { final, interim } = getSessionTranscriptFromResults(event.results);
+      const utterance = [final, interim].filter(Boolean).join(" ").trim();
+      latestUtteranceRef.current = utterance;
+      setInput(combineBaseAndUtterance(voiceBaseRef.current, utterance));
     };
+
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       const error = (event as SpeechRecognitionErrorEvent).error;
-      recognitionRef.current = null;
-      setListening(false);
-      if (error === "aborted") return;
-      if (error === "no-speech") {
+      // These are normal closure paths; `onend` still runs in Chromium and will finish + beep.
+      if (error === "aborted" || error === "no-speech") {
         return;
       }
+      sessionActiveRef.current = false;
+      recognitionRef.current = null;
+      setListening(false);
+      endBeepPlayedRef.current = true;
       if (error === "not-allowed") {
         toast.error("Microphone access denied. Allow the mic and try again.");
         return;
@@ -109,58 +154,41 @@ export default function AiFillBlock({
       }
       toast.error("Voice input failed. Try typing instead.");
     };
+
     recognition.onend = () => {
-      // If we didn't call stop() (ref still set), browser ended the session (e.g. silence).
-      // Restart so it keeps listening until you click Stop. Don't reset pendingTranscriptRef.
-      if (recognitionRef.current) {
-        lastProcessedResultIndexRef.current = 0;
-        try {
-          recognitionRef.current.start();
-        } catch {
-          setListening(false);
-        }
-      } else {
-        setListening(false);
-      }
+      finishRecognitionSession();
     };
+
     recognitionRef.current = recognition;
-    recognition.start();
-    setListening(true);
-  }, []);
+    try {
+      recognition.start();
+      setListening(true);
+    } catch {
+      sessionActiveRef.current = false;
+      recognitionRef.current = null;
+      setListening(false);
+      toast.error("Could not start microphone.");
+    }
+  }, [input, finishRecognitionSession]);
 
   const stopVoice = useCallback(() => {
     try {
       if (recognitionRef.current) {
-        try {
-          recognitionRef.current.stop();
-        } catch {
-          // ignore if already stopped or in error state
-        }
-        recognitionRef.current = null;
+        recognitionRef.current.stop();
       }
-    } finally {
-      setListening(false);
+    } catch {
+      finishRecognitionSession();
     }
-    const pending = pendingTranscriptRef.current;
-    pendingTranscriptRef.current = [];
-    lastProcessedResultIndexRef.current = 0;
-    if (pending.length > 0) {
-      const transcript = pending.join(" ").trim();
-      if (transcript) {
-        setInput((prev) => (prev ? `${prev} ${transcript}` : transcript));
-      }
-    }
-    setShowConvertingMessage(true);
-    if (convertingTimeoutRef.current) clearTimeout(convertingTimeoutRef.current);
-    convertingTimeoutRef.current = setTimeout(() => {
-      setShowConvertingMessage(false);
-      convertingTimeoutRef.current = null;
-    }, 4000);
-  }, []);
+  }, [finishRecognitionSession]);
 
   useEffect(() => {
     return () => {
-      if (convertingTimeoutRef.current) clearTimeout(convertingTimeoutRef.current);
+      try {
+        recognitionRef.current?.stop();
+      } catch {
+        /* ignore */
+      }
+      recognitionRef.current = null;
     };
   }, []);
 
@@ -171,17 +199,17 @@ export default function AiFillBlock({
           0%, 100% { transform: scaleY(0.4); }
           50% { transform: scaleY(1); }
         }
-        @keyframes ai-converting-glow {
-          0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.2); }
-          50% { opacity: 1; box-shadow: 0 0 12px 2px rgba(34, 197, 94, 0.25); }
-        }
       `}</style>
       <div className="mb-2 flex items-center gap-2 text-[#09391C]">
         <Sparkles className="h-5 w-5 text-[#8DDB90]" aria-hidden />
         <span className="font-semibold">{title}</span>
       </div>
       <p className="mb-3 text-sm text-[#5A5D63]">
-        Optionally describe in a few words or sentences; we&apos;ll suggest form fields. You can review and edit before submitting.
+        Optionally describe in a few words or sentences; we&apos;ll suggest form fields. You can review and edit before
+        submitting.{" "}
+        <span className="text-[#09391C] font-medium">
+          Voice: speak clearly — text appears as you talk (no repeats). When you pause, recognition stops and you&apos;ll hear a short beep. Tap the mic again to add more.
+        </span>
       </p>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
         <div className="relative flex-1">
@@ -189,7 +217,7 @@ export default function AiFillBlock({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={placeholder}
-            disabled={disabled}
+            disabled={disabled || listening}
             rows={3}
             className="w-full resize-y rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-[#09391C] placeholder-gray-400 focus:border-[#8DDB90] focus:outline-none focus:ring-2 focus:ring-[#8DDB90]/20 disabled:bg-gray-100 disabled:opacity-70"
             style={{ maxHeight }}
@@ -215,20 +243,17 @@ export default function AiFillBlock({
               type="button"
               onClick={listening ? stopVoice : startVoice}
               disabled={disabled || loading}
-              className={`inline-flex items-center gap-2 rounded px-2 py-1.5 text-sm font-medium transition-colors disabled:opacity-50 ${
+              className={`inline-flex items-center gap-2 rounded px-2 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${
                 listening
                   ? "bg-red-50 text-red-600 hover:bg-red-100"
                   : "text-gray-500 hover:bg-gray-100 hover:text-[#09391C]"
               }`}
-              title={listening ? "Stop recording" : "Use voice input"}
+              title={listening ? "Stop listening" : "Speak — tap again after a pause to add more text"}
               aria-label={listening ? "Stop voice input" : "Start voice input"}
             >
               {listening ? (
                 <>
-                  <span
-                    className="h-2 w-2 rounded-full bg-red-500 animate-pulse"
-                    aria-hidden
-                  />
+                  <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" aria-hidden />
                   <span>Stop</span>
                 </>
               ) : (
@@ -237,31 +262,34 @@ export default function AiFillBlock({
             </button>
           </div>
         </div>
-        {showConvertingMessage && (
-          <div
-            className="mt-3 flex items-center gap-3 rounded-xl border border-[#8DDB90]/50 bg-gradient-to-r from-[#f0fdf4] to-[#dcfce7] px-4 py-3"
-            style={{ animation: "ai-converting-glow 1.5s ease-in-out infinite" }}
+        <div className="relative sm:self-end inline-block min-w-[8rem]">
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={disabled || loading || !canSend}
+            className="inline-flex w-full min-h-[2.75rem] items-center justify-center gap-2 rounded-lg bg-[#8DDB90] px-4 py-2.5 font-medium text-[#09391C] transition-colors hover:bg-[#7BC87F] disabled:opacity-45"
+            aria-label={!canSend && !loading ? `${buttonLabel} (enter text first)` : buttonLabel}
           >
-            <Loader2 className="h-6 w-6 flex-shrink-0 animate-spin text-[#16a34a]" aria-hidden />
-            <div>
-              <p className="font-medium text-[#09391C]">Converting your speech to text…</p>
-              <p className="text-xs text-[#5A5D63] mt-0.5">This may take a moment</p>
+            {loading ? (
+              <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
+            ) : (
+              <Sparkles className="h-5 w-5" aria-hidden />
+            )}
+            <span>{loading ? "Getting suggestions…" : buttonLabel}</span>
+          </button>
+          {!canSend && !loading && !disabled && (
+            <div
+              className="absolute inset-0 z-[1] flex cursor-not-allowed items-center justify-center rounded-lg bg-transparent group/send-empty"
+              title="Type or use the mic, then send"
+              aria-hidden
+            >
+              <Send
+                className="h-6 w-6 text-[#09391C] opacity-0 transition-opacity duration-150 group-hover/send-empty:opacity-55"
+                aria-hidden
+              />
             </div>
-          </div>
-        )}
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={disabled || loading}
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#8DDB90] px-4 py-2.5 font-medium text-[#09391C] transition-colors hover:bg-[#7BC87F] disabled:opacity-60 sm:self-end"
-        >
-          {loading ? (
-            <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
-          ) : (
-            <Sparkles className="h-5 w-5" aria-hidden />
           )}
-          <span>{loading ? "Getting suggestions…" : buttonLabel}</span>
-        </button>
+        </div>
       </div>
     </div>
   );

@@ -13,8 +13,10 @@ import {
   Home,
   Briefcase,
   Users,
+  Calendar,
+  Handshake,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { usePageContext } from "@/context/page-context";
 import { AgentNavData } from "@/enums";
 
@@ -28,18 +30,76 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
   userDetails,
 }) => {
   const ref = React.useRef<HTMLDivElement | null>(null);
-  const { logout } = useUserContext();
+  const { logout, user: contextUser } = useUserContext();
   const { setSelectedNav } = usePageContext();
-  const [userType, setUserType] = useState<"Agent" | "Landowners"| "FieldAgent">("Agent");
+  type UserTypeValue = "Agent" | "Landowners" | "Developer" | "FieldAgent";
   const [position, setPosition] = useState({ top: 0, right: 0 });
 
   const router = useRouter();
+  const pathname = usePathname();
 
   useClickOutside(ref, () => closeUserProfileModal(false));
 
-  useEffect(() => {
-    setUserType(userDetails?.userType as "Agent" | "Landowners" | "FieldAgent");
-  }, [userDetails]);
+  // Normalize any string to canonical UserTypeValue (API may return "developer", "Developer ", etc.)
+  const normalizeToUserType = (value: unknown): UserTypeValue => {
+    if (value == null) return "Agent";
+    const s = String(value).trim();
+    if (!s) return "Agent";
+    const lower = s.toLowerCase();
+    if (lower === "developer") return "Developer";
+    if (lower === "landowners" || lower === "landowner") return "Landowners";
+    if (lower === "fieldagent" || lower === "field_agent") return "FieldAgent";
+    if (lower === "agent") return "Agent";
+    if (["Agent", "Landowners", "Developer", "FieldAgent"].includes(s)) return s as UserTypeValue;
+    return "Agent";
+  };
+
+  // Derive userType: on /dashboard prefer localStorage (set by Developer/Landlord dashboard on mount), else user object then localStorage then sessionStorage
+  const userType: UserTypeValue = (() => {
+    const onDashboard = pathname === "/dashboard";
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("userType");
+        const normalized = normalizeToUserType(stored);
+        if (stored != null && stored !== "" && normalized !== "Agent") return normalized;
+        if (onDashboard && normalized !== "Agent") return normalized;
+      } catch {}
+    }
+    const u = userDetails ?? contextUser;
+    const raw =
+      (u as any)?.userType ??
+      (u as any)?.user_type ??
+      (u as any)?.role ??
+      (u as any)?.type ??
+      (u as any)?.accountType;
+    let normalized = normalizeToUserType(raw);
+    if (normalized !== "Agent") return normalized;
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("userType");
+        if (stored != null && stored !== "") {
+          normalized = normalizeToUserType(stored);
+          if (normalized !== "Agent") return normalized;
+        }
+        const sessionUser = sessionStorage.getItem("user");
+        if (sessionUser) {
+          const parsed = JSON.parse(sessionUser) as Record<string, unknown>;
+          const sessionType = parsed?.userType ?? parsed?.user_type ?? parsed?.role ?? parsed?.type;
+          normalized = normalizeToUserType(sessionType);
+          if (normalized !== "Agent") return normalized;
+        }
+      } catch {}
+    }
+    return "Agent";
+  })();
+
+  // When on /dashboard and we still ended up as Agent (e.g. localStorage was empty), treat as Publisher so dropdown shows Inspection + Agent Requests.
+  // Use both pathname and window.location so we detect /dashboard even if router context is stale (e.g. dynamic import).
+  const isOnDashboard =
+    pathname === "/dashboard" ||
+    (typeof window !== "undefined" && window.location.pathname === "/dashboard");
+  const effectiveUserType: UserTypeValue =
+    isOnDashboard && userType === "Agent" ? "Developer" : userType;
 
   // Calculate position based on screen size
   useEffect(() => {
@@ -75,7 +135,7 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
     },
 
     // Agent-specific items
-    ...(userType === "Agent"
+    ...(effectiveUserType === "Agent"
       ? [
           {
             icon: <Briefcase size={18} />,
@@ -121,9 +181,29 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
         ]
       : []),
 
-    // Landowner-specific items
-    ...(userType === "Landowners"
+    // Publisher (Developer + Landowners): Inspection Requests only for Developer; Agent Requests for both
+    ...(effectiveUserType === "Developer" || effectiveUserType === "Landowners"
       ? [
+          ...(effectiveUserType === "Developer"
+            ? [
+                {
+                  icon: <Calendar size={18} />,
+                  label: "Inspection Requests",
+                  action: () => {
+                    router.push("/my-inspection-requests");
+                    closeUserProfileModal(false);
+                  },
+                },
+              ]
+            : []),
+          {
+            icon: <Handshake size={18} />,
+            label: "Agent Requests",
+            action: () => {
+              router.push("/my-request-to-market");
+              closeUserProfileModal(false);
+            },
+          },
           {
             icon: <Home size={18} />,
             label: "List Property",
@@ -152,7 +232,7 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
       : []),
 
     // FieldAgent-specific items
-    ...(userType === "FieldAgent"
+    ...(effectiveUserType === "FieldAgent"
       ? [
           {
             icon: <Briefcase size={18} />,
@@ -219,11 +299,13 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
           <div>
             <span className="text-gray-500 block">Type</span>
             <span className="font-semibold text-gray-800">
-              {userType === "Agent"
+              {effectiveUserType === "Agent"
                 ? userDetails?.agentData?.agentType || "Agent"
-                : userType === "Landowners"
+                : effectiveUserType === "Landowners"
                 ? "Landowner"
-                : userType === "FieldAgent"
+                : effectiveUserType === "Developer"
+                ? "Developer"
+                : effectiveUserType === "FieldAgent"
                 ? "Field Agent"
                 : ""}
             </span>

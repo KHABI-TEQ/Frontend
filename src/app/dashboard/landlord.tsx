@@ -60,6 +60,15 @@ export default function LandlordDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState("all");
 
+  // Sync userType to localStorage so the header profile dropdown shows Landlord menu (Agent Requests, etc.)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("userType", "Landowners");
+      } catch {}
+    }
+  }, []);
+
   useEffect(() => {
     if (!user?._id && !user?.id) return;
     const load = async () => {
@@ -99,6 +108,7 @@ export default function LandlordDashboard() {
     try {
       const url = `${URLS.BASE}/account/properties/fetchAll?page=1&limit=5`;
       const response = await GET_REQUEST(url, Cookies.get("token"));
+      console.log("[fetchAll /account/properties/fetchAll] response (Landlord dashboard)", response);
       const raw = response as { success?: boolean; data?: unknown[]; pagination?: { total?: number } };
       if (raw?.success && Array.isArray(raw.data)) {
         const total = raw.pagination?.total ?? raw.data.length;

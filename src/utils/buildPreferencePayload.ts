@@ -13,6 +13,18 @@ import type {
 
 type FormData = Record<string, unknown>;
 
+/** Ensures fields the API expects as strings are never sent as numbers (e.g. propertyDetails.minBedrooms). */
+function ensurePreferencePayloadStrings(payload: Record<string, unknown>): void {
+  const pd = payload.propertyDetails as Record<string, unknown> | undefined;
+  if (pd && pd.minBedrooms !== undefined) {
+    pd.minBedrooms = typeof pd.minBedrooms === "string" ? pd.minBedrooms : String(pd.minBedrooms ?? "0");
+  }
+  const bd = payload.bookingDetails as Record<string, unknown> | undefined;
+  if (bd && bd.minBedrooms !== undefined) {
+    bd.minBedrooms = typeof bd.minBedrooms === "string" ? bd.minBedrooms : String(bd.minBedrooms ?? "0");
+  }
+}
+
 function cleanObject(obj: unknown): unknown {
   if (Array.isArray(obj)) {
     return obj
@@ -107,7 +119,10 @@ export function buildPreferencePayload(
         propertyDetails: {
           propertyType: String(pd.propertySubtype ?? pd.propertyType ?? ""),
           buildingType: String(pd.buildingType ?? ""),
-          minBedrooms: Number(pd.bedrooms ?? pd.minBedrooms) || 0,
+          minBedrooms: (() => {
+            const v = pd.bedrooms ?? pd.minBedrooms;
+            return typeof v === "string" ? (v.trim() || "0") : String(Number(v) || 0);
+          })(),
           minBathrooms: Number(pd.bathrooms ?? pd.minBathrooms) || 0,
           propertyCondition: String(pd.propertyCondition ?? ""),
           purpose: String(pd.purpose ?? "For living"),
@@ -122,7 +137,9 @@ export function buildPreferencePayload(
         ).trim(),
         additionalNotes: String(buyData.additionalNotes ?? "").trim(),
       };
-      return cleanObject(buyPayload) as BuyPreferencePayload;
+      const buyCleaned = cleanObject(buyPayload) as BuyPreferencePayload;
+      ensurePreferencePayloadStrings(buyCleaned as unknown as Record<string, unknown>);
+      return buyCleaned;
     }
 
     case "rent": {
@@ -134,7 +151,10 @@ export function buildPreferencePayload(
         preferenceMode: "tenant",
         propertyDetails: {
           propertyType: String(pd.propertySubtype ?? pd.propertyType ?? ""),
-          minBedrooms: Number(pd.bedrooms ?? pd.minBedrooms) || 0,
+          minBedrooms: (() => {
+            const v = pd.bedrooms ?? pd.minBedrooms;
+            return typeof v === "string" ? (v.trim() || "0") : String(Number(v) || 0);
+          })(),
           leaseTerm: String(pd.leaseTerm ?? "1 Year"),
           propertyCondition: String(pd.propertyCondition ?? ""),
           purpose: String(pd.purpose ?? "Residential"),
@@ -146,7 +166,9 @@ export function buildPreferencePayload(
         },
         additionalNotes: String(rentData.additionalNotes ?? "").trim(),
       };
-      return cleanObject(rentPayload) as RentPreferencePayload;
+      const rentCleaned = cleanObject(rentPayload) as RentPreferencePayload;
+      ensurePreferencePayloadStrings(rentCleaned as unknown as Record<string, unknown>);
+      return rentCleaned;
     }
 
     case "joint-venture": {
@@ -187,11 +209,9 @@ export function buildPreferencePayload(
         preferenceMode: "shortlet",
         bookingDetails: {
           propertyType: String(pd?.propertyType ?? "").trim(),
-          minBedrooms: ((): number | string => {
+          minBedrooms: (() => {
             const v = pd?.bedrooms ?? pd?.minBedrooms;
-            if (typeof v === "number" && !Number.isNaN(v)) return v;
-            if (typeof v === "string") return v.trim() || 0;
-            return Number(v) || 0;
+            return typeof v === "string" ? (v.trim() || "0") : String(Number(v) || 0);
           })(),
           numberOfGuests: Number(pd?.maxGuests ?? bd?.numberOfGuests ?? 0) || 0,
           checkInDate: String(bd?.checkInDate ?? "").trim(),
@@ -204,7 +224,9 @@ export function buildPreferencePayload(
         },
         additionalNotes: String(shortletData.additionalNotes ?? "").trim() || undefined,
       };
-      return cleanObject(shortletPayload) as ShortletPreferencePayload;
+      const shortletCleaned = cleanObject(shortletPayload) as ShortletPreferencePayload;
+      ensurePreferencePayloadStrings(shortletCleaned as unknown as Record<string, unknown>);
+      return shortletCleaned;
     }
 
     default:

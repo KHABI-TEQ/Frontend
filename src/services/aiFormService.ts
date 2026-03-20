@@ -5,6 +5,7 @@
 
 import { POST_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
+import { wrapUserInputForAiSuggest } from "@/utils/wrapAiSuggestUserInput";
 
 export interface SuggestPropertyResponse {
   success: boolean;
@@ -36,7 +37,7 @@ export async function suggestProperty(
   const url = `${URLS.BASE}${URLS.aiSuggestProperty}`;
   const response = await POST_REQUEST<{ success: boolean; message?: string; data?: Record<string, unknown> }>(
     url,
-    { userInput: trimmed },
+    { userInput: wrapUserInputForAiSuggest(trimmed) },
     token
   );
   if (response.success && response.data) {
@@ -78,7 +79,7 @@ export async function suggestPreference(
   const url = `${URLS.BASE}${URLS.aiSuggestPreference}`;
   const response = await POST_REQUEST<{ success: boolean; message?: string; data?: Record<string, unknown> }>(
     url,
-    { userInput: trimmed },
+    { userInput: wrapUserInputForAiSuggest(trimmed) },
     undefined
   );
   if (response.success && response.data) {

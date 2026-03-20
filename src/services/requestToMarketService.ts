@@ -1,6 +1,7 @@
 /**
  * Request To Market — Agents create requests; Publishers (Landlord/Developer) accept or reject.
  * See docs/FRONTEND_API_GUIDE.md §4.
+ * §4.4 Publisher dashboard: list (role=publisher, status optional), respond (accept/reject), registerSale.
  */
 
 import { GET_REQUEST, POST_REQUEST } from "@/utils/requests";
@@ -12,16 +13,22 @@ export const DEFAULT_AGENT_COMMISSION_DISPLAY_NAIRA = 50000;
 
 export interface RequestToMarketListItem {
   _id: string;
-  propertyId?: { _id?: string; location?: unknown; price?: number; briefType?: string; pictures?: string[]; [k: string]: unknown };
-  requestedByAgentId?: { firstName?: string; lastName?: string; fullName?: string; email?: string; [k: string]: unknown };
+  propertyId?: { _id?: string; location?: unknown; price?: number; briefType?: string; pictures?: string[]; description?: string; [k: string]: unknown };
+  requestedByAgentId?: { firstName?: string; lastName?: string; fullName?: string; email?: string; phoneNumber?: string; [k: string]: unknown };
   publisherId?: { firstName?: string; lastName?: string; fullName?: string; email?: string; [k: string]: unknown };
   status?: "pending" | "accepted" | "rejected";
   marketingFeeNaira?: number;
   /** Agent commission amount (Naira) for display; use DEFAULT_AGENT_COMMISSION_DISPLAY_NAIRA if not returned. */
   agentCommissionAmount?: number;
   rejectedReason?: string;
-  acceptedAt?: string;
+  acceptedAt?: string | null;
   rejectedAt?: string;
+  /** If set, sale is already registered; show "Sale registered" instead of "Register sale". */
+  saleRegisteredAt?: string | null;
+  actualSalePriceNaira?: number | null;
+  commissionPercent?: number | null;
+  /** When present (after register sale with receipt), URL of uploaded receipt for admin verification. */
+  commissionReceiptUrl?: string | null;
   createdAt?: string;
   [k: string]: unknown;
 }
@@ -57,4 +64,18 @@ export const requestToMarketService = {
       { action, ...(action === "reject" && rejectedReason ? { rejectedReason } : {}) },
       token()
     ),
+
+  /** Register sale (Publisher only). No payment link — pay agent outside app. Optional receipt URL for admin verification. */
+  registerSale: (requestId: string, body: { actualSalePriceNaira: number; commissionPercent?: number; commissionReceiptUrl?: string }) =>
+    POST_REQUEST<{
+      success: boolean;
+      message?: string;
+      data?: {
+        agentCommissionAmount?: number;
+        commissionPercent?: number;
+        actualSalePriceNaira?: number;
+        commissionReceiptUrl?: string | null;
+        agent?: { name?: string; email?: string; phoneNumber?: string };
+      };
+    }>(URLS.BASE + URLS.requestToMarketRegisterSale(requestId), body, token()),
 };

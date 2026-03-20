@@ -104,6 +104,7 @@ export default function AgentDashboard() {
     try {
       const url = `${URLS.BASE}/account/properties/fetchAll?page=1&limit=5`;
       const response = await GET_REQUEST(url, Cookies.get("token"));
+      console.log("[fetchAll /account/properties/fetchAll] response (Agent dashboard)", response);
       const raw = response as { success?: boolean; data?: unknown[]; pagination?: { total?: number } };
       if (raw?.success && Array.isArray(raw.data)) {
         const total = raw.pagination?.total ?? raw.data.length;

@@ -119,14 +119,29 @@ const MyListingPage = () => {
 
       const url = `${URLS.BASE}/account/properties/fetchAll?${queryParams.toString()}`;
       const response = await GET_REQUEST(url, Cookies.get("token"));
+      console.log("[fetchAll /account/properties/fetchAll] response", response);
 
       if (response?.success) {
-        const propertiesData = (response.data as any) || [];
-        const paginationData = (response.pagination as any) || {
-          total: propertiesData.length,
-          page: activeFilters.page || 1,
-          limit: activeFilters.limit || 12,
-          totalPages: Math.ceil(propertiesData.length / (activeFilters.limit || 12)),
+        // Support both { data: Property[] } and { data: { results|properties|data: Property[] } }
+        const raw = response.data as any;
+        const propertiesData = Array.isArray(raw)
+          ? raw
+          : Array.isArray(raw?.results)
+            ? raw.results
+            : Array.isArray(raw?.properties)
+              ? raw.properties
+              : Array.isArray(raw?.data)
+                ? raw.data
+                : [];
+
+        const serverPagination = response.pagination as { total?: number; page?: number; limit?: number; totalPages?: number } | undefined;
+        const totalFromServer = typeof serverPagination?.total === "number" ? serverPagination.total : propertiesData.length;
+        const limit = activeFilters.limit || 12;
+        const paginationData = {
+          total: totalFromServer,
+          page: typeof serverPagination?.page === "number" ? serverPagination.page : (activeFilters.page || 1),
+          limit: typeof serverPagination?.limit === "number" ? serverPagination.limit : limit,
+          totalPages: typeof serverPagination?.totalPages === "number" ? serverPagination.totalPages : Math.max(1, Math.ceil(totalFromServer / limit)),
         };
 
         setProperties(propertiesData);

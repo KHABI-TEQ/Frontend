@@ -383,22 +383,20 @@ Only **Agents** can create a request. **Publishers** (Landlord or Developer who 
 
 **Success response (200) — accept:**
 
-When the Agent has a Paystack sub-account, the backend creates a split payment and may return a payment URL and send the payment link by email to the Publisher.
+No payment link is generated at accept time. The Publisher receives an email explaining that agent commission is based on the **actual sale price** and must be registered on the dashboard after the transaction is complete.
 
 ```json
 {
   "success": true,
-  "message": "Request accepted. The property is now visible on the agent's public page. A payment link has been sent to your email to pay the agent commission to the agent.",
+  "message": "Request accepted. The property is now visible on the agent's public page. After the transaction is complete, register the actual sale price on your dashboard to calculate and pay the agent commission.",
   "data": {
     "status": "accepted",
-    "propertyId": "...",
-    "agentCommissionAmount": 50000,
-    "paymentUrl": "https://checkout.paystack.com/..."
+    "propertyId": "..."
   }
 }
 ```
 
-If no payment link could be generated (e.g. Agent has no sub-account), `data.paymentUrl` may be undefined and the message will ask the Publisher to arrange payment directly with the Agent.
+To record the sale and optional proof of payment to the Agent, the Publisher must later call **`POST /account/request-to-market/:requestId/register-sale`** (see 4.3.1) with the actual sale price, commission percentage, and optionally a receipt URL. Payment to the Agent happens outside the app.
 
 **Errors:**
 
@@ -407,60 +405,219 @@ If no payment link could be generated (e.g. Agent has no sub-account), `data.pay
 
 ---
 
-### 4.4 Publisher (Landlord/Developer) dashboard: how to show Accept/Reject and payment
+### 4.3.1 Register sale (Publisher only) — no in-app payment link
 
-After a Landlord or Developer receives the email that an Agent has requested to market their property, they need to see the request in the dashboard and use **Accept** or **Reject**, then pay the agent commission if they accept. The frontend should implement the following flow.
+After the Publisher has accepted a request and the property is sold, they register the **actual sale price** and (for Developer) the **commission percentage**. The backend computes the agent commission. **Payment to the Agent is made outside the app** (e.g. bank transfer, cash); the Publisher may optionally upload a **receipt** (proof of payment) so that admin can verify the developer/landlord has paid the Agent.
 
-#### Step 1: Show “Request To Market” requests in the dashboard
+**Endpoint:** `POST /account/request-to-market/:requestId/register-sale`  
+**Auth:** Bearer token (must be the Publisher of the property).
 
-- **Who:** Logged-in user is **Landowners** or **Developer** (Publisher).
-- **API:** `GET /account/request-to-market?role=publisher&status=pending`  
-  (Optionally omit `status` to show all, or use `status=pending` to show only requests awaiting response.)
-- **Auth:** Bearer token (account auth).
+**Request body (JSON):**
 
-The response `data` array contains one object per request. Each object includes:
+| Field                  | Type   | Required | Description |
+|------------------------|--------|----------|-------------|
+| actualSalePriceNaira   | number | Yes      | Actual price in Naira at which the property was sold. |
+| commissionPercent      | number | For Developer only | Commission percentage (1–5). **Landlord:** always 5% (omit or ignored). **Developer:** required, 1–5. |
+| commissionReceiptUrl   | string | No       | Optional. URL of uploaded receipt/proof of payment (e.g. from your upload endpoint). Used for admin verification that the Publisher paid the Agent. |
 
-- **`_id`** — Request ID (use this for the respond API).
-- **`status`** — e.g. `"pending"`, `"accepted"`, `"rejected"`.
-- **`propertyId`** — Property details (location, price, briefType, pictures, etc.).
-- **`requestedByAgentId`** — Agent details (firstName, lastName, fullName, email).
-- **`agentCommissionAmount`** — Amount in Naira the Publisher will pay the Agent if they accept.
+**Receipt upload flow:** If the frontend supports receipt upload, first call your file upload endpoint (e.g. `POST /upload-single-file` with `file` and optionally `for: "default"` or a dedicated type), then send the returned URL in **`commissionReceiptUrl`** when calling register-sale.
 
-**UI suggestion:** Add a “Request To Market” or “Marketplace requests” section in the Publisher’s dashboard (e.g. under Account or a dedicated “Requests” page). List each **pending** request with property summary, agent name, and **agentCommissionAmount**. For each pending request, show two actions: **Accept** and **Reject**.
-
-#### Step 2: Accept or Reject (where the buttons go)
-
-- **Accept:** Call `POST /account/request-to-market/:requestId/respond` with body `{ "action": "accept" }`. Use the request’s **`_id`** as `requestId` in the URL.
-- **Reject:** Call `POST /account/request-to-market/:requestId/respond` with body `{ "action": "reject", "rejectedReason": "optional reason" }` (same `requestId`).
-
-So the **Accept** and **Reject** buttons are tied to each row/card in the list from Step 1; on click, the frontend calls this respond endpoint with that request’s `_id`.
-
-#### Step 3: After Accept — how the Publisher pays the agent commission
-
-When the Publisher clicks **Accept**, the backend:
-
-- Marks the request as accepted and links the property to the Agent.
-- If **agentCommissionAmount > 0** and the Agent has a Paystack sub-account, it creates a payment link and sends it to the **Publisher’s email** and also returns it in the API response.
-
-**Respond (accept) success response (200):**
+**Success response (200):**
 
 ```json
 {
   "success": true,
-  "message": "Request accepted. The property is now visible on the agent's public page. A payment link has been sent to your email to pay the agent commission to the agent.",
+  "message": "Sale registered. Pay the agent commission outside the app; receipt URL saved for admin verification when provided.",
   "data": {
-    "status": "accepted",
-    "propertyId": "...",
-    "agentCommissionAmount": 50000,
-    "paymentUrl": "https://checkout.paystack.com/..."
+    "agentCommissionAmount": 4000000,
+    "commissionPercent": 5,
+    "actualSalePriceNaira": 80000000,
+    "commissionReceiptUrl": "https://...",
+    "agent": {
+      "name": "Agent Name",
+      "email": "agent@example.com",
+      "phoneNumber": "..."
+    }
   }
 }
 ```
 
-- **If `data.paymentUrl` is present:** Show a clear call-to-action on the same screen (or a success modal): e.g. **“Pay agent commission: ₦X”** with a button that opens **`data.paymentUrl`** in the same tab or a new tab. The Publisher completes payment on Paystack’s page; no payment form is needed in your app.
-- **If `data.paymentUrl` is missing** (e.g. Agent has no sub-account): Show the message that they should arrange payment directly with the Agent (and optionally show `data.agentCommissionAmount` and the Agent’s contact from the original request list).
+- **agentCommissionAmount** — Computed as `actualSalePriceNaira × (commissionPercent / 100)` (e.g. 5% of ₦80,000,000 = ₦4,000,000). Show this to the Publisher so they know how much to pay the Agent.
+- **agent** — Agent details (name, email, phoneNumber) so the Publisher can pay the Agent outside the app.
+- **commissionReceiptUrl** — Echo of the saved receipt URL when provided; otherwise `null`. Admin can retrieve this from the request-to-market list to confirm payment.
 
-So the Publisher “sees” the accept/reject buttons by listing pending requests (Step 1) and calling the respond API (Step 2); they “make the payment” by using the **paymentUrl** returned when they accept (Step 3), either from the dashboard or from the link in the email.
+**Errors:**
+
+- 400 — `actualSalePriceNaira` missing/invalid; or (Developer) `commissionPercent` missing or not 1–5; or sale already registered for this request.
+- 403 — Only the property publisher can register the sale.
+- 404 — Request not found.
+
+---
+
+### 4.4 Publisher (Landlord/Developer) dashboard: list requests, Accept/Reject, Register sale, and payment
+
+The endpoint that returns Request To Market data to the **Publisher (Developer or Landlord)** includes **Agent details** for each request so the frontend can show the Agent and attach a **“Register sale”** button for accepted requests. Implement the flow below with the exact APIs listed.
+
+---
+
+#### API 1: List requests (Publisher view — includes Agent details)
+
+**Method and URL:** `GET /account/request-to-market?role=publisher&status={pending|accepted|rejected}`  
+**Auth:** Bearer token (account auth). User must be Landlord or Developer (Publisher).
+
+**Query params:**
+
+| Param   | Required | Description |
+|---------|----------|-------------|
+| role    | Yes (for Publisher view) | `publisher` |
+| status  | No       | `pending` \| `accepted` \| `rejected`. Omit to return all. |
+| page    | No       | Default `1` |
+| limit   | No       | Default `20` |
+
+**Success response (200):**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "requestId",
+      "status": "pending",
+      "propertyId": { "location": {...}, "price": 50000000, "briefType": "sell", "pictures": [], ... },
+      "requestedByAgentId": {
+        "firstName": "John",
+        "lastName": "Doe",
+        "fullName": "John Doe",
+        "email": "agent@example.com",
+        "phoneNumber": "+234..."
+      },
+      "agentCommissionAmount": 0,
+      "publisherId": {...},
+      "acceptedAt": null,
+      "actualSalePriceNaira": null,
+      "commissionPercent": null,
+      "saleRegisteredAt": null
+    }
+  ],
+  "pagination": { "total": 10, "page": 1, "limit": 20, "totalPages": 1 }
+}
+```
+
+**Fields to use on the frontend:**
+
+- **`_id`** — Request ID. Use as `requestId` in respond and register-sale APIs.
+- **`status`** — `"pending"` \| `"accepted"` \| `"rejected"`.
+- **`propertyId`** — Property summary (location, price, briefType, pictures, etc.) for display.
+- **`requestedByAgentId`** — **Agent details** (firstName, lastName, fullName, email, phoneNumber). Show Agent name and contact on each request card/row.
+- **`agentCommissionAmount`** — From listing (may be 0); commission at pay time is based on actual sale (see Register sale).
+- **`saleRegisteredAt`** — If set, sale is already registered for this request; show "Sale registered" instead of "Register sale".
+- **`commissionReceiptUrl`** — When present (after register sale with receipt), the URL of the uploaded receipt. **Admin** can use this (e.g. when listing requests) to confirm the Publisher has paid the Agent.
+
+**UI:** For each request, show property summary + **Agent details** (name, email, phone). For **pending**: show **Accept** and **Reject**. For **accepted** and not yet registered: show **“Register sale”** (see Step 3).
+
+---
+
+#### API 2: Accept or Reject a request
+
+**Accept**  
+**Method and URL:** `POST /account/request-to-market/:requestId/respond`  
+**Body:** `{ "action": "accept" }`  
+Use the request’s **`_id`** as **`requestId`** in the URL.
+
+**Reject**  
+**Method and URL:** `POST /account/request-to-market/:requestId/respond`  
+**Body:** `{ "action": "reject", "rejectedReason": "optional reason" }`  
+Same **`requestId`**.
+
+**Success (200) — accept:** No payment link. Message tells Publisher to register actual sale after transaction.
+
+```json
+{
+  "success": true,
+  "message": "Request accepted. The property is now visible on the agent's public page. After the transaction is complete, register the actual sale price on your dashboard to calculate and pay the agent commission.",
+  "data": { "status": "accepted", "propertyId": "..." }
+}
+```
+
+**UI:** “Accept” / “Reject” on each row/card; on success, refresh the list or update that request’s status.
+
+---
+
+#### Step 3: “Register sale” button and modal (accepted requests only)
+
+When the property is sold, the Publisher registers the actual sale in the app. **No payment link is generated** — payment to the Agent happens outside the app (e.g. bank transfer). The Publisher may optionally upload a **receipt** (proof of payment) so admin can verify the Agent was paid. The **list response already includes Agent details** and request `_id`, so the frontend can attach a **“Register sale”** action per **accepted** request (and hide it if `saleRegisteredAt` is set).
+
+**UI flow:**
+
+1. For each **accepted** request with **no** `saleRegisteredAt`, show a **“Register sale”** button (same row/card as the request, with Agent details).
+2. **On click:** open a **modal** (sale registration form).
+3. **Form fields:**
+   - **Actual sale price (Naira)** — number, required. Label e.g. “Actual price at which the property was sold (₦)”.
+   - **Commission %** — only if user is **Developer**: number 1–5, required. If user is **Landlord**, do not show this field (backend uses 5%).
+   - **Receipt (proof of payment)** — optional. File upload; after upload use the returned URL as `commissionReceiptUrl` in API 3. Lets admin confirm the Publisher has paid the Agent.
+4. **Modal actions:** “Cancel” (close modal), **“Submit”** (submit registration).
+5. **On Submit:** call **API 3** with the form values and the request’s `_id`.
+6. **On success:** close modal and show that the sale was registered. Optionally show **Agent details** and **commission amount** so the Publisher knows who to pay and how much (payment is done outside the app).
+
+---
+
+#### API 3: Register sale (no payment link; optional receipt)
+
+**Method and URL:** `POST /account/request-to-market/:requestId/register-sale`  
+**Auth:** Bearer token (Publisher).  
+Use the request’s **`_id`** as **`requestId`** in the URL.
+
+**Request body (JSON):**
+
+| Field                | Type   | Required | Description |
+|----------------------|--------|----------|-------------|
+| actualSalePriceNaira | number | Yes      | Actual price in Naira at which the property was sold. |
+| commissionPercent    | number | Developer only | 1–5. **Landlord:** omit (backend uses 5%). |
+| commissionReceiptUrl | string | No             | Optional. URL from upload endpoint (receipt/proof of payment). Visible to admin. |
+
+**Success response (200):**
+
+```json
+{
+  "success": true,
+  "message": "Sale registered. Pay the agent commission outside the app; receipt URL saved for admin verification when provided.",
+  "data": {
+    "agentCommissionAmount": 4000000,
+    "commissionPercent": 5,
+    "actualSalePriceNaira": 80000000,
+    "commissionReceiptUrl": "https://...",
+    "agent": {
+      "name": "John Doe",
+      "email": "agent@example.com",
+      "phoneNumber": "+234..."
+    }
+  }
+}
+```
+
+**Frontend handling:**
+
+- No **paymentUrl** is returned. Payment to the Agent is done **outside the app** (e.g. bank transfer).
+- Show **`data.agentCommissionAmount`** and **`data.agent`** (name, email, phoneNumber) so the Publisher knows how much to pay and who to pay.
+- **`commissionReceiptUrl`** is returned when one was submitted; admin can use it (e.g. from the request list) to confirm the Publisher paid the Agent.
+
+
+**Errors:**
+
+- **400** — `actualSalePriceNaira` missing/invalid; (Developer) `commissionPercent` missing or not 1–5; or sale already registered for this request.
+- **403** — Only the property publisher can register the sale.
+- **404** — Request not found.
+
+---
+
+#### Summary: APIs to consume for Publisher Request To Market
+
+| Action            | Method | URL | Body / notes |
+|-------------------|--------|-----|--------------|
+| List requests     | GET    | `/account/request-to-market?role=publisher&status=pending` (or `accepted` / omit) | Returns requests + **Agent details** (`requestedByAgentId`), `saleRegisteredAt`. |
+| Accept request    | POST   | `/account/request-to-market/:requestId/respond` | `{ "action": "accept" }` |
+| Reject request    | POST   | `/account/request-to-market/:requestId/respond` | `{ "action": "reject", "rejectedReason": "..." }` |
+| Register sale     | POST   | `/account/request-to-market/:requestId/register-sale` | `{ "actualSalePriceNaira": number, "commissionPercent": number, "commissionReceiptUrl": string? }`. No payment link; optional receipt for admin verification. Returns **agent** details and **agentCommissionAmount**. |
 
 ### 4.5 Agent: verify property address on map (frontend-only)
 
@@ -474,6 +631,107 @@ Before requesting to market a publisher property, the **Agent** can confirm the 
 **Optional backend enhancement:**
 
 - If you want **server-side address validation** (e.g. ensure the address resolves to a real place via Google Geocoding API), that would be a **backend** integration: the backend would call the Geocoding API and optionally store normalized coordinates or a validation flag. The frontend would continue to show the map; any "verified" badge or stricter validation would come from the backend response.
+
+---
+
+### 4.6 Public access page (DealSite): ensuring accepted Request To Market properties are visible
+
+When a **Publisher (Landlord or Developer)** accepts an **Agent’s Request To Market**, the backend adds that Agent to the property’s **`marketedByAgentIds`** array (multiple agents can market the same property). The property must then appear on:
+
+1. **The Agent’s public access page (DealSite)** — so visitors see both properties the Agent owns and properties they are marketing (accepted by the Publisher).
+2. **The Publisher’s public access page (DealSite), when the marketplace is opened** — those properties are still owned by the Publisher, so they appear under the Publisher’s DealSite as well.
+
+The **public access page application** must use the correct API and query params so that both **owned** and **marketed-by-agent** properties are returned. If the property does not show on the Agent’s DealSite, the usual cause is calling the wrong endpoint or sending a **briefType** (or other) filter that excludes it.
+
+#### API the public access page must use
+
+**Endpoint:** `GET /deal-site/:publicSlug/properties`  
+**Auth:** None (public).  
+**Base URL:** Your API base (e.g. `https://api.khabiteq.com` or `https://khabiteq-realty.onrender.com/api`). So the full URL is: `{API_BASE}/deal-site/:publicSlug/properties`.
+
+- **`:publicSlug`** — The DealSite’s public slug (e.g. from the page URL when a visitor is on the Agent’s or Publisher’s public page, e.g. `john-doe-properties`).
+
+**What the backend returns:**
+
+- Properties where **owner** = DealSite creator (User who owns the DealSite), **or**
+- Properties where **marketedByAgentIds** contains the DealSite creator (Request To Market accepted for this Agent; same property can be marketed by multiple agents).
+
+So a **single** call to this endpoint returns both “my listings” and “properties I’m marketing for others” for that DealSite. No second API is needed.
+
+#### Query parameters (optional)
+
+| Param       | Type   | Description |
+|------------|--------|-------------|
+| page       | string | Default `1`. |
+| limit      | string | Default `10`. |
+| briefType  | string | **Only send when the user has chosen a specific type** (e.g. `sell`, `rent`). **Do not send** when showing “All” or on initial load — otherwise the backend filters by that type and marketed properties with a different type can disappear. |
+| location   | string | e.g. state, LGA, area (comma-separated). |
+| priceRange | string | JSON string, e.g. `{"min":1000000,"max":50000000}`. |
+| type       | string | Property category (e.g. Residential, Commercial, Land). |
+| bedroom    | string | Number(s). |
+| bathroom   | string | Number(s). |
+| landSize   | string | Number. |
+| documentType | string | Comma-separated. |
+| desireFeature | string | Comma-separated. |
+| tenantCriteria | string | Comma-separated. |
+
+**Critical for visibility:**
+
+- **Omit `briefType`** (or do not add it to the request) when the page is showing “All” properties. The backend only filters by `briefType` when it is present and non-empty. If the frontend sends `briefType` (e.g. from a dropdown default), marketed properties may be excluded.
+- Use the **same** endpoint for both the **Agent’s** public page and the **Publisher’s** public page: only `publicSlug` changes (Agent’s slug vs Publisher’s slug).
+
+#### Success response (200)
+
+```json
+{
+  "success": true,
+  "dealSite": { "inspectionSettings": { ... } },
+  "data": [
+    {
+      "_id": "propertyId",
+      "propertyType": "sell",
+      "propertyCategory": "Residential",
+      "propertyCondition": "New",
+      "price": 50000000,
+      "location": { "state": "...", "localGovernment": "...", "area": "..." },
+      "additionalFeatures": { "noOfBedroom": 3, ... },
+      "pictures": ["..."],
+      "isAvailable": true,
+      "shortletDetails": null,
+      "bookedPeriods": [],
+      "status": "active",
+      "briefType": "sell",
+      "isPremium": false,
+      "isApproved": true
+    }
+  ],
+  "pagination": {
+    "total": 15,
+    "currentPage": 1,
+    "totalPages": 2,
+    "perPage": 10
+  }
+}
+```
+
+Render the **data** array as the property list. No distinction in the response between “owned” and “marketed”; both are included whenever they match the filters.
+
+#### Single property (detail page)
+
+**Endpoint:** `GET /deal-site/:publicSlug/properties/:propertyId`  
+**Auth:** None (public).
+
+Same `publicSlug` as the list. The backend allows access if the property is either owned by the DealSite creator or has the DealSite creator in **marketedByAgentIds** (or legacy **marketedByAgentId**). Use this for the property detail page on the public access site.
+
+#### Summary: how the public access page should handle the APIs
+
+1. **Resolve `publicSlug`** from the current page (e.g. Agent’s or Publisher’s DealSite URL).
+2. **List properties:** `GET {API_BASE}/deal-site/:publicSlug/properties` with **no `briefType`** (and no other filters) on initial load or when “All” is selected, so that both owned and marketed properties appear.
+3. **Optional filters:** When the user selects a type (e.g. “For Sale”), add `briefType=sell`; when they select location/price/etc., add the corresponding query params. Avoid defaulting `briefType` to a value when you intend to show all.
+4. **Detail page:** `GET {API_BASE}/deal-site/:publicSlug/properties/:propertyId` for a single property.
+5. **Featured properties:** If the page shows a “Featured” section, use `GET {API_BASE}/deal-site/:publicSlug/featuredProperties`. The backend already includes both owned and marketed properties in featured when applicable.
+
+Following this ensures that when a Publisher accepts an Agent’s Request To Market, the property appears on the Agent’s public access page (and remains visible on the Publisher’s public page when the marketplace is opened).
 
 ---
 
@@ -562,6 +820,8 @@ Full request/response shapes are documented in `docs/UPDATES.md` (Transaction Re
 
 - **Developers** can create and manage a **DealSite** (public access page) and have the same **subscription** obligation as Agents (required to create/maintain DealSite and to post properties).
 - DealSite and subscription APIs are under **`/account`** (e.g. `/account/dealSite/setUp`, `/account/subscriptions/...`). Same as for Agents; use `user.dealSite` and `user.activeSubscription` from login (and verify) to drive UI (e.g. show DealSite link, subscription status, or prompt to subscribe).
+
+**Public access page (no auth):** To show properties on an Agent’s or Publisher’s DealSite (including properties that appear after a Request To Market is accepted), the frontend must call **`GET /deal-site/:publicSlug/properties`**. Do **not** send **`briefType`** when showing “All” properties, or marketed properties may not appear. See **Section 4.6** for full details and query parameters.
 
 ---
 
@@ -773,6 +1033,8 @@ Users can **optionally** describe what they want in natural language; the backen
 
 **Request body (JSON):** `{ "userInput": "string" }` — natural-language description of the property.
 
+**Note:** The frontend may prepend a short instruction block to `userInput` so the model corrects speech-to-text / typing errors (especially Nigerian locations and property terms) before extraction. The backend should pass the full string to the LLM (or treat the prefix as part of the user message).
+
 **Success response (200):** `{ "success": true, "message": "...", "data": { ... } }`. The `data` object contains suggested fields (e.g. `propertyType`, `propertyCategory`, `location`, `price`, `description`, `features`, etc.). Merge into your form; validation happens on actual submit via `POST /account/properties/create`.
 
 **Errors:** 400 — missing/invalid `userInput`. 403 — user not Agent/Landlord/Developer. 503 — OpenAI not configured.
@@ -785,6 +1047,8 @@ Users can **optionally** describe what they want in natural language; the backen
 **Auth:** None (public).
 
 **Request body (JSON):** `{ "userInput": "string" }` — natural-language description of what the buyer is looking for.
+
+**Note:** The same optional speech/typing correction prefix as in §10.2 may be prepended to `userInput` before send.
 
 **Success response (200):** `{ "success": true, "message": "...", "data": { ... } }`. The `data` object contains suggested preference fields (e.g. `preferenceType`, `preferenceMode`, `location`, `budget`, `propertyDetails`, `features`). Merge into the preference form; user submits via `POST /preferences/submit`.
 
@@ -820,7 +1084,8 @@ Users can **optionally** describe what they want in natural language; the backen
 | Account (profile, properties, my-inspections, request-to-market, dealSite, subscriptions, **ai/suggest-property**) | `/account` | Bearer token (account) |
 | **AI suggest preference** | `/ai/suggest-preference` | None (public) |
 | LASRERA Market Place list | `/lasrera-marketplace/properties` | None (optional Bearer for currentUserHasRequested) |
-| DealSite public (e.g. inspection request) | `/deal-site/:publicSlug/...` | None |
+| **DealSite public — properties list** (owned + marketed; see 4.6) | `GET /deal-site/:publicSlug/properties` | None |
+| DealSite public (inspection request, featured, etc.) | `/deal-site/:publicSlug/...` | None |
 | Transaction registration (types, guidelines, search, check, register) | `/transaction-registration` | None (public) |
 
 Use this guide together with `docs/UPDATES.md` for full backend context. For admin-only APIs (e.g. transaction registration list), see `docs/ADMIN_API_GUIDE.md`.

@@ -47,6 +47,7 @@ export default function FeaturedPage() {
       }
 
       const response = await api.get("/account/properties/fetchAll");
+      console.log("[fetchAll /account/properties/fetchAll] response (DealSite featured)", response?.data ?? response);
 
       if (response.data?.success && Array.isArray(response.data.data)) {
         setProperties(response.data.data);

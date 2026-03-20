@@ -1,14 +1,54 @@
 "use client";
 
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import { usePostPropertyContext } from "@/context/post-property-context";
 import { suggestProperty } from "@/services/aiFormService";
 import AiFillBlock from "@/components/ai-form-fill/AiFillBlock";
 import PropertyAiDataSummary from "./PropertyAiDataSummary";
 import { mergeSuggestPropertyIntoForm } from "@/utils/aiSuggestPropertyMerge";
+import { pickAiComplimentPrefix } from "@/utils/aiComplimentPrefix";
+import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
-import { ArrowLeft, MessageSquare, Bot, Loader2 } from "lucide-react";
+import { ArrowLeft, MessageSquare, Bot, Loader2, Volume2, VolumeX } from "lucide-react";
+
+function fieldLabelOnly(field: string): string {
+  return field.replace(/\s*\([^)]*\)\s*$/, "").trim() || field;
+}
+
+function getShortFormatForPropertyField(field: string): string {
+  const s = field.toLowerCase();
+  const rules: { test: (x: string) => boolean; format: string }[] = [
+    { test: (x) => x.includes("local government") || x.includes("lga"), format: "e.g. Ikeja" },
+    { test: (x) => x.includes("location") && x.includes("state"), format: "state, area, LGA — e.g. Lagos, Lekki, Ikeja" },
+    { test: (x) => x.includes("property type") && x.includes("sale"), format: "sale | rent | shortlet | joint venture" },
+    { test: (x) => x.includes("property category"), format: "Residential | Commercial | Land" },
+    { test: (x) => x.includes("price"), format: "Naira number no commas e.g. 50000000" },
+    { test: (x) => x.includes("description"), format: "one or two short sentences" },
+    { test: (x) => x.includes("bathrooms") && x.includes("toilets"), format: "counts e.g. 2 bathrooms 2 toilets" },
+    { test: (x) => x.includes("bathroom"), format: "integer" },
+    { test: (x) => x.includes("toilet"), format: "integer" },
+    { test: (x) => x.includes("bedroom"), format: "integer e.g. 3" },
+    { test: (x) => x.includes("property condition"), format: "new | fairly used | renovated …" },
+    { test: (x) => x.includes("type of building"), format: "flat | duplex | terrace | detached …" },
+    { test: (x) => x.includes("parking"), format: "number or none" },
+    { test: (x) => x.includes("document") || x.includes("title"), format: "comma list C of O Survey plan …" },
+    { test: (x) => x.includes("measurement type"), format: "Square Meter | Plot | Hectares …" },
+    { test: (x) => x.includes("land size") && x.includes("numeric"), format: "number e.g. 500" },
+    { test: (x) => x.includes("features"), format: "comma list parking generator security …" },
+  ];
+  const hit = rules.find((r) => r.test(s));
+  return hit ? hit.format : "short text or number";
+}
+
+/** Returns plain text suitable for TTS from an assistant message (Web Speech API — SpeechSynthesis). */
+function getSpeakableAssistantText(msg: { content: string; missingFields?: string[] }): string {
+  if (!msg.missingFields?.length) return msg.content;
+  const lines = msg.missingFields.map(
+    (f) => `${fieldLabelOnly(f)}. Format: ${getShortFormatForPropertyField(f)}`,
+  );
+  return `${msg.content} Still need: ${lines.join(". ")}`;
+}
 
 /** Returns true only if the value is non-empty and meaningful (not placeholder) */
 function isMeaningful(value: unknown): boolean {
@@ -17,58 +57,6 @@ function isMeaningful(value: unknown): boolean {
   if (typeof value === "number") return !Number.isNaN(value) && value > 0;
   if (Array.isArray(value)) return value.length > 0;
   return false;
-}
-
-/**
- * Returns an expected-format hint for missing property fields so users can provide
- * data in a format the system recognizes (simple text, no special characters).
- * Reduces repeated prompts when the user's phrasing is not parsed correctly.
- */
-function getFormatHintForMissingPropertyFields(missingFields: string[]): string {
-  if (missingFields.length === 0) return "";
-  const parts: string[] = [];
-  const has = (...keywords: string[]) =>
-    missingFields.some((f) => keywords.some((k) => f.toLowerCase().includes(k)));
-
-  if (has("property type")) {
-    parts.push("property type: one of sale, rent, shortlet, joint venture");
-  }
-  if (has("property category")) {
-    parts.push("property category: e.g. Residential, Commercial, Land");
-  }
-  if (has("location", "state", "area") || has("local government", "LGA")) {
-    parts.push("location: state, area, and local government (LGA), e.g. Lagos, Lekki, Ikeja");
-  }
-  if (has("price")) {
-    parts.push("price: number in Naira only, e.g. 50000000");
-  }
-  if (has("description")) {
-    parts.push("description: short description of the property");
-  }
-  if (has("bedrooms", "bathrooms", "toilets")) {
-    parts.push("rooms: bedrooms 3, bathrooms 2, toilets 2 (use numbers only)");
-  }
-  if (has("property condition")) {
-    parts.push("property condition: e.g. new, fairly used, renovated");
-  }
-  if (has("type of building")) {
-    parts.push("type of building: e.g. flat, duplex, terrace, detached house");
-  }
-  if (has("parking")) {
-    parts.push("parking: number of spaces or write none");
-  }
-  if (has("property documents", "title")) {
-    parts.push("documents: list document names separated by commas, e.g. C of O, Governors consent, Survey plan (no apostrophes or special characters)");
-  }
-  if (has("land size", "measurement type") || has("measurement type", "numeric")) {
-    parts.push("land size: measurement type (e.g. Square Meter, Plot, Hectares) and size as number, e.g. land size 500 Square Meter");
-  }
-  if (has("key features")) {
-    parts.push("features: e.g. parking, generator, security, water supply (comma separated)");
-  }
-
-  if (parts.length === 0) return "";
-  return " Use this format so we can read it correctly: " + parts.join("; ") + ".";
 }
 
 /** Extract local government / LGA from user text so we recognize it even if the API omits it. */
@@ -263,11 +251,10 @@ export default function PropertyAiConversationFlow({
   } = usePostPropertyContext();
 
   const [loading, setLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, []);
+  /** Default on: speak each assistant reply automatically; user can mute via toggle or stop via speaker icon. */
+  const [playRepliesAloud, setPlayRepliesAloud] = useState(true);
+  const prevMessageCountRef = useRef(0);
+  const { speak, stop, speaking } = useSpeechSynthesis({ lang: "en-NG", rate: 0.95 });
 
   const handleSend = useCallback(async (textOverride: string) => {
     const trimmed = textOverride.toString().trim();
@@ -277,7 +264,6 @@ export default function PropertyAiConversationFlow({
     }
     setLoading(true);
     setAiConversationMessages((prev) => [...prev, { role: "user", content: trimmed }]);
-    scrollToBottom();
 
     try {
       const accumulated = [...aiConversationMessages, { role: "user", content: trimmed }]
@@ -290,7 +276,6 @@ export default function PropertyAiConversationFlow({
           ...prev,
           { role: "assistant", content: res.message || "Could not get suggestions. Please try again or add more detail." },
         ]);
-        scrollToBottom();
         return;
       }
       let data = (res.data || {}) as Record<string, unknown>;
@@ -322,10 +307,9 @@ export default function PropertyAiConversationFlow({
         };
       }
       const missingFields = getMissingFieldsFromData(data);
-      const formatHint = getFormatHintForMissingPropertyFields(missingFields);
       const hasMissing = missingFields.length > 0;
-      const _suffix = hasMissing ? "" : " I have enough to build your listing. If everything looks good, click “I’m done” below to see the summary and continue to image upload.";
-      const assistantContent = `Here’s what I have so far:${_suffix}`;
+      const praise = pickAiComplimentPrefix();
+      const assistantContent = hasMissing ? praise : `${praise}\n\nReady. Tap I'm done for summary.`;
       setAiCollectedData(data);
       setAiConversationMessages((prev) => [
         ...prev,
@@ -334,21 +318,27 @@ export default function PropertyAiConversationFlow({
           content: assistantContent,
           data,
           missingFields: hasMissing ? missingFields : undefined,
-          formatHint: hasMissing ? formatHint : undefined,
         },
       ]);
-      scrollToBottom();
     } catch (e) {
       toast.error((e as Error)?.message || "Something went wrong.");
       setAiConversationMessages((prev) => [
         ...prev,
         { role: "assistant", content: "Something went wrong. Please try again or add more detail." },
       ]);
-      scrollToBottom();
     } finally {
       setLoading(false);
     }
-  }, [aiConversationMessages, setAiConversationMessages, setAiCollectedData, scrollToBottom]);
+  }, [aiConversationMessages, setAiConversationMessages, setAiCollectedData]);
+
+  // Auto-play latest assistant reply when TTS is enabled (Web Speech API — SpeechSynthesis).
+  useEffect(() => {
+    const n = aiConversationMessages.length;
+    if (n > prevMessageCountRef.current && aiConversationMessages[n - 1]?.role === "assistant" && playRepliesAloud) {
+      speak(getSpeakableAssistantText(aiConversationMessages[n - 1] as { content: string; missingFields?: string[] }));
+    }
+    prevMessageCountRef.current = n;
+  }, [aiConversationMessages, playRepliesAloud, speak]);
 
   const handleSuggest = useCallback(
     async (userInput: string) => {
@@ -414,6 +404,22 @@ export default function PropertyAiConversationFlow({
         Tip: If voice input fails (e.g. network), type your description instead.
       </p>
 
+      <label className="flex items-start gap-2 text-sm text-[#5A5D63] cursor-pointer">
+        <input
+          type="checkbox"
+          checked={playRepliesAloud}
+          onChange={(e) => {
+            setPlayRepliesAloud(e.target.checked);
+            if (!e.target.checked) stop();
+          }}
+          className="mt-1 rounded border-gray-300 text-[#8DDB90] focus:ring-[#8DDB90]"
+        />
+        <span>
+          <span className="block font-medium text-[#09391C]">Play AI replies aloud</span>
+          <span className="block text-xs text-[#5A5D63] mt-0.5">On by default. Tap the speaker icon on a reply to stop playback.</span>
+        </span>
+      </label>
+
       {loading && (
         <div className="flex items-center gap-3 rounded-lg border border-[#8DDB90]/50 bg-[#f0fdf4] px-4 py-3 text-sm text-[#09391C]">
           <Loader2 className="h-5 w-5 flex-shrink-0 animate-spin text-[#8DDB90]" aria-hidden />
@@ -431,8 +437,19 @@ export default function PropertyAiConversationFlow({
               className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
             >
               {msg.role === "assistant" && (
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#8DDB90]/20 flex items-center justify-center">
-                  <Bot className="h-4 w-4 text-[#09391C]" />
+                <div className="flex flex-col gap-1 items-center">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#8DDB90]/20 flex items-center justify-center">
+                    <Bot className="h-4 w-4 text-[#09391C]" />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => (speaking ? stop() : speak(getSpeakableAssistantText(msg as { content: string; missingFields?: string[] })))}
+                    className="p-1 rounded text-[#5A5D63] hover:bg-[#8DDB90]/20 hover:text-[#09391C]"
+                    title={speaking ? "Stop playback" : "Play reply aloud"}
+                    aria-label={speaking ? "Stop playback" : "Play reply aloud"}
+                  >
+                    {speaking ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                  </button>
                 </div>
               )}
               <div
@@ -442,25 +459,26 @@ export default function PropertyAiConversationFlow({
                     : "bg-gray-100 text-[#09391C]"
                 }`}
               >
-                {msg.role === "assistant" && (msg as { missingFields?: string[]; formatHint?: string }).missingFields?.length ? (
+                {msg.role === "assistant" && (msg as { missingFields?: string[] }).missingFields?.length ? (
                   <>
-                    <p>{msg.content}</p>
-                    <p className="font-medium mt-2">I still need:</p>
-                    <ul className="list-disc list-inside mt-1 space-y-0.5 ml-1">
+                    <p className="mb-2 whitespace-pre-line">{msg.content}</p>
+                    <p className="text-xs font-semibold text-[#5A5D63] uppercase tracking-wide mb-1.5">Still need</p>
+                    <ul className="space-y-2 text-sm">
                       {(msg as { missingFields: string[] }).missingFields.map((f, j) => (
-                        <li key={j}>{f}</li>
+                        <li key={j} className="border-l-2 border-[#8DDB90]/60 pl-2">
+                          <span className="font-medium text-[#09391C]">{fieldLabelOnly(f)}</span>
+                          <span className="text-[#5A5D63]"> — {getShortFormatForPropertyField(f)}</span>
+                        </li>
                       ))}
                     </ul>
-                    <p className="mt-2">Please provide these so we can complete your listing.{(msg as { formatHint?: string }).formatHint}</p>
                   </>
                 ) : (
-                  msg.content
+                  <span className="whitespace-pre-line">{msg.content}</span>
                 )}
               </div>
             </div>
           ))
         )}
-        <div ref={messagesEndRef} />
       </div>
 
       <div className="flex flex-col gap-3">

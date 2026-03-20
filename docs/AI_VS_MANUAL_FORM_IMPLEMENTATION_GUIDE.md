@@ -175,6 +175,12 @@ Reusable component: textarea + mic button + primary action (e.g. "Send" or "Fill
 
 - On click: get trimmed text from textarea. If empty, toast "Please enter a description first." Else call `onSuggest(trimmed)`. On success you may clear the textarea and show a success toast. On error, show error toast. Disable button (and optionally mic) while `onSuggest` is in progress and show a loading spinner in the button.
 
+### 7.6 Text-to-Speech (reply playback)
+
+- **API:** [Web Speech API — SpeechSynthesis](https://developer.mozilla.org/en-US/docs/Web/API/Speech_Synthesis_API). Client-only (no `window` in SSR).
+- **Usage:** `window.speechSynthesis`, `SpeechSynthesisUtterance` for the text, and `speak()` to play. Optionally set `lang` (e.g. `"en-NG"`), `rate`, `pitch`, `volume` for a consistent assistant voice.
+- **In the app:** Preference and property AI flows use `useSpeechSynthesis` (see `src/hooks/useSpeechSynthesis.ts`). Users can enable "Play replies aloud" to hear the latest assistant message when it arrives, and use the speaker icon on each assistant message to replay or stop playback.
+
 ---
 
 ## 8. API Contract (Suggest Property)

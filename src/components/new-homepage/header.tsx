@@ -25,7 +25,8 @@ import { Suspense } from "react";
 // Lazy load heavy components that are only shown on interaction
 const SideBar = dynamic(() => import("../general-components/sideBar"), { ssr: false });
 const UserNotifications = dynamic(() => import("./user-notifications"), { ssr: false });
-const UserProfile = dynamic(() => import("./my-profile"), { ssr: false });
+// Import profile directly so dropdown always has latest logic (Developer/Landlord menu on /dashboard)
+import UserProfile from "./my-profile";
 
 const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
   const {

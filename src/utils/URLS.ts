@@ -182,6 +182,7 @@ export const URLS = {
   requestToMarketCreate: "/account/request-to-market",
   requestToMarketList: "/account/request-to-market",
   requestToMarketRespond: (requestId: string) => `/account/request-to-market/${requestId}/respond`,
+  requestToMarketRegisterSale: (requestId: string) => `/account/request-to-market/${requestId}/register-sale`,
 
   /**
    * Transaction registration (public/DealSite) (guide §5–6)
