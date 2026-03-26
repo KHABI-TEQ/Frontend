@@ -1,13 +1,17 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Button from "@/components/general-components/button";
+import { getPostingAgreementUserTypeLabel } from "@/utils/postingUserTypeLabel";
+
+export { getPostingAgreementUserTypeLabel } from "@/utils/postingUserTypeLabel";
 
 interface AgreementModalProps {
   open: boolean;
   onClose: () => void;
   onAccept: () => void;
   userName?: string;
-  userType?: "landowner" | "agent";
+  /** Session account type: Agent, Developer, Landowners, FieldAgent (from user context). */
+  userType?: string;
   textValue?: string;
 }
 
@@ -16,12 +20,10 @@ const AgreementModal: React.FC<AgreementModalProps> = ({
   onClose,
   onAccept,
   userName = "User",
-  userType = "landowner",
+  userType,
   textValue = "Agree and Post Property"
 }) => {
-  const getUserTypeText = () => {
-    return userType === "agent" ? "Agent" : "Property Owner";
-  };
+  const userTypeText = getPostingAgreementUserTypeLabel(userType);
 
   return (
     <AnimatePresence>
@@ -56,7 +58,7 @@ const AgreementModal: React.FC<AgreementModalProps> = ({
                 <span className="font-semibold">Name:</span> {userName}
               </p>
               <p>
-                <span className="font-semibold">User Type:</span> {getUserTypeText()}
+                <span className="font-semibold">User Type:</span> {userTypeText}
               </p>
             </div>
 

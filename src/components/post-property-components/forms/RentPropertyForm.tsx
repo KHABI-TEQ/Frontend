@@ -579,7 +579,7 @@ const RentPropertyForm: React.FC<RentPropertyFormProps> = ({
             }}
             textValue={"Agree and Post Property"}
             userName={`${user.firstName} ${user.lastName}`}
-            userType={user?.userType === "Agent" ? "agent" : "landowner"}
+            userType={user?.userType}
           />
 
           <SuccessModal

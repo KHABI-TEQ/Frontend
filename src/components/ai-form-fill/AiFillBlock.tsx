@@ -57,10 +57,20 @@ export default function AiFillBlock({
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  /** Max allowed silence (ms) before we end the listening session and commit text. */
+  const SILENCE_GRACE_MS = 10_000;
   /** Textarea snapshot when current mic session started — new speech appends after this. */
   const voiceBaseRef = useRef("");
-  /** Latest combined final+interim for this utterance (so onend can sync). */
-  const latestUtteranceRef = useRef("");
+  /** Final transcript accumulated across recognition restarts within one mic session. */
+  const finalTranscriptRef = useRef("");
+  /** Final transcript captured in the current recognition run (not yet committed). */
+  const runFinalTranscriptRef = useRef("");
+  /** Latest interim transcript for the current recognition run. */
+  const interimTranscriptRef = useRef("");
+  /** Last time speech activity was detected (result event). */
+  const lastSpeechAtRef = useRef<number>(0);
+  /** True if user explicitly clicked Stop. */
+  const manualStopRequestedRef = useRef(false);
   /** Avoid double beep if both onerror(aborted) and onend run. */
   const endBeepPlayedRef = useRef(false);
   /** One finish path per mic session (onend + onerror can both fire). */
@@ -72,14 +82,104 @@ export default function AiFillBlock({
     playSpeechEndBeep();
   }, []);
 
+  const updateInputFromVoiceBuffers = useCallback(() => {
+    const utterance = [finalTranscriptRef.current, runFinalTranscriptRef.current, interimTranscriptRef.current]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+    setInput(combineBaseAndUtterance(voiceBaseRef.current, utterance));
+  }, []);
+
   const finishRecognitionSession = useCallback(() => {
     if (!sessionActiveRef.current) return;
     sessionActiveRef.current = false;
     recognitionRef.current = null;
     setListening(false);
-    setInput(combineBaseAndUtterance(voiceBaseRef.current, latestUtteranceRef.current));
+    updateInputFromVoiceBuffers();
     playEndBeepOnce();
-  }, [playEndBeepOnce]);
+  }, [playEndBeepOnce, updateInputFromVoiceBuffers]);
+
+  const startRecognitionRun = useCallback(() => {
+    if (typeof window === "undefined" || !sessionActiveRef.current) return;
+    const SpeechRecognitionAPI =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognitionAPI) {
+      sessionActiveRef.current = false;
+      setListening(false);
+      toast.error("Speech recognition is not supported in this browser.");
+      return;
+    }
+
+    const recognition = new SpeechRecognitionAPI() as SpeechRecognition;
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = "en-NG";
+    recognition.maxAlternatives = 1;
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      const { final, interim } = getSessionTranscriptFromResults(event.results);
+      lastSpeechAtRef.current = Date.now();
+      runFinalTranscriptRef.current = final.trim();
+      interimTranscriptRef.current = interim.trim();
+      updateInputFromVoiceBuffers();
+    };
+
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      const error = (event as SpeechRecognitionErrorEvent).error;
+      if (error === "aborted" || error === "no-speech") return;
+      sessionActiveRef.current = false;
+      recognitionRef.current = null;
+      setListening(false);
+      endBeepPlayedRef.current = true;
+      if (error === "not-allowed") {
+        toast.error("Microphone access denied. Allow the mic and try again.");
+        return;
+      }
+      if (error === "network") {
+        toast.error("Voice needs a stable internet connection. You can type your description below instead.");
+        return;
+      }
+      toast.error("Voice input failed. Try typing instead.");
+    };
+
+    recognition.onend = () => {
+      recognitionRef.current = null;
+      if (runFinalTranscriptRef.current) {
+        finalTranscriptRef.current = [finalTranscriptRef.current, runFinalTranscriptRef.current]
+          .filter(Boolean)
+          .join(" ")
+          .trim();
+        runFinalTranscriptRef.current = "";
+      }
+      interimTranscriptRef.current = "";
+      if (!sessionActiveRef.current) return;
+      if (manualStopRequestedRef.current) {
+        manualStopRequestedRef.current = false;
+        finishRecognitionSession();
+        return;
+      }
+      const silentFor = Date.now() - lastSpeechAtRef.current;
+      if (silentFor >= SILENCE_GRACE_MS) {
+        finishRecognitionSession();
+        return;
+      }
+      setTimeout(() => {
+        if (!sessionActiveRef.current || manualStopRequestedRef.current) return;
+        startRecognitionRun();
+      }, 80);
+    };
+
+    recognitionRef.current = recognition;
+    try {
+      recognition.start();
+      setListening(true);
+    } catch {
+      sessionActiveRef.current = false;
+      recognitionRef.current = null;
+      setListening(false);
+      toast.error("Could not start microphone.");
+    }
+  }, [finishRecognitionSession, updateInputFromVoiceBuffers]);
 
   const handleSubmit = useCallback(async () => {
     const trimmed = input.trim();
@@ -103,7 +203,11 @@ export default function AiFillBlock({
     if (typeof window === "undefined") return;
     endBeepPlayedRef.current = false;
     sessionActiveRef.current = true;
-    latestUtteranceRef.current = "";
+    manualStopRequestedRef.current = false;
+    finalTranscriptRef.current = "";
+    runFinalTranscriptRef.current = "";
+    interimTranscriptRef.current = "";
+    lastSpeechAtRef.current = Date.now();
     if (recognitionRef.current) {
       try {
         recognitionRef.current.stop();
@@ -113,68 +217,16 @@ export default function AiFillBlock({
       recognitionRef.current = null;
     }
     voiceBaseRef.current = input.trimEnd();
-
-    const SpeechRecognitionAPI =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognitionAPI) {
-      toast.error("Speech recognition is not supported in this browser.");
-      return;
-    }
-    const recognition = new SpeechRecognitionAPI() as SpeechRecognition;
-    /** One utterance per start: stops when you pause — text updates live; beep on end. Tap mic again to add more. */
-    recognition.continuous = false;
-    recognition.interimResults = true;
-    recognition.lang = "en-NG";
-    recognition.maxAlternatives = 1;
-
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      const { final, interim } = getSessionTranscriptFromResults(event.results);
-      const utterance = [final, interim].filter(Boolean).join(" ").trim();
-      latestUtteranceRef.current = utterance;
-      setInput(combineBaseAndUtterance(voiceBaseRef.current, utterance));
-    };
-
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      const error = (event as SpeechRecognitionErrorEvent).error;
-      // These are normal closure paths; `onend` still runs in Chromium and will finish + beep.
-      if (error === "aborted" || error === "no-speech") {
-        return;
-      }
-      sessionActiveRef.current = false;
-      recognitionRef.current = null;
-      setListening(false);
-      endBeepPlayedRef.current = true;
-      if (error === "not-allowed") {
-        toast.error("Microphone access denied. Allow the mic and try again.");
-        return;
-      }
-      if (error === "network") {
-        toast.error("Voice needs a stable internet connection. You can type your description below instead.");
-        return;
-      }
-      toast.error("Voice input failed. Try typing instead.");
-    };
-
-    recognition.onend = () => {
-      finishRecognitionSession();
-    };
-
-    recognitionRef.current = recognition;
-    try {
-      recognition.start();
-      setListening(true);
-    } catch {
-      sessionActiveRef.current = false;
-      recognitionRef.current = null;
-      setListening(false);
-      toast.error("Could not start microphone.");
-    }
-  }, [input, finishRecognitionSession]);
+    startRecognitionRun();
+  }, [input, startRecognitionRun]);
 
   const stopVoice = useCallback(() => {
+    manualStopRequestedRef.current = true;
     try {
       if (recognitionRef.current) {
         recognitionRef.current.stop();
+      } else {
+        finishRecognitionSession();
       }
     } catch {
       finishRecognitionSession();
@@ -208,7 +260,7 @@ export default function AiFillBlock({
         Optionally describe in a few words or sentences; we&apos;ll suggest form fields. You can review and edit before
         submitting.{" "}
         <span className="text-[#09391C] font-medium">
-          Voice: speak clearly — text appears as you talk (no repeats). When you pause, recognition stops and you&apos;ll hear a short beep. Tap the mic again to add more.
+          Voice: speak clearly — text appears as you talk (no repeats). You can pause for up to 10 seconds before listening ends; at session end you&apos;ll hear a short beep. Tap the mic again to add more.
         </span>
       </p>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end">

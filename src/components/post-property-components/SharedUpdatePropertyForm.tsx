@@ -855,7 +855,7 @@ const SharedUpdatePropertyForm: React.FC<SharedUpdatePropertyFormProps> = ({
             }}
             textValue={"Agree and Update Property"}
             userName={`${user.firstName} ${user.lastName}`}
-            userType={user?.userType === "Agent" ? "agent" : "landowner"}
+            userType={user?.userType}
           />
 
           {/* Success Modal */}

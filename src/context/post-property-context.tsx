@@ -148,7 +148,8 @@ interface PostPropertyContextType {
   showPropertySummary: boolean;
   setShowPropertySummary: (show: boolean) => void;
   getUserCommissionRate: () => number;
-  getUserType: () => "landowner" | "agent";
+  /** Canonical account type from session (Agent, Developer, Landowners, FieldAgent). */
+  getUserType: () => string;
   /** "ai" | "manual" | null. When null, user has not yet chosen. */
   postingMode: PostingMode;
   setPostingMode: Dispatch<SetStateAction<PostingMode>>;
@@ -409,31 +410,39 @@ export function PostPropertyProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const getUserType = (): "landowner" | "agent" => {
-    // Import useUserContext here to avoid circular dependencies
+  const readAccountUserTypeFromStorage = (): string => {
     if (typeof window !== "undefined") {
       try {
-        // Try to get from global context first
         const userContextString = localStorage.getItem("user");
         if (userContextString) {
           const userData = JSON.parse(userContextString);
-          return userData.userType === "Agent" ? "agent" : "landowner";
+          const t = userData.userType ?? userData.user_type;
+          if (typeof t === "string" && t.trim()) return t.trim();
         }
       } catch (error) {
         console.error("Error parsing user data from localStorage", error);
       }
+      try {
+        const onlyType = localStorage.getItem("userType");
+        if (onlyType && onlyType.trim()) return onlyType.trim();
+      } catch {
+        /* ignore */
+      }
     }
-    // Default to landowner for property owners/individuals
-    return "landowner";
+    return "Landowners";
   };
 
+  const getUserType = (): string => readAccountUserTypeFromStorage();
+
+  /** Agent uses agent commission tier; Developer / Landowners / FieldAgent use publisher tier. */
   const getUserCommissionRate = (): number => {
-    const userType = getUserType();
+    const accountType = readAccountUserTypeFromStorage();
+    const commissionRole = accountType === "Agent" ? "agent" : "landowner";
     const briefType = propertyData.propertyType as keyof typeof briefTypeConfig;
     const config = (briefType && (briefTypeConfig as any)[briefType]) || null;
-    if (briefType === 'shortlet') return 7;
-    if (!config) return userType === 'agent' ? 50 : 10;
-    return userType === 'agent' ? config.commission.agent : config.commission.landowner;
+    if (briefType === "shortlet") return 7;
+    if (!config) return commissionRole === "agent" ? 50 : 10;
+    return commissionRole === "agent" ? config.commission.agent : config.commission.landowner;
   };
 
   const contextValue: PostPropertyContextType = {

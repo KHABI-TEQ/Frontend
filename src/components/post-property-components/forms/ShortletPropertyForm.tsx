@@ -620,7 +620,7 @@ const ShortletPropertyForm: React.FC<ShortletPropertyFormProps> = ({
             }}
             textValue={"Agree and Post Property"}
             userName={`${user.firstName} ${user.lastName}`}
-            userType={user?.userType === "Agent" ? "agent" : "landowner"}
+            userType={user?.userType}
           />
 
           <SuccessModal

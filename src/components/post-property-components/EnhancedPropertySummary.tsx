@@ -8,6 +8,7 @@ import { usePostPropertyContext } from "@/context/post-property-context";
 import { getBriefTypeConfig } from "@/data/post-property-form-config";
 import Button from "@/components/general-components/button";
 import { kebabToTitleCase } from "@/utils/helpers";
+import { getPostingAgreementUserTypeLabel } from "@/utils/postingUserTypeLabel";
 
 const EnhancedPropertySummary: React.FC = () => {
   const {
@@ -19,7 +20,7 @@ const EnhancedPropertySummary: React.FC = () => {
   } = usePostPropertyContext();
 
   const briefConfig = getBriefTypeConfig(propertyData.propertyType);
-  const userType = getUserType();
+  const userTypeLabel = getPostingAgreementUserTypeLabel(getUserType());
 
   const formatPrice = (price: string | number | undefined) => {
     if (!price) return "Not specified";
@@ -331,8 +332,8 @@ const EnhancedPropertySummary: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-[#5A5D63]">User Type:</span>
-                  <span className="text-[#09391C] font-medium capitalize">
-                    {userType}
+                  <span className="text-[#09391C] font-medium text-right">
+                    {userTypeLabel}
                   </span>
                 </div>
               </div>

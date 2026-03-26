@@ -534,7 +534,7 @@ const UpdateRentPropertyForm: React.FC<UpdateRentPropertyFormProps> = ({
             }}
             textValue={"Agree and Update Property"}
             userName={`${user.firstName} ${user.lastName}`}
-            userType={user?.userType === "Agent" ? "agent" : "landowner"}
+            userType={user?.userType}
           />
 
           <SuccessModal
