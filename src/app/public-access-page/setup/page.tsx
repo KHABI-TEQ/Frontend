@@ -22,9 +22,46 @@ import Stepper from "@/components/post-property-components/Stepper";
 interface Bank {
   name: string;
   code: string;
+  id?: string;
   country?: string;
   currency?: string;
   type?: string;
+}
+
+/**
+ * POST /account/dealSite/setUp — matches DealSiteService.setUpPublicAccess / Mongoose schema (camelCase).
+ * Service reads Paystack subaccount fields from paymentDetails only; do not send primaryContact* at root.
+ */
+function buildDealSiteSetupPayload(values: Record<string, any>) {
+  const kw = (values.keywords || []) as unknown[];
+  const keywords = kw
+    .map((k) => (typeof k === "string" ? k.trim() : String(k ?? "").trim()))
+    .filter(Boolean);
+  const p = values.paymentDetails || {};
+  return {
+    publicSlug: String(values.publicSlug || "").trim(),
+    title: String(values.title || "").trim(),
+    description: String(values.description || "").trim(),
+    keywords,
+    paymentDetails: {
+      businessName: String(p.businessName || "").trim(),
+      accountNumber: String(p.accountNumber || "").trim(),
+      sortCode: String(p.sortCode || "").trim(),
+      primaryContactName: String(p.primaryContactName || "").trim(),
+      primaryContactEmail: String(p.primaryContactEmail || "").trim(),
+      primaryContactPhone: String(p.primaryContactPhone || "").trim(),
+    },
+  };
+}
+
+function dedupeBanksByCodeAndName(list: Bank[]): Bank[] {
+  const seen = new Set<string>();
+  return list.filter((b) => {
+    const k = `${String(b.code)}::${String(b.name || "").toLowerCase()}`;
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
 }
 
 // Yup validation schemas for each step
@@ -62,6 +99,23 @@ const Setup = () => {
   const router = useRouter();
   const { settings, updateSettings, markSetupComplete } = useDealSite();
   const [step, setStep] = useState(0);
+
+  // Global `body` uses flex + justify-center (globals.css), which can block scrolling on long forms.
+  // Opening the "setup" modal from the dashboard also sets body overflow:hidden; clear both for this route.
+  useEffect(() => {
+    const body = document.body;
+    const html = document.documentElement;
+    body.style.overflow = "auto";
+    body.style.justifyContent = "flex-start";
+    body.style.alignItems = "stretch";
+    html.style.overflow = "auto";
+    return () => {
+      body.style.removeProperty("overflow");
+      body.style.removeProperty("justify-content");
+      body.style.removeProperty("align-items");
+      html.style.removeProperty("overflow");
+    };
+  }, []);
   const [slugStatus, setSlugStatus] = useState<"idle" | "invalid" | "checking" | "available" | "taken">("idle");
   const [slugMessage, setSlugMessage] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -179,30 +233,24 @@ const Setup = () => {
     setIsProcessing(true);
     try {
       const token = Cookies.get("token");
-      const payload: DealSiteSettings = {
-        ...values,
-        keywords: values.keywords
-          .map((k: any) => (typeof k === "string" ? k.trim() : ""))
-          .filter(Boolean),
-        contactVisibility: {
-          ...values.contactVisibility,
-          whatsappNumber: values.contactVisibility.showWhatsAppButton
-            ? values.contactVisibility.whatsappNumber
-            : "",
-        },
-      };
+      const payload = buildDealSiteSetupPayload(values);
 
       const res = await POST_REQUEST(`${URLS.BASE}${URLS.dealSiteSetup}`, payload, token);
 
       if (res?.success) {
-        updateSettings(values);
+        updateSettings({ ...values, ...payload } as DealSiteSettings);
         markSetupComplete();
         toast.success("Setup complete!");
         setTimeout(() => {
           router.replace("/public-access-page");
         }, 1000);
       } else {
-        toast.error(res?.message || "Setup failed");
+        const msg =
+          (res as any)?.message ||
+          (res as any)?.error ||
+          (Array.isArray((res as any)?.errors) ? (res as any).errors.join(", ") : null) ||
+          "Setup failed";
+        toast.error(String(msg));
       }
     } catch (error: any) {
       toast.error(error?.message || "Failed to complete setup");
@@ -229,7 +277,7 @@ const Setup = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#EEF1F1] py-12 px-4">
+    <div className="min-h-screen w-full max-w-none bg-[#EEF1F1] py-12 px-4 pb-24">
       {/* Processing Preloader */}
       {isProcessing && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -472,8 +520,9 @@ function Step2Payment({ formik }: { formik: any }) {
         const res = await GET_REQUEST<any>(`${URLS.BASE}/account/dealSite/bankList`, token);
 
         if (res?.data && Array.isArray(res.data)) {
-          setBanks(res.data);
-          setFilteredBanks(res.data);
+          const list = dedupeBanksByCodeAndName(res.data as Bank[]);
+          setBanks(list);
+          setFilteredBanks(list);
         }
       } catch (error) {
         console.warn("Failed to load banks:", error);
@@ -618,9 +667,9 @@ function Step2Payment({ formik }: { formik: any }) {
               {loadingBanks ? (
                 <div className="p-4 text-center text-gray-500">Loading banks...</div>
               ) : filteredBanks.length > 0 ? (
-                filteredBanks.map((bank) => (
+                filteredBanks.map((bank, bankIndex) => (
                   <div
-                    key={bank.code}
+                    key={bank.id || `${bank.code}-${bank.name}-${bankIndex}`}
                     onClick={() => selectBank(bank)}
                     className="px-4 py-2 hover:bg-emerald-50 cursor-pointer border-b last:border-b-0"
                   >

@@ -89,6 +89,12 @@ interface InspectionData {
   origin?: string;
   /** DealSite vs main app; when type === "dealSite" show badge and optional fee note on accept. */
   receiverMode?: ReceiverMode;
+  /** Backend may set when buyer accepted seller’s proposed date — formal accept (fee/note) is next. */
+  buyerAcceptedSchedule?: boolean;
+  buyerAcceptedProposedDate?: boolean;
+  buyerAcceptedProposedInspectionDate?: boolean;
+  scheduleNegotiationStatus?: string;
+  scheduleStatus?: string;
 }
 
 interface BookingData {
@@ -234,6 +240,127 @@ const MODE_CONFIG = {
     color: "text-[#8DDB90]",
   },
 } as const;
+
+/** List row is settled or past the “respond on dashboard” step (accept/reject via §8.3). */
+const TERMINAL_INSPECTION_STATUSES = [
+  "inspection_approved",
+  "completed",
+  "cancelled",
+  "agent_rejected",
+  "confirmed",
+  "pending_transaction",
+  "rejected",
+] as const;
+
+function isTerminalInspectionStatus(inspection: InspectionData): boolean {
+  const s = String(inspection.status || "");
+  const is = String(inspection.inspectionStatus || "");
+  return TERMINAL_INSPECTION_STATUSES.some((t) => t === s || t === is);
+}
+
+/** Seller/owner actions on this page must not show while buyer or admin must act. */
+function sellerCanActOnInspectionList(inspection: InspectionData): boolean {
+  const prf = inspection.pendingResponseFrom;
+  if (prf === "buyer" || prf === "admin") return false;
+  return prf === "seller" || prf == null;
+}
+
+/**
+ * Defensive guard: hide seller response buttons once an action has already succeeded
+ * (accept/reject/update schedule) even if backend fields are partially stale.
+ */
+function hasSuccessfulSellerAction(inspection: InspectionData): boolean {
+  const statusRaw = String(
+    inspection.status || inspection.inspectionStatus || ""
+  ).toLowerCase();
+  const terminalOrResponded = [
+    "inspection_approved",
+    "accepted",
+    "approve",
+    "pending_transaction",
+    "agent_rejected",
+    "rejected",
+    "cancelled",
+    "completed",
+    "confirmed",
+    "countered",
+  ].some((k) => statusRaw.includes(k));
+  if (terminalOrResponded) return true;
+
+  if (inspection.pendingResponseFrom === "buyer" || inspection.pendingResponseFrom === "admin") {
+    return true;
+  }
+
+  if (
+    inspection.buyerAcceptedSchedule === true ||
+    inspection.buyerAcceptedProposedDate === true ||
+    inspection.buyerAcceptedProposedInspectionDate === true
+  ) {
+    return true;
+  }
+
+  const scheduleStatus = String(
+    inspection.scheduleNegotiationStatus ?? inspection.scheduleStatus ?? ""
+  ).toLowerCase();
+  if (
+    ["buyer_accepted", "accepted_by_buyer", "schedule_agreed"].includes(
+      scheduleStatus
+    )
+  ) {
+    return true;
+  }
+
+  // After at least one successful schedule update/counter, keep actions hidden on list.
+  if ((inspection.counterCount ?? 0) > 0 && String(inspection.stage ?? "").toLowerCase() === "inspection") {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Whether to show “Update schedule” (secure seller flow). Hidden after buyer accepts seller’s proposed date.
+ * Prefer explicit API flags; fallback heuristic when backend omits them.
+ */
+function shouldOfferScheduleChangeOnList(inspection: InspectionData): boolean {
+  if (inspection.buyerAcceptedSchedule === true) return false;
+  if (inspection.buyerAcceptedProposedDate === true) return false;
+  if (inspection.buyerAcceptedProposedInspectionDate === true) return false;
+  const sn = String(
+    inspection.scheduleNegotiationStatus ?? inspection.scheduleStatus ?? ""
+  ).toLowerCase();
+  if (["buyer_accepted", "accepted_by_buyer", "schedule_agreed"].includes(sn))
+    return false;
+
+  const insSt = String(inspection.inspectionStatus ?? "").toLowerCase();
+  if (
+    insSt.includes("buyer") &&
+    (insSt.includes("accept") || insSt.includes("agreed")) &&
+    (insSt.includes("schedule") || insSt.includes("date") || insSt.includes("inspection"))
+  ) {
+    return false;
+  }
+
+  const cc = inspection.counterCount ?? 0;
+  const stage = String(inspection.stage ?? "");
+  const raw = String(inspection.status || inspection.inspectionStatus || "");
+  const awaitingFormalAccept =
+    raw === "pending_approval" || raw === "pending" || raw === "new";
+  const stageIsInspection = stage === "inspection";
+  /** List payload sometimes omits `stage`; `isNegotiating === false` can indicate schedule is settled. */
+  const scheduleLikelySettled =
+    stageIsInspection ||
+    (!stage && inspection.isNegotiating === false);
+  if (
+    inspection.pendingResponseFrom === "seller" &&
+    cc >= 1 &&
+    scheduleLikelySettled &&
+    awaitingFormalAccept
+  ) {
+    return false;
+  }
+  return true;
+}
 
 type TabKey = "inspections" | "bookings";
 
@@ -863,56 +990,88 @@ export default function MyInspectionRequestsPage() {
                           </div>
                         )}
 
-                        <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-200">
-                          {(() => {
-                            const statusLabel = statusConfig.label;
-                            const isInspectionApproved =
-                              statusLabel === "Inspection Approved" ||
-                              inspection.status === "inspection_approved" ||
-                              inspection.inspectionStatus === "inspection_approved";
-                            const terminal = ["inspection_approved", "completed", "cancelled", "agent_rejected", "confirmed"];
-                            const isTerminal = terminal.includes(String(inspection.status)) || terminal.includes(String(inspection.inspectionStatus));
-                            const showAcceptRejectUpdate =
-                              !isInspectionApproved &&
-                              ((inspection.pendingResponseFrom === "seller" && !isTerminal) ||
-                                statusLabel === "Pending Your Response" ||
-                                statusLabel === "Pending" ||
-                                statusLabel === "New Request" ||
-                                inspection.status === "pending_approval" ||
-                                inspection.inspectionStatus === "pending_approval" ||
-                                inspection.status === "pending" ||
-                                inspection.inspectionStatus === "pending" ||
-                                inspection.status === "new" ||
-                                inspection.inspectionStatus === "new");
-                            const showRespond =
-                              !isInspectionApproved &&
-                              inspection.pendingResponseFrom === "seller" &&
-                              !showAcceptRejectUpdate &&
-                              inspection.status !== "inspection_approved" &&
-                              inspection.inspectionStatus !== "inspection_approved";
-                            return (
-                              <>
+                        {(() => {
+                          const statusLabel = statusConfig.label;
+                          const isInspectionApproved =
+                            statusLabel === "Inspection Approved" ||
+                            inspection.status === "inspection_approved" ||
+                            inspection.inspectionStatus === "inspection_approved";
+                          const isTerminal = isTerminalInspectionStatus(inspection);
+                          const pendingStatusMatch =
+                            statusLabel === "Pending Your Response" ||
+                            statusLabel === "Pending" ||
+                            statusLabel === "New Request" ||
+                            inspection.status === "pending_approval" ||
+                            inspection.inspectionStatus === "pending_approval" ||
+                            inspection.status === "pending" ||
+                            inspection.inspectionStatus === "pending" ||
+                            inspection.status === "new" ||
+                            inspection.inspectionStatus === "new";
+                          const sellerCanAct = sellerCanActOnInspectionList(inspection);
+                          const sellerActionAlreadyHandled =
+                            hasSuccessfulSellerAction(inspection);
+                          const showAcceptRejectUpdate =
+                            !isInspectionApproved &&
+                            !isTerminal &&
+                            sellerCanAct &&
+                            !sellerActionAlreadyHandled &&
+                            pendingStatusMatch;
+                          const showUpdateSchedule =
+                            showAcceptRejectUpdate &&
+                            shouldOfferScheduleChangeOnList(inspection);
+                          const showBuyerAcceptedScheduleBanner =
+                            showAcceptRejectUpdate && !showUpdateSchedule;
+                          const awaitingBuyerSchedule =
+                            inspection.pendingResponseFrom === "buyer" &&
+                            !isTerminal &&
+                            !isInspectionApproved;
+                          const showRespond =
+                            !isInspectionApproved &&
+                            inspection.pendingResponseFrom === "seller" &&
+                            !sellerActionAlreadyHandled &&
+                            !showAcceptRejectUpdate &&
+                            inspection.status !== "inspection_approved" &&
+                            inspection.inspectionStatus !== "inspection_approved";
+
+                          return (
+                            <>
+                              {awaitingBuyerSchedule && (
+                                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                  <p className="text-sm text-blue-900 font-medium">
+                                    Waiting for the buyer to confirm your proposed inspection schedule. You will be able to accept the inspection request here once they agree to the date.
+                                  </p>
+                                </div>
+                              )}
+                              {showBuyerAcceptedScheduleBanner && (
+                                <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                  <p className="text-sm text-green-900 font-medium">
+                                    The buyer accepted your proposed inspection date. Use Accept below to confirm the inspection (optional fee and note).
+                                  </p>
+                                </div>
+                              )}
+                              <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-200">
                                 {showAcceptRejectUpdate && (
                                   <>
                                     <button onClick={() => { setRespondInspection(inspection); setRespondAction("accept"); setRespondNote(""); setRespondInspectionFee(""); }} className="inline-flex items-center gap-2 px-4 py-2 bg-[#8DDB90] text-white rounded-lg hover:bg-[#7BC87F] transition-colors text-sm font-medium">Accept</button>
                                     <button onClick={() => { setRespondInspection(inspection); setRespondAction("reject"); setRespondNote(""); setRespondInspectionFee(""); }} className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium">Reject</button>
-                                    <button onClick={() => router.push(`/secure-seller-response/${inspection.owner}/${inspection.id || (inspection as any)._id}`)} className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">Update schedule</button>
+                                    {showUpdateSchedule && (
+                                      <button onClick={() => router.push(`/secure-seller-response/${inspection.owner}/${inspection.id || (inspection as any)._id}`)} className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">Update schedule</button>
+                                    )}
                                   </>
                                 )}
                                 {showRespond && (
                                   <button onClick={() => router.push(`/secure-seller-response/${inspection.owner}/${inspection.id || (inspection as any)._id}`)} className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">Respond</button>
                                 )}
-                              </>
-                            );
-                          })()}
-
-                          {inspection.property && (
-                            <button onClick={() => router.push(`/property/buy/${inspection.property!.id || inspection.property!._id}`)} className="inline-flex items-center gap-2 px-4 py-2 bg-white text-[#09391C] border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
-                              <HomeIcon size={16} />
-                              View Property
-                            </button>
-                          )}
-                        </div>
+                                {inspection.property && (
+                                  <button onClick={() => router.push(`/property/buy/${inspection.property!.id || inspection.property!._id}`)} className="inline-flex items-center gap-2 px-4 py-2 bg-white text-[#09391C] border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
+                                    <HomeIcon size={16} />
+                                    View Property
+                                  </button>
+                                )}
+                              </div>
+                            </>
+                          );
+                        })()}
                       </div>
                     </motion.div>
                   );

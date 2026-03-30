@@ -255,6 +255,11 @@ interface SecureNegotiationContextType {
     userType: "seller" | "buyer",
     payload: NegotiationPayload,
   ) => Promise<any>;
+  submitDirectInspectionAccept: (
+    inspectionId: string,
+    note?: string,
+    inspectionFee?: number,
+  ) => Promise<any>;
 
   // Utility methods for creating payloads
   createAcceptPayload: (
@@ -262,6 +267,8 @@ interface SecureNegotiationContextType {
     inspectionDate?: string,
     inspectionTime?: string,
     inspectionMode?: string,
+    note?: string,
+    inspectionFee?: number,
   ) => NegotiationPayload;
   createRejectPayload: (
     inspectionType: InspectionType,
@@ -479,6 +486,8 @@ export const SecureNegotiationProvider: React.FC<{ children: ReactNode }> = ({
       inspectionDate?: string,
       inspectionTime?: string,
       inspectionMode?: string,
+      note?: string,
+      inspectionFee?: number,
     ): NegotiationPayload => {
       const payload: any = {
         action: "accept",
@@ -488,6 +497,10 @@ export const SecureNegotiationProvider: React.FC<{ children: ReactNode }> = ({
       if (inspectionDate) payload.inspectionDate = inspectionDate;
       if (inspectionTime) payload.inspectionTime = inspectionTime;
       if (inspectionMode) payload.inspectionMode = inspectionMode;
+      if (note && note.trim()) payload.note = note.trim();
+      if (inspectionFee != null && Number.isFinite(inspectionFee)) {
+        payload.inspectionFee = inspectionFee;
+      }
 
       return payload;
     },
@@ -597,6 +610,42 @@ export const SecureNegotiationProvider: React.FC<{ children: ReactNode }> = ({
     [state.userId, fetchNegotiationDetails],
   );
 
+  // Calls same endpoint as dashboard direct Accept to guarantee fee/payment-link flow.
+  const submitDirectInspectionAccept = useCallback(
+    async (inspectionId: string, note?: string, inspectionFee?: number) => {
+      dispatch({
+        type: "SET_LOADING",
+        payload: { type: "accepting", isLoading: true },
+      });
+      try {
+        const token = Cookies.get("token") ?? state.accessToken ?? undefined;
+        const url = `${URLS.BASE}${URLS.accountInspectionRespond(inspectionId)}`;
+        const payload: { action: "accept"; note?: string; inspectionFee?: number } = {
+          action: "accept",
+        };
+        if (note && note.trim()) payload.note = note.trim();
+        if (inspectionFee != null && Number.isFinite(inspectionFee)) {
+          payload.inspectionFee = inspectionFee;
+        }
+
+        const response = await POST_REQUEST(url, payload, token);
+        if (response?.success && state.userId && state.currentUserType) {
+          await fetchNegotiationDetails(state.userId, inspectionId, state.currentUserType);
+        }
+        return response;
+      } catch (error) {
+        console.error("Failed to submit direct inspection accept:", error);
+        throw error;
+      } finally {
+        dispatch({
+          type: "SET_LOADING",
+          payload: { type: "accepting", isLoading: false },
+        });
+      }
+    },
+    [state.accessToken, state.userId, state.currentUserType, fetchNegotiationDetails],
+  );
+
   // Helper method to determine if it's the user's turn to respond
   const isUserTurn = useCallback(
     (userType: "seller" | "buyer") => {
@@ -671,6 +720,7 @@ export const SecureNegotiationProvider: React.FC<{ children: ReactNode }> = ({
       setStage,
       setPendingResponseFrom,
       submitNegotiationAction,
+      submitDirectInspectionAccept,
       createAcceptPayload,
       createRejectPayload,
       createCounterPayload,
@@ -694,6 +744,7 @@ export const SecureNegotiationProvider: React.FC<{ children: ReactNode }> = ({
       setStage,
       setPendingResponseFrom,
       submitNegotiationAction,
+      submitDirectInspectionAccept,
       createAcceptPayload,
       createRejectPayload,
       createCounterPayload,

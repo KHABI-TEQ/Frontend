@@ -10,6 +10,7 @@ import Cookies from "js-cookie";
 import { GET_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import { useUserContext } from "./user-context";
+import { isAgentOrDeveloperEffective } from "@/utils/effectiveUserType";
 
 // Type definitions (same as in the main page.tsx but extracted for reusability)
 export interface SocialLinks {
@@ -293,7 +294,7 @@ const DEFAULT_SETTINGS: DealSiteSettings = {
 };
 
 export function DealSiteProvider({ children }: { children: ReactNode }) {
-  const { user } = useUserContext();
+  const { user, isLoading: userLoading, isInitialized } = useUserContext();
   const [settings, setSettings] = useState<DealSiteSettings>(DEFAULT_SETTINGS);
   const [isSetupComplete, setIsSetupComplete] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -429,14 +430,21 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
     }
   }, [settings.publicSlug]);
 
-  // Load settings on mount
+  // Load settings once profile is ready (same role resolution as dashboard + public-access layout)
   useEffect(() => {
-    if (user?.userType === "Agent") {
+    if (!isInitialized || userLoading) {
+      return;
+    }
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
+    if (isAgentOrDeveloperEffective(user as unknown as Record<string, unknown>)) {
       loadSettings();
     } else {
       setIsLoading(false);
     }
-  }, [user, loadSettings]);
+  }, [user, userLoading, isInitialized, loadSettings]);
 
   const value: DealSiteContextType = {
     settings,

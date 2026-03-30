@@ -45,9 +45,12 @@ const InspectionDateTimeStep: React.FC<InspectionDateTimeStepProps> = ({
   userType,
   negotiationAction,
 }) => {
+  const INSPECTION_FEE_MIN = 1000;
+  const INSPECTION_FEE_MAX = 50000;
   const {
     state,
     submitNegotiationAction,
+    submitDirectInspectionAccept,
     createAcceptPayload,
     createCounterPayload,
     createRejectPayload,
@@ -60,6 +63,9 @@ const InspectionDateTimeStep: React.FC<InspectionDateTimeStepProps> = ({
   const [newInspectionMode, setNewInspectionMode] = useState(details?.inspectionMode || "in_person");
   const [showUpdateForm, setShowUpdateForm] = useState(false);
   const [showAllDays, setShowAllDays] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmNote, setConfirmNote] = useState("");
+  const [confirmInspectionFee, setConfirmInspectionFee] = useState("");
 
   // Check if inspection date has passed
   const inspectionDatePassed = useMemo(() => {
@@ -354,7 +360,10 @@ const InspectionDateTimeStep: React.FC<InspectionDateTimeStepProps> = ({
     return timeString;
   };
 
-  const handleConfirmDateTime = async () => {
+  const submitConfirmDateTime = async (
+    note?: string,
+    inspectionFee?: number,
+  ) => {
     if (!currentDate || !currentTime) {
       toast.error("Date or time not selected")
       return;
@@ -372,6 +381,8 @@ const InspectionDateTimeStep: React.FC<InspectionDateTimeStepProps> = ({
               currentDate,
               currentTime,
               currentInspectionMode,
+              note,
+              inspectionFee,
             );
             break;
           case "reject":
@@ -400,6 +411,8 @@ const InspectionDateTimeStep: React.FC<InspectionDateTimeStepProps> = ({
           currentDate,
           currentTime,
           currentInspectionMode,
+          note,
+          inspectionFee,
         );
       }
 
@@ -414,6 +427,15 @@ const InspectionDateTimeStep: React.FC<InspectionDateTimeStepProps> = ({
     } catch (error) {
       console.error("Failed to confirm inspection date/time:", error);
     }
+  };
+
+  const handleConfirmDateTime = async () => {
+    const needsFeeAndNoteModal = userType === "seller" && !negotiationAction;
+    if (needsFeeAndNoteModal) {
+      setShowConfirmModal(true);
+      return;
+    }
+    await submitConfirmDateTime();
   };
 
   const handleUpdateDateTime = async () => {
@@ -844,6 +866,148 @@ const InspectionDateTimeStep: React.FC<InspectionDateTimeStepProps> = ({
                       : "Update Schedule"}
                   </button>
                 </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Confirm Schedule Modal (seller path after date negotiation agreement) */}
+      {showConfirmModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={() => {
+            if (
+              !loadingStates.submitting &&
+              !loadingStates.accepting &&
+              !loadingStates.countering
+            ) {
+              setShowConfirmModal(false);
+            }
+          }}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-xl max-w-md w-full border border-[#C7CAD0]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-semibold text-[#09391C]">
+                  Confirm Inspection Schedule
+                </h3>
+                <button
+                  onClick={() => setShowConfirmModal(false)}
+                  disabled={
+                    loadingStates.submitting ||
+                    loadingStates.accepting ||
+                    loadingStates.countering
+                  }
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50"
+                >
+                  <FiX className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+
+              <p className="text-sm text-gray-600 mb-4">
+                Add an optional inspection fee and note before sending final confirmation.
+              </p>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Inspection fee (NGN) - optional
+                </label>
+                <input
+                  type="number"
+                  min={INSPECTION_FEE_MIN}
+                  max={INSPECTION_FEE_MAX}
+                  step={1000}
+                  value={confirmInspectionFee}
+                  onChange={(e) =>
+                    setConfirmInspectionFee(
+                      e.target.value.replace(/\D/g, "").slice(0, 6),
+                    )
+                  }
+                  placeholder={`${INSPECTION_FEE_MIN} - ${INSPECTION_FEE_MAX}`}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Leave empty for no fee. Allowed range: NGN {INSPECTION_FEE_MIN.toLocaleString()} - {INSPECTION_FEE_MAX.toLocaleString()}.
+                </p>
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Note (optional)
+                </label>
+                <textarea
+                  rows={3}
+                  value={confirmNote}
+                  onChange={(e) => setConfirmNote(e.target.value)}
+                  placeholder="Add a message for the buyer"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                />
+              </div>
+
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setShowConfirmModal(false)}
+                  disabled={
+                    loadingStates.submitting ||
+                    loadingStates.accepting ||
+                    loadingStates.countering
+                  }
+                  className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    const feeRaw = confirmInspectionFee.trim()
+                      ? parseInt(confirmInspectionFee, 10)
+                      : undefined;
+                    const fee =
+                      feeRaw != null && !Number.isNaN(feeRaw) ? feeRaw : undefined;
+                    if (
+                      fee != null &&
+                      (fee < INSPECTION_FEE_MIN || fee > INSPECTION_FEE_MAX)
+                    ) {
+                      toast.error(
+                        `Inspection fee must be between NGN ${INSPECTION_FEE_MIN.toLocaleString()} and ${INSPECTION_FEE_MAX.toLocaleString()}.`,
+                      );
+                      return;
+                    }
+                    const response = await submitDirectInspectionAccept(
+                      inspectionId!,
+                      confirmNote,
+                      fee,
+                    );
+                    if (response?.success) {
+                      toast.success(
+                        response?.message ||
+                          "Inspection accepted. Buyer has been notified.",
+                      );
+                      setShowConfirmModal(false);
+                      setConfirmNote("");
+                      setConfirmInspectionFee("");
+                    } else {
+                      toast.error(
+                        response?.message ||
+                          response?.error ||
+                          "Failed to accept inspection",
+                      );
+                    }
+                  }}
+                  disabled={
+                    loadingStates.submitting ||
+                    loadingStates.accepting ||
+                    loadingStates.countering
+                  }
+                  className="px-5 py-2 rounded-lg bg-[#09391C] text-white hover:bg-green-700 disabled:opacity-50"
+                >
+                  Confirm
+                </button>
               </div>
             </div>
           </motion.div>

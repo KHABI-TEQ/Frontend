@@ -12,11 +12,12 @@ import { AlertCircle } from "lucide-react";
 import { DealSiteProvider, useDealSite } from "@/context/deal-site-context";
 import { useUserContext } from "@/context/user-context";
 import DashboardSidebar from "@/components/public-access-page/DashboardSidebar";
+import { isAgentOrDeveloperEffective } from "@/utils/effectiveUserType";
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user } = useUserContext();
+  const { user, isLoading: userLoading, isInitialized } = useUserContext();
   const { isSetupComplete, slugLocked, isLoading } = useDealSite();
   const [showSetupModal, setShowSetupModal] = useState(false);
 
@@ -24,8 +25,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (isLoading) return;
 
-    // Check if user is an agent
-    if (user?.userType !== "Agent") {
+    if (!user || !isAgentOrDeveloperEffective(user as unknown as Record<string, unknown>)) {
       return;
     }
 
@@ -44,21 +44,44 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     }
   }, [isLoading, isSetupComplete, pathname, user, router]);
 
-  // Prevent background scroll when modal is open
+  // On the setup route, clear modal state so we never leave body scroll locked from the dashboard modal
   useEffect(() => {
+    if (pathname === "/public-access-page/setup") {
+      setShowSetupModal(false);
+    }
+  }, [pathname]);
+
+  // Prevent background scroll when modal is open (never lock scroll on the setup URL)
+  useEffect(() => {
+    if (pathname === "/public-access-page/setup") {
+      document.body.style.overflow = "";
+      return () => {
+        document.body.style.overflow = "";
+      };
+    }
     if (showSetupModal) {
       document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = "unset";
+      document.body.style.overflow = "";
     }
 
     return () => {
-      document.body.style.overflow = "unset";
+      document.body.style.overflow = "";
     };
-  }, [showSetupModal]);
+  }, [showSetupModal, pathname]);
 
-  // Show error for non-agents
-  if (!user || user?.userType !== "Agent") {
+  if (!isInitialized || userLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500" />
+      </div>
+    );
+  }
+
+  if (
+    !user ||
+    !isAgentOrDeveloperEffective(user as unknown as Record<string, unknown>)
+  ) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center p-6">
@@ -67,7 +90,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             Access Denied
           </h2>
           <p className="text-gray-600 mb-6">
-            Only agents can access the Public Access Page dashboard.
+            Only agents and developers can access the Public Access Page dashboard.
           </p>
           <button
             onClick={() => router.back()}

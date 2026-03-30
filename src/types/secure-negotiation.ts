@@ -102,6 +102,8 @@ export interface BasePayload {
   rejectionReason?: string;
   counterPrice?: number;
   inspectionMode?: "in_person" | "virtual";
+  note?: string;
+  inspectionFee?: number;
 }
 
 // Union type for all possible payloads
