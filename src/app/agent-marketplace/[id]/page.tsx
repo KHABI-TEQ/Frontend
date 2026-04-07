@@ -6,7 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faMapMarkerAlt, faFileAlt, faBed, faTag, faUser, faEnvelope, faPhone, faCalendarAlt, faClock, faUsers, faHome } from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
 import { useUserContext } from '@/context/user-context';
-import { GET_REQUEST } from '@/utils/requests';
+import { GET_REQUEST, POST_REQUEST } from '@/utils/requests';
 import { URLS } from '@/utils/URLS';
 import toast from 'react-hot-toast';
 import Loading from '@/components/loading-component/loading';
@@ -77,6 +77,10 @@ interface Features {
   autoAdjustToFeatures?: boolean;
 }
 
+interface ReceiverMode {
+  type?: string;
+}
+
 interface Preference {
   id: string;
   preferenceMode: string;
@@ -88,11 +92,32 @@ interface Preference {
   features?: Features;
   status: string;
   createdAt: string;
-  buyer: Buyer;
+  buyer?: Buyer;
   contactInfo?: ContactInfo;
   nearbyLandmark?: string;
   additionalNotes?: string;
+  receiverMode?: ReceiverMode;
 }
+
+interface MatchPreferenceResponseData {
+  matchedCount: number;
+  matchEmailBaseUrl?: string;
+}
+
+const DEAL_SITE_GENERAL_MARKETPLACE_COPY =
+  "This preference was submitted on an agent DealSite; matching is not available through the general marketplace action.";
+
+const isDealSiteReceiverModePref = (p: Pick<Preference, "receiverMode"> | null) =>
+  p ? String(p.receiverMode?.type ?? "").toLowerCase() === "dealsite" : false;
+
+const isDealSiteGeneralMarketplaceApiMessage = (msg: string) => {
+  const m = (msg || "").toLowerCase();
+  return (
+    /submitted\s+on\s+an\s+agent\s+dealsite/.test(m) ||
+    /matching\s+is\s+not\s+available\s+through\s+the\s+general\s+marketplace/.test(m) ||
+    /general\s+marketplace\s+action/.test(m)
+  );
+};
 
 interface ApiResponse {
   success: boolean;
@@ -107,8 +132,29 @@ const PreferenceDetailPage = () => {
   const [preference, setPreference] = useState<Preference | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [matchLoading, setMatchLoading] = useState(false);
+  const [matchLockedAfterSuccess, setMatchLockedAfterSuccess] = useState(false);
+  const [publicPageCta, setPublicPageCta] = useState(false);
+  const [dealSiteGeneralMatchDenied, setDealSiteGeneralMatchDenied] = useState(false);
+  const [dealSiteGeneralMatchMessage, setDealSiteGeneralMatchMessage] = useState<string | null>(null);
 
   const preferenceId = params?.id as string;
+
+  const isUnauthorizedMessage = (msg: string) =>
+    /unauthorized|jwt|expired|session|log\s*in|authentication/i.test(msg || "");
+
+  const isDealSiteSubmissionRejection = (msg: string) =>
+    /submitted\s+on\s+an\s+agent|receiver\s*mode|not\s+a\s+general|deal\s*site\s+submission|general\s+marketplace\s+action/i.test(
+      (msg || "").toLowerCase(),
+    );
+
+  const suggestsActivatePublicPage = (msg: string) => {
+    const m = (msg || "").toLowerCase();
+    if (isDealSiteSubmissionRejection(msg)) return false;
+    return /public\s*access|public\s*page|active.*public|must\s+activate|running|resume|paused|on\s*hold/.test(
+      m,
+    );
+  };
 
   useEffect(() => {
     const fetchPreferenceDetails = async () => {
@@ -125,7 +171,15 @@ const PreferenceDetailPage = () => {
         const response = await GET_REQUEST(url, token);
 
         if (response?.success && response?.data) {
-          setPreference(response.data as Preference);
+          const data = response.data as Preference;
+          setPreference(data);
+          if (isDealSiteReceiverModePref(data)) {
+            setDealSiteGeneralMatchDenied(true);
+            setDealSiteGeneralMatchMessage(DEAL_SITE_GENERAL_MARKETPLACE_COPY);
+          } else {
+            setDealSiteGeneralMatchDenied(false);
+            setDealSiteGeneralMatchMessage(null);
+          }
         } else {
           toast.error("Failed to load preference details")
           setError(response?.message || 'Failed to load preference details');
@@ -141,12 +195,79 @@ const PreferenceDetailPage = () => {
     fetchPreferenceDetails();
   }, [preferenceId]);
 
-  const handleSubmitBrief = () => {
-    if (!user) {
-      sessionStorage.setItem('redirectAfterLogin', `/post-property-by-preference?preferenceId=${preferenceId}`);
-      router.push('/auth/login');
-    } else {
-      router.push(`/post-property-by-preference?preferenceId=${preferenceId}`);
+  const handleMatchPreference = async () => {
+    if (!preferenceId) return;
+
+    const token = Cookies.get("token");
+    if (!user || !token) {
+      try {
+        sessionStorage.setItem(
+          "redirectAfterLogin",
+          `/agent-marketplace/${preferenceId}`,
+        );
+      } catch {
+        /* ignore */
+      }
+      router.push("/auth/login");
+      return;
+    }
+
+    setMatchLoading(true);
+    setPublicPageCta(false);
+
+    try {
+      const url = `${URLS.BASE}${URLS.accountMarketplaceMatchPreference(preferenceId)}`;
+      const response = await POST_REQUEST(url, {}, token);
+
+      if (response?.success && response.data) {
+        const data = response.data as MatchPreferenceResponseData;
+        const count = typeof data.matchedCount === "number" ? data.matchedCount : 0;
+        toast.success(
+          response.message ||
+            (count > 0
+              ? `Matched ${count} listing(s). The buyer will be notified by email.`
+              : "Request completed. The buyer will be notified by email."),
+        );
+        if (count > 0) {
+          setMatchLockedAfterSuccess(true);
+        }
+        return;
+      }
+
+      const errText = String(
+        response?.message || response?.error || "Could not match preference",
+      );
+
+      if (isUnauthorizedMessage(errText)) {
+        toast.error("Please log in again to continue.");
+        try {
+          sessionStorage.setItem(
+            "redirectAfterLogin",
+            `/agent-marketplace/${preferenceId}`,
+          );
+        } catch {
+          /* ignore */
+        }
+        router.push("/auth/login");
+        return;
+      }
+
+      if (isDealSiteGeneralMarketplaceApiMessage(errText)) {
+        setDealSiteGeneralMatchDenied(true);
+        setDealSiteGeneralMatchMessage(errText.trim() || DEAL_SITE_GENERAL_MARKETPLACE_COPY);
+        return;
+      }
+
+      if (suggestsActivatePublicPage(errText)) {
+        setPublicPageCta(true);
+      }
+
+      toast.error(errText);
+    } catch (e) {
+      console.error("Match preference error:", e);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setMatchLoading(false);
     }
   };
 
@@ -492,7 +613,54 @@ const PreferenceDetailPage = () => {
 
           {/* Sidebar */}
           <div className="space-y-4 md:space-y-6">
-         
+            {/* Client name & contact */}
+            {(preference.contactInfo || preference.buyer) && (
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <h2 className="text-xl font-semibold text-[#09391C] mb-4">Client contact</h2>
+                <div className="space-y-3 text-sm">
+                  <div className="flex items-start gap-2">
+                    <FontAwesomeIcon icon={faUser} className="w-4 h-4 text-gray-500 mt-0.5" />
+                    <div>
+                      <span className="text-gray-600 block">Name</span>
+                      <span className="font-medium text-gray-900">
+                        {preference.contactInfo?.fullName ||
+                          preference.buyer?.fullName ||
+                          "—"}
+                      </span>
+                    </div>
+                  </div>
+                  {(preference.contactInfo?.email || preference.buyer?.email) && (
+                    <div className="flex items-start gap-2">
+                      <FontAwesomeIcon icon={faEnvelope} className="w-4 h-4 text-gray-500 mt-0.5" />
+                      <div>
+                        <span className="text-gray-600 block">Email</span>
+                        <a
+                          href={`mailto:${preference.contactInfo?.email || preference.buyer?.email}`}
+                          className="font-medium text-[#09391C] break-all hover:underline"
+                        >
+                          {preference.contactInfo?.email || preference.buyer?.email}
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                  {(preference.contactInfo?.phoneNumber || preference.buyer?.phoneNumber) && (
+                    <div className="flex items-start gap-2">
+                      <FontAwesomeIcon icon={faPhone} className="w-4 h-4 text-gray-500 mt-0.5" />
+                      <div>
+                        <span className="text-gray-600 block">Phone</span>
+                        <a
+                          href={`tel:${preference.contactInfo?.phoneNumber || preference.buyer?.phoneNumber}`}
+                          className="font-medium text-gray-900"
+                        >
+                          {preference.contactInfo?.phoneNumber || preference.buyer?.phoneNumber}
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Contact Information */}
             {preference.contactInfo &&
               (preference.contactInfo.petsAllowed !== undefined ||
@@ -558,11 +726,11 @@ const PreferenceDetailPage = () => {
               )}
 
 
-            {/* Action Button */}
+            {/* Match preference (auto-pair with agent listings) */}
             <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <h2 className="text-xl font-semibold text-[#09391C] mb-4">Ready to Help?</h2>
+              <h2 className="text-xl font-semibold text-[#09391C] mb-4">Match this preference</h2>
 
-              {/* Property match confirmation */}
+              {!isDealSiteReceiverModePref(preference) && !dealSiteGeneralMatchDenied ? (
               <div className="bg-[#8DDB90]/5 rounded-lg p-4 mb-4 border border-[#8DDB90]/20">
                 <div className="flex items-start gap-3">
                   <div className="w-5 h-5 bg-[#8DDB90] rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -571,39 +739,83 @@ const PreferenceDetailPage = () => {
                     </svg>
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-medium text-[#09391C] text-sm mb-1">Perfect Match Found?</h3>
+                    <h3 className="font-medium text-[#09391C] text-sm mb-1">Auto-pair your listings</h3>
                     <p className="text-gray-600 text-xs">
-                      Do you have a property that matches this buyer's requirements? Submit your brief to connect directly.
+                      We&apos;ll compare this buyer&apos;s preference with properties on your public page and email them when there are matches (or if there are none).
                     </p>
                   </div>
                 </div>
               </div>
+              ) : null}
 
-              <button
-                onClick={handleSubmitBrief}
-                className="w-full bg-[#8DDB90] hover:bg-[#7BC97F] text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Submit Brief
-              </button>
-
-              <p className="text-sm text-gray-600 mt-3 text-center">
-                {!user ? (
-                  <>You'll be asked to <span className="font-medium text-[#8DDB90]">log in</span> before submitting your property</>
-                ) : (
-                  <>Submit your matching property details for this buyer preference</>
-                )}
-              </p>
-
-              {/* Additional info */}
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500">Response Time:</span>
-                  <span className="text-[#09391C] font-medium">Usually within 24hrs</span>
+              {publicPageCta && (
+                <div className="mb-4 p-3 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-900">
+                  <p className="mb-2">
+                    Your public access page must be active (DealSite <strong>running</strong>) to match preferences.
+                  </p>
+                  <Link
+                    href="/public-access-page"
+                    className="inline-flex font-semibold text-[#09391C] underline hover:text-[#8DDB90]"
+                  >
+                    Open public access settings
+                  </Link>
                 </div>
-              </div>
+              )}
+
+              {isDealSiteReceiverModePref(preference) || dealSiteGeneralMatchDenied ? (
+                <p className="text-sm text-gray-600 text-center py-2">
+                  {dealSiteGeneralMatchMessage || DEAL_SITE_GENERAL_MARKETPLACE_COPY}
+                </p>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleMatchPreference}
+                    disabled={
+                      matchLoading ||
+                      matchLockedAfterSuccess ||
+                      !["approved", "matched"].includes(
+                        (preference.status || "").toLowerCase(),
+                      )
+                    }
+                    className="w-full bg-[#8DDB90] hover:bg-[#7BC97F] disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                  >
+                    {matchLoading ? (
+                      <span>Matching…</span>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        Match preference
+                      </>
+                    )}
+                  </button>
+
+                  {!["approved", "matched"].includes((preference.status || "").toLowerCase()) && (
+                    <p className="text-xs text-amber-700 mt-2 text-center">
+                      Matching is only available when this preference is approved or already matched.
+                    </p>
+                  )}
+
+                  {matchLockedAfterSuccess && (
+                    <p className="text-xs text-gray-600 mt-2 text-center">
+                      Matches were sent. Avoid running match again unless you intend to refresh pairing.
+                    </p>
+                  )}
+
+                  <p className="text-sm text-gray-600 mt-3 text-center">
+                    {!user ? (
+                      <>
+                        You must{" "}
+                        <span className="font-medium text-[#8DDB90]">log in</span> as an agent to match.
+                      </>
+                    ) : (
+                      <>Requires an active public page with running status.</>
+                    )}
+                  </p>
+                </>
+              )}
             </div>
           </div>
         </div>

@@ -5,7 +5,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronDown, faMagnifyingGlass, faArrowLeft, faMapMarkerAlt, faFileAlt, faBed, faTag } from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useUserContext } from '@/context/user-context';
 import { GET_REQUEST } from '@/utils/requests';
 import { URLS } from '@/utils/URLS';
 import toast from 'react-hot-toast';
@@ -77,20 +76,26 @@ interface Features {
   autoAdjustToFeatures?: boolean;
 }
 
+interface ReceiverMode {
+  type?: string;
+}
+
 interface Preference {
-  preferenceId: string;
-  buyer: Buyer;
+  preferenceId?: string;
+  _id?: string;
+  buyer?: Buyer;
   status: string;
   preferenceType: string;
   preferenceMode: string;
   location: Location;
   budget: Budget;
   features?: Features;
-  contactInfo: ContactInfo;
+  contactInfo?: ContactInfo;
   propertyDetails?: PropertyDetails;
   bookingDetails?: BookingDetails;
   nearbyLandmark?: string;
   additionalNotes?: string;
+  receiverMode?: ReceiverMode;
 }
 
 interface ApiResponse {
@@ -105,9 +110,12 @@ interface ApiResponse {
   };
 }
 
+/** Aligns with backend: general marketplace list must exclude DealSite submissions (receiverMode.type === "dealSite"). */
+const isDealSiteReceiverMode = (p: Pick<Preference, "receiverMode">) =>
+  String(p.receiverMode?.type ?? "").toLowerCase() === "dealsite";
+
 const AgentMarketplace = () => {
   const router = useRouter();
-  const { user } = useUserContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [preferenceMode, setPreferenceMode] = useState('');
   const [documentType, setDocumentType] = useState('');
@@ -115,8 +123,8 @@ const AgentMarketplace = () => {
   const [preferences, setPreferences] = useState<Preference[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [hasInitialized, setHasInitialized] = useState(false);
   const [criticalError, setCriticalError] = useState<string | null>(null);
+  const [authRequired, setAuthRequired] = useState(false);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -146,56 +154,77 @@ const AgentMarketplace = () => {
     };
   }, []);
 
-  // Fetch approved preferences from API
+  // Fetch general (main-site) preferences — GET /account/marketplace/general-preferences
   useEffect(() => {
     const fetchApprovedPreferences = async () => {
       setIsLoading(true);
       setError(null);
-      try {
-        // Build query params from filters
-        const params = new URLSearchParams();
-        params.append('page', String(currentPage));
-        params.append('limit', String(limit));
-        if (searchTerm) params.append('search', searchTerm);
-        if (preferenceMode) params.append('preferenceMode', preferenceMode);
-        if (documentType) params.append('documentType', documentType);
-        if (propertyCondition) params.append('propertyCondition', propertyCondition);
+      setAuthRequired(false);
 
-        const url = `${URLS.BASE}/preferences/getApprovedForAgent?${params.toString()}`;
-       
-        const response = await GET_REQUEST(url);
+      const token = Cookies.get("token");
+      if (!token) {
+        setAuthRequired(true);
+        setPreferences([]);
+        setTotalPages(0);
+        setTotalItems(0);
+        setIsLoading(false);
+        setIsPaginationLoading(false);
+        return;
+      }
+
+      try {
+        const params = new URLSearchParams();
+        params.append("page", String(currentPage));
+        params.append("limit", String(limit));
+        if (searchTerm) params.append("keyword", searchTerm);
+        if (preferenceMode) params.append("preferenceMode", preferenceMode);
+        if (documentType) params.append("documentType", documentType);
+        if (propertyCondition) params.append("propertyCondition", propertyCondition);
+
+        const url = `${URLS.BASE}${URLS.accountMarketplaceGeneralPreferences}?${params.toString()}`;
+        const response = await GET_REQUEST(url, token);
+
+        if (String(response?.error || "").includes("401") || String(response?.message || "").includes("401")) {
+          setAuthRequired(true);
+          setPreferences([]);
+          setTotalPages(0);
+          setTotalItems(0);
+          setIsLoading(false);
+          setIsPaginationLoading(false);
+          return;
+        }
 
         if (response?.success && response?.data && Array.isArray(response.data)) {
-          setPreferences(response.data);
-          
-          // Set pagination info from backend response
+          const raw = response.data as Preference[];
+          // Client safety net: never show DealSite-submitted prefs here (backend GET should omit them for correct pagination).
+          const filtered = raw.filter((p) => !isDealSiteReceiverMode(p));
+          setPreferences(filtered);
+
           if (response.pagination as any) {
             setTotalPages((response.pagination as any).pages || 1);
-            setTotalItems((response.pagination as any).total || response.data.length);
+            setTotalItems((response.pagination as any).total || filtered.length);
           } else {
             setTotalPages(1);
-            setTotalItems(response.data.length);
+            setTotalItems(filtered.length);
           }
         } else {
-          console.log('No data received from API or unexpected format');
-          console.log('Response structure:', response);
-          setError('No buyer preferences found');
+          setError(response?.message || "No buyer preferences found");
           setPreferences([]);
           setTotalPages(0);
           setTotalItems(0);
         }
       } catch (error) {
-        console.error('Error fetching buyer preferences:', error);
+        console.error("Error fetching buyer preferences:", error);
 
-        // Provide more specific error messages
-        let errorMessage = 'Failed to load buyer preferences';
+        let errorMessage = "Failed to load buyer preferences";
         if (error instanceof Error) {
-          if (error.message.includes('Failed to fetch')) {
-            errorMessage = 'Network error: Unable to connect to server. Please check your internet connection.';
-          } else if (error.message.includes('Authentication')) {
-            errorMessage = 'Authentication error: Please log in again.';
-          } else if (error.message.includes('API base URL')) {
-            errorMessage = 'Configuration error: API endpoint not available.';
+          if (error.message.includes("Failed to fetch")) {
+            errorMessage =
+              "Network error: Unable to connect to server. Please check your internet connection.";
+          } else if (error.message.includes("Authentication")) {
+            errorMessage = "Authentication error: Please log in again.";
+          } else if (error.message.includes("API base URL")) {
+            errorMessage = "Configuration error: API endpoint not available.";
           } else {
             errorMessage = `Error: ${error.message}`;
           }
@@ -211,14 +240,10 @@ const AgentMarketplace = () => {
       }
     };
 
-    // Only fetch if we have the basic requirements
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       fetchApprovedPreferences();
-      if (!hasInitialized) {
-        setHasInitialized(true);
-      }
     }
-  }, [currentPage, searchTerm, documentType, propertyCondition, preferenceMode, hasInitialized]);
+  }, [currentPage, searchTerm, documentType, propertyCondition, preferenceMode]);
 
   const handleSearch = () => {
     setCurrentPage(1);
@@ -280,15 +305,32 @@ const AgentMarketplace = () => {
 
 
 
-  const PreferenceCard = ({ preference }: { preference: Preference }) => (
-    <div className={`group relative bg-white border border-gray-200/80 hover:border-gray-300 rounded-lg overflow-hidden flex flex-col h-full transition-all duration-500 hover:translate-y-[-2px] ${preference.status?.toLowerCase() === 'closed' ? 'select-none' : ''}`}>
-      {/* Watermark for closed preferences */}
-      {preference.status?.toLowerCase() === 'closed' && (
+  const isPreferenceInactive = (status?: string) => {
+    const s = status?.toLowerCase() || "";
+    return s === "closed" || s === "matched";
+  };
+
+  const getPreferenceRowId = (p: Preference) => p.preferenceId || p._id || "";
+
+  const PreferenceCard = ({ preference }: { preference: Preference }) => {
+    const rowId = getPreferenceRowId(preference);
+    const inactive = isPreferenceInactive(preference.status);
+    const isDealSitePref = isDealSiteReceiverMode(preference);
+    const clientName =
+      preference.contactInfo?.fullName || preference.buyer?.fullName || "—";
+    const clientPhone =
+      preference.contactInfo?.phoneNumber || preference.buyer?.phoneNumber;
+    const clientEmail = preference.contactInfo?.email || preference.buyer?.email;
+
+    return (
+    <div className={`group relative bg-white border border-gray-200/80 hover:border-gray-300 rounded-lg overflow-hidden flex flex-col h-full transition-all duration-500 hover:translate-y-[-2px] ${inactive ? 'select-none' : ''}`}>
+      {/* Watermark for closed / matched preferences */}
+      {inactive && (
         <>
           <div className="absolute inset-0 bg-white/70 z-20 pointer-events-none"></div>
           <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
             <div className="px-6 py-2 text-3xl md:text-4xl font-extrabold tracking-widest text-red-600/50 border-4 border-red-600/40 rounded rotate-[-20deg] bg-white/60">
-              CLOSED
+              {preference.status?.toLowerCase() === "matched" ? "MATCHED" : "CLOSED"}
             </div>
           </div>
         </>
@@ -299,8 +341,8 @@ const AgentMarketplace = () => {
       {/* Status Indicator */}
       <div className="absolute top-3 right-3 z-10">
         <div className="relative">
-          <div className={`w-2 h-2 rounded-full ${preference.status?.toLowerCase() === 'closed' ? 'bg-red-500' : 'bg-green-500'}`}></div>
-          <div className={`absolute inset-0 w-2 h-2 rounded-full animate-ping opacity-75 ${preference.status?.toLowerCase() === 'closed' ? 'bg-red-500' : 'bg-green-500'}`}></div>
+          <div className={`w-2 h-2 rounded-full ${inactive ? 'bg-red-500' : 'bg-green-500'}`}></div>
+          <div className={`absolute inset-0 w-2 h-2 rounded-full animate-ping opacity-75 ${inactive ? 'bg-red-500' : 'bg-green-500'}`}></div>
         </div>
       </div>
 
@@ -335,6 +377,20 @@ const AgentMarketplace = () => {
 
       {/* Content */}
       <div className="flex-1 p-5">
+        {/* Client contact (main-site preferences) */}
+        <div className="mb-3 pb-3 border-b border-gray-100">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Client</p>
+          <p className="text-sm font-medium text-gray-900 truncate" title={clientName}>
+            {clientName}
+          </p>
+          {(clientPhone || clientEmail) && (
+            <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+              {clientPhone ? <span>{clientPhone}</span> : null}
+              {clientPhone && clientEmail ? <span className="mx-1">·</span> : null}
+              {clientEmail ? <span className="break-all">{clientEmail}</span> : null}
+            </p>
+          )}
+        </div>
         {/* Key Details Grid */}
         <div className="space-y-3">
           {/* Location */}
@@ -404,9 +460,9 @@ const AgentMarketplace = () => {
       {/* Footer Actions */}
       <div className="p-5 pt-0 space-y-3 border-t border-gray-50">
         {/* View Details */}
-        {preference.status?.toLowerCase() !== 'closed' && (
+        {!inactive && !isDealSitePref && rowId && (
           <a
-            href={`/agent-marketplace/${preference.preferenceId}`}
+            href={`/agent-marketplace/${rowId}`}
             className="w-full text-gray-600 hover:text-gray-900 text-xs font-medium py-2 flex items-center justify-center gap-1 group/btn transition-colors"
           >
             <span>View Details</span>
@@ -416,15 +472,19 @@ const AgentMarketplace = () => {
           </a>
         )}
 
-        {/* Primary Action or Matched Badge */}
-        {preference.status?.toLowerCase() === 'closed' ? (
+        {isDealSitePref ? (
+          <div className="w-full py-2.5 rounded bg-gray-100 text-gray-600 text-xs font-medium text-center">
+            Submitted via an agent DealSite — not available here
+          </div>
+        ) : inactive ? (
           <div className="w-full py-2.5 rounded bg-green-100 text-green-700 text-xs font-semibold text-center uppercase tracking-wide">
-            Matched
+            {preference.status?.toLowerCase() === "matched" ? "Matched" : "Closed"}
           </div>
         ) : (
           <button
-            onClick={() => handleIHaveIt(preference.preferenceId)}
-            className="relative w-full bg-gray-900 hover:bg-black text-white py-3 text-sm font-medium rounded transition-all duration-300 overflow-hidden group/action"
+            onClick={() => handleIHaveIt(rowId)}
+            disabled={!rowId}
+            className="relative w-full bg-gray-900 hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-900 text-white py-3 text-sm font-medium rounded transition-all duration-300 overflow-hidden group/action"
           >
             <span className="relative z-10 flex items-center justify-center gap-2">
               <span>I Have This Property</span>
@@ -435,6 +495,7 @@ const AgentMarketplace = () => {
       </div>
     </div>
   );
+  };
 
   // Critical error boundary
   if (criticalError) {
@@ -458,15 +519,6 @@ const AgentMarketplace = () => {
             </button>
           </div>
         </div>
-      </div>
-    );
-  }
-
-  // Early return for initial loading state
-  if (!hasInitialized && isLoading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <Loading />
       </div>
     );
   }
@@ -686,7 +738,32 @@ const AgentMarketplace = () => {
 
         {/* Properties Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 px-2 md:px-0">
-          {isLoading ? (
+          {authRequired ? (
+            <div className="col-span-full max-w-lg mx-auto text-center py-16 px-6 border border-gray-200 rounded-xl bg-gray-50/80">
+              <h3 className="text-lg font-semibold text-[#09391C] mb-2">Sign in required</h3>
+              <p className="text-gray-600 text-sm mb-6">
+                The agent marketplace uses your account to load buyer preferences from the main site. Log in to continue.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  const path =
+                    typeof window !== "undefined"
+                      ? `${window.location.pathname}${window.location.search || ""}`
+                      : "/agent-marketplace";
+                  try {
+                    sessionStorage.setItem("redirectAfterLogin", path);
+                  } catch {
+                    /* ignore */
+                  }
+                  router.push("/auth/login");
+                }}
+                className="px-6 py-3 bg-[#8DDB90] hover:bg-[#7BC97F] text-white font-medium rounded-lg transition-colors text-sm"
+              >
+                Log in
+              </button>
+            </div>
+          ) : isLoading ? (
             <div className="col-span-full text-center py-8">
               <Loading />
             </div>
@@ -702,7 +779,10 @@ const AgentMarketplace = () => {
             </div>
           ) : preferences.length > 0 ? (
             preferences.map((preference: Preference, idx: number) => (
-              <PreferenceCard key={preference.preferenceId || idx} preference={preference} />
+              <PreferenceCard
+                key={getPreferenceRowId(preference) || idx}
+                preference={preference}
+              />
             ))
           ) : (
             <div className="col-span-full">
@@ -729,7 +809,7 @@ const AgentMarketplace = () => {
                   </h3>
                   <p className="text-gray-600 text-sm md:text-base leading-relaxed">
                     We couldn&apos;t find any approved buyer preferences matching your current filters.
-                    This could be because buyers are still reviewing requirements or there aren'&apos; any active preferences in your selected criteria.
+                    This could be because buyers are still reviewing requirements or there are no active preferences in your selected criteria.
                   </p>
 
                   {/* Suggestions */}

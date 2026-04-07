@@ -6,7 +6,11 @@ import { suggestProperty } from "@/services/aiFormService";
 import AiFillBlock from "@/components/ai-form-fill/AiFillBlock";
 import PropertyAiDataSummary from "./PropertyAiDataSummary";
 import { mergeSuggestPropertyIntoForm } from "@/utils/aiSuggestPropertyMerge";
-import { pickAiComplimentPrefix } from "@/utils/aiComplimentPrefix";
+import {
+  getPropertyFieldPrompt,
+  propertyAllDonePrompt,
+} from "@/utils/aiInteractivePrompts";
+import { assistantMessageToSpeakable } from "@/utils/ttsText";
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
@@ -16,38 +20,51 @@ function fieldLabelOnly(field: string): string {
   return field.replace(/\s*\([^)]*\)\s*$/, "").trim() || field;
 }
 
-function getShortFormatForPropertyField(field: string): string {
-  const s = field.toLowerCase();
-  const rules: { test: (x: string) => boolean; format: string }[] = [
-    { test: (x) => x.includes("local government") || x.includes("lga"), format: "e.g. Ikeja" },
-    { test: (x) => x.includes("location") && x.includes("state"), format: "state, area, LGA — e.g. Lagos, Lekki, Ikeja" },
-    { test: (x) => x.includes("property type") && x.includes("sale"), format: "sale | rent | shortlet | joint venture" },
-    { test: (x) => x.includes("property category"), format: "Residential | Commercial | Land" },
-    { test: (x) => x.includes("price"), format: "Naira number no commas e.g. 50000000" },
-    { test: (x) => x.includes("description"), format: "one or two short sentences" },
-    { test: (x) => x.includes("bathrooms") && x.includes("toilets"), format: "counts e.g. 2 bathrooms 2 toilets" },
-    { test: (x) => x.includes("bathroom"), format: "integer" },
-    { test: (x) => x.includes("toilet"), format: "integer" },
-    { test: (x) => x.includes("bedroom"), format: "integer e.g. 3" },
-    { test: (x) => x.includes("property condition"), format: "new | fairly used | renovated …" },
-    { test: (x) => x.includes("type of building"), format: "flat | duplex | terrace | detached …" },
-    { test: (x) => x.includes("parking"), format: "number or none" },
-    { test: (x) => x.includes("document") || x.includes("title"), format: "comma list C of O Survey plan …" },
-    { test: (x) => x.includes("measurement type"), format: "Square Meter | Plot | Hectares …" },
-    { test: (x) => x.includes("land size") && x.includes("numeric"), format: "number e.g. 500" },
-    { test: (x) => x.includes("features"), format: "comma list parking generator security …" },
-  ];
-  const hit = rules.find((r) => r.test(s));
-  return hit ? hit.format : "short text or number";
+function getSpeakableAssistantText(msg: { content: string; speakLine?: string }): string {
+  return assistantMessageToSpeakable(msg);
 }
 
-/** Returns plain text suitable for TTS from an assistant message (Web Speech API — SpeechSynthesis). */
-function getSpeakableAssistantText(msg: { content: string; missingFields?: string[] }): string {
-  if (!msg.missingFields?.length) return msg.content;
-  const lines = msg.missingFields.map(
-    (f) => `${fieldLabelOnly(f)}. Format: ${getShortFormatForPropertyField(f)}`,
-  );
-  return `${msg.content} Still need: ${lines.join(". ")}`;
+const SKIP_UTTERANCE_RE = /^\s*(please\s+)?skip\b/i;
+
+function isPropertyFieldSkippable(field: string): boolean {
+  const f = field.toLowerCase();
+  if (f.includes("key features")) return true;
+  return false;
+}
+
+function buildPropertyInteractiveReply(
+  data: Record<string, unknown>,
+  skipped: Set<string>,
+  questionVariant: number,
+): {
+  content: string;
+  speakLine?: string;
+  focusedMissingField?: string;
+  missingFields: string[];
+  remainingMissingCount: number;
+} {
+  const missing = getMissingFieldsFromData(data).filter((f) => !skipped.has(f));
+
+  if (missing.length === 0) {
+    const done = propertyAllDonePrompt();
+    return {
+      content: done.displayLine,
+      speakLine: done.speakLine,
+      missingFields: [],
+      remainingMissingCount: 0,
+    };
+  }
+
+  const focus = missing[0];
+  const { displayLine, speakLine } = getPropertyFieldPrompt(focus, questionVariant);
+
+  return {
+    content: displayLine,
+    speakLine,
+    focusedMissingField: focus,
+    missingFields: [focus],
+    remainingMissingCount: Math.max(0, missing.length - 1),
+  };
 }
 
 /** Returns true only if the value is non-empty and meaningful (not placeholder) */
@@ -251,10 +268,24 @@ export default function PropertyAiConversationFlow({
   } = usePostPropertyContext();
 
   const [loading, setLoading] = useState(false);
+  const skippedFieldsRef = useRef<Set<string>>(new Set());
+  const collectedDataRef = useRef<Record<string, unknown> | null>(null);
+  const propertyQuestionVariantRef = useRef(0);
   /** Default on: speak each assistant reply automatically; user can mute via toggle or stop via speaker icon. */
   const [playRepliesAloud, setPlayRepliesAloud] = useState(true);
   const prevMessageCountRef = useRef(0);
   const { speak, stop, speaking } = useSpeechSynthesis({ lang: "en-NG", rate: 0.95 });
+
+  useEffect(() => {
+    collectedDataRef.current = aiCollectedData;
+  }, [aiCollectedData]);
+
+  useEffect(() => {
+    if (aiConversationMessages.length === 0) {
+      skippedFieldsRef.current = new Set();
+      propertyQuestionVariantRef.current = 0;
+    }
+  }, [aiConversationMessages.length]);
 
   const handleSend = useCallback(async (textOverride: string) => {
     const trimmed = textOverride.toString().trim();
@@ -262,6 +293,61 @@ export default function PropertyAiConversationFlow({
       toast.error("Please enter or say something.");
       return;
     }
+
+    if (SKIP_UTTERANCE_RE.test(trimmed)) {
+      setLoading(true);
+      try {
+        setAiConversationMessages((prev) => {
+          const lastAssist = [...prev].reverse().find((m) => m.role === "assistant");
+          const lastFocus = lastAssist?.focusedMissingField;
+          const data = { ...(collectedDataRef.current || {}) } as Record<string, unknown>;
+          const skipped = skippedFieldsRef.current;
+          const missingBefore = getMissingFieldsFromData(data).filter((f) => !skipped.has(f));
+          const toSkip =
+            lastFocus && missingBefore.includes(lastFocus) ? lastFocus : missingBefore[0];
+          if (toSkip && !isPropertyFieldSkippable(toSkip)) {
+            const label = fieldLabelOnly(toSkip);
+            const reqLine = `${label} is required. Please answer in your next message.`;
+            return [
+              ...prev,
+              { role: "user" as const, content: trimmed },
+              {
+                role: "assistant" as const,
+                content: reqLine,
+                speakLine: `${label} is required. Please share an answer.`,
+                data,
+                missingFields: [toSkip],
+                focusedMissingField: toSkip,
+                remainingMissingCount: Math.max(0, missingBefore.length - 1),
+              },
+            ];
+          }
+          if (toSkip) skipped.add(toSkip);
+          const reply = buildPropertyInteractiveReply(
+            data,
+            skipped,
+            propertyQuestionVariantRef.current++,
+          );
+          return [
+            ...prev,
+            { role: "user" as const, content: trimmed },
+            {
+              role: "assistant" as const,
+              content: reply.content,
+              speakLine: reply.speakLine,
+              data,
+              missingFields: reply.missingFields.length ? reply.missingFields : undefined,
+              focusedMissingField: reply.focusedMissingField,
+              remainingMissingCount: reply.remainingMissingCount,
+            },
+          ];
+        });
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
     setLoading(true);
     setAiConversationMessages((prev) => [...prev, { role: "user", content: trimmed }]);
 
@@ -270,7 +356,13 @@ export default function PropertyAiConversationFlow({
         .filter((m) => m.role === "user")
         .map((m) => m.content)
         .join(". ");
-      const res = await suggestProperty(accumulated || trimmed, Cookies.get("token") ?? "");
+      const lastAssist = [...aiConversationMessages].reverse().find((m) => m.role === "assistant");
+      const focus = lastAssist?.focusedMissingField;
+      const contextual = focus
+        ? `${accumulated || trimmed}\n\n[The user is answering this specific field: ${focus}]`
+        : accumulated || trimmed;
+
+      const res = await suggestProperty(contextual, Cookies.get("token") ?? "");
       if (!res.success) {
         setAiConversationMessages((prev) => [
           ...prev,
@@ -306,18 +398,22 @@ export default function PropertyAiConversationFlow({
           },
         };
       }
-      const missingFields = getMissingFieldsFromData(data);
-      const hasMissing = missingFields.length > 0;
-      const praise = pickAiComplimentPrefix();
-      const assistantContent = hasMissing ? praise : `${praise}\n\nReady. Tap I'm done for summary.`;
       setAiCollectedData(data);
+      const reply = buildPropertyInteractiveReply(
+        data,
+        skippedFieldsRef.current,
+        propertyQuestionVariantRef.current++,
+      );
       setAiConversationMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content: assistantContent,
+          content: reply.content,
+          speakLine: reply.speakLine,
           data,
-          missingFields: hasMissing ? missingFields : undefined,
+          missingFields: reply.missingFields.length ? reply.missingFields : undefined,
+          focusedMissingField: reply.focusedMissingField,
+          remainingMissingCount: reply.remainingMissingCount,
         },
       ]);
     } catch (e) {
@@ -329,13 +425,17 @@ export default function PropertyAiConversationFlow({
     } finally {
       setLoading(false);
     }
-  }, [aiConversationMessages, setAiConversationMessages, setAiCollectedData]);
+  }, [aiCollectedData, aiConversationMessages, setAiConversationMessages, setAiCollectedData]);
 
   // Auto-play latest assistant reply when TTS is enabled (Web Speech API — SpeechSynthesis).
   useEffect(() => {
     const n = aiConversationMessages.length;
     if (n > prevMessageCountRef.current && aiConversationMessages[n - 1]?.role === "assistant" && playRepliesAloud) {
-      speak(getSpeakableAssistantText(aiConversationMessages[n - 1] as { content: string; missingFields?: string[] }));
+      speak(
+        getSpeakableAssistantText(
+          aiConversationMessages[n - 1] as { content: string; speakLine?: string },
+        ),
+      );
     }
     prevMessageCountRef.current = n;
   }, [aiConversationMessages, playRepliesAloud, speak]);
@@ -361,6 +461,8 @@ export default function PropertyAiConversationFlow({
   }, [aiCollectedData, propertyData, setPropertyData, setCurrentStep, setAiFlowStep, imageStepIndex]);
 
   const handleBackToMode = useCallback(() => {
+    skippedFieldsRef.current = new Set();
+    propertyQuestionVariantRef.current = 0;
     setPostingMode(null);
     setAiConversationMessages([]);
     setAiCollectedData(null);
@@ -398,10 +500,10 @@ export default function PropertyAiConversationFlow({
         </button>
       </div>
       <p className="text-sm text-[#5A5D63]">
-        Type or use the mic to describe your property. The AI will ask for any missing details. When you’re done, click “I’m done” to see the summary and continue to image upload.
+        Type or use the mic to describe your property. The AI asks for <strong>one detail at a time</strong>, building on what you already said. Say <strong>skip</strong> to move to the next item. When you&apos;re ready, use <strong>I&apos;m done</strong> for the summary and image upload.
       </p>
       <p className="text-xs text-[#5A5D63] italic">
-        Tip: If voice input fails (e.g. network), type your description instead.
+        Tip: If voice input fails (e.g. network), type instead.
       </p>
 
       <label className="flex items-start gap-2 text-sm text-[#5A5D63] cursor-pointer">
@@ -443,7 +545,11 @@ export default function PropertyAiConversationFlow({
                   </div>
                   <button
                     type="button"
-                    onClick={() => (speaking ? stop() : speak(getSpeakableAssistantText(msg as { content: string; missingFields?: string[] })))}
+                    onClick={() =>
+                      speaking
+                        ? stop()
+                        : speak(getSpeakableAssistantText(msg as { content: string; speakLine?: string }))
+                    }
                     className="p-1 rounded text-[#5A5D63] hover:bg-[#8DDB90]/20 hover:text-[#09391C]"
                     title={speaking ? "Stop playback" : "Play reply aloud"}
                     aria-label={speaking ? "Stop playback" : "Play reply aloud"}
@@ -459,18 +565,17 @@ export default function PropertyAiConversationFlow({
                     : "bg-gray-100 text-[#09391C]"
                 }`}
               >
-                {msg.role === "assistant" && (msg as { missingFields?: string[] }).missingFields?.length ? (
+                {msg.role === "assistant" &&
+                (msg as { focusedMissingField?: string }).focusedMissingField ? (
                   <>
                     <p className="mb-2 whitespace-pre-line">{msg.content}</p>
-                    <p className="text-xs font-semibold text-[#5A5D63] uppercase tracking-wide mb-1.5">Still need</p>
-                    <ul className="space-y-2 text-sm">
-                      {(msg as { missingFields: string[] }).missingFields.map((f, j) => (
-                        <li key={j} className="border-l-2 border-[#8DDB90]/60 pl-2">
-                          <span className="font-medium text-[#09391C]">{fieldLabelOnly(f)}</span>
-                          <span className="text-[#5A5D63]"> — {getShortFormatForPropertyField(f)}</span>
-                        </li>
-                      ))}
-                    </ul>
+                    {(msg as { remainingMissingCount?: number }).remainingMissingCount ? (
+                      <p className="text-xs text-[#5A5D63] mt-2 pt-2 border-t border-gray-200">
+                        {(msg as { remainingMissingCount: number }).remainingMissingCount} more item
+                        {(msg as { remainingMissingCount: number }).remainingMissingCount !== 1 ? "s" : ""}{" "}
+                        after this (or say skip).
+                      </p>
+                    ) : null}
                   </>
                 ) : (
                   <span className="whitespace-pre-line">{msg.content}</span>

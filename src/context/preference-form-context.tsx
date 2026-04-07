@@ -216,6 +216,12 @@ export interface PreferenceAiMessage {
   content: string;
   data?: Record<string, unknown>;
   missingFields?: string[];
+  /** Single field the assistant is asking for (interactive flow); TTS/UI focus */
+  focusedMissingField?: string;
+  /** How many fields remain after the focused one (not counting skipped) */
+  remainingMissingCount?: number;
+  /** Short line for TTS only (no format hints, emojis stripped separately) */
+  speakLine?: string;
 }
 
 // Context type
@@ -226,8 +232,10 @@ interface PreferenceFormContextType {
   // AI vs manual entry (preference submission flow)
   preferenceEntryMode: PreferenceEntryMode;
   setPreferenceEntryMode: React.Dispatch<React.SetStateAction<PreferenceEntryMode>>;
-  preferenceAiFlowStep: "conversation" | "summary" | null;
-  setPreferenceAiFlowStep: React.Dispatch<React.SetStateAction<"conversation" | "summary" | null>>;
+  preferenceAiFlowStep: "conversation" | "contactConfirm" | "summary" | null;
+  setPreferenceAiFlowStep: React.Dispatch<
+    React.SetStateAction<"conversation" | "contactConfirm" | "summary" | null>
+  >;
   preferenceAiMessages: PreferenceAiMessage[];
   setPreferenceAiMessages: React.Dispatch<React.SetStateAction<PreferenceAiMessage[]>>;
   preferenceAiCollectedData: Record<string, unknown> | null;
@@ -276,7 +284,9 @@ export const PreferenceFormProvider: React.FC<{ children: ReactNode }> = ({
 
   // AI vs manual entry state (preference submission)
   const [preferenceEntryMode, setPreferenceEntryMode] = React.useState<PreferenceEntryMode>(null);
-  const [preferenceAiFlowStep, setPreferenceAiFlowStep] = React.useState<"conversation" | "summary" | null>(null);
+  const [preferenceAiFlowStep, setPreferenceAiFlowStep] = React.useState<
+    "conversation" | "contactConfirm" | "summary" | null
+  >(null);
   const [preferenceAiMessages, setPreferenceAiMessages] = React.useState<PreferenceAiMessage[]>([]);
   const [preferenceAiCollectedData, setPreferenceAiCollectedData] = React.useState<Record<string, unknown> | null>(null);
 

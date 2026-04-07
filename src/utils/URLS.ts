@@ -81,6 +81,12 @@ export const URLS = {
   agentBroadcast: "/account/agent/broadcast",
   submitKyc: "/account/submitKyc",
 
+  /** GET /account/marketplace/general-preferences — agent marketplace (main-site preferences, auth) */
+  accountMarketplaceGeneralPreferences: "/account/marketplace/general-preferences",
+  /** POST /account/marketplace/preferences/:preferenceId/match — auto-pair agent listings with preference */
+  accountMarketplaceMatchPreference: (preferenceId: string) =>
+    `/account/marketplace/preferences/${preferenceId}/match`,
+
   /**
    * Auth Endpoints (see docs/FRONTEND_API_GUIDE.md)
    */

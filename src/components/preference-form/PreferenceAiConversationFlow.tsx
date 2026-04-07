@@ -5,7 +5,11 @@ import { usePreferenceForm } from "@/context/preference-form-context";
 import { suggestPreference } from "@/services/aiFormService";
 import AiFillBlock from "@/components/ai-form-fill/AiFillBlock";
 import { mergeSuggestPreferenceIntoForm } from "@/utils/aiSuggestPreferenceMerge";
-import { pickAiComplimentPrefix } from "@/utils/aiComplimentPrefix";
+import {
+  getPreferenceFieldPrompt,
+  preferenceAllDonePrompt,
+} from "@/utils/aiInteractivePrompts";
+import { assistantMessageToSpeakable } from "@/utils/ttsText";
 import { buildPreferencePayload } from "@/utils/buildPreferencePayload";
 import { POST_REQUEST } from "@/utils/requests";
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
@@ -16,57 +20,54 @@ function fieldLabelOnly(field: string): string {
   return field.replace(/\s*\([^)]*\)\s*$/, "").trim() || field;
 }
 
-/** One short format per missing line — for display and TTS (no long explanations). */
-function getShortFormatForPreferenceField(field: string): string {
-  const s = field.toLowerCase();
-  const rules: { test: (x: string) => boolean; format: string }[] = [
-    { test: (x) => x.includes("check-in"), format: "YYYY-MM-DD" },
-    { test: (x) => x.includes("check-out"), format: "YYYY-MM-DD" },
-    { test: (x) => x.includes("number of guests") || x.includes("guests"), format: "positive number" },
-    { test: (x) => x.includes("travel type"), format: "e.g. solo | couple | family | business" },
-    { test: (x) => x.includes("company name"), format: "company legal name" },
-    { test: (x) => x.includes("contact person"), format: "full name" },
-    { test: (x) => x.includes("measurement unit") && x.includes("jv"), format: "plot | sqm | hectares" },
-    { test: (x) => x.includes("jv type"), format: "Equity Split | Lease-to-Build | Development Partner" },
-    { test: (x) => x.includes("development type") && x.includes("jv"), format: "comma list e.g. Mini Flats" },
-    { test: (x) => x.includes("preferred sharing"), format: "e.g. 60-40" },
-    { test: (x) => x.includes("minimum title"), format: "comma list e.g. C of O, Survey plan" },
-    { test: (x) => x.includes("land size") && x.includes("jv"), format: "number e.g. 500" },
-    { test: (x) => x.includes("max price must be greater"), format: "max greater than min, Naira numbers" },
-    { test: (x) => x.includes("min price"), format: "Naira number no commas e.g. 10000000" },
-    { test: (x) => x.includes("max price"), format: "Naira number no commas e.g. 50000000" },
-    { test: (x) => x.includes("additional notes") || x.includes("special requirements"), format: "short text" },
-    { test: (x) => x.includes("landmark"), format: "short text" },
-    { test: (x) => x.includes("document type"), format: "comma list C of O Survey plan etc" },
-    { test: (x) => x.includes("lease term"), format: "e.g. 1 Year | 6 Months" },
-    { test: (x) => x.includes("property condition"), format: "new | renovated | fairly used …" },
-    { test: (x) => x.includes("building type"), format: "detached | duplex | block of flats …" },
-    { test: (x) => x.includes("property type") && x.includes("shortlet"), format: "studio | apartment …" },
-    { test: (x) => x.includes("number of bedrooms") || (x.includes("bedrooms") && x.includes("required")), format: "integer e.g. 3" },
-    { test: (x) => x.includes("number of bathrooms"), format: "integer" },
-    { test: (x) => x.includes("property type"), format: "land | residential | commercial …" },
-    { test: (x) => x.includes("email") && x.includes("phone"), format: "email or 080… phone" },
-    { test: (x) => x.includes("phone number") || (x.includes("phone") && x.includes("required")), format: "080… or +234…" },
-    { test: (x) => x.includes("email") && x.includes("required"), format: "you@example.com" },
-    { test: (x) => x.includes("full name"), format: "First Last" },
-    { test: (x) => x.includes("area name") || x.includes("custom location"), format: "area or custom place text" },
-    { test: (x) => x.includes("at least one lga") || x.includes("lga or area name"), format: "LGA or area name" },
-    { test: (x) => x.includes("location state") || x.includes("lga or area"), format: "state + LGA or area" },
-    { test: (x) => x.includes("location") && x.includes("state"), format: "Lagos + LGA + area" },
-    { test: (x) => x.includes("preference type"), format: "buy | rent | shortlet | joint venture" },
-    { test: (x) => x.includes("features") || x.includes("amenities"), format: "comma list parking security water …" },
-  ];
-  const hit = rules.find((r) => r.test(s));
-  return hit ? hit.format : "short text or number";
+function getSpeakableAssistantText(msg: { content: string; speakLine?: string }): string {
+  return assistantMessageToSpeakable(msg);
 }
 
-/** Returns plain text suitable for TTS from an assistant message (Web Speech API — SpeechSynthesis). */
-function getSpeakableAssistantText(msg: { content: string; missingFields?: string[] }): string {
-  if (!msg.missingFields?.length) return msg.content;
-  const lines = msg.missingFields.map(
-    (f) => `${fieldLabelOnly(f)}. Format: ${getShortFormatForPreferenceField(f)}`,
-  );
-  return `${msg.content} Still need: ${lines.join(". ")}`;
+const SKIP_UTTERANCE_RE = /^\s*(please\s+)?skip\b/i;
+
+function isPreferenceFieldSkippable(field: string): boolean {
+  const f = field.toLowerCase();
+  if (f.includes("(optional)")) return true;
+  if (f.includes("key features") || f.includes("amenities")) return true;
+  if (f.includes("additional notes") || f.includes("special requirements")) return true;
+  if (f.includes("nearby landmark")) return true;
+  return false;
+}
+
+function buildPreferenceInteractiveReply(
+  data: Record<string, unknown>,
+  skipped: Set<string>,
+  questionVariant: number,
+): {
+  content: string;
+  speakLine?: string;
+  focusedMissingField?: string;
+  missingFields: string[];
+  remainingMissingCount: number;
+} {
+  const missing = getMissingFieldsFromPreferenceData(data).filter((f) => !skipped.has(f));
+
+  if (missing.length === 0) {
+    const done = preferenceAllDonePrompt();
+    return {
+      content: done.displayLine,
+      speakLine: done.speakLine,
+      missingFields: [],
+      remainingMissingCount: 0,
+    };
+  }
+
+  const focus = missing[0];
+  const { displayLine, speakLine } = getPreferenceFieldPrompt(focus, questionVariant);
+
+  return {
+    content: displayLine,
+    speakLine,
+    focusedMissingField: focus,
+    missingFields: [focus],
+    remainingMissingCount: Math.max(0, missing.length - 1),
+  };
 }
 
 function isMeaningful(value: unknown): boolean {
@@ -75,6 +76,73 @@ function isMeaningful(value: unknown): boolean {
   if (typeof value === "number") return !Number.isNaN(value) && value >= 0;
   if (Array.isArray(value)) return value.length > 0;
   return false;
+}
+
+/**
+ * Parse "Lagos, Ikeja, Lekki Phase" (or single-segment replies per step) into
+ * location.state, location.localGovernmentAreas, location.areas as the form expects.
+ */
+function applyPreferenceLocationFromNaturalText(
+  text: string,
+  loc: Record<string, unknown> | undefined,
+): Record<string, unknown> {
+  const base: Record<string, unknown> = { ...(loc || {}) };
+  const raw = text.trim();
+  if (!raw) return base;
+
+  const hasState = isMeaningful(base.state);
+  const hasLga =
+    (Array.isArray(base.localGovernmentAreas) && base.localGovernmentAreas.length > 0) ||
+    (Array.isArray(base.lgas) && base.lgas.length > 0);
+  const hasArea =
+    (Array.isArray(base.areas) && base.areas.length > 0) ||
+    isMeaningful(base.area) ||
+    isMeaningful(base.customLocation);
+
+  const parts = raw.split(/[,;]/).map((p) => p.trim()).filter(Boolean);
+
+  if (parts.length >= 3) {
+    base.state = parts[0];
+    base.localGovernmentAreas = [parts[1]];
+    base.areas = [parts.slice(2).join(", ")];
+    return base;
+  }
+
+  if (parts.length === 2) {
+    if (!hasState) {
+      base.state = parts[0];
+      base.localGovernmentAreas = [parts[1]];
+      return base;
+    }
+    if (!hasLga) {
+      base.localGovernmentAreas = [parts[0]];
+      base.areas = [parts[1]];
+      return base;
+    }
+    if (!hasArea) {
+      base.areas = [parts.join(", ")];
+    }
+    return base;
+  }
+
+  if (parts.length === 1) {
+    const v = parts[0];
+    if (!hasState) base.state = v;
+    else if (!hasLga) base.localGovernmentAreas = [v];
+    else if (!hasArea) base.areas = [v];
+    return base;
+  }
+
+  return base;
+}
+
+/** If API put "Lagos, Ikeja, ..." only in state, split into structured location. */
+function normalizeCompoundPreferenceLocation(loc: Record<string, unknown> | undefined): Record<string, unknown> {
+  if (!loc || typeof loc !== "object") return {};
+  const st = String(loc.state ?? "").trim();
+  if (!st.includes(",")) return { ...loc };
+  const withoutState = { ...loc, state: "" };
+  return applyPreferenceLocationFromNaturalText(st, withoutState);
 }
 
 /**
@@ -147,19 +215,22 @@ function getMissingFieldsFromPreferenceData(data: Record<string, unknown>): stri
     missing.push("preference type (required: one of buy, rent, shortlet, joint venture)");
   }
 
-  // --- Required for all: location (state, at least one LGA, and area or custom location) ---
-  const loc = data.location as Record<string, unknown> | undefined;
+  // --- Required for all: location — ask state, then LGA, then area (one step each) ---
+  const loc = normalizeCompoundPreferenceLocation((data.location || {}) as Record<string, unknown>);
   const hasState = loc && isMeaningful(loc.state);
   const hasLgas = loc && Array.isArray(loc.localGovernmentAreas) && (loc.localGovernmentAreas as unknown[]).length > 0;
   const hasLgasAlt = loc && Array.isArray(loc.lgas) && (loc.lgas as unknown[]).length > 0;
-  const hasArea = (loc && Array.isArray(loc.areas) && (loc.areas as unknown[]).length > 0) || (loc && loc.area && isMeaningful(loc.area));
+  const hasArea =
+    (loc && Array.isArray(loc.areas) && (loc.areas as unknown[]).length > 0) ||
+    (loc && loc.area && isMeaningful(loc.area));
   const hasCustomLocation = loc && isMeaningful(loc.customLocation);
-  if (!hasState && !hasLgas && !hasLgasAlt) {
-    missing.push("location (required: state and at least one LGA or area)");
-  } else {
-    if (!hasState) missing.push("location state (required)");
-    if (!hasLgas && !hasLgasAlt) missing.push("at least one LGA or area name (required)");
-    if (!hasArea && !hasCustomLocation) missing.push("area name or custom location (required)");
+
+  if (!hasState) {
+    missing.push("preference location — state (required)");
+  } else if (!hasLgas && !hasLgasAlt) {
+    missing.push("preference location — LGA (required)");
+  } else if (!hasArea && !hasCustomLocation) {
+    missing.push("preference location — area (required)");
   }
 
   // --- Required for all: budget (form requires both min and max) ---
@@ -176,31 +247,12 @@ function getMissingFieldsFromPreferenceData(data: Record<string, unknown>): stri
     missing.push("budget max price must be greater than min price");
   }
 
-  // --- Required for all (except JV uses different contact): fullName, email, phoneNumber ---
+  // --- Contact identity is collected in the dedicated post-conversation form ---
+  // Do not ask for name/email during AI chat.
   if (type === "joint-venture") {
     const contact = data.contactInfo as Record<string, unknown> | undefined;
     if (!contact || !isMeaningful(contact.companyName)) {
       missing.push("company name (required for JV)");
-    }
-    if (!contact || !isMeaningful(contact.contactPerson)) {
-      missing.push("contact person name (required for JV)");
-    }
-    if (!contact || !isMeaningful(contact.email)) {
-      missing.push("email (required)");
-    }
-    if (!contact || !isMeaningful(contact.phoneNumber)) {
-      missing.push("phone number (required, e.g. 08012345678)");
-    }
-  } else {
-    const contact = data.contactInfo as Record<string, unknown> | undefined;
-    const hasEmail = contact && isMeaningful(contact.email);
-    const hasPhone = contact && isMeaningful(contact.phoneNumber);
-    const hasName = contact && isMeaningful(contact.fullName);
-    if (!hasEmail && !hasPhone) {
-      missing.push("contact email or phone number (required)");
-    }
-    if (!hasName) {
-      missing.push("your full name (required)");
     }
   }
 
@@ -402,16 +454,38 @@ export default function PreferenceAiConversationFlow() {
 
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  /** Manual name/email after voice (typed for accuracy). */
+  const [manualFullName, setManualFullName] = useState("");
+  const [manualEmail, setManualEmail] = useState("");
+  /** Fields the user skipped in the interactive AI flow (exact strings from getMissingFieldsFromPreferenceData). */
+  const skippedFieldsRef = useRef<Set<string>>(new Set());
+  const collectedDataRef = useRef<Record<string, unknown> | null>(null);
+  const preferenceQuestionVariantRef = useRef(0);
   /** Default on: speak each assistant reply automatically; user can mute via toggle or stop via speaker icon. */
   const [playRepliesAloud, setPlayRepliesAloud] = useState(true);
   const prevMessageCountRef = useRef(0);
   const { speak, stop, speaking } = useSpeechSynthesis({ lang: "en-NG", rate: 0.95 });
 
+  useEffect(() => {
+    collectedDataRef.current = preferenceAiCollectedData;
+  }, [preferenceAiCollectedData]);
+
+  useEffect(() => {
+    if (preferenceAiMessages.length === 0) {
+      skippedFieldsRef.current = new Set();
+      preferenceQuestionVariantRef.current = 0;
+    }
+  }, [preferenceAiMessages.length]);
+
   // Auto-play latest assistant reply when TTS is enabled (Web Speech API — SpeechSynthesis).
   useEffect(() => {
     const n = preferenceAiMessages.length;
     if (n > prevMessageCountRef.current && preferenceAiMessages[n - 1]?.role === "assistant" && playRepliesAloud) {
-      speak(getSpeakableAssistantText(preferenceAiMessages[n - 1] as { content: string; missingFields?: string[] }));
+      speak(
+        getSpeakableAssistantText(
+          preferenceAiMessages[n - 1] as { content: string; speakLine?: string },
+        ),
+      );
     }
     prevMessageCountRef.current = n;
   }, [preferenceAiMessages, playRepliesAloud, speak]);
@@ -423,6 +497,61 @@ export default function PreferenceAiConversationFlow() {
         toast.error("Please enter or say something.");
         return;
       }
+
+      if (SKIP_UTTERANCE_RE.test(trimmed)) {
+        setLoading(true);
+        try {
+          setPreferenceAiMessages((prev) => {
+            const lastAssist = [...prev].reverse().find((m) => m.role === "assistant");
+            const lastFocus = lastAssist?.focusedMissingField;
+            const data = { ...(collectedDataRef.current || {}) } as Record<string, unknown>;
+            const skipped = skippedFieldsRef.current;
+            const missingBefore = getMissingFieldsFromPreferenceData(data).filter((f) => !skipped.has(f));
+            const toSkip =
+              lastFocus && missingBefore.includes(lastFocus) ? lastFocus : missingBefore[0];
+            if (toSkip && !isPreferenceFieldSkippable(toSkip)) {
+              const label = fieldLabelOnly(toSkip);
+              const reqLine = `${label} is required. Please answer in your next message.`;
+              return [
+                ...prev,
+                { role: "user" as const, content: trimmed },
+                {
+                  role: "assistant" as const,
+                  content: reqLine,
+                  speakLine: `${label} is required. Please share an answer.`,
+                  data,
+                  missingFields: [toSkip],
+                  focusedMissingField: toSkip,
+                  remainingMissingCount: Math.max(0, missingBefore.length - 1),
+                },
+              ];
+            }
+            if (toSkip) skipped.add(toSkip);
+            const reply = buildPreferenceInteractiveReply(
+              data,
+              skipped,
+              preferenceQuestionVariantRef.current++,
+            );
+            return [
+              ...prev,
+              { role: "user" as const, content: trimmed },
+              {
+                role: "assistant" as const,
+                content: reply.content,
+                speakLine: reply.speakLine,
+                data,
+                missingFields: reply.missingFields.length ? reply.missingFields : undefined,
+                focusedMissingField: reply.focusedMissingField,
+                remainingMissingCount: reply.remainingMissingCount,
+              },
+            ];
+          });
+        } finally {
+          setLoading(false);
+        }
+        return;
+      }
+
       setLoading(true);
       setPreferenceAiMessages((prev) => [...prev, { role: "user", content: trimmed }]);
 
@@ -431,7 +560,14 @@ export default function PreferenceAiConversationFlow() {
           .filter((m) => m.role === "user")
           .map((m) => m.content)
           .join(". ");
-        const res = await suggestPreference(accumulated || trimmed);
+        const contextual =
+          (() => {
+            const lastAssist = [...preferenceAiMessages].reverse().find((m) => m.role === "assistant");
+            const focus = lastAssist?.focusedMissingField;
+            if (!focus) return accumulated || trimmed;
+            return `${accumulated || trimmed}\n\n[The user is answering this specific field: ${focus}]`;
+          })();
+        const res = await suggestPreference(contextual);
         if (!res.success) {
           setPreferenceAiMessages((prev) => [
             ...prev,
@@ -460,14 +596,29 @@ export default function PreferenceAiConversationFlow() {
         if (Object.keys(mergedContact).length > 0) {
           data = { ...data, contactInfo: mergedContact };
         }
-        const missingFields = getMissingFieldsFromPreferenceData(data);
-        const hasMissing = missingFields.length > 0;
-        const praise = pickAiComplimentPrefix();
-        const assistantContent = hasMissing ? praise : `${praise}\n\nReady. Tap I'm done for summary.`;
+        {
+          let loc = (data.location || {}) as Record<string, unknown>;
+          loc = normalizeCompoundPreferenceLocation(loc);
+          loc = applyPreferenceLocationFromNaturalText(trimmed, loc);
+          data = { ...data, location: loc };
+        }
         setPreferenceAiCollectedData(data);
+        const reply = buildPreferenceInteractiveReply(
+          data,
+          skippedFieldsRef.current,
+          preferenceQuestionVariantRef.current++,
+        );
         setPreferenceAiMessages((prev) => [
           ...prev,
-          { role: "assistant", content: assistantContent, data, missingFields: hasMissing ? missingFields : undefined },
+          {
+            role: "assistant",
+            content: reply.content,
+            speakLine: reply.speakLine,
+            data,
+            missingFields: reply.missingFields.length ? reply.missingFields : undefined,
+            focusedMissingField: reply.focusedMissingField,
+            remainingMissingCount: reply.remainingMissingCount,
+          },
         ]);
       } catch (e) {
         toast.error((e as Error)?.message || "Something went wrong.");
@@ -479,7 +630,7 @@ export default function PreferenceAiConversationFlow() {
         setLoading(false);
       }
     },
-    [preferenceAiMessages, setPreferenceAiMessages, setPreferenceAiCollectedData]
+    [preferenceAiMessages, setPreferenceAiMessages, setPreferenceAiCollectedData],
   );
 
   const handleSuggest = useCallback(
@@ -489,9 +640,60 @@ export default function PreferenceAiConversationFlow() {
     [handleSend]
   );
 
-  const handleProceedToSummary = useCallback(() => {
-    setPreferenceAiFlowStep("summary");
+  const handleProceedToContactConfirm = useCallback(() => {
+    setPreferenceAiFlowStep("contactConfirm");
   }, [setPreferenceAiFlowStep]);
+
+  useEffect(() => {
+    if (preferenceAiFlowStep !== "contactConfirm" || !preferenceAiCollectedData) return;
+    const c = preferenceAiCollectedData.contactInfo as Record<string, unknown> | undefined;
+    const type = String(preferenceAiCollectedData.preferenceType || "").toLowerCase();
+    if (type === "joint-venture") {
+      setManualFullName(String(c?.contactPerson || c?.fullName || ""));
+    } else {
+      setManualFullName(String(c?.fullName || ""));
+    }
+    setManualEmail(String(c?.email || ""));
+  }, [preferenceAiFlowStep, preferenceAiCollectedData]);
+
+  const handleContactConfirmContinue = useCallback(() => {
+    const name = manualFullName.trim();
+    const email = manualEmail.trim();
+    if (!name || !email) {
+      toast.error("Please enter your name and email.");
+      return;
+    }
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    if (!emailOk) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+    setPreferenceAiCollectedData((prev) => {
+      const base = { ...(prev || {}) };
+      const prevContact = (base.contactInfo || {}) as Record<string, unknown>;
+      const type = String(base.preferenceType || "").toLowerCase();
+      if (type === "joint-venture") {
+        base.contactInfo = {
+          ...prevContact,
+          contactPerson: name,
+          email,
+        };
+      } else {
+        base.contactInfo = {
+          ...prevContact,
+          fullName: name,
+          email,
+        };
+      }
+      return base;
+    });
+    setPreferenceAiFlowStep("summary");
+  }, [
+    manualEmail,
+    manualFullName,
+    setPreferenceAiCollectedData,
+    setPreferenceAiFlowStep,
+  ]);
 
   const handleSubmitFromSummary = useCallback(async () => {
     if (!preferenceAiCollectedData) return;
@@ -529,15 +731,17 @@ export default function PreferenceAiConversationFlow() {
   }, [preferenceAiCollectedData, updateFormData, setPreferenceAiFlowStep, goToStep]);
 
   const handleBackToMode = useCallback(() => {
+    skippedFieldsRef.current = new Set();
+    preferenceQuestionVariantRef.current = 0;
     setPreferenceEntryMode(null);
     setPreferenceAiMessages([]);
     setPreferenceAiCollectedData(null);
     setPreferenceAiFlowStep(null);
   }, [setPreferenceEntryMode, setPreferenceAiMessages, setPreferenceAiCollectedData, setPreferenceAiFlowStep]);
 
-  if (preferenceAiFlowStep === "summary") {
-    const data = preferenceAiCollectedData || {};
-    const rows = flattenPreferenceData(data);
+  if (preferenceAiFlowStep === "contactConfirm") {
+    const type = String(preferenceAiCollectedData?.preferenceType || "").toLowerCase();
+    const nameLabel = type === "joint-venture" ? "Contact person name" : "Your full name";
     return (
       <div className="space-y-4">
         <button
@@ -546,6 +750,70 @@ export default function PreferenceAiConversationFlow() {
           className="text-sm text-[#09391C] hover:text-[#8DDB90] flex items-center gap-1"
         >
           <ArrowLeft className="h-4 w-4" /> Back to conversation
+        </button>
+        <div className="rounded-xl border border-[#8DDB90]/40 bg-[#f0fdf4]/60 p-6 md:p-8 space-y-4">
+          <h2 className="text-lg font-semibold text-[#09391C] flex items-center gap-2">
+            <MessageSquare className="h-5 w-5 text-[#8DDB90]" />
+            Confirm your name and email
+          </h2>
+          <p className="text-sm text-[#5A5D63]">
+            Voice input often mishears names and emails. Type them below so we can reach you correctly.
+          </p>
+          <div className="space-y-3 max-w-md">
+            <div>
+              <label htmlFor="pref-ai-manual-name" className="block text-sm font-medium text-[#09391C] mb-1">
+                {nameLabel}
+              </label>
+              <input
+                id="pref-ai-manual-name"
+                type="text"
+                autoComplete="name"
+                value={manualFullName}
+                onChange={(e) => setManualFullName(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-[#8DDB90] focus:border-[#8DDB90]"
+                placeholder={type === "joint-venture" ? "e.g. Jane Doe" : "e.g. Jane Doe"}
+              />
+            </div>
+            <div>
+              <label htmlFor="pref-ai-manual-email" className="block text-sm font-medium text-[#09391C] mb-1">
+                Email
+              </label>
+              <input
+                id="pref-ai-manual-email"
+                type="email"
+                autoComplete="email"
+                value={manualEmail}
+                onChange={(e) => setManualEmail(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-[#8DDB90] focus:border-[#8DDB90]"
+                placeholder="you@example.com"
+              />
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-3 pt-2">
+            <button
+              type="button"
+              onClick={handleContactConfirmContinue}
+              className="px-6 py-3 rounded-lg bg-[#8DDB90] hover:bg-[#7BC87F] text-[#09391C] font-semibold transition-colors"
+            >
+              Continue to summary
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (preferenceAiFlowStep === "summary") {
+    const data = preferenceAiCollectedData || {};
+    const rows = flattenPreferenceData(data);
+    return (
+      <div className="space-y-4">
+        <button
+          type="button"
+          onClick={() => setPreferenceAiFlowStep("contactConfirm")}
+          className="text-sm text-[#09391C] hover:text-[#8DDB90] flex items-center gap-1"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back to contact details
         </button>
         <div className="rounded-xl border border-[#8DDB90]/40 bg-[#f0fdf4]/60 p-6 md:p-8">
           <h2 className="text-lg font-semibold text-[#09391C] mb-2 flex items-center gap-2">
@@ -626,10 +894,10 @@ export default function PreferenceAiConversationFlow() {
         </button>
       </div>
       <p className="text-sm text-[#5A5D63]">
-        Type or use the mic to describe the property you want. The AI will ask for any missing details. When you&apos;re done, click “I’m done” to see the summary and continue to the form.
+        Type or use the mic to describe what you want. The AI asks for <strong>one detail at a time</strong>, using what you already said. Say <strong>skip</strong> to move to the next item. When you&apos;re ready, use <strong>I&apos;m done</strong> to enter your name and email, then review the summary.
       </p>
       <p className="text-xs text-[#5A5D63] italic">
-        Tip: If voice input fails (e.g. network), type your description instead.
+        Tip: If voice input fails (e.g. network), type instead. Name and email are confirmed on the next step.
       </p>
 
       <label className="flex items-start gap-2 text-sm text-[#5A5D63] cursor-pointer">
@@ -671,7 +939,11 @@ export default function PreferenceAiConversationFlow() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => (speaking ? stop() : speak(getSpeakableAssistantText(msg as { content: string; missingFields?: string[] })))}
+                    onClick={() =>
+                      speaking
+                        ? stop()
+                        : speak(getSpeakableAssistantText(msg as { content: string; speakLine?: string }))
+                    }
                     className="p-1 rounded text-[#5A5D63] hover:bg-[#8DDB90]/20 hover:text-[#09391C]"
                     title={speaking ? "Stop playback" : "Play reply aloud"}
                     aria-label={speaking ? "Stop playback" : "Play reply aloud"}
@@ -685,18 +957,17 @@ export default function PreferenceAiConversationFlow() {
                   msg.role === "user" ? "bg-[#09391C] text-white" : "bg-gray-100 text-[#09391C]"
                 }`}
               >
-                {msg.role === "assistant" && (msg as { missingFields?: string[] }).missingFields?.length ? (
+                {msg.role === "assistant" &&
+                (msg as { focusedMissingField?: string }).focusedMissingField ? (
                   <>
                     <p className="mb-2 whitespace-pre-line">{msg.content}</p>
-                    <p className="text-xs font-semibold text-[#5A5D63] uppercase tracking-wide mb-1.5">Still need</p>
-                    <ul className="space-y-2 text-sm">
-                      {(msg as { missingFields: string[] }).missingFields.map((f, j) => (
-                        <li key={j} className="border-l-2 border-[#8DDB90]/60 pl-2">
-                          <span className="font-medium text-[#09391C]">{fieldLabelOnly(f)}</span>
-                          <span className="text-[#5A5D63]"> — {getShortFormatForPreferenceField(f)}</span>
-                        </li>
-                      ))}
-                    </ul>
+                    {(msg as { remainingMissingCount?: number }).remainingMissingCount ? (
+                      <p className="text-xs text-[#5A5D63] mt-2 pt-2 border-t border-gray-200">
+                        {(msg as { remainingMissingCount: number }).remainingMissingCount} more item
+                        {(msg as { remainingMissingCount: number }).remainingMissingCount !== 1 ? "s" : ""}{" "}
+                        after this (or say skip).
+                      </p>
+                    ) : null}
                   </>
                 ) : (
                   <span className="whitespace-pre-line">{msg.content}</span>
@@ -720,10 +991,10 @@ export default function PreferenceAiConversationFlow() {
           {preferenceAiMessages.some((m) => m.role === "assistant") && (
             <button
               type="button"
-              onClick={handleProceedToSummary}
+              onClick={handleProceedToContactConfirm}
               className="px-4 py-2 rounded-lg border-2 border-[#8DDB90] text-[#09391C] font-medium hover:bg-[#8DDB90]/10"
             >
-              I’m done — show summary
+              I&apos;m done — confirm contact
             </button>
           )}
         </div>

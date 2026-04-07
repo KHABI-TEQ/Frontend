@@ -121,6 +121,11 @@ export interface AiConversationMessage {
   data?: Record<string, unknown>;
   /** Fields still missing (assistant only) */
   missingFields?: string[];
+  /** Single field the assistant is asking for (interactive flow) */
+  focusedMissingField?: string;
+  remainingMissingCount?: number;
+  /** Short line for TTS (no format parenthetical) */
+  speakLine?: string;
 }
 
 interface PostPropertyContextType {
