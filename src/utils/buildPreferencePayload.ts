@@ -1,77 +1,137 @@
 /**
- * Builds the API payload for preference submission from form data.
- * Used by both the manual form (preference page) and the AI summary submit flow.
+ * Builds the POST /preferences/submit payload (general preference — no receiverMode).
+ * Must match backend Joi: common block + features + contactInfo + exactly one of
+ * propertyDetails | developmentDetails | bookingDetails.
+ *
+ * Used by the AI summary submit flow; mirrors `generatePayload` in `app/preference/page.tsx`.
  */
 
-import type {
-  PreferencePayload,
-  BuyPreferencePayload,
-  RentPreferencePayload,
-  JointVenturePreferencePayload,
-  ShortletPreferencePayload,
-} from "@/types/preference-form";
+import type { PreferencePayload } from "@/types/preference-form";
 
 type FormData = Record<string, unknown>;
 
-/** Ensures fields the API expects as strings are never sent as numbers (e.g. propertyDetails.minBedrooms). */
+function toStr(v: unknown): string {
+  if (v === undefined || v === null) return "";
+  return String(v).trim();
+}
+
+function filterStringArray(v: unknown): string[] {
+  if (!Array.isArray(v)) return [];
+  return v.map((x) => String(x).trim()).filter((s) => s.length > 0);
+}
+
+/** API stores measurement lowercased; accepts plot, sqm, acres, hectares (+ legacy hectare / ha). */
+export function normalizeMeasurementUnitForApi(v: unknown): string {
+  const s = toStr(v).toLowerCase();
+  if (!s) return "";
+  if (s === "hectare" || s === "ha") return "hectares";
+  return s;
+}
+
+function minBedroomsStr(pd: Record<string, unknown> | undefined): string {
+  if (!pd) return "";
+  const v = pd.bedrooms ?? pd.minBedrooms;
+  if (typeof v === "string") return v.trim() || "0";
+  if (typeof v === "number" && Number.isFinite(v)) return String(v);
+  return String(Number(v) || 0);
+}
+
+/**
+ * `lgasWithAreas` is required (may be []). Prefer `enhancedLocation.lgasWithAreas`;
+ * else derive from `location.lgas` / `localGovernmentAreas` + `location.areas`.
+ */
+function buildLgasWithAreas(formData: FormData): { lgaName: string; areas: string[] }[] {
+  const enhanced = (formData as { enhancedLocation?: { lgasWithAreas?: unknown } }).enhancedLocation
+    ?.lgasWithAreas;
+  if (Array.isArray(enhanced) && enhanced.length > 0) {
+    return (enhanced as { lgaName?: string; areas?: unknown }[])
+      .filter((item) => toStr(item?.lgaName))
+      .map((item) => ({
+        lgaName: toStr(item.lgaName),
+        areas: filterStringArray(item.areas),
+      }));
+  }
+
+  const loc = (formData.location || {}) as Record<string, unknown>;
+  const lgas = (
+    Array.isArray(loc.lgas)
+      ? loc.lgas
+      : Array.isArray(loc.localGovernmentAreas)
+        ? loc.localGovernmentAreas
+        : []
+  )
+    .map((x) => toStr(x))
+    .filter(Boolean);
+
+  const stateStr = toStr(loc.state);
+  const lgaLower = new Set(lgas.map((l) => l.toLowerCase()));
+  let areas = filterStringArray(loc.areas);
+  areas = areas.filter(
+    (a) =>
+      a.toLowerCase() !== stateStr.toLowerCase() &&
+      !lgaLower.has(a.toLowerCase()),
+  );
+
+  if (lgas.length === 1) {
+    return [{ lgaName: lgas[0], areas }];
+  }
+  if (lgas.length > 1) {
+    if (areas.length > 0) {
+      return lgas.map((lga, i) => ({ lgaName: lga, areas: i === 0 ? areas : [] }));
+    }
+    return lgas.map((lga) => ({ lgaName: lga, areas: [] }));
+  }
+  return [];
+}
+
+/** Ensures minBedrooms are strings where the API expects string ids. */
 function ensurePreferencePayloadStrings(payload: Record<string, unknown>): void {
   const pd = payload.propertyDetails as Record<string, unknown> | undefined;
   if (pd && pd.minBedrooms !== undefined) {
-    pd.minBedrooms = typeof pd.minBedrooms === "string" ? pd.minBedrooms : String(pd.minBedrooms ?? "0");
+    pd.minBedrooms =
+      typeof pd.minBedrooms === "string" ? pd.minBedrooms : String(pd.minBedrooms ?? "0");
   }
   const bd = payload.bookingDetails as Record<string, unknown> | undefined;
   if (bd && bd.minBedrooms !== undefined) {
-    bd.minBedrooms = typeof bd.minBedrooms === "string" ? bd.minBedrooms : String(bd.minBedrooms ?? "0");
+    bd.minBedrooms =
+      typeof bd.minBedrooms === "string" ? bd.minBedrooms : String(bd.minBedrooms ?? "0");
   }
 }
 
-function cleanObject(obj: unknown): unknown {
-  if (Array.isArray(obj)) {
-    return obj
-      .filter((item) => item !== null && item !== undefined && item !== "")
-      .map(cleanObject);
-  }
-  if (obj !== null && typeof obj === "object") {
-    const cleaned: Record<string, unknown> = {};
-    Object.keys(obj).forEach((key) => {
-      const value = cleanObject((obj as Record<string, unknown>)[key]);
-      if (
-        value !== null &&
-        value !== undefined &&
-        value !== "" &&
-        !(Array.isArray(value) && value.length === 0) &&
-        !(typeof value === "object" && value !== null && Object.keys(value as object).length === 0)
-      ) {
-        cleaned[key] = value;
-      }
-    });
-    return cleaned;
-  }
-  return obj;
-}
-
-function getLgasWithAreas(formData: FormData): { lgaName: string; areas: string[] }[] {
-  const enhanced = formData.enhancedLocation as { lgasWithAreas?: { lgaName: string; areas: string[] }[] } | undefined;
-  if (Array.isArray(enhanced?.lgasWithAreas) && enhanced.lgasWithAreas.length > 0) {
-    return enhanced.lgasWithAreas.filter((item) => item?.lgaName?.trim());
-  }
-  const lgas = (formData.location as { lgas?: string[] } | undefined)?.lgas
-    ?? (formData.location as { localGovernmentAreas?: string[] } | undefined)?.localGovernmentAreas
-    ?? [];
-  return (Array.isArray(lgas) ? lgas : [])
-    .filter((lga) => typeof lga === "string" && lga.trim() !== "")
-    .map((lga) => ({ lgaName: String(lga).trim(), areas: [] }));
+function compactPayload<T extends Record<string, unknown>>(obj: T): T {
+  const out = { ...obj };
+  Object.keys(out).forEach((k) => {
+    const v = out[k];
+    if (v === null || v === undefined) delete out[k];
+  });
+  return out as T;
 }
 
 export function buildPreferencePayload(
   formData: FormData,
-  selectedPreferenceType: string
+  selectedPreferenceType: string,
 ): PreferencePayload {
-  const loc = (formData.location || {}) as Record<string, unknown>;
-  const lgas = (loc.lgas ?? loc.localGovernmentAreas ?? []) as string[];
-  const filteredLgas = Array.isArray(lgas) ? lgas.filter((l: string) => String(l).trim() !== "") : [];
-  const lgasWithAreas = getLgasWithAreas(formData);
+  const fd = { ...formData };
+  delete (fd as { receiverMode?: unknown }).receiverMode;
 
+  const loc = (fd.location || {}) as Record<string, unknown>;
+  const lgas = (
+    Array.isArray(loc.lgas)
+      ? loc.lgas
+      : Array.isArray(loc.localGovernmentAreas)
+        ? loc.localGovernmentAreas
+        : []
+  )
+    .map((x) => toStr(x))
+    .filter(Boolean);
+
+  const lgasWithAreas = buildLgasWithAreas(fd);
+  const effectiveLgasWithAreas =
+    lgasWithAreas.length > 0
+      ? lgasWithAreas
+      : lgas.map((name) => ({ lgaName: name, areas: [] as string[] }));
+
+  const feat = (fd.features || {}) as Record<string, unknown>;
   const basePayload = {
     preferenceType: selectedPreferenceType,
     preferenceMode:
@@ -83,150 +143,208 @@ export function buildPreferencePayload(
             ? "developer"
             : "shortlet",
     location: {
-      state: String(loc.state ?? "").trim(),
-      localGovernmentAreas: filteredLgas,
-      lgasWithAreas: lgasWithAreas.length > 0 ? lgasWithAreas : filteredLgas.map((lga) => ({ lgaName: lga, areas: [] })),
-      customLocation: String(loc.customLocation ?? "").trim(),
+      state: toStr(loc.state),
+      localGovernmentAreas: lgas,
+      lgasWithAreas: effectiveLgasWithAreas,
+      customLocation: toStr(loc.customLocation),
     },
     budget: {
-      minPrice: Number((formData.budget as { minPrice?: number })?.minPrice) || 0,
-      maxPrice: Number((formData.budget as { maxPrice?: number })?.maxPrice) || 0,
+      minPrice: Number((fd.budget as { minPrice?: number })?.minPrice) || 0,
+      maxPrice: Number((fd.budget as { maxPrice?: number })?.maxPrice) || 0,
       currency: "NGN" as const,
     },
     features: {
-      baseFeatures:
-        ((formData.features as { basicFeatures?: string[] })?.basicFeatures ?? []).filter(
-          (f: string) => String(f).trim() !== ""
-        ) || [],
-      premiumFeatures:
-        ((formData.features as { premiumFeatures?: string[] })?.premiumFeatures ?? []).filter(
-          (f: string) => String(f).trim() !== ""
-        ) || [],
-      autoAdjustToFeatures: Boolean((formData.features as { autoAdjustToBudget?: boolean })?.autoAdjustToBudget),
+      baseFeatures: filterStringArray(
+        (feat.basicFeatures as unknown[]) ?? (feat.baseFeatures as unknown[]),
+      ),
+      premiumFeatures: filterStringArray(feat.premiumFeatures as unknown[]),
+      autoAdjustToFeatures: Boolean(
+        feat.autoAdjustToFeatures ?? feat.autoAdjustToBudget,
+      ),
     },
   };
 
-  const contact = (formData.contactInfo || {}) as Record<string, unknown>;
+  const contact = (fd.contactInfo || {}) as Record<string, unknown>;
 
   switch (selectedPreferenceType) {
     case "buy": {
-      const buyData = formData as Record<string, unknown>;
+      const buyData = fd;
       const pd = (buyData.propertyDetails || {}) as Record<string, unknown>;
-      const buyPayload: BuyPreferencePayload = {
+      const buyPayload = {
         ...basePayload,
-        preferenceType: "buy",
-        preferenceMode: "buy",
+        preferenceType: "buy" as const,
+        preferenceMode: "buy" as const,
         propertyDetails: {
-          propertyType: String(pd.propertySubtype ?? pd.propertyType ?? ""),
-          buildingType: String(pd.buildingType ?? ""),
-          minBedrooms: (() => {
-            const v = pd.bedrooms ?? pd.minBedrooms;
-            return typeof v === "string" ? (v.trim() || "0") : String(Number(v) || 0);
-          })(),
+          propertyType: toStr(pd.propertySubtype ?? pd.propertyType),
+          buildingType: toStr(pd.buildingType),
+          minBedrooms: minBedroomsStr(pd),
           minBathrooms: Number(pd.bathrooms ?? pd.minBathrooms) || 0,
-          propertyCondition: String(pd.propertyCondition ?? ""),
-          purpose: String(pd.purpose ?? "For living"),
+          leaseTerm: toStr(pd.leaseTerm) || "",
+          propertyCondition: toStr(pd.propertyCondition),
+          purpose: toStr(pd.purpose) || "For living",
+          landSize: toStr(pd.landSize),
+          minLandSize: toStr(pd.minLandSize),
+          maxLandSize: toStr(pd.maxLandSize),
+          measurementUnit: normalizeMeasurementUnitForApi(pd.measurementUnit),
+          documentTypes: filterStringArray(pd.documentTypes),
+          landConditions: filterStringArray(pd.landConditions),
         },
         contactInfo: {
-          fullName: String(contact.fullName ?? "").trim(),
-          email: String(contact.email ?? "").trim(),
-          phoneNumber: String(contact.phoneNumber ?? "").trim(),
+          fullName: toStr(contact.fullName),
+          email: toStr(contact.email),
+          phoneNumber: toStr(contact.phoneNumber),
         },
-        nearbyLandmark: String(
-          (pd as Record<string, unknown>).nearbyLandmark ?? buyData.nearbyLandmark ?? ""
-        ).trim(),
-        additionalNotes: String(buyData.additionalNotes ?? "").trim(),
+        nearbyLandmark: toStr(
+          (pd as Record<string, unknown>).nearbyLandmark ?? buyData.nearbyLandmark,
+        ),
+        additionalNotes: (() => {
+          const parts: string[] = [];
+          const baseNotes = toStr(buyData.additionalNotes);
+          if (baseNotes) parts.push(baseNotes);
+          if (pd.toilets != null && toStr(pd.toilets)) {
+            parts.push(`Preferred toilets: ${pd.toilets}`);
+          }
+          const pk =
+            (pd as Record<string, unknown>).parkingSpaces ??
+            (pd as Record<string, unknown>).carParks;
+          if (pk != null && toStr(pk)) {
+            parts.push(`Preferred car parks: ${pk}`);
+          }
+          return parts.join(" ").trim();
+        })(),
       };
-      const buyCleaned = cleanObject(buyPayload) as BuyPreferencePayload;
-      ensurePreferencePayloadStrings(buyCleaned as unknown as Record<string, unknown>);
-      return buyCleaned;
+      ensurePreferencePayloadStrings(buyPayload as unknown as Record<string, unknown>);
+      return compactPayload(buyPayload) as PreferencePayload;
     }
 
     case "rent": {
-      const rentData = formData as Record<string, unknown>;
+      const rentData = fd;
       const pd = (rentData.propertyDetails || {}) as Record<string, unknown>;
-      const rentPayload: RentPreferencePayload = {
+      const rentPayload = {
         ...basePayload,
-        preferenceType: "rent",
-        preferenceMode: "tenant",
+        preferenceType: "rent" as const,
+        preferenceMode: "tenant" as const,
         propertyDetails: {
-          propertyType: String(pd.propertySubtype ?? pd.propertyType ?? ""),
-          minBedrooms: (() => {
-            const v = pd.bedrooms ?? pd.minBedrooms;
-            return typeof v === "string" ? (v.trim() || "0") : String(Number(v) || 0);
-          })(),
-          leaseTerm: String(pd.leaseTerm ?? "1 Year"),
-          propertyCondition: String(pd.propertyCondition ?? ""),
-          purpose: String(pd.purpose ?? "Residential"),
+          propertyType: toStr(pd.propertySubtype ?? pd.propertyType),
+          buildingType: toStr(pd.buildingType),
+          minBedrooms: minBedroomsStr(pd),
+          minBathrooms: Number(pd.bathrooms ?? pd.minBathrooms) || 0,
+          leaseTerm: toStr(pd.leaseTerm) || "1 Year",
+          propertyCondition: toStr(pd.propertyCondition),
+          purpose: toStr(pd.purpose) || "Residential",
+          landSize: toStr(pd.landSize),
+          minLandSize: toStr(pd.minLandSize),
+          maxLandSize: toStr(pd.maxLandSize),
+          measurementUnit: normalizeMeasurementUnitForApi(pd.measurementUnit),
+          documentTypes: filterStringArray(pd.documentTypes),
+          landConditions: filterStringArray(pd.landConditions),
         },
         contactInfo: {
-          fullName: String(contact.fullName ?? "").trim(),
-          email: String(contact.email ?? "").trim(),
-          phoneNumber: String(contact.phoneNumber ?? "").trim(),
+          fullName: toStr(contact.fullName),
+          email: toStr(contact.email),
+          phoneNumber: toStr(contact.phoneNumber),
         },
-        additionalNotes: String(rentData.additionalNotes ?? "").trim(),
+        nearbyLandmark: toStr(
+          (pd as Record<string, unknown>).nearbyLandmark ?? rentData.nearbyLandmark,
+        ),
+        additionalNotes: toStr(rentData.additionalNotes),
       };
-      const rentCleaned = cleanObject(rentPayload) as RentPreferencePayload;
-      ensurePreferencePayloadStrings(rentCleaned as unknown as Record<string, unknown>);
-      return rentCleaned;
+      ensurePreferencePayloadStrings(rentPayload as unknown as Record<string, unknown>);
+      return compactPayload(rentPayload) as PreferencePayload;
     }
 
     case "joint-venture": {
-      const jvData = formData as Record<string, unknown>;
+      const jvData = fd;
       const dev = (jvData.developmentDetails || {}) as Record<string, unknown>;
-      const devTypes = Array.isArray(dev.developmentTypes) ? (dev.developmentTypes as string[]) : [];
-      const jvPayload: JointVenturePreferencePayload = {
+      const jvPayload = {
         ...basePayload,
-        preferenceType: "joint-venture",
-        preferenceMode: "developer",
+        preferenceType: "joint-venture" as const,
+        preferenceMode: "developer" as const,
         developmentDetails: {
-          minLandSize: String(dev.minLandSize ?? "").trim(),
-          jvType: String(dev.jvType ?? "").trim(),
-          propertyType: String(dev.propertyType ?? "").trim(),
-          expectedStructureType: String(dev.expectedStructureType ?? devTypes[0] ?? "").trim(),
-          timeline: String(dev.timeline ?? "").trim(),
-          budgetRange: typeof dev.budgetRange === "number" ? dev.budgetRange : Number(dev.budgetRange) || undefined,
+          minLandSize: toStr(dev.minLandSize),
+          maxLandSize: toStr(dev.maxLandSize),
+          measurementUnit: normalizeMeasurementUnitForApi(dev.measurementUnit),
+          developmentTypes: filterStringArray(dev.developmentTypes),
+          preferredSharingRatio: toStr(dev.preferredSharingRatio),
+          proposalDetails: toStr(dev.proposalDetails),
+          minimumTitleRequirements: filterStringArray(dev.minimumTitleRequirements),
+          willingToConsiderPendingTitle: Boolean(dev.willingToConsiderPendingTitle),
+          additionalRequirements: toStr(dev.additionalRequirements),
         },
         contactInfo: {
-          companyName: String(contact.companyName ?? "").trim(),
-          contactPerson: String(contact.contactPerson ?? contact.fullName ?? "").trim(),
-          email: String(contact.email ?? "").trim(),
-          phoneNumber: String(contact.phoneNumber ?? "").trim(),
-          cacRegistrationNumber: String(contact.cacRegistrationNumber ?? "").trim() || undefined,
+          companyName: toStr(contact.companyName),
+          contactPerson: toStr(contact.contactPerson ?? contact.fullName),
+          email: toStr(contact.email),
+          phoneNumber: toStr(contact.phoneNumber),
+          ...(toStr(contact.cacRegistrationNumber)
+            ? { cacRegistrationNumber: toStr(contact.cacRegistrationNumber) }
+            : {}),
         },
-        partnerExpectations: String(jvData.partnerExpectations ?? "").trim() || undefined,
+        partnerExpectations: toStr(jvData.partnerExpectations) || undefined,
+        nearbyLandmark: toStr(jvData.nearbyLandmark),
+        additionalNotes: toStr(jvData.additionalNotes),
       };
-      return cleanObject(jvPayload) as JointVenturePreferencePayload;
+      return compactPayload(jvPayload) as PreferencePayload;
     }
 
     case "shortlet": {
-      const shortletData = formData as Record<string, unknown>;
+      const shortletData = fd;
       const pd = (shortletData.propertyDetails || {}) as Record<string, unknown>;
       const bd = (shortletData.bookingDetails || {}) as Record<string, unknown>;
-      const shortletPayload: ShortletPreferencePayload = {
-        ...basePayload,
-        preferenceType: "shortlet",
-        preferenceMode: "shortlet",
-        bookingDetails: {
-          propertyType: String(pd?.propertyType ?? "").trim(),
-          minBedrooms: (() => {
-            const v = pd?.bedrooms ?? pd?.minBedrooms;
-            return typeof v === "string" ? (v.trim() || "0") : String(Number(v) || 0);
-          })(),
-          numberOfGuests: Number(pd?.maxGuests ?? bd?.numberOfGuests ?? 0) || 0,
-          checkInDate: String(bd?.checkInDate ?? "").trim(),
-          checkOutDate: String(bd?.checkOutDate ?? "").trim(),
-        },
-        contactInfo: {
-          fullName: String(contact.fullName ?? "").trim(),
-          email: String(contact.email ?? "").trim(),
-          phoneNumber: String(contact.phoneNumber ?? "").trim(),
-        },
-        additionalNotes: String(shortletData.additionalNotes ?? "").trim() || undefined,
+      const bookingDetails = {
+        propertyType: toStr(pd.propertyType),
+        buildingType: toStr(pd.buildingType ?? bd.buildingType),
+        minBedrooms: minBedroomsStr(pd),
+        minBathrooms: Number(pd.bathrooms ?? bd.minBathrooms) || 0,
+        numberOfGuests: Number(pd.maxGuests ?? bd.numberOfGuests) || 0,
+        checkInDate: toStr(bd.checkInDate),
+        checkOutDate: toStr(bd.checkOutDate),
+        travelType: toStr(pd.travelType ?? bd.travelType),
+        preferredCheckInTime: toStr(
+          bd.preferredCheckInTime ?? contact.preferredCheckInTime,
+        ),
+        preferredCheckOutTime: toStr(
+          bd.preferredCheckOutTime ?? contact.preferredCheckOutTime,
+        ),
+        propertyCondition: toStr(pd.propertyCondition ?? bd.propertyCondition),
+        purpose: toStr(pd.purpose ?? bd.purpose),
+        landSize: toStr(pd.landSize ?? bd.landSize),
+        minLandSize: toStr(pd.minLandSize ?? bd.minLandSize),
+        maxLandSize: toStr(pd.maxLandSize ?? bd.maxLandSize),
+        measurementUnit: normalizeMeasurementUnitForApi(
+          pd.measurementUnit ?? bd.measurementUnit,
+        ),
+        documentTypes: filterStringArray(pd.documentTypes ?? bd.documentTypes),
+        landConditions: filterStringArray(pd.landConditions ?? bd.landConditions),
       };
-      const shortletCleaned = cleanObject(shortletPayload) as ShortletPreferencePayload;
-      ensurePreferencePayloadStrings(shortletCleaned as unknown as Record<string, unknown>);
-      return shortletCleaned;
+      const shortletPayload = {
+        ...basePayload,
+        preferenceType: "shortlet" as const,
+        preferenceMode: "shortlet" as const,
+        bookingDetails,
+        contactInfo: {
+          fullName: toStr(contact.fullName),
+          email: toStr(contact.email),
+          phoneNumber: toStr(contact.phoneNumber),
+          petsAllowed: Boolean(contact.petsAllowed),
+          smokingAllowed: Boolean(contact.smokingAllowed),
+          partiesAllowed: Boolean(contact.partiesAllowed),
+          additionalRequests: toStr(contact.additionalRequests),
+          maxBudgetPerNight: Number(contact.maxBudgetPerNight) || 0,
+          willingToPayExtra: Boolean(contact.willingToPayExtra),
+          cleaningFeeBudget: Number(contact.cleaningFeeBudget) || 0,
+          securityDepositBudget: Number(contact.securityDepositBudget) || 0,
+          cancellationPolicy: toStr(contact.cancellationPolicy),
+          preferredCheckInTime: toStr(contact.preferredCheckInTime),
+          preferredCheckOutTime: toStr(contact.preferredCheckOutTime),
+        },
+        nearbyLandmark: toStr(
+          (pd as Record<string, unknown>).nearbyLandmark ?? shortletData.nearbyLandmark,
+        ),
+        additionalNotes: toStr(shortletData.additionalNotes),
+      };
+      ensurePreferencePayloadStrings(shortletPayload as unknown as Record<string, unknown>);
+      return compactPayload(shortletPayload) as PreferencePayload;
     }
 
     default:

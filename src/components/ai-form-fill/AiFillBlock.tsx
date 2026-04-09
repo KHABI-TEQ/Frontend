@@ -4,6 +4,13 @@ import React, { useState, useRef, useCallback, useEffect } from "react";
 import { Sparkles, Mic, Loader2, Send } from "lucide-react";
 import toast from "react-hot-toast";
 import { playSpeechEndBeep } from "@/utils/playSpeechEndBeep";
+import {
+  mergeVoiceTextWithSpokenAmount,
+  normalizeNairaAmountTyping,
+  stripNairaAmountToDigits,
+} from "@/utils/nairaAmountInput";
+
+const SKIP_AMOUNT_UTTERANCE_RE = /^\s*(please\s+)?skip\b/i;
 
 export interface AiFillBlockProps {
   /** Main label, e.g. "Describe your property" or "Describe what you're looking for" */
@@ -18,6 +25,11 @@ export interface AiFillBlockProps {
   disabled?: boolean;
   /** Optional: max height of textarea */
   maxHeight?: string;
+  /**
+   * When true (e.g. budget min/max focused in preference AI): spoken amounts like "five million"
+   * become comma-formatted digits in the box; submit sends digits only. Typing is auto-formatted with commas.
+   */
+  amountEntryMode?: boolean;
 }
 
 /** Rebuild full utterance from all results each event — avoids repeating / duplicating partials. */
@@ -51,6 +63,7 @@ export default function AiFillBlock({
   onSuggest,
   disabled = false,
   maxHeight = "120px",
+  amountEntryMode = false,
 }: AiFillBlockProps) {
   const [input, setInput] = useState("");
   const canSend = input.trim().length > 0;
@@ -87,8 +100,13 @@ export default function AiFillBlock({
       .filter(Boolean)
       .join(" ")
       .trim();
-    setInput(combineBaseAndUtterance(voiceBaseRef.current, utterance));
-  }, []);
+    if (amountEntryMode) {
+      const { display } = mergeVoiceTextWithSpokenAmount(voiceBaseRef.current, utterance);
+      setInput(display);
+    } else {
+      setInput(combineBaseAndUtterance(voiceBaseRef.current, utterance));
+    }
+  }, [amountEntryMode]);
 
   const finishRecognitionSession = useCallback(() => {
     if (!sessionActiveRef.current) return;
@@ -187,9 +205,22 @@ export default function AiFillBlock({
       toast.error("Please enter a description first.");
       return;
     }
+    let toSend = trimmed;
+    if (amountEntryMode) {
+      if (SKIP_AMOUNT_UTTERANCE_RE.test(trimmed)) {
+        toSend = trimmed;
+      } else {
+        const digits = stripNairaAmountToDigits(trimmed);
+        if (!digits) {
+          toast.error("Please enter a numeric amount (or say skip).");
+          return;
+        }
+        toSend = digits;
+      }
+    }
     setLoading(true);
     try {
-      await onSuggest(trimmed);
+      await onSuggest(toSend);
       toast.success("Suggestions applied. Review and edit as needed.");
       setInput("");
     } catch (e) {
@@ -197,7 +228,7 @@ export default function AiFillBlock({
     } finally {
       setLoading(false);
     }
-  }, [input, onSuggest]);
+  }, [amountEntryMode, input, onSuggest]);
 
   const startVoice = useCallback(() => {
     if (typeof window === "undefined") return;
@@ -267,7 +298,9 @@ export default function AiFillBlock({
         <div className="relative flex-1">
           <textarea
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) =>
+              setInput(amountEntryMode ? normalizeNairaAmountTyping(e.target.value) : e.target.value)
+            }
             placeholder={placeholder}
             disabled={disabled || listening}
             rows={3}

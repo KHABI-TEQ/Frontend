@@ -16,6 +16,14 @@ const isAuthExpiredMessage = (msg?: string) => {
   return m.includes('unauthorized') || m.includes('jwt') || m.includes('expired') || m.includes('malformed');
 };
 
+/** When our AbortController times out, browsers often set message to "signal is aborted without reason". */
+const userFacingFetchError = (isAbort: boolean, rawMessage?: string) => {
+  if (isAbort) {
+    return "The request took too long and was cancelled. Please try again.";
+  }
+  return (rawMessage && rawMessage.trim()) || "Network error";
+};
+
 const handleAuthExpirySideEffects = () => {
   try { Cookies.remove('token'); } catch {}
   try {
@@ -51,7 +59,7 @@ export const GET_REQUEST = async <T = unknown, P = unknown>(
 
     // Add timeout to prevent hanging requests
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     const request = await fetch(url, {
       signal: controller.signal,
@@ -111,7 +119,7 @@ export const GET_REQUEST = async <T = unknown, P = unknown>(
   } catch (error: unknown) {
     const err = error as Error & { name?: string };
     const isAbort = err.name === "AbortError";
-    const errorMsg = err.message || (isAbort ? "Request timed out" : "Network error");
+    const errorMsg = userFacingFetchError(isAbort, err.message);
 
     // Retry once for transient network errors
     if (retryCount === 0 && !isAbort) {
@@ -167,6 +175,7 @@ export const POST_REQUEST = async <T = unknown>(
   token?: string,
   customHeaders?: Record<string, string>,
   retryCount = 0,
+  timeoutMs = 15000,
 ): Promise<ApiResponse<T, unknown>> => {
   try {
     // Check if URL is valid
@@ -197,7 +206,7 @@ export const POST_REQUEST = async <T = unknown>(
 
     // Add timeout to prevent hanging requests
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     const request = await fetch(url, {
       method: "POST",
@@ -233,12 +242,12 @@ export const POST_REQUEST = async <T = unknown>(
   } catch (error: unknown) {
     const err = error as Error & { name?: string };
     const isAbort = err.name === "AbortError";
-    const errorMsg = err.message || (isAbort ? "Request timed out" : "Network error");
+    const errorMsg = userFacingFetchError(isAbort, err.message);
 
     // Retry once for transient network errors
     if (retryCount === 0 && !isAbort) {
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      return POST_REQUEST(url, data, token, customHeaders, 1);
+      return POST_REQUEST(url, data, token, customHeaders, 1, timeoutMs);
     }
 
     return {

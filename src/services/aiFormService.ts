@@ -7,6 +7,9 @@ import { POST_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import { wrapUserInputForAiSuggest } from "@/utils/wrapAiSuggestUserInput";
 
+/** LLM-backed routes often exceed the default 15s client timeout. */
+const AI_SUGGEST_POST_TIMEOUT_MS = 120_000;
+
 export interface SuggestPropertyResponse {
   success: boolean;
   message?: string;
@@ -38,7 +41,10 @@ export async function suggestProperty(
   const response = await POST_REQUEST<{ success: boolean; message?: string; data?: Record<string, unknown> }>(
     url,
     { userInput: wrapUserInputForAiSuggest(trimmed) },
-    token
+    token,
+    undefined,
+    0,
+    AI_SUGGEST_POST_TIMEOUT_MS
   );
   if (response.success && response.data) {
     return { success: true, message: response.message, data: response.data as Record<string, unknown> };
@@ -80,7 +86,10 @@ export async function suggestPreference(
   const response = await POST_REQUEST<{ success: boolean; message?: string; data?: Record<string, unknown> }>(
     url,
     { userInput: wrapUserInputForAiSuggest(trimmed) },
-    undefined
+    undefined,
+    undefined,
+    0,
+    AI_SUGGEST_POST_TIMEOUT_MS
   );
   if (response.success && response.data) {
     return { success: true, message: response.message, data: response.data as Record<string, unknown> };

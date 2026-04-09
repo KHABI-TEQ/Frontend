@@ -1,10 +1,13 @@
 "use client";
 
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { usePreferenceForm } from "@/context/preference-form-context";
 import { suggestPreference } from "@/services/aiFormService";
 import AiFillBlock from "@/components/ai-form-fill/AiFillBlock";
-import { mergeSuggestPreferenceIntoForm } from "@/utils/aiSuggestPreferenceMerge";
+import {
+  mergePreferenceAiCollectedData,
+  mergeSuggestPreferenceIntoForm,
+} from "@/utils/aiSuggestPreferenceMerge";
 import {
   getPreferenceFieldPrompt,
   preferenceAllDonePrompt,
@@ -15,6 +18,12 @@ import { POST_REQUEST } from "@/utils/requests";
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
 import toast from "react-hot-toast";
 import { ArrowLeft, MessageSquare, Bot, Loader2, CheckCircle, Volume2, VolumeX } from "lucide-react";
+import nigerianStateLgaJson from "@/data/state-lga.json";
+
+/** Lowercase names as in the location form dataset (keys of state-lga.json). */
+const NIGERIAN_STATE_NAMES_LOWER = new Set(
+  Object.keys(nigerianStateLgaJson as Record<string, unknown>).map((k) => k.trim().toLowerCase()),
+);
 
 function fieldLabelOnly(field: string): string {
   return field.replace(/\s*\([^)]*\)\s*$/, "").trim() || field;
@@ -47,6 +56,7 @@ function buildPreferenceInteractiveReply(
   remainingMissingCount: number;
 } {
   const missing = getMissingFieldsFromPreferenceData(data).filter((f) => !skipped.has(f));
+  const missingRequiredForCount = missing.filter((f) => !isPreferenceFieldSkippable(f));
 
   if (missing.length === 0) {
     const done = preferenceAllDonePrompt();
@@ -59,14 +69,15 @@ function buildPreferenceInteractiveReply(
   }
 
   const focus = missing[0];
-  const { displayLine, speakLine } = getPreferenceFieldPrompt(focus, questionVariant);
+  // Stable wording (variant 0): do not rotate phrasing for the same field — avoids sounding like a new question.
+  const { displayLine, speakLine } = getPreferenceFieldPrompt(focus, 0);
 
   return {
     content: displayLine,
     speakLine,
     focusedMissingField: focus,
     missingFields: [focus],
-    remainingMissingCount: Math.max(0, missing.length - 1),
+    remainingMissingCount: Math.max(0, missingRequiredForCount.length - 1),
   };
 }
 
@@ -76,6 +87,507 @@ function isMeaningful(value: unknown): boolean {
   if (typeof value === "number") return !Number.isNaN(value) && value >= 0;
   if (Array.isArray(value)) return value.length > 0;
   return false;
+}
+
+function preferenceModeFromType(t: string): string {
+  switch (t) {
+    case "buy":
+      return "buy";
+    case "rent":
+      return "tenant";
+    case "shortlet":
+      return "shortlet";
+    case "joint-venture":
+      return "developer";
+    default:
+      return "";
+  }
+}
+
+/** Detect Buy / Rent / Shortlet / JV from natural text so the user can start with a type, as the form requires. */
+function detectPreferenceTypeFromText(text: string): string | null {
+  const raw = text.trim();
+  if (!raw) return null;
+  if (/\bjoint\s*venture\b|\bjv\b/i.test(raw)) return "joint-venture";
+  if (/\bshortlet\b|\bshort\s*let\b/i.test(raw)) return "shortlet";
+  if (/\bbuy\b|\bpurchase\b|\bto\s+buy\b/i.test(raw)) return "buy";
+  if (/\brent\b|\bletting\b|\btenant\b/i.test(raw)) return "rent";
+  return null;
+}
+
+function budgetAmountNgn(value: unknown): number {
+  if (value === undefined || value === null) return 0;
+  if (typeof value === "number") return Number.isFinite(value) && value > 0 ? value : 0;
+  const cleaned = String(value).replace(/,/g, "").trim();
+  const n = parseFloat(cleaned);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+function landSizeAmountPositive(value: unknown): boolean {
+  if (value === undefined || value === null || value === "") return false;
+  const n = parseFloat(String(value).replace(/,/g, "").trim());
+  return Number.isFinite(n) && n > 0;
+}
+
+function getPropertySubtype(pd: Record<string, unknown> | undefined): string {
+  if (!pd) return "";
+  const s = pd.propertySubtype ?? pd.propertyType;
+  return String(s || "").toLowerCase().trim();
+}
+
+function bedroomsPresent(pd: Record<string, unknown> | undefined): boolean {
+  if (!pd) return false;
+  const b = pd.bedrooms ?? pd.minBedrooms;
+  if (b === undefined || b === null || b === "") return false;
+  if (b === "More") return true;
+  const n = typeof b === "number" ? b : parseInt(String(b), 10);
+  return Number.isFinite(n);
+}
+
+function bathroomsPositive(pd: Record<string, unknown> | undefined): boolean {
+  if (!pd || pd.bathrooms == null) return false;
+  const n = typeof pd.bathrooms === "number" ? pd.bathrooms : parseFloat(String(pd.bathrooms).replace(/,/g, ""));
+  return Number.isFinite(n) && n > 0;
+}
+
+/** Buy residential bathrooms use string "1"–"10" or "more" (matches PropertyDetails options). */
+function buyResidentialBathroomsAnswered(pd: Record<string, unknown> | undefined): boolean {
+  if (!pd || pd.bathrooms == null) return false;
+  const s = String(pd.bathrooms).trim().toLowerCase();
+  if (!s) return false;
+  if (s === "more") return true;
+  const n = parseInt(s, 10);
+  return Number.isFinite(n) && n >= 1 && n <= 10;
+}
+
+function nonNegativeIntPresent(v: unknown, max = 99): boolean {
+  if (v === undefined || v === null || v === "") return false;
+  const n = typeof v === "number" ? v : parseInt(String(v), 10);
+  return Number.isFinite(n) && n >= 0 && n <= max;
+}
+
+function parseFirstCountFromUserText(text: string): number | null {
+  const m = text.trim().match(/\b(\d{1,3})\b/);
+  if (!m) return null;
+  const n = parseInt(m[1], 10);
+  return Number.isFinite(n) ? n : null;
+}
+
+function parseBuyBathroomChoiceFromUserText(text: string): string | null {
+  const t = text.trim().toLowerCase();
+  if (!t) return null;
+  if (/\bmore\b/.test(t)) return "more";
+  const n = parseFirstCountFromUserText(t);
+  if (n != null && n >= 1 && n <= 10) return String(n);
+  return null;
+}
+
+function shortletMaxGuestsPresent(
+  pd: Record<string, unknown> | undefined,
+  bd: Record<string, unknown> | undefined,
+): boolean {
+  const mg = pd?.maxGuests;
+  if (mg !== undefined && mg !== null && mg !== "") {
+    const n = typeof mg === "number" ? mg : parseInt(String(mg), 10);
+    if (Number.isFinite(n) && n > 0) return true;
+  }
+  const ng = bd?.numberOfGuests;
+  if (ng != null) {
+    const n = typeof ng === "number" ? ng : parseInt(String(ng), 10);
+    if (Number.isFinite(n) && n > 0) return true;
+  }
+  return false;
+}
+
+function normalizedPreferenceType(data: Record<string, unknown>): string {
+  const t = String(data.preferenceType || "").toLowerCase().trim();
+  if (["buy", "rent", "shortlet", "joint-venture"].includes(t)) return t;
+  return "";
+}
+
+/** Must match `MEASUREMENT_UNITS` values in PropertyDetails.tsx (buy) and JV land step. */
+const PREFERENCE_LAND_MEASUREMENT_VALUES = new Set(["plot", "sqm", "hectares", "acres"]);
+
+function isValidLandMeasurementUnitValue(v: unknown): boolean {
+  const s = String(v ?? "").trim().toLowerCase();
+  return PREFERENCE_LAND_MEASUREMENT_VALUES.has(s);
+}
+
+/** Map free text to canonical measurement `value` when the user is answering that field (API often omits it). */
+function parseLandMeasurementUnitFromUserText(text: string): string | null {
+  const t = text.trim().toLowerCase();
+  if (!t) return null;
+  if (/\b(sqm|square\s*met(?:er|re)s?|m\s*2|m²)\b/i.test(t)) return "sqm";
+  if (/\bhectares?\b/i.test(t)) return "hectares";
+  if (/\bacres?\b/i.test(t)) return "acres";
+  if (/\bplots?\b/i.test(t)) return "plot";
+  if (PREFERENCE_LAND_MEASUREMENT_VALUES.has(t)) return t;
+  return null;
+}
+
+/** Writes measurement unit from the user's reply when the assistant asked for that field. */
+function applyPreferenceLandMeasurementFromFocusedAnswer(
+  data: Record<string, unknown>,
+  trimmed: string,
+  focusedField: string | undefined,
+): Record<string, unknown> {
+  if (!focusedField || !trimmed) return data;
+  const f = normalizePreferenceFieldKey(focusedField);
+  const type = normalizedPreferenceType(data);
+  const unit = parseLandMeasurementUnitFromUserText(trimmed);
+  if (!unit) return data;
+
+  if (type === "buy" && f.includes("land measurement unit")) {
+    const pd = { ...((data.propertyDetails || {}) as Record<string, unknown>), measurementUnit: unit };
+    return { ...data, propertyDetails: pd };
+  }
+
+  if (type === "joint-venture" && f.includes("measurement unit")) {
+    const dev = { ...((data.developmentDetails || {}) as Record<string, unknown>), measurementUnit: unit };
+    return { ...data, developmentDetails: dev };
+  }
+
+  return data;
+}
+
+/** Persist bedroom count when answering the bedrooms question (suggest API often omits or strips it). */
+function applyPreferenceBedroomsFromFocusedAnswer(
+  data: Record<string, unknown>,
+  trimmed: string,
+  focusedField: string | undefined,
+): Record<string, unknown> {
+  if (!focusedField || !trimmed) return data;
+  const f = normalizePreferenceFieldKey(focusedField);
+  if (!f.includes("number of bedrooms")) return data;
+
+  const pd = { ...((data.propertyDetails || {}) as Record<string, unknown>) };
+  if (/\bmore\b/i.test(trimmed)) {
+    return { ...data, propertyDetails: { ...pd, bedrooms: "More", minBedrooms: "More" } };
+  }
+  const n = parseFirstCountFromUserText(trimmed);
+  if (n == null || n < 0) return data;
+  const s = String(n);
+  return { ...data, propertyDetails: { ...pd, bedrooms: s, minBedrooms: s } };
+}
+
+/** Persist bathroom / toilet / car-park counts when the user replies to those questions (API often omits them). */
+function applyPreferenceBuyResidentialCountFromFocusedAnswer(
+  data: Record<string, unknown>,
+  trimmed: string,
+  focusedField: string | undefined,
+): Record<string, unknown> {
+  if (!focusedField || !trimmed) return data;
+  if (normalizedPreferenceType(data) !== "buy") return data;
+  const pd = (data.propertyDetails || {}) as Record<string, unknown>;
+  if (getPropertySubtype(pd) !== "residential") return data;
+
+  const f = normalizePreferenceFieldKey(focusedField);
+  const nextPd = () => ({ ...pd });
+
+  if (f.includes("number of bathrooms") && f.includes("residential buy")) {
+    const b = parseBuyBathroomChoiceFromUserText(trimmed);
+    if (b) return { ...data, propertyDetails: { ...nextPd(), bathrooms: b } };
+  }
+  if (f.includes("number of toilets") && f.includes("residential buy")) {
+    const n = parseFirstCountFromUserText(trimmed);
+    if (n != null && n >= 0 && n <= 99) return { ...data, propertyDetails: { ...nextPd(), toilets: n } };
+  }
+  if (f.includes("car park") && f.includes("residential buy")) {
+    const n = parseFirstCountFromUserText(trimmed);
+    if (n != null && n >= 0 && n <= 99) return { ...data, propertyDetails: { ...nextPd(), parkingSpaces: n } };
+  }
+
+  return data;
+}
+
+function normalizePreferenceFieldKey(field: string): string {
+  return field.toLowerCase().replace(/\u2013|\u2014/g, "-");
+}
+
+/** LGAs that are non-empty and not a duplicate of the state name (API often confuses state and LGA). */
+function getMeaningfulLgas(loc: Record<string, unknown>, stateStr: string): string[] {
+  const stateL = stateStr.trim().toLowerCase();
+  const raw = Array.isArray(loc.localGovernmentAreas)
+    ? loc.localGovernmentAreas
+    : Array.isArray(loc.lgas)
+      ? loc.lgas
+      : [];
+  return (raw as unknown[])
+    .map((x) => String(x).trim())
+    .filter((s) => s.length > 0 && s.toLowerCase() !== stateL);
+}
+
+/** Areas must be non-empty and not duplicates of state/LGA labels. */
+function getMeaningfulAreas(loc: Record<string, unknown>, stateStr: string): string[] {
+  const stateL = stateStr.trim().toLowerCase();
+  const lgaSet = new Set(getMeaningfulLgas(loc, stateStr).map((x) => x.toLowerCase()));
+  const raw = Array.isArray(loc.areas) ? loc.areas : [];
+  return (raw as unknown[])
+    .map((x) => String(x).trim())
+    .filter((s) => {
+      const l = s.toLowerCase();
+      if (!l) return false;
+      if (l === stateL) return false;
+      if (lgaSet.has(l)) return false;
+      return true;
+    });
+}
+
+function syncPreferenceLocationLgaKeys(loc: Record<string, unknown>): Record<string, unknown> {
+  const raw = Array.isArray(loc.localGovernmentAreas)
+    ? loc.localGovernmentAreas
+    : loc.lgas;
+  const list = (Array.isArray(raw) ? raw : [])
+    .map((x) => String(x).trim())
+    .filter((s) => s.length > 0);
+  return { ...loc, lgas: list, localGovernmentAreas: list };
+}
+
+/** Keep area keys aligned: accept singular `area` and normalize into `areas[]`. */
+function syncPreferenceLocationAreaKeys(loc: Record<string, unknown>): Record<string, unknown> {
+  const fromArr = (Array.isArray(loc.areas) ? (loc.areas as unknown[]) : [])
+    .map((x) => String(x).trim())
+    .filter(Boolean);
+  const single = String(loc.area ?? "").trim();
+  const merged = [...fromArr, ...(single ? [single] : [])];
+  const deduped: string[] = [];
+  const seen = new Set<string>();
+  for (const item of merged) {
+    const key = item.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(item);
+  }
+  const next: Record<string, unknown> = { ...loc, areas: deduped };
+  if (deduped.length > 0) next.area = deduped[0];
+  else delete next.area;
+  return next;
+}
+
+/** Only parse user text into location fields when they are answering a location step (matches form order: state → LGA → area). */
+function shouldApplyUserTextToPreferenceLocation(focusedMissingField: string | undefined): boolean {
+  if (!focusedMissingField) return false;
+  const f = normalizePreferenceFieldKey(focusedMissingField);
+  return (
+    f.includes("preference location - state") ||
+    f.includes("preference location - lga") ||
+    f.includes("preference location - area")
+  );
+}
+
+/**
+ * Apply the user's answer directly to the currently focused location field.
+ * This prevents AI merge noise from causing repeated location prompts.
+ */
+function applyPreferenceLocationFromFocusedAnswer(
+  text: string,
+  focusedMissingField: string | undefined,
+  loc: Record<string, unknown>,
+): Record<string, unknown> {
+  const raw = text.trim();
+  if (!raw || !focusedMissingField) return loc;
+  const f = normalizePreferenceFieldKey(focusedMissingField);
+  const next: Record<string, unknown> = { ...loc };
+
+  if (f.includes("preference location - state")) {
+    next.state = raw;
+    next.localGovernmentAreas = [];
+    next.lgas = [];
+    next.areas = [];
+    delete next.area;
+    return syncPreferenceLocationAreaKeys(syncPreferenceLocationLgaKeys(next));
+  }
+
+  if (f.includes("preference location - lga")) {
+    next.localGovernmentAreas = [raw];
+    next.lgas = [raw];
+    next.areas = [];
+    delete next.area;
+    return syncPreferenceLocationAreaKeys(syncPreferenceLocationLgaKeys(next));
+  }
+
+  if (f.includes("preference location - area")) {
+    next.areas = [raw];
+    next.area = raw;
+    return syncPreferenceLocationAreaKeys(syncPreferenceLocationLgaKeys(next));
+  }
+
+  return next;
+}
+
+/**
+ * Remove `state` when it is clearly not a state name (e.g. whole sentence "I want to buy a property" from bad merges).
+ * Prevents skipping ahead to LGA before a real state is chosen.
+ */
+function stripImplausiblePreferenceLocationState(loc: Record<string, unknown> | undefined): Record<string, unknown> {
+  if (!loc || typeof loc !== "object") return {};
+  const st = String(loc.state ?? "").trim();
+  if (!st) return { ...loc };
+  const wordCount = st.split(/\s+/).filter(Boolean).length;
+  const looksLikeNarration =
+    wordCount > 5 ||
+    /\b(i want|i'd like|i need|looking for|searching for|help me|submit|preference)\b/i.test(st);
+  const looksLikeIntentNotState =
+    /^(buy|rent|sale|sell|shortlet|jv|property|properties|land|flat|apartment|house|duplex|bungalow|studio|commercial|residential)$/i.test(
+      st,
+    ) || /\b(i want|looking)\b.*\b(buy|rent)\b/i.test(st);
+  if (!looksLikeNarration && !looksLikeIntentNotState) return { ...loc };
+  const next = { ...loc };
+  delete next.state;
+  return next;
+}
+
+function isRecognizedNigerianStateName(raw: string): boolean {
+  const s = raw.trim().toLowerCase();
+  if (!s) return false;
+  if (NIGERIAN_STATE_NAMES_LOWER.has(s)) return true;
+  return false;
+}
+
+/** Drop API-hallucinated location: keep only state/LGA/area/custom the user actually typed or said. */
+function normalizeUserMentionBlob(text: string): string {
+  return text.toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+function userMessagesMentionPhrase(blobNorm: string, phrase: string): boolean {
+  const p = normalizeUserMentionPhrase(phrase);
+  if (!p) return false;
+  return blobNorm.includes(p);
+}
+
+function normalizeUserMentionPhrase(phrase: string): string {
+  return phrase.toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+function filterPreferenceLocationToUserMentionedOnly(
+  loc: Record<string, unknown>,
+  userMessagesCombined: string,
+): Record<string, unknown> {
+  const blob = normalizeUserMentionBlob(userMessagesCombined);
+  if (!blob) return { ...loc };
+
+  let out: Record<string, unknown> = syncPreferenceLocationAreaKeys({ ...loc });
+  const st = String(out.state ?? "").trim();
+  if (st && !userMessagesMentionPhrase(blob, st)) {
+    out = { ...out, state: "" };
+  }
+
+  const stateForLga = String(out.state ?? "").trim();
+  const rawLgas = getMeaningfulLgas(out, stateForLga);
+  const keptLgas = rawLgas.filter((g) => userMessagesMentionPhrase(blob, g));
+  if (rawLgas.length > 0 && keptLgas.length === 0) {
+    out = { ...out, localGovernmentAreas: [], lgas: [] };
+  } else {
+    out = { ...out, localGovernmentAreas: keptLgas, lgas: keptLgas };
+  }
+
+  const areas = Array.isArray(out.areas) ? (out.areas as unknown[]).map((x) => String(x).trim()).filter(Boolean) : [];
+  const keptAreas = areas.filter((a) => userMessagesMentionPhrase(blob, a));
+  if (areas.length > 0 && keptAreas.length === 0) {
+    out = { ...out, areas: [] };
+  } else {
+    out = { ...out, areas: keptAreas };
+  }
+
+  const custom = String(out.customLocation ?? "").trim();
+  if (custom && !userMessagesMentionPhrase(blob, custom)) {
+    delete out.customLocation;
+  }
+
+  return syncPreferenceLocationAreaKeys(syncPreferenceLocationLgaKeys(out));
+}
+
+/** Same order as the form: no state → no LGA/areas; unknown state string → clear children. */
+function coercePreferenceLocationFormHierarchy(loc: Record<string, unknown>): Record<string, unknown> {
+  const st = String(loc.state ?? "").trim();
+  if (!st) {
+    const next: Record<string, unknown> = { ...loc, state: "", localGovernmentAreas: [], lgas: [], areas: [] };
+    delete next.area;
+    return syncPreferenceLocationLgaKeys(next);
+  }
+  if (!isRecognizedNigerianStateName(st)) {
+    return syncPreferenceLocationLgaKeys({
+      state: "",
+      localGovernmentAreas: [],
+      lgas: [],
+      areas: [],
+    });
+  }
+  return syncPreferenceLocationLgaKeys(loc);
+}
+
+/** Until at least one LGA is chosen, drop areas so the flow stays state → LGA → area. */
+function stripPreferenceAreasUntilLgaSelected(loc: Record<string, unknown>): Record<string, unknown> {
+  const st = String(loc.state ?? "").trim();
+  if (!st || getMeaningfulLgas(loc, st).length > 0) return loc;
+  const next: Record<string, unknown> = { ...loc, areas: [] };
+  delete next.area;
+  return syncPreferenceLocationLgaKeys(next);
+}
+
+/** Remove area values that are actually state/LGA repeats. */
+function stripPreferenceAreasThatDuplicateStateOrLga(loc: Record<string, unknown>): Record<string, unknown> {
+  const st = String(loc.state ?? "").trim();
+  const areas = getMeaningfulAreas(loc, st);
+  const next: Record<string, unknown> = { ...loc, areas };
+  if (areas.length > 0) next.area = areas[0];
+  else delete next.area;
+  return next;
+}
+
+function getSanitizedPreferenceLocation(data: Record<string, unknown>): Record<string, unknown> {
+  let loc = normalizeCompoundPreferenceLocation((data.location || {}) as Record<string, unknown>);
+  loc = syncPreferenceLocationAreaKeys(loc);
+  loc = stripImplausiblePreferenceLocationState(loc);
+  loc = coercePreferenceLocationFormHierarchy(loc);
+  loc = stripPreferenceAreasUntilLgaSelected(loc);
+  loc = stripPreferenceAreasThatDuplicateStateOrLga(loc);
+  return syncPreferenceLocationAreaKeys(loc);
+}
+
+/**
+ * Prevent non-location turns from regressing already-captured location progress
+ * due to imperfect AI merges (e.g. LGA gets dropped later and is asked again).
+ */
+function keepBestPreferenceLocationProgress(
+  previousLocRaw: Record<string, unknown> | undefined,
+  nextLocRaw: Record<string, unknown>,
+  isLocationTurn: boolean,
+): Record<string, unknown> {
+  if (isLocationTurn) return nextLocRaw;
+  const prev = getSanitizedPreferenceLocation({ location: previousLocRaw || {} } as Record<string, unknown>);
+  const next = getSanitizedPreferenceLocation({ location: nextLocRaw || {} } as Record<string, unknown>);
+
+  const prevState = String(prev.state ?? "").trim();
+  const nextState = String(next.state ?? "").trim();
+  const prevLgas = getMeaningfulLgas(prev, prevState);
+  const nextLgas = getMeaningfulLgas(next, nextState);
+  const prevAreas = Array.isArray(prev.areas) ? (prev.areas as unknown[]).map((x) => String(x).trim()).filter(Boolean) : [];
+  const nextAreas = Array.isArray(next.areas) ? (next.areas as unknown[]).map((x) => String(x).trim()).filter(Boolean) : [];
+  const prevHasCustom = isMeaningful(prev.customLocation);
+  const nextHasCustom = isMeaningful(next.customLocation);
+
+  // If next is less complete than previous, keep previous to avoid duplicate prompts.
+  if (prevState && !nextState) return prev;
+  if (prevLgas.length > 0 && nextLgas.length === 0) return prev;
+  if ((prevAreas.length > 0 || prevHasCustom) && nextAreas.length === 0 && !nextHasCustom) return prev;
+  return next;
+}
+
+/** Step 0 complete: state, LGAs, and at least one area or custom (same as validateStep case 0). */
+function isPreferenceLocationCompleteForData(data: Record<string, unknown>): boolean {
+  const loc = getSanitizedPreferenceLocation(data);
+  if (!isMeaningful(loc.state)) return false;
+  const hasLgas = getMeaningfulLgas(loc, String(loc.state || "")).length > 0;
+  if (!hasLgas) return false;
+  const hasArea = getMeaningfulAreas(loc, String(loc.state || "")).length > 0;
+  const custom = String(loc.customLocation ?? "").trim();
+  const customL = custom.toLowerCase();
+  const hasCustom =
+    custom.length > 0 &&
+    customL !== String(loc.state ?? "").trim().toLowerCase() &&
+    !new Set(getMeaningfulLgas(loc, String(loc.state || "")).map((x) => x.toLowerCase())).has(customL);
+  return Boolean(hasArea || hasCustom);
 }
 
 /**
@@ -91,9 +603,7 @@ function applyPreferenceLocationFromNaturalText(
   if (!raw) return base;
 
   const hasState = isMeaningful(base.state);
-  const hasLga =
-    (Array.isArray(base.localGovernmentAreas) && base.localGovernmentAreas.length > 0) ||
-    (Array.isArray(base.lgas) && base.lgas.length > 0);
+  const hasLga = getMeaningfulLgas(base, String(base.state || "")).length > 0;
   const hasArea =
     (Array.isArray(base.areas) && base.areas.length > 0) ||
     isMeaningful(base.area) ||
@@ -105,24 +615,24 @@ function applyPreferenceLocationFromNaturalText(
     base.state = parts[0];
     base.localGovernmentAreas = [parts[1]];
     base.areas = [parts.slice(2).join(", ")];
-    return base;
+    return syncPreferenceLocationLgaKeys(base);
   }
 
   if (parts.length === 2) {
     if (!hasState) {
       base.state = parts[0];
       base.localGovernmentAreas = [parts[1]];
-      return base;
+      return syncPreferenceLocationLgaKeys(base);
     }
     if (!hasLga) {
       base.localGovernmentAreas = [parts[0]];
       base.areas = [parts[1]];
-      return base;
+      return syncPreferenceLocationLgaKeys(base);
     }
     if (!hasArea) {
       base.areas = [parts.join(", ")];
     }
-    return base;
+    return syncPreferenceLocationLgaKeys(base);
   }
 
   if (parts.length === 1) {
@@ -130,10 +640,10 @@ function applyPreferenceLocationFromNaturalText(
     if (!hasState) base.state = v;
     else if (!hasLga) base.localGovernmentAreas = [v];
     else if (!hasArea) base.areas = [v];
-    return base;
+    return syncPreferenceLocationLgaKeys(base);
   }
 
-  return base;
+  return syncPreferenceLocationLgaKeys(base);
 }
 
 /** If API put "Lagos, Ikeja, ..." only in state, split into structured location. */
@@ -203,165 +713,192 @@ function extractContactFromText(text: string): {
 }
 
 /**
- * Returns list of missing/incomplete fields aligned with the preference form required/optional fields.
- * Mirrors location, budget, contact, propertyDetails, bookingDetails, developmentDetails validation.
+ * Returns missing fields in the same order users complete the real form (`validateStep` in preference-form-context).
+ * Joint-venture uses only JV step rules (no buy/rent property-budget block); budget is not validated on JV steps.
  */
 function getMissingFieldsFromPreferenceData(data: Record<string, unknown>): string[] {
   const missing: string[] = [];
-  const type = String(data.preferenceType || "").toLowerCase();
+  const type = normalizedPreferenceType(data);
 
-  // --- Required for all: preference type ---
-  if (!isMeaningful(data.preferenceType)) {
-    missing.push("preference type (required: one of buy, rent, shortlet, joint venture)");
-  }
-
-  // --- Required for all: location — ask state, then LGA, then area (one step each) ---
-  const loc = normalizeCompoundPreferenceLocation((data.location || {}) as Record<string, unknown>);
-  const hasState = loc && isMeaningful(loc.state);
-  const hasLgas = loc && Array.isArray(loc.localGovernmentAreas) && (loc.localGovernmentAreas as unknown[]).length > 0;
-  const hasLgasAlt = loc && Array.isArray(loc.lgas) && (loc.lgas as unknown[]).length > 0;
-  const hasArea =
-    (loc && Array.isArray(loc.areas) && (loc.areas as unknown[]).length > 0) ||
-    (loc && loc.area && isMeaningful(loc.area));
-  const hasCustomLocation = loc && isMeaningful(loc.customLocation);
-
-  if (!hasState) {
-    missing.push("preference location — state (required)");
-  } else if (!hasLgas && !hasLgasAlt) {
-    missing.push("preference location — LGA (required)");
-  } else if (!hasArea && !hasCustomLocation) {
-    missing.push("preference location — area (required)");
+  if (!type) {
+    missing.push(
+      "preference type (required: start with Buy, Rent, Shortlet, or JV — same as choosing listing type on the form)",
+    );
+    return missing;
   }
 
-  // --- Required for all: budget (form requires both min and max) ---
-  const budget = data.budget as Record<string, unknown> | undefined;
-  const minPrice = budget && typeof budget.minPrice === "number" ? budget.minPrice : 0;
-  const maxPrice = budget && typeof budget.maxPrice === "number" ? budget.maxPrice : 0;
-  if (!(minPrice > 0)) {
-    missing.push("budget min price in Naira (required)");
-  }
-  if (!(maxPrice > 0)) {
-    missing.push("budget max price in Naira (required)");
-  }
-  if (minPrice > 0 && maxPrice > 0 && maxPrice <= minPrice) {
-    missing.push("budget max price must be greater than min price");
-  }
+  const pushLocs = () => {
+    const loc = getSanitizedPreferenceLocation(data);
+    const hasState = loc && isMeaningful(loc.state);
+    const hasLgas = loc && getMeaningfulLgas(loc, String(loc.state || "")).length > 0;
+    const hasArea = loc && getMeaningfulAreas(loc, String(loc.state || "")).length > 0;
+    const custom = String(loc?.customLocation ?? "").trim();
+    const customL = custom.toLowerCase();
+    const hasCustomLocation =
+      custom.length > 0 &&
+      customL !== String(loc?.state ?? "").trim().toLowerCase() &&
+      !new Set(getMeaningfulLgas((loc || {}) as Record<string, unknown>, String(loc?.state || "")).map((x) => x.toLowerCase())).has(customL);
 
-  // --- Contact identity is collected in the dedicated post-conversation form ---
-  // Do not ask for name/email during AI chat.
-  if (type === "joint-venture") {
-    const contact = data.contactInfo as Record<string, unknown> | undefined;
-    if (!contact || !isMeaningful(contact.companyName)) {
-      missing.push("company name (required for JV)");
+    if (!hasState) {
+      missing.push("preference location - state (required)");
+      return;
     }
-  }
+    if (!hasLgas) {
+      missing.push("preference location - LGA (required)");
+      return;
+    }
+    if (!hasArea && !hasCustomLocation) {
+      missing.push("preference location - area (required)");
+    }
+  };
 
-  // --- Optional but suggested: features, additional notes ---
-  const features = data.features as Record<string, unknown> | undefined;
-  const hasFeatures = features && (Array.isArray(features.baseFeatures) || Array.isArray(features.premiumFeatures));
-  if (!hasFeatures) {
-    missing.push("key features or amenities (e.g. parking, security, water)");
-  }
-  if (!isMeaningful(data.additionalNotes)) {
-    missing.push("additional notes or special requirements (optional)");
-  }
+  const pushBudgetBuyRentShortlet = () => {
+    const budget = data.budget as Record<string, unknown> | undefined;
+    const minPrice = budgetAmountNgn(budget?.minPrice);
+    const maxPrice = budgetAmountNgn(budget?.maxPrice);
+    if (minPrice <= 0) {
+      missing.push("budget minimum price in Naira (required — same as min price on the form, use commas e.g. 20,000,000)");
+    }
+    if (maxPrice <= 0) {
+      missing.push("budget maximum price in Naira (required — same as max price on the form, use commas e.g. 50,000,000)");
+    }
+    if (minPrice > 0 && maxPrice > 0 && maxPrice <= minPrice) {
+      missing.push("budget max price must be greater than min price");
+    }
+  };
 
-  // --- Buy: property details required by form ---
-  if (type === "buy") {
-    const pd = data.propertyDetails as Record<string, unknown> | undefined;
-    if (!pd || !isMeaningful(pd.propertyType)) {
-      missing.push("property type (required: land, residential, or commercial)");
-    }
-    const subtype = String(pd?.propertyType || pd?.propertySubtype || "").toLowerCase();
-    if (subtype && subtype !== "land") {
-      if (!pd || !isMeaningful(pd.buildingType)) {
-        missing.push("building type (required for buy: e.g. detached, semi-detached, block of flats)");
-      }
-      if (!pd || !isMeaningful(pd.propertyCondition)) {
-        missing.push("property condition (required: e.g. new, renovated, any)");
-      }
-      if (subtype === "residential" && (!pd || !isMeaningful(pd.bedrooms) && !isMeaningful(pd.minBedrooms))) {
-        missing.push("number of bedrooms (required for residential)");
-      }
-    }
-    if (!pd || !Array.isArray(pd.documentTypes) || (pd.documentTypes as unknown[]).length === 0) {
-      missing.push("at least one document type (required for buy: e.g. C of O, Survey plan)");
-    }
-    if (!isMeaningful(data.nearbyLandmark)) {
-      missing.push("nearby landmark (optional)");
-    }
-  }
-
-  // --- Rent: property details required by form ---
-  if (type === "rent") {
-    const pd = data.propertyDetails as Record<string, unknown> | undefined;
-    if (!pd || !isMeaningful(pd.propertyType)) {
-      missing.push("property type (required: residential or commercial)");
-    }
-    if (!pd || !isMeaningful(pd.buildingType)) {
-      missing.push("building type (required for rent)");
-    }
-    if (!pd || !isMeaningful(pd.propertyCondition)) {
-      missing.push("property condition (required for rent)");
-    }
-    if (!pd || !isMeaningful(pd.leaseTerm)) {
-      missing.push("lease term (required: e.g. 6 Months, 1 Year)");
-    }
-    const subtype = String(pd?.propertyType || "").toLowerCase();
-    if (subtype === "residential" && (!pd || !isMeaningful(pd.bedrooms) && !isMeaningful(pd.minBedrooms))) {
-      missing.push("number of bedrooms (required for residential rent)");
-    }
-  }
-
-  // --- Shortlet: required fields ---
-  if (type === "shortlet") {
-    const bd = data.bookingDetails as Record<string, unknown> | undefined;
-    const pd = data.propertyDetails as Record<string, unknown> | undefined;
-    if (!bd || !isMeaningful(bd.checkInDate)) {
-      missing.push("check-in date (required, e.g. YYYY-MM-DD)");
-    }
-    if (!bd || !isMeaningful(bd.checkOutDate)) {
-      missing.push("check-out date (required, e.g. YYYY-MM-DD)");
-    }
-    if (!pd || !isMeaningful(pd.propertyType)) {
-      missing.push("property type for shortlet (required: e.g. studio, apartment)");
-    }
-    if (!pd || (!isMeaningful(pd.bedrooms) && !isMeaningful(pd.minBedrooms))) {
-      missing.push("number of bedrooms (required for shortlet)");
-    }
-    if (!pd || (pd.bathrooms == null && pd.minBathrooms == null)) {
-      missing.push("number of bathrooms (required for shortlet)");
-    }
-    if (!bd || (bd.numberOfGuests == null || Number(bd.numberOfGuests) < 1)) {
-      missing.push("number of guests (required for shortlet)");
-    }
-    if (!pd || !isMeaningful(pd.travelType)) {
-      missing.push("travel type (required: e.g. solo, couple, family, group, business)");
-    }
-  }
-
-  // --- Joint venture: development details required by form ---
+  // --- Joint venture (form steps: development type → land requirements → terms → title) ---
   if (type === "joint-venture") {
     const dev = data.developmentDetails as Record<string, unknown> | undefined;
-    if (!dev || !isMeaningful(dev.minLandSize)) {
-      missing.push("land size (required for JV, e.g. 500)");
-    }
-    if (!dev || !isMeaningful(dev.measurementUnit)) {
-      missing.push("measurement unit (required for JV: plot, sqm, or hectares)");
-    }
-    if (!dev || !isMeaningful(dev.jvType)) {
-      missing.push("JV type (required: Equity Split, Lease-to-Build, or Development Partner)");
-    }
     if (!dev || !Array.isArray(dev.developmentTypes) || (dev.developmentTypes as unknown[]).length === 0) {
-      missing.push("at least one development type (required for JV)");
+      missing.push("development type(s) (required — at least one, as on JV form step Development Type)");
+    }
+    pushLocs();
+    if (!dev || !isValidLandMeasurementUnitValue(dev.measurementUnit)) {
+      missing.push("measurement unit for land (required — plot, sqm, hectares, or acres)");
+    }
+    if (!dev || !landSizeAmountPositive(dev.minLandSize)) {
+      missing.push("minimum land size (required — numeric size as on JV land requirements step)");
     }
     if (!dev || !isMeaningful(dev.preferredSharingRatio)) {
-      missing.push("preferred sharing ratio (required for JV)");
+      missing.push("preferred sharing ratio (required — JV terms & proposal step)");
     }
     if (!dev || !Array.isArray(dev.minimumTitleRequirements) || (dev.minimumTitleRequirements as unknown[]).length === 0) {
-      missing.push("minimum title requirements (required for JV: e.g. C of O, Governors consent)");
+      missing.push("minimum title requirements (required — at least one, e.g. C of O, as on title & documentation step)");
+    }
+    const contact = data.contactInfo as Record<string, unknown> | undefined;
+    if (!contact || !isMeaningful(contact.companyName)) {
+      missing.push("company name (required for JV contact — full name and email are filled on the next screen only)");
+    }
+  } else {
+    pushLocs();
+
+    const pd = data.propertyDetails as Record<string, unknown> | undefined;
+    const subtype = getPropertySubtype(pd);
+
+    // Form order: step 0 Location must be complete before Property details & Budget (step 1).
+    if (isPreferenceLocationCompleteForData(data)) {
+      if (type === "buy" || type === "rent") {
+        if (!pd || !isMeaningful(pd.propertySubtype ?? pd.propertyType)) {
+          missing.push(
+            type === "buy"
+              ? "property subtype (required — land, residential, or commercial, as on Property details & Budget)"
+              : "property subtype (required — e.g. self-con, flat, as on Property details & Budget)",
+          );
+        }
+      }
+
+      if (type === "buy" && subtype) {
+        if (!pd || !isValidLandMeasurementUnitValue(pd.measurementUnit)) {
+          missing.push("land measurement unit (required for buy — plot, sqm, hectares, or acres)");
+        } else if (String(pd.measurementUnit).toLowerCase() === "sqm") {
+          if (!landSizeAmountPositive(pd.minLandSize)) {
+            missing.push("minimum land size (required for buy when unit is sqm — same as form min land size)");
+          }
+          if (!landSizeAmountPositive(pd.maxLandSize)) {
+            missing.push("maximum land size (required for buy when unit is sqm — same as form max land size)");
+          }
+        } else if (!landSizeAmountPositive(pd.landSize)) {
+          missing.push("land size (required for buy — single size when unit is not sqm, same as form)");
+        }
+
+        if (!pd || !Array.isArray(pd.documentTypes) || (pd.documentTypes as unknown[]).length === 0) {
+          missing.push("document type(s) (required for buy — at least one, same as form)");
+        }
+
+        if (subtype !== "land") {
+          if (!isMeaningful(pd?.propertyCondition)) {
+            missing.push("property condition (required for buy when not land — same as form)");
+          }
+          if (!isMeaningful(pd?.buildingType)) {
+            missing.push("building type (required for buy when not land — same as form)");
+          }
+          if (subtype === "residential") {
+            const pdr = (pd || {}) as Record<string, unknown>;
+            if (!bedroomsPresent(pd)) {
+              missing.push("number of bedrooms (required for residential buy — same as form)");
+            } else if (!buyResidentialBathroomsAnswered(pd)) {
+              missing.push("number of bathrooms (required for residential buy — after bedrooms)");
+            } else if (!nonNegativeIntPresent(pdr.toilets)) {
+              missing.push("number of toilets (required for residential buy — after bathrooms)");
+            } else if (!nonNegativeIntPresent(pdr.parkingSpaces ?? pdr.carParks)) {
+              missing.push("number of car parks (required for residential buy — after toilets)");
+            }
+          }
+        }
+      }
+
+      if (type === "rent") {
+        if (subtype && subtype !== "land") {
+          if (!isMeaningful(pd?.propertyCondition)) {
+            missing.push("property condition (required for rent when not land — same as form)");
+          }
+          if (!isMeaningful(pd?.buildingType)) {
+            missing.push("building type (required for rent when not land — same as form)");
+          }
+          if (subtype === "residential" && !bedroomsPresent(pd)) {
+            missing.push("number of bedrooms (required for residential rent — same as form)");
+          }
+        }
+      }
+
+      if (type === "shortlet") {
+        const bd = data.bookingDetails as Record<string, unknown> | undefined;
+        if (!pd || !isMeaningful(pd.propertyType)) {
+          missing.push(
+            "property type (required for shortlet — e.g. studio, 1-bed apartment, as on Property details & Budget)",
+          );
+        }
+        if (!pd || !isMeaningful(pd.travelType)) {
+          missing.push("travel type (required for shortlet — same as form)");
+        }
+        if (!bedroomsPresent(pd)) {
+          missing.push("number of bedrooms (required for shortlet — same as form)");
+        }
+        if (!bathroomsPositive(pd)) {
+          missing.push("number of bathrooms (required for shortlet — same as form)");
+        }
+        if (!shortletMaxGuestsPresent(pd, bd)) {
+          missing.push("maximum guests (required for shortlet — same as max guests on Property details & Budget)");
+        }
+      }
+
+      pushBudgetBuyRentShortlet();
+
+      if (type === "shortlet") {
+        const bd = data.bookingDetails as Record<string, unknown> | undefined;
+        if (!bd || !isMeaningful(bd.checkInDate)) {
+          missing.push("check-in date (required for shortlet — Features step / dates on form, e.g. YYYY-MM-DD)");
+        }
+        if (!bd || !isMeaningful(bd.checkOutDate)) {
+          missing.push("check-out date (required for shortlet — same as form)");
+        }
+      }
     }
   }
+
+  // Features, additionalNotes, nearbyLandmark: optional in API — `buildPreferencePayload` defaults
+  // empty feature arrays and omits empty optionals; do not prompt in AI flow.
 
   return missing;
 }
@@ -385,7 +922,10 @@ function flattenPreferenceData(data: Record<string, unknown>): { key: string; la
   if (loc) {
     if (loc.state) out.push({ key: "state", label: "State", value: String(loc.state) });
     const lgas = loc.localGovernmentAreas ?? loc.lgas;
-    if (Array.isArray(lgas) && lgas.length) out.push({ key: "lgas", label: "LGAs / Areas", value: (lgas as string[]).join(", ") });
+    if (Array.isArray(lgas) && lgas.length) out.push({ key: "lgas", label: "LGA(s)", value: (lgas as string[]).join(", ") });
+    if (Array.isArray(loc.areas) && loc.areas.length) {
+      out.push({ key: "areas", label: "Area(s)", value: (loc.areas as string[]).join(", ") });
+    }
     if (loc.customLocation) out.push({ key: "customLocation", label: "Custom location", value: String(loc.customLocation) });
   }
   const budget = data.budget as Record<string, unknown> | undefined;
@@ -395,9 +935,13 @@ function flattenPreferenceData(data: Record<string, unknown>): { key: string; la
   }
   const pd = data.propertyDetails as Record<string, unknown> | undefined;
   if (pd) {
+    if (pd.propertySubtype) out.push({ key: "propertySubtype", label: "Property subtype", value: String(pd.propertySubtype) });
     if (pd.propertyType) out.push({ key: "propertyType", label: "Property type", value: String(pd.propertyType) });
     if (pd.bedrooms != null || pd.minBedrooms != null) out.push({ key: "bedrooms", label: "Bedrooms", value: String(pd.bedrooms ?? pd.minBedrooms) });
     if (pd.bathrooms != null || pd.minBathrooms != null) out.push({ key: "bathrooms", label: "Bathrooms", value: String(pd.bathrooms ?? pd.minBathrooms) });
+    if (pd.toilets != null && pd.toilets !== "") out.push({ key: "toilets", label: "Toilets", value: String(pd.toilets) });
+    const pk = (pd as Record<string, unknown>).parkingSpaces ?? (pd as Record<string, unknown>).carParks;
+    if (pk != null && pk !== "") out.push({ key: "parkingSpaces", label: "Car parks", value: String(pk) });
     if (pd.buildingType) out.push({ key: "buildingType", label: "Building type", value: String(pd.buildingType) });
     if (pd.propertyCondition) out.push({ key: "propertyCondition", label: "Condition", value: String(pd.propertyCondition) });
     if (pd.leaseTerm) out.push({ key: "leaseTerm", label: "Lease term", value: String(pd.leaseTerm) });
@@ -466,6 +1010,20 @@ export default function PreferenceAiConversationFlow() {
   const prevMessageCountRef = useRef(0);
   const { speak, stop, speaking } = useSpeechSynthesis({ lang: "en-NG", rate: 0.95 });
 
+  /** Budget min/max steps: format amounts with commas; send digits-only to the flow / backend. */
+  const preferenceAmountEntryMode = useMemo(() => {
+    const last = [...preferenceAiMessages].reverse().find((m) => m.role === "assistant") as
+      | { focusedMissingField?: string }
+      | undefined;
+    const f = (last?.focusedMissingField ?? "").toLowerCase();
+    if (!f) return false;
+    return (
+      (f.includes("budget") && (f.includes("naira") || f.includes("price"))) ||
+      f.includes("minimum price") ||
+      f.includes("maximum price")
+    );
+  }, [preferenceAiMessages]);
+
   useEffect(() => {
     collectedDataRef.current = preferenceAiCollectedData;
   }, [preferenceAiCollectedData]);
@@ -512,6 +1070,7 @@ export default function PreferenceAiConversationFlow() {
             if (toSkip && !isPreferenceFieldSkippable(toSkip)) {
               const label = fieldLabelOnly(toSkip);
               const reqLine = `${label} is required. Please answer in your next message.`;
+              const missingReq = missingBefore.filter((f) => !isPreferenceFieldSkippable(f));
               return [
                 ...prev,
                 { role: "user" as const, content: trimmed },
@@ -522,16 +1081,12 @@ export default function PreferenceAiConversationFlow() {
                   data,
                   missingFields: [toSkip],
                   focusedMissingField: toSkip,
-                  remainingMissingCount: Math.max(0, missingBefore.length - 1),
+                  remainingMissingCount: Math.max(0, missingReq.length - 1),
                 },
               ];
             }
             if (toSkip) skipped.add(toSkip);
-            const reply = buildPreferenceInteractiveReply(
-              data,
-              skipped,
-              preferenceQuestionVariantRef.current++,
-            );
+            const reply = buildPreferenceInteractiveReply(data, skipped, 0);
             return [
               ...prev,
               { role: "user" as const, content: trimmed },
@@ -552,14 +1107,39 @@ export default function PreferenceAiConversationFlow() {
         return;
       }
 
+      const accumulated = [...preferenceAiMessages, { role: "user", content: trimmed }]
+        .filter((m) => m.role === "user")
+        .map((m) => m.content)
+        .join(". ");
+
+      const storedType = normalizedPreferenceType((collectedDataRef.current || {}) as Record<string, unknown>);
+      const detectedFromMsg = detectPreferenceTypeFromText(trimmed);
+      const detectedFromAccum = detectPreferenceTypeFromText(accumulated);
+      const effectiveType = storedType || detectedFromMsg || detectedFromAccum;
+
+      if (!effectiveType) {
+        const typeFieldLabel =
+          "preference type (required: start with Buy, Rent, Shortlet, or JV — same as choosing listing type on the form)";
+        const prompt = getPreferenceFieldPrompt(typeFieldLabel, preferenceQuestionVariantRef.current++);
+        setPreferenceAiMessages((prev) => [
+          ...prev,
+          { role: "user", content: trimmed },
+          {
+            role: "assistant",
+            content: prompt.displayLine,
+            speakLine: prompt.speakLine,
+            missingFields: [typeFieldLabel],
+            focusedMissingField: typeFieldLabel,
+            remainingMissingCount: 0,
+          },
+        ]);
+        return;
+      }
+
       setLoading(true);
       setPreferenceAiMessages((prev) => [...prev, { role: "user", content: trimmed }]);
 
       try {
-        const accumulated = [...preferenceAiMessages, { role: "user", content: trimmed }]
-          .filter((m) => m.role === "user")
-          .map((m) => m.content)
-          .join(". ");
         const contextual =
           (() => {
             const lastAssist = [...preferenceAiMessages].reverse().find((m) => m.role === "assistant");
@@ -578,7 +1158,23 @@ export default function PreferenceAiConversationFlow() {
           ]);
           return;
         }
-        let data = (res.data || {}) as Record<string, unknown>;
+        const seedData: Record<string, unknown> = {
+          ...(collectedDataRef.current || {}),
+          preferenceType: effectiveType,
+          preferenceMode: preferenceModeFromType(effectiveType),
+        };
+        let data = mergePreferenceAiCollectedData(seedData, (res.data || {}) as Record<string, unknown>);
+        data.preferenceType = effectiveType;
+        data.preferenceMode = preferenceModeFromType(effectiveType);
+
+        const lastAssistBeforeTurn = [...preferenceAiMessages]
+          .reverse()
+          .find((m) => m.role === "assistant");
+        const lastFocusBeforeMerge = lastAssistBeforeTurn?.focusedMissingField;
+        data = applyPreferenceLandMeasurementFromFocusedAnswer(data, trimmed, lastFocusBeforeMerge);
+        data = applyPreferenceBedroomsFromFocusedAnswer(data, trimmed, lastFocusBeforeMerge);
+        data = applyPreferenceBuyResidentialCountFromFocusedAnswer(data, trimmed, lastFocusBeforeMerge);
+
         const fromUser = extractContactFromText(trimmed);
         const fromAccumulated = extractContactFromText(accumulated || trimmed);
         const parsedContact = {
@@ -591,23 +1187,30 @@ export default function PreferenceAiConversationFlow() {
           ...existingContact,
           ...(parsedContact.email && { email: parsedContact.email }),
           ...(parsedContact.phoneNumber && { phoneNumber: parsedContact.phoneNumber }),
-          ...(parsedContact.fullName && { fullName: parsedContact.fullName }),
         };
         if (Object.keys(mergedContact).length > 0) {
           data = { ...data, contactInfo: mergedContact };
         }
         {
+          const lastFocusBeforeTurn = lastFocusBeforeMerge;
+          const isLocationTurn = shouldApplyUserTextToPreferenceLocation(lastFocusBeforeTurn);
+          const previousLocation = ((collectedDataRef.current || {}).location || {}) as Record<string, unknown>;
           let loc = (data.location || {}) as Record<string, unknown>;
           loc = normalizeCompoundPreferenceLocation(loc);
-          loc = applyPreferenceLocationFromNaturalText(trimmed, loc);
+          if (isLocationTurn) {
+            loc = applyPreferenceLocationFromFocusedAnswer(trimmed, lastFocusBeforeTurn, loc);
+            loc = applyPreferenceLocationFromNaturalText(trimmed, loc);
+          }
+          loc = stripImplausiblePreferenceLocationState(loc);
+          // Always trust only what the user has mentioned (prevents AI-inserted area/LGA values).
+          loc = filterPreferenceLocationToUserMentionedOnly(loc, accumulated || trimmed);
+          loc = coercePreferenceLocationFormHierarchy(loc);
+          loc = stripPreferenceAreasUntilLgaSelected(loc);
+          loc = keepBestPreferenceLocationProgress(previousLocation, loc, isLocationTurn);
           data = { ...data, location: loc };
         }
         setPreferenceAiCollectedData(data);
-        const reply = buildPreferenceInteractiveReply(
-          data,
-          skippedFieldsRef.current,
-          preferenceQuestionVariantRef.current++,
-        );
+        const reply = buildPreferenceInteractiveReply(data, skippedFieldsRef.current, 0);
         setPreferenceAiMessages((prev) => [
           ...prev,
           {
@@ -647,13 +1250,8 @@ export default function PreferenceAiConversationFlow() {
   useEffect(() => {
     if (preferenceAiFlowStep !== "contactConfirm" || !preferenceAiCollectedData) return;
     const c = preferenceAiCollectedData.contactInfo as Record<string, unknown> | undefined;
-    const type = String(preferenceAiCollectedData.preferenceType || "").toLowerCase();
-    if (type === "joint-venture") {
-      setManualFullName(String(c?.contactPerson || c?.fullName || ""));
-    } else {
-      setManualFullName(String(c?.fullName || ""));
-    }
-    setManualEmail(String(c?.email || ""));
+    setManualFullName("");
+    setManualEmail(String(c?.email || "").trim());
   }, [preferenceAiFlowStep, preferenceAiCollectedData]);
 
   const handleContactConfirmContinue = useCallback(() => {
@@ -894,7 +1492,8 @@ export default function PreferenceAiConversationFlow() {
         </button>
       </div>
       <p className="text-sm text-[#5A5D63]">
-        Type or use the mic to describe what you want. The AI asks for <strong>one detail at a time</strong>, using what you already said. Say <strong>skip</strong> to move to the next item. When you&apos;re ready, use <strong>I&apos;m done</strong> to enter your name and email, then review the summary.
+        <strong>Start with the listing type</strong> — say <strong>Buy</strong>, <strong>Rent</strong>, <strong>Shortlet</strong>, or <strong>JV</strong> first (same as on the manual form). The AI then asks for <strong>one detail at a time</strong>, matching each listing type&apos;s form. For budgets, use commas (e.g.{" "}
+        <span className="whitespace-nowrap">20,000,000</span>). Say <strong>skip</strong> on optional lines. Use <strong>I&apos;m done</strong> to enter your name and email, then review the summary.
       </p>
       <p className="text-xs text-[#5A5D63] italic">
         Tip: If voice input fails (e.g. network), type instead. Name and email are confirmed on the next step.
@@ -925,7 +1524,9 @@ export default function PreferenceAiConversationFlow() {
 
       <div className="bg-white rounded-lg border border-gray-200 max-h-64 overflow-y-auto p-4 space-y-3">
         {preferenceAiMessages.length === 0 ? (
-          <p className="text-sm text-[#5A5D63] italic">Start by describing what you&apos;re looking for below.</p>
+          <p className="text-sm text-[#5A5D63] italic">
+            Example first message: &quot;Buy — 3 bedroom in Lekki…&quot; or &quot;Shortlet in Victoria Island…&quot; You must include Buy, Rent, Shortlet, or JV.
+          </p>
         ) : (
           preferenceAiMessages.map((msg, i) => (
             <div
@@ -981,11 +1582,12 @@ export default function PreferenceAiConversationFlow() {
       <div className="flex flex-col gap-3">
         <AiFillBlock
           title=""
-          placeholder="e.g. 3-bedroom in Lekki, Lagos, max 50 million, with parking..."
+          placeholder="e.g. Buy — 3-bedroom in Lekki, Lagos, budget max 50,000,000…"
           buttonLabel={loading ? "Sending…" : "Send"}
           onSuggest={handleSuggest}
           disabled={loading}
           maxHeight="80px"
+          amountEntryMode={preferenceAmountEntryMode}
         />
         <div className="flex flex-wrap gap-2 items-center">
           {preferenceAiMessages.some((m) => m.role === "assistant") && (

@@ -76,6 +76,23 @@ function isMeaningful(value: unknown): boolean {
   return false;
 }
 
+function normalizedListingPropertyType(data: Record<string, unknown>): string {
+  const t = String(data.propertyType || "").toLowerCase().trim();
+  if (["sell", "rent", "shortlet", "jv"].includes(t)) return t;
+  return "";
+}
+
+/** Maps natural language to post-property `propertyType` (sell | rent | shortlet | jv). */
+function detectListingPropertyTypeFromText(text: string): string | null {
+  const raw = text.trim();
+  if (!raw) return null;
+  if (/\bjoint\s*venture\b|\bjv\b/i.test(raw)) return "jv";
+  if (/\bshortlet\b|\bshort\s*let\b/i.test(raw)) return "shortlet";
+  if (/\brent\b|\bletting\b|\blease\b/i.test(raw)) return "rent";
+  if (/\bsale\b|\bsell\b|\boutright\b|\bbuy\b/i.test(raw)) return "sell";
+  return null;
+}
+
 /** Extract local government / LGA from user text so we recognize it even if the API omits it. */
 function extractLocalGovernmentFromText(text: string): string | null {
   const t = text.trim();
@@ -139,7 +156,7 @@ function getMissingFieldsFromData(data: Record<string, unknown>): string[] {
 
   const propertyType = data.propertyType;
   if (!isMeaningful(propertyType)) {
-    missing.push("property type (e.g. sale, rent, shortlet, joint venture)");
+    missing.push("property type — start with Sale, Rent, Shortlet, or JV (listing type on the form)");
   }
 
   const propertyCategory = data.propertyCategory;
@@ -158,11 +175,13 @@ function getMissingFieldsFromData(data: Record<string, unknown>): string[] {
   }
 
   const price = data.price;
+  const priceDigits =
+    typeof price === "string" ? price.replace(/,/g, "").replace(/\D/g, "") : "";
   const priceOk =
-    typeof price === "number" && price > 0 ||
-    (typeof price === "string" && price.trim() !== "" && Number(price.replace(/\D/g, "")) > 0);
+    (typeof price === "number" && price > 0) ||
+    (typeof price === "string" && price.trim() !== "" && Number(priceDigits) > 0);
   if (!priceOk) {
-    missing.push("price (in Naira)");
+    missing.push("price in Naira (required — comma-separated e.g. 85,000,000, as on the form)");
   }
 
   const description = data.description;
@@ -348,14 +367,38 @@ export default function PropertyAiConversationFlow({
       return;
     }
 
+    const accumulated = [...aiConversationMessages, { role: "user", content: trimmed }]
+      .filter((m) => m.role === "user")
+      .map((m) => m.content)
+      .join(". ");
+
+    const storedListing = normalizedListingPropertyType((collectedDataRef.current || {}) as Record<string, unknown>);
+    const detectedListing =
+      detectListingPropertyTypeFromText(trimmed) || detectListingPropertyTypeFromText(accumulated);
+    const effectiveListing = storedListing || detectedListing;
+
+    if (!effectiveListing) {
+      const typeField = "property type — start with Sale, Rent, Shortlet, or JV (listing type on the form)";
+      const prompt = getPropertyFieldPrompt(typeField, propertyQuestionVariantRef.current++);
+      setAiConversationMessages((prev) => [
+        ...prev,
+        { role: "user", content: trimmed },
+        {
+          role: "assistant",
+          content: prompt.displayLine,
+          speakLine: prompt.speakLine,
+          missingFields: [typeField],
+          focusedMissingField: typeField,
+          remainingMissingCount: 0,
+        },
+      ]);
+      return;
+    }
+
     setLoading(true);
     setAiConversationMessages((prev) => [...prev, { role: "user", content: trimmed }]);
 
     try {
-      const accumulated = [...aiConversationMessages, { role: "user", content: trimmed }]
-        .filter((m) => m.role === "user")
-        .map((m) => m.content)
-        .join(". ");
       const lastAssist = [...aiConversationMessages].reverse().find((m) => m.role === "assistant");
       const focus = lastAssist?.focusedMissingField;
       const contextual = focus
@@ -370,7 +413,7 @@ export default function PropertyAiConversationFlow({
         ]);
         return;
       }
-      let data = (res.data || {}) as Record<string, unknown>;
+      let data = { ...(res.data || {}), propertyType: effectiveListing } as Record<string, unknown>;
       const lgaUser = extractLocalGovernmentFromText(trimmed);
       const lgaAccumulated = extractLocalGovernmentFromText(accumulated || trimmed);
       const parsedLga = lgaUser || lgaAccumulated;
@@ -500,7 +543,8 @@ export default function PropertyAiConversationFlow({
         </button>
       </div>
       <p className="text-sm text-[#5A5D63]">
-        Type or use the mic to describe your property. The AI asks for <strong>one detail at a time</strong>, building on what you already said. Say <strong>skip</strong> to move to the next item. When you&apos;re ready, use <strong>I&apos;m done</strong> for the summary and image upload.
+        <strong>Start with the listing type</strong> — <strong>Sale</strong>, <strong>Rent</strong>, <strong>Shortlet</strong>, or <strong>JV</strong> (same as the manual form). The AI then asks for <strong>one detail at a time</strong>. Use comma-separated Naira amounts (e.g.{" "}
+        <span className="whitespace-nowrap">85,000,000</span>). Say <strong>skip</strong> where allowed. When you&apos;re ready, use <strong>I&apos;m done</strong> for the summary and image upload.
       </p>
       <p className="text-xs text-[#5A5D63] italic">
         Tip: If voice input fails (e.g. network), type instead.
@@ -531,7 +575,9 @@ export default function PropertyAiConversationFlow({
 
       <div className="bg-white rounded-lg border border-gray-200 max-h-64 overflow-y-auto p-4 space-y-3">
         {aiConversationMessages.length === 0 ? (
-          <p className="text-sm text-[#5A5D63] italic">Start by describing your property below.</p>
+          <p className="text-sm text-[#5A5D63] italic">
+            Example: &quot;Sale — duplex in Ikoyi…&quot; or &quot;Rent, 3-bed in Surulere…&quot; You must include Sale, Rent, Shortlet, or JV.
+          </p>
         ) : (
           aiConversationMessages.map((msg, i) => (
             <div
@@ -589,7 +635,7 @@ export default function PropertyAiConversationFlow({
       <div className="flex flex-col gap-3">
         <AiFillBlock
           title=""
-          placeholder="e.g. 3-bedroom in Lekki, Lagos, 85 million, with parking..."
+          placeholder="e.g. Sale — 3-bedroom in Lekki, Lagos, price 85,000,000…"
           buttonLabel={loading ? "Sending…" : "Send"}
           onSuggest={handleSuggest}
           disabled={loading}

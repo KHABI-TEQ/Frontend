@@ -102,11 +102,17 @@ export type PreferenceForm =
   | ShortletPreferenceForm;
 
 // API payload interfaces
+export interface LgaWithAreasPayload {
+  lgaName: string;
+  areas: string[];
+}
+
 export interface LocationPayload {
   state: string;
   localGovernmentAreas: string[];
+  lgasWithAreas: LgaWithAreasPayload[];
+  customLocation: string;
   selectedAreas?: string[];
-  customLocation?: string;
 }
 
 export interface BudgetPayload {
@@ -146,8 +152,15 @@ export interface BuyPreferencePayload {
     buildingType: string;
     minBedrooms: number | string;
     minBathrooms: number;
+    leaseTerm: string;
     propertyCondition: string;
     purpose: string;
+    landSize: string;
+    minLandSize: string;
+    maxLandSize: string;
+    measurementUnit: string;
+    documentTypes: string[];
+    landConditions: string[];
   };
   features: FeaturesPayload;
   contactInfo: ContactInfoPayload;
@@ -162,13 +175,22 @@ export interface RentPreferencePayload {
   budget: BudgetPayload;
   propertyDetails: {
     propertyType: string;
+    buildingType: string;
     minBedrooms: number | string;
+    minBathrooms: number;
     leaseTerm: string;
     propertyCondition: string;
     purpose: string;
+    landSize: string;
+    minLandSize: string;
+    maxLandSize: string;
+    measurementUnit: string;
+    documentTypes: string[];
+    landConditions: string[];
   };
   features: FeaturesPayload;
   contactInfo: ContactInfoPayload;
+  nearbyLandmark?: string;
   additionalNotes?: string;
 }
 
@@ -179,15 +201,55 @@ export interface JointVenturePreferencePayload {
   budget: BudgetPayload;
   developmentDetails: {
     minLandSize: string;
-    jvType: string;
-    propertyType: string;
-    expectedStructureType: string;
-    timeline: string;
-    budgetRange?: number;
+    maxLandSize: string;
+    measurementUnit: string;
+    developmentTypes: string[];
+    preferredSharingRatio: string;
+    proposalDetails: string;
+    minimumTitleRequirements: string[];
+    willingToConsiderPendingTitle: boolean;
+    additionalRequirements: string;
   };
   features: FeaturesPayload;
   contactInfo: JointVentureContactPayload;
   partnerExpectations?: string;
+  nearbyLandmark?: string;
+  additionalNotes?: string;
+}
+
+export interface ShortletBookingPayload {
+  propertyType: string;
+  buildingType: string;
+  minBedrooms: number | string;
+  minBathrooms: number;
+  numberOfGuests: number;
+  checkInDate: string;
+  checkOutDate: string;
+  travelType: string;
+  preferredCheckInTime: string;
+  preferredCheckOutTime: string;
+  propertyCondition: string;
+  purpose: string;
+  landSize: string;
+  minLandSize: string;
+  maxLandSize: string;
+  measurementUnit: string;
+  documentTypes: string[];
+  landConditions: string[];
+}
+
+export interface ShortletContactPayload extends ContactInfoPayload {
+  petsAllowed?: boolean;
+  smokingAllowed?: boolean;
+  partiesAllowed?: boolean;
+  additionalRequests?: string;
+  maxBudgetPerNight?: number;
+  willingToPayExtra?: boolean;
+  cleaningFeeBudget?: number;
+  securityDepositBudget?: number;
+  cancellationPolicy?: string;
+  preferredCheckInTime?: string;
+  preferredCheckOutTime?: string;
 }
 
 export interface ShortletPreferencePayload {
@@ -195,15 +257,10 @@ export interface ShortletPreferencePayload {
   preferenceMode: "shortlet";
   location: LocationPayload;
   budget: BudgetPayload;
-  bookingDetails: {
-    propertyType: string;
-    minBedrooms: number | string;
-    numberOfGuests: number;
-    checkInDate: string;
-    checkOutDate: string;
-  };
+  bookingDetails: ShortletBookingPayload;
   features: FeaturesPayload;
-  contactInfo: ContactInfoPayload;
+  contactInfo: ShortletContactPayload;
+  nearbyLandmark?: string;
   additionalNotes?: string;
 }
 
@@ -269,6 +326,8 @@ export interface FlexibleFormData {
   bookingDetails?: any; // For shortlet
   nearbyLandmark?: string;
   partnerExpectations?: string;
+  /** When set, submit uses these LGA→area pairs for `location.lgasWithAreas`. */
+  enhancedLocation?: { lgasWithAreas?: LgaWithAreasPayload[] };
 }
 
 // Form context state

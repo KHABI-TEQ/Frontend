@@ -148,7 +148,7 @@ const buyPropertyDetailsSchema = Yup.object({
   }),
   measurementUnit: Yup.string()
     .oneOf(
-      ["plot", "sqm", "hectares"],
+      ["plot", "sqm", "hectares", "acres"],
       "Please select a valid measurement unit",
     )
     .required("Measurement unit is required"),
@@ -225,7 +225,7 @@ const rentPropertyDetailsSchema = Yup.object({
   }),
   measurementUnit: Yup.string()
     .oneOf(
-      ["plot", "sqm", "hectares"],
+      ["plot", "sqm", "hectares", "acres"],
       "Please select a valid measurement unit",
     )
     .required("Measurement unit is required"),
@@ -285,7 +285,7 @@ const developmentDetailsSchema = Yup.object({
   minLandSize: Yup.string().required("Land size is required"),
   measurementUnit: Yup.string()
     .oneOf(
-      ["plot", "sqm", "hectares"],
+      ["plot", "sqm", "hectares", "acres"],
       "Please select a valid measurement unit",
     )
     .required("Measurement unit is required"),

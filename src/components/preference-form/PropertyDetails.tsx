@@ -49,6 +49,7 @@ const MEASUREMENT_UNITS = [
   { value: "plot", label: "Plot" },
   { value: "sqm", label: "SQM" },
   { value: "hectares", label: "Hectares" },
+  { value: "acres", label: "Acres" },
 ];
 
 // Property conditions
