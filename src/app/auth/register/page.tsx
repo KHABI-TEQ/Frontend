@@ -349,26 +349,113 @@ const Register = () => {
 
   return (
     <section
-      className={`flex items-center justify-center bg-[#EEF1F1] w-full ${
+      className={`min-h-screen w-full bg-[#F8FAF8] flex ${
         isContactUsClicked && "filter brightness-[30%]"
       } transition-all duration-500`}
     >
-      <div className="container flex items-center justify-center py-[20px] md:py-[30px] md:mt-[60px] px-[25px] lg:px-0">
+      {/* Left Side - Branding Panel */}
+      <div className="hidden lg:flex lg:w-1/2 xl:w-5/12 bg-gradient-to-br from-[#09391C] via-[#0B423D] to-[#0A3E72] relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.2) 1px, transparent 0)', backgroundSize: '32px 32px'}}></div>
+        </div>
+
+        {/* Decorative Circles */}
+        <div className="absolute top-20 right-20 w-64 h-64 bg-[#8DDB90]/20 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 left-10 w-48 h-48 bg-white/10 rounded-full blur-2xl"></div>
+
+        <div className="relative z-10 flex flex-col justify-between p-12 xl:p-16 w-full">
+          {/* Logo */}
+          <div>
+            <Link href="/" className="inline-flex items-center gap-2">
+              <div className="w-10 h-10 bg-[#8DDB90] rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-[#09391C]" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
+                </svg>
+              </div>
+              <span className="text-white font-display font-bold text-xl">Khabiteq</span>
+            </Link>
+          </div>
+
+          {/* Main Content */}
+          <div className="space-y-6">
+            <h1 className="text-4xl xl:text-5xl font-display font-bold text-white leading-tight">
+              Start Your Real Estate Journey Today
+            </h1>
+            <p className="text-white/80 text-lg leading-relaxed max-w-sm">
+              Join thousands of Nigerians who trust Khabiteq for their property needs. List, buy, rent, or invest with confidence.
+            </p>
+
+            {/* Features */}
+            <div className="space-y-4 pt-4">
+              <div className="flex items-center gap-3 text-white/90">
+                <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center">
+                  <svg className="w-4 h-4 text-[#8DDB90]" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                  </svg>
+                </div>
+                <span className="text-sm font-medium">Free to get started</span>
+              </div>
+              <div className="flex items-center gap-3 text-white/90">
+                <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center">
+                  <svg className="w-4 h-4 text-[#8DDB90]" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                  </svg>
+                </div>
+                <span className="text-sm font-medium">Verified properties & agents</span>
+              </div>
+              <div className="flex items-center gap-3 text-white/90">
+                <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center">
+                  <svg className="w-4 h-4 text-[#8DDB90]" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                  </svg>
+                </div>
+                <span className="text-sm font-medium">Secure transactions</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Stats */}
+          <div className="flex gap-8">
+            <div>
+              <div className="text-2xl font-bold text-[#8DDB90] font-display">1000+</div>
+              <div className="text-white/60 text-sm">Properties</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-[#8DDB90] font-display">500+</div>
+              <div className="text-white/60 text-sm">Happy Clients</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-[#8DDB90] font-display">50+</div>
+              <div className="text-white/60 text-sm">Agents</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Side - Form */}
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8 xl:p-12">
         <form
           onSubmit={formik.handleSubmit}
-          className="lg:w-[700px] w-full min-h-[700px] flex flex-col items-center gap-[20px]"
+          className="w-full max-w-lg flex flex-col gap-5"
         >
-          <h2 className="text-3xl md:text-[24px] font-display leading-[38.4px] font-semibold text-[#09391C]">
-            Register with us
-          </h2>
+          {/* Header */}
+          <div className="text-center lg:text-left mb-2">
+            <h2 className="text-2xl sm:text-3xl font-display font-bold text-[#09391C] mb-2">
+              Create Your Account
+            </h2>
+            <p className="text-[#5A5D63] text-sm sm:text-base">
+              Join Khabiteq and unlock access to verified properties
+            </p>
+          </div>
 
           {/* Account Type Selection */}
-          <div className="w-full flex flex-col gap-[15px] lg:px-[60px]">
-            <span className="text-base leading-[25.6px] font-medium text-[#1E1E1E]">
-              What type of account do you want?
-            </span>
+          <div className="w-full flex flex-col gap-3">
+            <label className="text-sm font-semibold text-[#09391C]">
+              I want to join as a...
+            </label>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {/* Landlord Radio Button */}
               <label className="relative cursor-pointer group h-full">
                 <input
@@ -380,41 +467,28 @@ const Register = () => {
                   disabled={isDisabled}
                   className="sr-only peer"
                 />
-                <div className="bg-white h-full border-2 border-gray-200 rounded-xl p-6 transition-all duration-300 hover:border-[#8DDB90] hover:shadow-lg hover:transform hover:scale-[1.02] peer-checked:border-[#8DDB90] peer-checked:bg-gradient-to-br peer-checked:from-[#8DDB90]/10 peer-checked:to-[#8DDB90]/5 peer-checked:shadow-lg peer-checked:transform peer-checked:scale-[1.02] peer-disabled:opacity-50 peer-disabled:cursor-not-allowed">
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-col">
-                      <div className="flex items-center justify-between gap-2 mb-1">
-                        <div className="flex gap-2 items-center">
-                          <div className="w-8 h-8 bg-[#8DDB90]/20 rounded-lg flex items-center justify-center">
-                            <svg
-                              className="w-4 h-4 text-[#09391C]"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-                            </svg>
-                          </div>
-                          <span className="text-lg font-semibold text-[#09391C]">
-                            Landlord
-                          </span>
-                        </div>
-                        <div className="relative">
-                          <div className="w-6 h-6 rounded-full border-2 border-gray-300 transition-all duration-300 flex items-center justify-center peer-checked:border-[#8DDB90] peer-checked:bg-[#8DDB90] peer-checked:shadow-sm">
-                            <div className="w-3 h-3 rounded-full bg-white opacity-0 transition-all duration-300 peer-checked:opacity-100 scale-0 peer-checked:scale-100"></div>
-                          </div>
-                          <div className="absolute inset-0 w-6 h-6 rounded-full bg-[#8DDB90] opacity-0 transition-all duration-300 peer-checked:opacity-20 animate-pulse"></div>
-                        </div>
-                      </div>
-                      <span className="text-sm text-[#5A5D63] leading-relaxed">
-                        Property owner looking to sell or rent
-                      </span>
+                <div className="bg-white border-2 border-gray-100 rounded-xl p-4 transition-all duration-300 hover:border-[#8DDB90]/50 hover:shadow-md peer-checked:border-[#8DDB90] peer-checked:bg-[#8DDB90]/5 peer-checked:shadow-md peer-disabled:opacity-50">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-[#8DDB90]/10 rounded-lg flex items-center justify-center shrink-0">
+                      <svg className="w-5 h-5 text-[#09391C]" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="block text-base font-semibold text-[#09391C] truncate">Landlord</span>
+                      <span className="block text-xs text-[#5A5D63] truncate">List & sell properties</span>
+                    </div>
+                    <div className="w-5 h-5 rounded-full border-2 border-gray-300 peer-checked:border-[#8DDB90] peer-checked:bg-[#8DDB90] flex items-center justify-center shrink-0">
+                      <svg className="w-3 h-3 text-white opacity-0 peer-checked:opacity-100" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                      </svg>
                     </div>
                   </div>
                 </div>
               </label>
 
               {/* Agent Radio Button */}
-              <label className="relative cursor-pointer group h-full">
+              <label className="relative cursor-pointer group">
                 <input
                   type="radio"
                   name="userType"
@@ -424,41 +498,28 @@ const Register = () => {
                   disabled={isDisabled}
                   className="sr-only peer"
                 />
-                <div className="bg-white h-full border-2 border-gray-200 rounded-xl p-6 transition-all duration-300 hover:border-[#8DDB90] hover:shadow-lg hover:transform hover:scale-[1.02] peer-checked:border-[#8DDB90] peer-checked:bg-gradient-to-br peer-checked:from-[#8DDB90]/10 peer-checked:to-[#8DDB90]/5 peer-checked:shadow-lg peer-checked:transform peer-checked:scale-[1.02] peer-disabled:opacity-50 peer-disabled:cursor-not-allowed">
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-col">
-                      <div className="flex items-center justify-between gap-2 mb-1">
-                        <div className="flex gap-2 items-center">
-                          <div className="w-8 h-8 bg-[#8DDB90]/20 rounded-lg flex items-center justify-center">
-                            <svg
-                              className="w-4 h-4 text-[#09391C]"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-                            </svg>
-                          </div>
-                          <span className="text-lg font-semibold text-[#09391C]">
-                            Agent
-                          </span>
-                        </div>
-                        <div className="relative">
-                          <div className="w-6 h-6 rounded-full border-2 border-gray-300 transition-all duration-300 flex items-center justify-center peer-checked:border-[#8DDB90] peer-checked:bg-[#8DDB90] peer-checked:shadow-sm">
-                            <div className="w-3 h-3 rounded-full bg-white opacity-0 transition-all duration-300 peer-checked:opacity-100 scale-0 peer-checked:scale-100"></div>
-                          </div>
-                          <div className="absolute inset-0 w-6 h-6 rounded-full bg-[#8DDB90] opacity-0 transition-all duration-300 peer-checked:opacity-20 animate-pulse"></div>
-                        </div>
-                      </div>
-                      <span className="text-sm text-[#5A5D63] leading-relaxed">
-                        Assisting clients with property buying and selling.
-                      </span>
+                <div className="bg-white border-2 border-gray-100 rounded-xl p-4 transition-all duration-300 hover:border-[#8DDB90]/50 hover:shadow-md peer-checked:border-[#8DDB90] peer-checked:bg-[#8DDB90]/5 peer-checked:shadow-md peer-disabled:opacity-50">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-[#8DDB90]/10 rounded-lg flex items-center justify-center shrink-0">
+                      <svg className="w-5 h-5 text-[#09391C]" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="block text-base font-semibold text-[#09391C] truncate">Agent</span>
+                      <span className="block text-xs text-[#5A5D63] truncate">Help clients buy/sell</span>
+                    </div>
+                    <div className="w-5 h-5 rounded-full border-2 border-gray-300 peer-checked:border-[#8DDB90] peer-checked:bg-[#8DDB90] flex items-center justify-center shrink-0">
+                      <svg className="w-3 h-3 text-white opacity-0 peer-checked:opacity-100" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                      </svg>
                     </div>
                   </div>
                 </div>
               </label>
 
               {/* Developer Radio Button */}
-              <label className="relative cursor-pointer group h-full">
+              <label className="relative cursor-pointer group">
                 <input
                   type="radio"
                   name="userType"
@@ -468,34 +529,21 @@ const Register = () => {
                   disabled={isDisabled}
                   className="sr-only peer"
                 />
-                <div className="bg-white h-full border-2 border-gray-200 rounded-xl p-6 transition-all duration-300 hover:border-[#8DDB90] hover:shadow-lg hover:transform hover:scale-[1.02] peer-checked:border-[#8DDB90] peer-checked:bg-gradient-to-br peer-checked:from-[#8DDB90]/10 peer-checked:to-[#8DDB90]/5 peer-checked:shadow-lg peer-checked:transform peer-checked:scale-[1.02] peer-disabled:opacity-50 peer-disabled:cursor-not-allowed">
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-col">
-                      <div className="flex items-center justify-between gap-2 mb-1">
-                        <div className="flex gap-2 items-center">
-                          <div className="w-8 h-8 bg-[#8DDB90]/20 rounded-lg flex items-center justify-center">
-                            <svg
-                              className="w-4 h-4 text-[#09391C]"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-                            </svg>
-                          </div>
-                          <span className="text-lg font-semibold text-[#09391C]">
-                            Developer
-                          </span>
-                        </div>
-                        <div className="relative">
-                          <div className="w-6 h-6 rounded-full border-2 border-gray-300 transition-all duration-300 flex items-center justify-center peer-checked:border-[#8DDB90] peer-checked:bg-[#8DDB90] peer-checked:shadow-sm">
-                            <div className="w-3 h-3 rounded-full bg-white opacity-0 transition-all duration-300 peer-checked:opacity-100 scale-0 peer-checked:scale-100"></div>
-                          </div>
-                          <div className="absolute inset-0 w-6 h-6 rounded-full bg-[#8DDB90] opacity-0 transition-all duration-300 peer-checked:opacity-20 animate-pulse"></div>
-                        </div>
-                      </div>
-                      <span className="text-sm text-[#5A5D63] leading-relaxed">
-                        Real estate developer with DealSite and subscription.
-                      </span>
+                <div className="bg-white border-2 border-gray-100 rounded-xl p-4 transition-all duration-300 hover:border-[#8DDB90]/50 hover:shadow-md peer-checked:border-[#8DDB90] peer-checked:bg-[#8DDB90]/5 peer-checked:shadow-md peer-disabled:opacity-50">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-[#8DDB90]/10 rounded-lg flex items-center justify-center shrink-0">
+                      <svg className="w-5 h-5 text-[#09391C]" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd"/>
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="block text-base font-semibold text-[#09391C] truncate">Developer</span>
+                      <span className="block text-xs text-[#5A5D63] truncate">Showcase projects</span>
+                    </div>
+                    <div className="w-5 h-5 rounded-full border-2 border-gray-300 peer-checked:border-[#8DDB90] peer-checked:bg-[#8DDB90] flex items-center justify-center shrink-0">
+                      <svg className="w-3 h-3 text-white opacity-0 peer-checked:opacity-100" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                      </svg>
                     </div>
                   </div>
                 </div>
@@ -511,19 +559,19 @@ const Register = () => {
 
           {/* Social Login Section - Show only when userType is selected */}
           {formik.values.userType && (
-            <div className="w-full lg:px-[60px] mt-4"> {/* Added mt-4 for spacing */}
-              <div className="relative w-full mb-4"> {/* Added mb-4 for spacing */}
+            <div className="w-full">
+              <div className="relative w-full mb-4">
                 <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                  <div className="w-full border-t border-gray-300" />
+                  <div className="w-full border-t border-gray-200" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="bg-[#EEF1F1] font-bold px-2 text-gray-500">
-                    or continue with
+                  <span className="bg-[#F8FAF8] px-3 text-gray-500 text-xs font-medium uppercase tracking-wide">
+                    Or sign up with
                   </span>
                 </div>
               </div>
 
-              <div className="flex justify-center gap-[15px]">
+              <div className="flex justify-center gap-3">
                 {googleOAuthConfigured ? (
                   <GoogleRegisterButton
                     userType={formik.values.userType}
@@ -537,28 +585,34 @@ const Register = () => {
                 ) : (
                   <RegisterWith
                     icon={googleIcon}
-                    text="Continue with Google (not configured)"
+                    text="Google"
                     onClick={() => toast.error("Google sign-in is not configured for this environment.")}
                     isDisabled={true}
                   />
                 )}
                 <RegisterWith
                   icon={facebookIcon}
-                  text="Continue with Facebook"
+                  text="Facebook"
                   onClick={handleFacebookSignup}
                   isDisabled={isDisabled || socialProcessing}
                 />
               </div>
 
-              <div className="mt-6 flex items-center" aria-hidden="true">
-                <div className="w-full border-t border-gray-300" />
+              <div className="mt-5 relative">
+                <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                  <div className="w-full border-t border-gray-200" />
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="bg-[#F8FAF8] px-3 text-gray-400 text-xs">
+                    Or fill in your details
+                  </span>
+                </div>
               </div>
-
             </div>
           )}
 
-          {/* Form Inputs (using InputField component) */}
-          <div className="w-full min-h-[460px] flex flex-col gap-[15px] lg:px-[60px]">
+          {/* Form Inputs */}
+          <div className="w-full flex flex-col gap-4">
             <div className="flex flex-col lg:flex-row gap-[15px] w-full">
               <InputField
                 formik={formik}
@@ -623,78 +677,61 @@ const Register = () => {
           </div>
 
           {/* Terms and Conditions Checkbox */}
-          <div className="flex justify-center items-center w-full lg:px-[60px]">
-            <div className="flex items-start gap-3 w-full">
-              <label className="relative flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={agreed}
-                  onChange={() => !isDisabled && setAgreed(!agreed)}
-                  disabled={isDisabled}
-                  className="sr-only peer"
-                />
-                <div className="w-5 h-5 border-2 border-gray-300 rounded bg-white transition-all duration-300 peer-checked:border-[#8DDB90] peer-checked:bg-[#8DDB90] peer-disabled:opacity-50 peer-disabled:cursor-not-allowed flex items-center justify-center">
-                  <svg
-                    className="w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity duration-300"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-              </label>
-              <div className="flex-1 text-sm text-gray-600 leading-relaxed">
-                By clicking here, I agree to the Khabi-Teq realty{" "}
-                <a
-                  href="/policies_page"
-                  className="text-[#0B423D] font-bold hover:underline"
-                >
-                  Policy and Rules
-                </a>
-              </div>
-            </div>
-          </div>
-            {/**Button */}
-            <div className="lg:px-[60px] w-full">
-              <Button
-                value={`${
-                  isDisabled
-                    ? "Registering..."
-                    : isSuccess
-                      ? "Registration Successful!"
-                      : "Register"
-                }`}
-                isDisabled={
-                  isDisabled ||
-                  isSuccess ||
-                  !agreed ||
-                  // Ensure all required fields from initialValues are checked for form validity
-                  !formik.values.email ||
-                  !formik.values.password ||
-                  !formik.values.confirmPassword || // Check confirmPassword
-                  !formik.values.firstName ||
-                  !formik.values.lastName ||
-                  !formik.values.phone ||
-                  !formik.values.userType ||
-                  // Also consider if formik.isValid should be part of this check
-                  (formik.submitCount > 0 && !formik.isValid) // Prevent submission if form is invalid after first attempt
-                }
-                className="min-h-[60px] w-full rounded-md py-[12px] duration-300 transition ease-in-out px-[24px] bg-[#8DDB90] text-[#FAFAFA] text-base leading-[25.6px] font-bold mt-6"
-                type="submit"
-                green={true}
+          <div className="w-full">
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={agreed}
+                onChange={() => !isDisabled && setAgreed(!agreed)}
+                disabled={isDisabled}
+                className="sr-only peer"
               />
-            </div>
-            {/**Already have an account */}
-            <span className="text-base leading-[25.6px] font-normal">
-              Already have an account?{" "}
-              <Link className="font-semibold text-[#09391C]" href={"/auth/login"}>
-                Sign In
-              </Link>
-            </span>
+              <div className="w-5 h-5 border-2 border-gray-300 rounded-md bg-white transition-all duration-200 peer-checked:border-[#8DDB90] peer-checked:bg-[#8DDB90] peer-disabled:opacity-50 flex items-center justify-center shrink-0 mt-0.5">
+                <svg className="w-3 h-3 text-white opacity-0 peer-checked:opacity-100" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                </svg>
+              </div>
+              <span className="text-sm text-gray-600 leading-relaxed">
+                I agree to the Khabi-Teq{" "}
+                <Link href="/policies_page" className="text-[#09391C] font-semibold hover:underline">
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link href="/policies_page" className="text-[#09391C] font-semibold hover:underline">
+                  Privacy Policy
+                </Link>
+              </span>
+            </label>
+          </div>
+
+          {/* Submit Button */}
+          <Button
+            value={isDisabled ? "Creating account..." : isSuccess ? "Success!" : "Create Account"}
+            isDisabled={
+              isDisabled ||
+              isSuccess ||
+              !agreed ||
+              !formik.values.email ||
+              !formik.values.password ||
+              !formik.values.confirmPassword ||
+              !formik.values.firstName ||
+              !formik.values.lastName ||
+              !formik.values.phone ||
+              !formik.values.userType ||
+              (formik.submitCount > 0 && !formik.isValid)
+            }
+            className="min-h-[52px] w-full rounded-xl bg-[#09391C] text-white text-base font-semibold hover:bg-[#0B423D] transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+            type="submit"
+            green={false}
+          />
+
+          {/* Sign In Link */}
+          <p className="text-center text-sm text-gray-600">
+            Already have an account?{" "}
+            <Link href="/auth/login" className="font-semibold text-[#09391C] hover:underline">
+              Sign in
+            </Link>
+          </p>
 
         </form>
       </div>

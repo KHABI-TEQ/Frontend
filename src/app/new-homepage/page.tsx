@@ -8,6 +8,7 @@ import { useHomePageSettings } from "@/hooks/useSystemSettings";
 import ErrorBoundary from "@/components/general-components/ErrorBoundary";
 import EmailVerification from "@/components/EmailVerification";
 import DevelopmentNotice from "@/components/general-components/DevelopmentNotice";
+import AIAdvantageSection from "@/components/new-homepage/ai-advantage-section";
 import KeyFeaturesSection from "@/components/new-homepage/key-features-section";
 import NewHeroSection from "@/components/new-homepage/new-hero-section";
 
@@ -61,7 +62,7 @@ const NewHomepage = ({
             fallback={
               <div className="w-full min-h-[600px] bg-[#0B423D] flex items-center justify-center">
                 <div className="text-center text-white">
-                  <h1 className="text-4xl font-bold mb-4">Find the Perfect Property</h1>
+                  <h1 className="text-4xl font-bold mb-4">List smarter. Match faster. Close with confidence.</h1>
                   <p className="text-xl">Unable to load hero section at the moment.</p>
                 </div>
               </div>
@@ -69,7 +70,20 @@ const NewHomepage = ({
             <NewHeroSection />
           </ErrorBoundary>
 
-          {/* 2. KEY FEATURES SECTION */}
+          {/* 2. AI ADVANTAGE BANNER */}
+          <ErrorBoundary
+            fallback={
+              <div className="w-full py-12 bg-gradient-to-r from-[#09391C] to-[#0B423D]">
+                <div className="container mx-auto px-4 text-center">
+                  <h2 className="text-2xl font-bold text-white mb-4">Speak or type — we make it work.</h2>
+                  <p className="text-white/80">AI-powered property listing and matching.</p>
+                </div>
+              </div>
+            }>
+            <AIAdvantageSection />
+          </ErrorBoundary>
+
+          {/* 3. KEY FEATURES SECTION */}
           <ErrorBoundary
             fallback={
               <div className="w-full py-16 bg-[#FFFEFB]">
@@ -82,7 +96,7 @@ const NewHomepage = ({
             <KeyFeaturesSection />
           </ErrorBoundary>
 
-          {/* 3. VALUE PROPOSITION SECTION (Replacement from Section 2) */}
+          {/* 4. VALUE PROPOSITION SECTION */}
           <Suspense fallback={<div className="w-full py-16 bg-[#FFFEFB]" />}>
             <ErrorBoundary
               fallback={
@@ -97,7 +111,7 @@ const NewHomepage = ({
             </ErrorBoundary>
           </Suspense>
 
-          {/* 4. FEATURED PROPERTIES SECTION */}
+          {/* 5. FEATURED PROPERTIES SECTION */}
           <Suspense fallback={<div className="w-full py-16 bg-[#FFFEFB]" />}>
             <ErrorBoundary
               fallback={
@@ -112,7 +126,7 @@ const NewHomepage = ({
             </ErrorBoundary>
           </Suspense>
 
-          {/* 5. REVIEWS & COUNTERS (SOCIAL PROOF & TRUST SIGNALS) */}
+          {/* 6. REVIEWS & COUNTERS (SOCIAL PROOF & TRUST SIGNALS) */}
           <Suspense fallback={<div className="w-full py-16 bg-[#F5F7F9]" />}>
             <ErrorBoundary
               fallback={
@@ -127,7 +141,7 @@ const NewHomepage = ({
             </ErrorBoundary>
           </Suspense>
 
-          {/* 6. FOR REAL ESTATE AGENTS SECTION */}
+          {/* 7. FOR REAL ESTATE AGENTS SECTION */}
           <Suspense fallback={<div className="w-full py-16 bg-[#FFFEFB]" />}>
             <ErrorBoundary
               fallback={
@@ -142,7 +156,7 @@ const NewHomepage = ({
             </ErrorBoundary>
           </Suspense>
 
-          {/* 7. SECURITY & TRANSPARENCY SECTION */}
+          {/* 8. SECURITY & TRANSPARENCY SECTION */}
           <Suspense fallback={<div className="w-full py-16 bg-[#09391C]" />}>
             <ErrorBoundary
               fallback={
@@ -157,7 +171,7 @@ const NewHomepage = ({
             </ErrorBoundary>
           </Suspense>
 
-          {/* 8. FINAL CALL TO ACTION (BOTTOM) */}
+          {/* 9. FINAL CALL TO ACTION (BOTTOM) */}
           <Suspense fallback={<div className="w-full py-16 bg-[#8DDB90]" />}>
             <ErrorBoundary
               fallback={

@@ -7,6 +7,7 @@ const withBundleAnalyzer = bundleAnalyzer({
 });
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ['192.168.0.3', 'localhost', '127.0.0.1'],
   eslint: {
     ignoreDuringBuilds: true,
   },

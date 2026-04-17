@@ -41,6 +41,16 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
   const pathName = usePathname();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const { user, logout } = useUserContext();
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  // Track scroll position for navbar styling
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Show "Publisher Properties (Request to Market)" only for logged-in Agents
   useEffect(() => {
@@ -145,9 +155,9 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
   return (
     <Fragment>
       <header
-        className={`w-full flex justify-center ${
+        className={`fixed top-0 left-0 right-0 z-50 flex justify-center transition-all duration-500 ${
           isComingSoon && "filter blur-sm"
-        } items-center py-[20px] pl-[10px] bg-[#EEF1F1] pr-[20px] ${
+        } ${
           (isContactUsClicked ||
             rentPage.isSubmitForInspectionClicked ||
             isModalOpened ||
@@ -157,38 +167,45 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
           "filter brightness-[30%] transition-all duration-500 overflow-hidden"
         }`}
       >
-        <nav className={`h-[50px] container flex justify-between items-center`}>
-          <Link href="/">
-            <Image
-              src={khabiteqIcon}
-              width={1000}
-              height={1000}
-              className="md:w-[169px] md:h-[25px] w-[144px] h-[30px]"
-              alt=""
-            />
+        <motion.nav 
+          initial={{ y: -100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
+          className={`mx-4 sm:mx-6 lg:mx-8 mt-4 px-4 sm:px-6 py-3 rounded-2xl flex justify-between items-center transition-all duration-500 ${
+            isScrolled 
+              ? 'bg-white/80 backdrop-blur-xl shadow-lg shadow-black/5 border border-white/50 w-full max-w-7xl' 
+              : 'bg-[#EEF1F1]/90 backdrop-blur-md w-full max-w-7xl'
+          }`}>
+          <Link href="/" className="group flex items-center gap-2">
+            <div className="relative overflow-hidden">
+              <Image
+                src={khabiteqIcon}
+                width={1000}
+                height={1000}
+                className="md:w-[140px] md:h-[22px] w-[120px] h-[20px] transition-transform duration-300 group-hover:scale-105"
+                alt="Khabiteq"
+              />
+            </div>
           </Link>
           
-          <div className="lg:flex gap-[20px] hidden">
+          <div className="lg:flex gap-1 hidden">
             {navigationState.map((item: NavigationItem, idx: number) => {
               if (item.subItems && item.subItems.length > 0) {
                 const isOpen = openDropdown === item.name;
                 return (
                   <div
                     key={idx}
-                    className="relative flex flex-col navigation-dropdown"
+                    className="relative flex flex-col navigation-dropdown group"
                     onMouseEnter={() => {
-                      // Close other dropdowns if any
                       setIsNotificationModalOpened(false);
                       setIsUserProfileModal(false);
                       setOpenDropdown(item.name);
                     }}
                     onMouseLeave={(e) => {
-                      // Check if mouse is moving to the dropdown or staying within the container
                       const rect = e.currentTarget.getBoundingClientRect();
                       const mouseX = e.clientX;
                       const mouseY = e.clientY;
 
-                      // If mouse is below the container (moving to dropdown), don't close
                       if (
                         mouseY > rect.bottom &&
                         mouseX >= rect.left &&
@@ -197,35 +214,42 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
                         return;
                       }
 
-                      // Add delay to prevent flickering when moving to dropdown
                       setTimeout(() => {
                         setOpenDropdown(null);
                       }, 300);
                     }}
                   >
-                    <button
-                      className="flex items-center gap-1 cursor-pointer py-2"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setOpenDropdown(isOpen ? null : item.name);
-                      }}
-                    >
-                      <span
-                        className={`transition-all duration-300 font-medium text-[18px] leading-[21px] hover:text-[#8DDB90] ${
-                          pathName?.includes(item.url) || isOpen
-                            ? "text-[#8DDB90]"
-                            : "text-[#000000]"
+                    <div className="flex items-center gap-1">
+                      <Link
+                        href={item.url}
+                        onClick={() => setOpenDropdown(null)}
+                        className={`relative px-3 py-2 text-sm font-medium tracking-wide transition-all duration-300 rounded-lg hover:bg-[#8DDB90]/10 ${
+                          pathName?.includes(item.url)
+                            ? "text-[#09391C] bg-[#8DDB90]/10"
+                            : "text-gray-700 hover:text-[#09391C]"
                         }`}
                       >
                         {item.name}
-                      </span>
-                      <ChevronDown
-                        size={12}
-                        className={`transition-transform duration-200 w-3 h-3 ${
-                          isOpen ? "rotate-180" : ""
-                        }`}
-                      />
-                    </button>
+                        <span className={`absolute bottom-1 left-3 right-3 h-0.5 bg-[#8DDB90] rounded-full transition-all duration-300 ${
+                          pathName?.includes(item.url) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                        }`} />
+                      </Link>
+                      <button
+                        className="p-1.5 rounded-lg hover:bg-[#8DDB90]/10 transition-all duration-300"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setOpenDropdown(isOpen ? null : item.name);
+                        }}
+                      >
+                        <ChevronDown
+                          size={14}
+                          className={`transition-all duration-300 ${
+                            isOpen ? "rotate-180 text-[#09391C]" : "text-gray-500 group-hover:text-[#09391C]"
+                          }`}
+                        />
+                      </button>
+                    </div>
                     <AnimatePresence>
                       {isOpen && (
                         <DropdownOptions
@@ -254,18 +278,23 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
                     );
                     setNavigationState(updatedNav);
                   }}
-                  className={`transition-all duration-300 font-medium text-[18px] leading-[21px] hover:text-[#8DDB90] py-2 ${
-                    item.url === pathName ? "text-[#8DDB90]" : "text-[#000000]"
+                  className={`relative px-3 py-2 text-sm font-medium tracking-wide transition-all duration-300 rounded-lg hover:bg-[#8DDB90]/10 group ${
+                    item.url === pathName 
+                      ? "text-[#09391C] bg-[#8DDB90]/10" 
+                      : "text-gray-700 hover:text-[#09391C]"
                   }`}
                 >
                   {item.name}
+                  <span className={`absolute bottom-1 left-3 right-3 h-0.5 bg-[#8DDB90] rounded-full transition-all duration-300 ${
+                    item.url === pathName ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                  }`} />
                 </Link>
               );
             })}
           </div>
 
           {/**Buttons for desktop screens */}
-          <div className="hidden lg:flex items-center gap-6">
+          <div className="hidden lg:flex items-center gap-4">
             {user?._id || user?.id ? (
               <>
                 {/* Notifications */}
@@ -280,7 +309,7 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
                       setOpenDropdown(null);
                       setIsUserProfileModal(false);
                     }}
-                    className="w-12 h-12 rounded-full flex items-center justify-center bg-white shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 relative"
+                    className="w-10 h-10 rounded-full flex items-center justify-center bg-white shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 hover:border-[#8DDB90]/30 relative hover:scale-105"
                   >
                     <Image
                       src={notificationBellIcon}
@@ -291,9 +320,9 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
                     />
                     {/* Notification Badge */}
                     {unreadCount > 0 && (
-                      <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
-                        <span className="text-white text-xs font-bold">
-                          {unreadCount}
+                      <div className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center shadow-sm">
+                        <span className="text-white text-[10px] font-semibold">
+                          {unreadCount > 9 ? '9+' : unreadCount}
                         </span>
                       </div>
                     )}
@@ -321,7 +350,7 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
                       setOpenDropdown(null);
                       setIsNotificationModalOpened(false);
                     }}
-                    className="w-12 h-12 rounded-full flex items-center justify-center bg-gradient-to-br from-[#8DDB90] to-[#09391C] shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
+                    className="w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-br from-[#8DDB90] to-[#6BC76F] shadow-sm hover:shadow-md transition-all duration-300 hover:scale-110 ring-2 ring-white/50 hover:ring-[#8DDB90]/30"
                   >
                     {user?.profile_picture ? (
                       <Image
@@ -350,121 +379,29 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
                 </div>
               </>
             ) : (
-              <div className="flex items-center gap-3">
-                <Button
-                  value="Login"
-                  onClick={() => {
-                    router.push("/auth/login");
-                  }}
-                  className="text-base bg-transparent border border-[#8DDB90] text-[#8DDB90] hover:bg-[#8DDB90] hover:text-white transition-all duration-300 leading-[25px] font-medium px-6 h-[44px] rounded-lg"
-                />
-                <Button
-                  value="Sign up"
-                  green={true}
-                  onClick={() => {
-                    window.localStorage.setItem("signupFromHeader", "true");
-                    router.push("/auth/register");
-                  }}
-                  className="text-base text-[#FFFFFF] leading-[25px] font-medium px-6 h-[44px] rounded-lg bg-[#8DDB90] hover:bg-[#7BC87F] transition-all duration-300"
-                />
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => router.push("/auth/login")}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-[#09391C] rounded-full hover:bg-gray-100/80 transition-all duration-300"
+                >
+                  Log in
+                </button>
+                <button
+                  onClick={() => router.push("/auth/register")}
+                  className="px-5 py-2.5 text-sm font-semibold text-white bg-[#09391C] hover:bg-[#0B423D] rounded-full shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
+                >
+                  Get Started
+                </button>
               </div>
             )}
           </div>
 
-          {/**Mobile controls */}
-          <div className="flex items-center gap-3 lg:hidden">
-            {user?._id || user?.id ? (
-              <>
-                {/* Mobile Notifications */}
-                <div className="notification-dropdown">
-                  <button
-                    type="button"
-                    title="Notifications"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsNotificationModalOpened(!isNotificationModalOpened);
-                      // Close other dropdowns
-                      setOpenDropdown(null);
-                      setIsUserProfileModal(false);
-                    }}
-                    className="w-10 h-10 rounded-full flex items-center justify-center bg-white shadow-sm border border-gray-100 relative"
-                  >
-                    <Image
-                      src={notificationBellIcon}
-                      width={18}
-                      height={18}
-                      alt="Notifications"
-                      className="w-[18px] h-[18px]"
-                    />
-                    {/* Mobile Notification Badge */}
-                    {unreadCount > 0 && (
-                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
-                        <span className="text-white text-xs font-bold">{unreadCount}</span>
-                      </div>)
-                    }
-
-                  </button>
-                </div>
-
-                {/* Mobile User Profile */}
-                <div className="relative profile-dropdown">
-                  <button
-                    type="button"
-                    title="Profile"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsUserProfileModal(!isUserProfileModalOpened);
-                      // Close other dropdowns
-                      setOpenDropdown(null);
-                      setIsNotificationModalOpened(false);
-                    }}
-                    className="w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-br from-[#8DDB90] to-[#09391C] shadow-sm"
-                  >
-                    {user?.profile_picture ? (
-                      <Image
-                        src={user?.profile_picture}
-                        width={32}
-                        height={32}
-                        alt="Profile"
-                        className="w-full h-full rounded-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-white font-semibold text-xs">
-                        {user.firstName?.charAt(0)?.toUpperCase() || "U"}
-                      </span>
-                    )}
-                  </button>
-                  <AnimatePresence>
-                    {isUserProfileModalOpened && (
-                      <Suspense fallback={null}>
-                        <UserProfile
-                          userDetails={user}
-                          closeUserProfileModal={setIsUserProfileModal}
-                        />
-                      </Suspense>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                {/* Mobile Notifications Modal */}
-                <AnimatePresence>
-                  {isNotificationModalOpened && (
-                    <Suspense fallback={null}>
-                      <UserNotifications
-                        closeNotificationModal={setIsNotificationModalOpened}
-                      />
-                    </Suspense>
-                  )}
-                </AnimatePresence>
-              </>
-            ) : null}
-
+          <div className="flex lg:hidden">
             <button
               onClick={() => {
                 setIsModalOpened(!isModalOpened);
               }}
-              className="w-10 h-10 flex items-center justify-center bg-white rounded-lg shadow-sm border border-gray-100"
-              aria-label="Menu"
+              className="w-10 h-10 rounded-full flex items-center justify-center bg-white shadow-sm hover:shadow-md border border-gray-100 hover:border-[#8DDB90]/30 transition-all duration-300 hover:scale-105"
             >
               <Image
                 src={barIcon}
@@ -475,7 +412,7 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
               />
             </button>
           </div>
-        </nav>
+        </motion.nav>
       </header>
 
       {/* Backdrop overlay for sidebar */}
@@ -511,21 +448,19 @@ const DropdownOptions = ({
   useClickOutside(ref, () => setModal(false));
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 10 }}
-      transition={{ duration: 0.2 }}
+      <motion.div
+      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+      transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
       ref={ref}
-      className="w-[231px] mt-[15px] p-[19px] flex flex-col gap-[15px] bg-[#FFFFFF] shadow-xl border border-gray-100 rounded-lg absolute left-0 z-[999]"
+      className="w-[220px] mt-3 p-2 flex flex-col gap-1 bg-white/95 backdrop-blur-xl shadow-xl shadow-black/10 border border-gray-100/80 rounded-xl absolute left-0 z-[999]"
       onMouseEnter={() => setModal(true)}
       onMouseLeave={(e) => {
-        // Check if mouse is moving back to parent container
         const dropdownRect = e.currentTarget.getBoundingClientRect();
         const mouseX = e.clientX;
         const mouseY = e.clientY;
 
-        // If mouse is above the dropdown (moving back to parent), don't close immediately
         if (
           mouseY < dropdownRect.top &&
           mouseX >= dropdownRect.left &&
@@ -548,7 +483,6 @@ const DropdownOptions = ({
         <Link
           onClick={(e) => {
             e.preventDefault();
-            // Handle marketplace specific logic
             if (parentName === "Marketplace") {
               if (item.name === "Buy") {
                 setSelectedType("Buy a property");
@@ -561,12 +495,11 @@ const DropdownOptions = ({
               }
             }
             setModal(false);
-            // Navigate after setting type
             setTimeout(() => {
               window.location.href = item.url;
             }, 100);
           }}
-          className="text-base font-medium text-[#000000] hover:text-[#8DDB90] transition-colors py-2 px-1 rounded hover:bg-gray-50"
+          className="text-sm font-medium text-gray-700 hover:text-[#09391C] transition-all duration-200 py-2.5 px-4 rounded-lg hover:bg-[#8DDB90]/10"
           href={item.url}
           key={idx}
         >

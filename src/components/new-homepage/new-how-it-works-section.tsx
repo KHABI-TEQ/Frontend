@@ -134,9 +134,9 @@ const NewHowItWorksSection = () => {
             <span className='text-white text-lg'>
               Ready to get started?
             </span>
-            <Link href="/preference">
+            <Link href="/auth/register">
               <button className='bg-[#8DDB90] hover:bg-[#7BC87F] text-white px-4 sm:px-6 md:px-8 py-3 rounded-full font-bold transition-colors duration-300 text-sm sm:text-base md:text-lg flex items-center justify-center min-h-[48px]'>
-                <span className="whitespace-nowrap">Submit Your Preference Now</span>
+                <span className="whitespace-nowrap">Create Free Account</span>
               </button>
             </Link>
           </div>

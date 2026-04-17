@@ -77,7 +77,7 @@ const FinalCTASection = () => {
           </p>
 
           {/* Primary CTA Button */}
-          <Link href="/preference">
+          <Link href="/auth/register">
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}

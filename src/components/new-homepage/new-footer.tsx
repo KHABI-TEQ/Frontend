@@ -203,8 +203,11 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
   };
 
   return (
-    <footer className={`bg-[#0B423D] w-full ${isComingSoon && 'filter blur-sm'}`}>
-      <div className='container mx-auto px-4 md:px-8 py-16'>
+    <footer className={`relative bg-gradient-to-br from-[#0B423D] via-[#09391C] to-[#0A3E72] w-full overflow-hidden ${isComingSoon && 'filter blur-sm'}`}>
+      {/* Background Pattern */}
+      <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-[0.03]" />
+      
+      <div className='relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-16 sm:py-20'>
         {/* Main Footer Content */}
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12 mb-12'>
           {/* Company Info */}
@@ -212,29 +215,32 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
+              transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
               viewport={{ once: true }}>
-              <Image
-                src={khabiTeqIcon}
-                width={169}
-                height={35}
-                alt='Khabiteq Logo'
-                className='mb-6'
-              />
-              <p className={`text-[#D6DDEB] text-base leading-relaxed mb-6 max-w-md ${footerFontClass}`}>
-                Simplifying real estate transactions in Nigeria. Buy, sell, rent, and manage properties with ease through Khabi-Teq&apos;s trusted platform. Verified agents, secure transactions, and transparent deals.
+              <div className="flex items-center gap-3 mb-6">
+                <Image
+                  src={khabiTeqIcon}
+                  width={140}
+                  height={30}
+                  alt='Khabiteq Logo'
+                  className='w-[140px] h-auto brightness-110'
+                />
+              </div>
+              <p className={`text-[#D6DDEB]/90 text-sm sm:text-base leading-relaxed mb-6 max-w-md ${footerFontClass}`}>
+                Simplifying real estate transactions in Nigeria. Buy, sell, rent, and manage properties with ease through our trusted platform.
               </p>
               {/* Quick Actions */}
-              <div className='space-y-3'>
-                <h4 className={`text-white font-semibold text-lg mb-4 ${footerFontClass}`}>
+              <div className='space-y-2'>
+                <h4 className={`text-white font-semibold text-sm uppercase tracking-wider mb-3 ${footerFontClass}`}>
                   Quick Actions
                 </h4>
                 {quickActions.map((action, index) => (
                   <Link
                     key={index}
                     href={action.url}
-                    className='block text-[#8DDB90] hover:text-white transition-colors duration-300 text-sm font-medium'>
-                    → {action.name}
+                    className='group flex items-center gap-2 text-[#8DDB90] hover:text-white transition-all duration-300 text-sm font-medium py-1.5'>
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#8DDB90] group-hover:bg-white transition-colors" />
+                    {action.name}
                   </Link>
                 ))}
               </div>
@@ -246,17 +252,18 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
+              transition={{ duration: 0.6, delay: 0.1, ease: [0.25, 0.1, 0.25, 1] }}
               viewport={{ once: true }}>
-              <h3 className={`text-white font-semibold text-lg mb-6 ${footerFontClass}`}>
+              <h3 className={`text-white font-semibold text-sm uppercase tracking-wider mb-5 ${footerFontClass}`}>
                 Explore
               </h3>
-              <div className='space-y-4'>
+              <div className='space-y-3'>
                 {exploreLinks.map((link, index) => (
                   <Link
                     key={index}
                     href={link.url}
-                    className={`block text-[#D6DDEB] hover:text-white transition-colors duration-300 text-base ${footerFontClass}`}>
+                    className={`group flex items-center gap-2 text-[#D6DDEB]/80 hover:text-white transition-all duration-300 text-sm ${footerFontClass}`}>
+                    <span className="w-0 group-hover:w-2 h-0.5 bg-[#8DDB90] rounded-full transition-all duration-300" />
                     {link.name}
                   </Link>
                 ))}
@@ -269,33 +276,68 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
+              transition={{ duration: 0.6, delay: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
               viewport={{ once: true }}>
-              <h3 className={`text-white font-semibold text-lg mb-6 ${footerFontClass}`}>
+              <h3 className={`text-white font-semibold text-sm uppercase tracking-wider mb-5 ${footerFontClass}`}>
                 Services
               </h3>
-              <div className='space-y-4'>
+              <div className='space-y-3'>
                 {servicesLinks.map((link, index) => (
                   <Link
                     key={index}
                     href={link.url}
-                    className={`block text-[#D6DDEB] hover:text-white transition-colors duration-300 text-base ${footerFontClass}`}>
+                    className={`group flex items-center gap-2 text-[#D6DDEB]/80 hover:text-white transition-all duration-300 text-sm ${footerFontClass}`}>
+                    <span className="w-0 group-hover:w-2 h-0.5 bg-[#8DDB90] rounded-full transition-all duration-300" />
+                    {link.name}
+                  </Link>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Contact */}
+          <div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+              viewport={{ once: true }}>
+              <h3 className={`text-white font-semibold text-sm uppercase tracking-wider mb-5 ${footerFontClass}`}>
+                Contact
+              </h3>
+              <div className='space-y-4'>
+                {supportLinks.map((link, index) => (
+                  <Link
+                    key={index}
+                    href={link.url}
+                    className={`group flex items-center gap-2 text-[#D6DDEB]/80 hover:text-white transition-all duration-300 text-sm ${footerFontClass}`}>
+                    <span className="w-0 group-hover:w-2 h-0.5 bg-[#8DDB90] rounded-full transition-all duration-300" />
                     {link.name}
                   </Link>
                 ))}
               </div>
               {/* Contact Info */}
-              <div className='mt-6 pt-6 border-t border-white/20'>
-                <div className='space-y-2'>
-                  <p className="text-[#D6DDEB] text-sm">
-                    📧 info@khabiteqrealty.com
-                  </p>
-                  <p className="text-[#D6DDEB] text-sm">
-                    📞 +234 813 210 8659, 02013306352
-                  </p>
-                  <p className="text-[#D6DDEB] text-sm">
-                    📍 Lagos, Nigeria
-                  </p>
+              <div className='mt-6 pt-6 border-t border-white/10'>
+                <div className='space-y-3'>
+                  <a href="mailto:info@khabiteqrealty.com" className="flex items-center gap-2 text-[#D6DDEB]/80 hover:text-[#8DDB90] transition-colors text-sm group">
+                    <svg className="w-4 h-4 text-[#8DDB90]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    info@khabiteqrealty.com
+                  </a>
+                  <a href="tel:+2348132108659" className="flex items-center gap-2 text-[#D6DDEB]/80 hover:text-[#8DDB90] transition-colors text-sm group">
+                    <svg className="w-4 h-4 text-[#8DDB90]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                    +234 813 210 8659
+                  </a>
+                  <a href="https://maps.google.com/?q=Lagos,Nigeria" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-[#D6DDEB]/80 hover:text-[#8DDB90] transition-colors text-sm group">
+                    <svg className="w-4 h-4 text-[#8DDB90]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Lagos, Nigeria
+                  </a>
                 </div>
               </div>
             </motion.div>
@@ -306,15 +348,15 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
+          transition={{ duration: 0.6, delay: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
           viewport={{ once: true }}
-          className='bg-white/5 rounded-2xl p-4 sm:p-6 md:p-8 mb-12'>
+          className='bg-white/5 backdrop-blur-sm rounded-2xl p-4 sm:p-6 md:p-8 mb-12 border border-white/10'>
           <div className='grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-center'>
             <div>
               <h4 className={`text-white font-bold text-lg sm:text-xl mb-2 ${footerFontClass}`}>
                 Stay Updated with Property Deals
               </h4>
-              <p className="text-[#D6DDEB] text-sm sm:text-base">
+              <p className="text-[#D6DDEB]/80 text-sm sm:text-base">
                 Get notified about new properties, market insights, and exclusive offers.
               </p>
             </div>
@@ -324,12 +366,12 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
                 placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className='w-full px-4 py-3 rounded-full bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#8DDB90] text-sm'
+                className='w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#8DDB90] focus:bg-white/20 transition-all duration-300 text-sm'
               />
               <button
                 onClick={handleSubscribe}
                 disabled={isSubmitting}
-                className='bg-[#8DDB90] hover:bg-[#7BC87F] disabled:opacity-60 text-white px-6 py-3 rounded-full font-medium transition-colors duration-300 whitespace-nowrap text-sm sm:text-base flex items-center justify-center min-h-[48px]'
+                className='bg-[#8DDB90] hover:bg-[#7BC87F] disabled:opacity-60 text-[#09391C] px-6 py-3 rounded-xl font-semibold transition-all duration-300 whitespace-nowrap text-sm sm:text-base flex items-center justify-center min-h-[48px] hover:shadow-lg hover:-translate-y-0.5'
               >
                 {isSubmitting ? 'Subscribing...' : 'Subscribe'}
               </button>
@@ -338,17 +380,16 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
         </motion.div>
 
         {/* Bottom Section */}
-        <div className='border-t border-white/20 pt-6 sm:pt-8'>
-          <div className='space-y-4 sm:space-y-0'>
+        <div className='border-t border-white/10 pt-6 sm:pt-8'>
+          <div className='flex flex-col sm:flex-row items-center justify-between gap-4'>
             {/* Copyright */}
             <motion.div
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.5 }}
-              viewport={{ once: true }}
-              className='text-center sm:text-left'>
-              <p className={`text-gray-400 text-xs sm:text-sm ${footerFontClass}`}>
-                © {new Date().getFullYear()} Khabiteq Realty Limited. All rights reserved.
+              viewport={{ once: true }}>
+              <p className={`text-[#D6DDEB]/60 text-xs sm:text-sm ${footerFontClass}`}>
+                © {new Date().getFullYear()} Khabi-Teq · <Link href="/policies_page" className="hover:text-[#8DDB90] transition-colors">Privacy</Link> · <Link href="/policies_page" className="hover:text-[#8DDB90] transition-colors">Terms</Link>
               </p>
             </motion.div>
             {/* Social Links */}
@@ -357,23 +398,18 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
               whileInView={{ opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.6 }}
               viewport={{ once: true }}
-              className='flex flex-col sm:flex-row items-center justify-center sm:justify-end gap-3 sm:gap-4'>
-              <span className="text-[#D6DDEB] text-xs sm:text-sm whitespace-nowrap">
-                Follow us:
-              </span>
-              <div className='flex flex-wrap gap-2 sm:gap-3 justify-center sm:justify-end'>
-                {(computedLinks.length ? computedLinks : defaultSocialLinks).map((social, index) => (
-                  <Link
-                    key={index}
-                    href={social.url}
-                    target='_blank'
-                    rel='noopener noreferrer'
-                    className='w-9 h-9 sm:w-10 sm:h-10 bg-white/10 rounded-full flex items-center justify-center text-[#D6DDEB] hover:bg-[#8DDB90] hover:text-white transition-all duration-300 hover:scale-110'
-                    title={social.name}>
-                    {social.icon}
-                  </Link>
-                ))}
-              </div>
+              className='flex items-center gap-2 sm:gap-3'>
+              {(computedLinks.length ? computedLinks : defaultSocialLinks).map((social, index) => (
+                <Link
+                  key={index}
+                  href={social.url}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='w-9 h-9 sm:w-10 sm:h-10 bg-white/10 hover:bg-[#8DDB90] rounded-full flex items-center justify-center text-[#D6DDEB] hover:text-[#09391C] transition-all duration-300 hover:scale-110 hover:shadow-lg'
+                  title={social.name}>
+                  {social.icon}
+                </Link>
+              ))}
             </motion.div>
           </div>
         </div>

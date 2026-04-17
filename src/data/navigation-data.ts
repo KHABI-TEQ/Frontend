@@ -14,58 +14,29 @@ export const mainNavigationData: NavigationItem[] = [
     isClicked: true,
   },
   {
-    name: "Client",
-    url: "/preference",
+    name: "Who is it for?",
+    url: "/user-types",
     isClicked: false,
-    subItems: [
-      {
-        name: "Buy",
-        url: "/preference?type=buy",
-        isClicked: false,
-      },
-      {
-        name: "Rent",
-        url: "/preference?type=rent",
-        isClicked: false,
-      },
-      {
-        name: "Shortlet",
-        url: "/preference?type=shortlet",
-        isClicked: false,
-      },
-      {
-        name: "Joint Venture",
-        url: "/preference?type=joint-venture",
-        isClicked: false,
-      },
-      {
-        name: "Verify Documents",
-        url: "/document-verification",
-        isClicked: false,
-      },
-    ],
+  },
+  {
+    name: "Client",
+    url: "/for-clients",
+    isClicked: false,
   },
   {
     name: "Landlord",
-    url: "/landlord",
+    url: "/for-landlords",
     isClicked: false,
   },
   {
     name: "Agent",
-    url: "/agent",
+    url: "/for-agents",
     isClicked: false,
-    subItems: [
-      {
-        name: "Sell",
-        url: "/my-listings",
-        isClicked: false,
-      },
-      {
-        name: "Agent Market Place",
-        url: "/agent-marketplace",
-        isClicked: false,
-      },
-    ],
+  },
+  {
+    name: "Developer",
+    url: "/for-developers",
+    isClicked: false,
   },
   {
     name: "Policies",
@@ -91,63 +62,29 @@ export const agentNavigationData: NavigationItem[] = [
     isClicked: true,
   },
   {
-    name: "Client",
-    url: "/preference",
+    name: "Who is it for?",
+    url: "/user-types",
     isClicked: false,
-    subItems: [
-      {
-        name: "Buy a property",
-        url: "/preference?type=buy",
-        isClicked: false,
-      },
-      {
-        name: "Rent a property",
-        url: "/preference?type=rent",
-        isClicked: false,
-      },
-      {
-        name: "Shortlet",
-        url: "/preference?type=shortlet",
-        isClicked: false,
-      },
-      {
-        name: "Joint Venture",
-        url: "/preference?type=joint-venture",
-        isClicked: false,
-      },
-      {
-        name: "Verify Documents",
-        url: "/document-verification",
-        isClicked: false,
-      },
-    ],
+  },
+  {
+    name: "Client",
+    url: "/for-clients",
+    isClicked: false,
   },
   {
     name: "Landlord",
-    url: "/dashboard",
+    url: "/for-landlords",
     isClicked: false,
   },
   {
     name: "Agent",
-    url: "/dashboard",
+    url: "/for-agents",
     isClicked: false,
-    subItems: [
-      {
-        name: "Sell",
-        url: "/my-listings",
-        isClicked: false,
-      },
-      {
-        name: "Agent Market Place",
-        url: "/agent-marketplace",
-        isClicked: false,
-      },
-      {
-        name: "Publisher Properties (Request to Market)",
-        url: "/lasrera-marketplace",
-        isClicked: false,
-      },
-    ],
+  },
+  {
+    name: "Developer",
+    url: "/for-developers",
+    isClicked: false,
   },
   {
     name: "Policies",

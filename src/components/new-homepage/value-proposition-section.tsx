@@ -45,44 +45,44 @@ const ValuePropositionSection = () => {
   ];
 
   return (
-    <section className='w-full py-16 md:py-24 bg-[#FFFEFB]'>
-      <div className='container mx-auto px-4 md:px-8'>
+    <section className='w-full py-16 sm:py-20 lg:py-24 bg-[#FFFEFB]'>
+      <div className='w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12'>
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-          className='text-center mb-16'>
-          <h2 className='text-3xl md:text-4xl lg:text-5xl font-bold text-[#09391C] mb-6 font-display'>
+          transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
+          viewport={{ once: true, margin: "-100px" }}
+          className='text-center mb-12 sm:mb-16'>
+          <h2 className='text-3xl sm:text-4xl lg:text-5xl font-bold text-[#09391C] mb-4 sm:mb-5 tracking-tight'>
             Why Choose Khabiteq?
           </h2>
-          <p className='text-lg md:text-xl text-gray-600 max-w-3xl mx-auto'>
+          <p className='text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed'>
             We've revolutionized the real estate experience with trust, technology, and transparency at the core.
           </p>
         </motion.div>
 
-        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12'>
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10'>
           {valuePoints.map((point, index) => (
             <motion.div
               key={index}
-              initial={{ opacity: 0, y: 50 }}
+              initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              viewport={{ once: true }}
-              className='text-center group hover:scale-105 transition-transform duration-300'>
-              
+              transition={{ duration: 0.5, delay: index * 0.08, ease: [0.25, 0.1, 0.25, 1] }}
+              viewport={{ once: true, margin: "-50px" }}
+              className='text-center group'>
+
               {/* Icon */}
-              <div className='w-16 h-16 mx-auto mb-6 bg-[#8DDB90] rounded-full flex items-center justify-center text-white group-hover:bg-[#7BC87F] transition-colors duration-300'>
-                {point.icon}
+              <div className='w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-5 bg-gradient-to-br from-[#8DDB90] to-[#6BC76F] rounded-2xl flex items-center justify-center text-white shadow-lg shadow-[#8DDB90]/20 group-hover:shadow-xl group-hover:shadow-[#8DDB90]/30 group-hover:scale-105 group-hover:rotate-3 transition-all duration-300'>
+                <span className="w-7 h-7 sm:w-8 sm:h-8">{point.icon}</span>
               </div>
 
               {/* Title */}
-              <h3 className='text-xl md:text-2xl font-bold text-[#09391C] mb-4'>
+              <h3 className='text-lg sm:text-xl font-bold text-[#09391C] mb-3 tracking-tight'>
                 {point.title}
               </h3>
 
               {/* Description */}
-              <p className='text-gray-600 leading-relaxed'>
+              <p className='text-gray-600 text-sm sm:text-base leading-relaxed'>
                 {point.description}
               </p>
             </motion.div>
@@ -91,14 +91,14 @@ const ValuePropositionSection = () => {
 
         {/* Call to action */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
+          transition={{ duration: 0.5, delay: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
           viewport={{ once: true }}
-          className='text-center mt-16'>
-          <div className='inline-flex items-center gap-2 bg-[#8DDB901A] px-6 py-3 rounded-full'>
-            <div className='w-2 h-2 bg-[#8DDB90] rounded-full animate-pulse'></div>
-            <span className='text-[#09391C] font-medium'>
+          className='text-center mt-12 sm:mt-16'>
+          <div className='inline-flex items-center gap-2 bg-[#8DDB90]/10 backdrop-blur-sm px-5 py-2.5 rounded-full border border-[#8DDB90]/20'>
+            <span className='w-2 h-2 bg-[#8DDB90] rounded-full animate-pulse' />
+            <span className='text-[#09391C] font-medium text-sm sm:text-base'>
               Join thousands of satisfied customers
             </span>
           </div>

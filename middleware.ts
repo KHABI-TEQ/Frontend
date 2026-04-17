@@ -26,7 +26,12 @@ const publicRoutes = [
   "/secure-seller-response",
   "/secure-buyer-response",
   "/continue-inspection",
-  "/update-preference"
+  "/update-preference",
+  "/for-landlords",
+  "/for-agents",
+  "/for-clients",
+  "/for-developers",
+  "/user-types"
 ];
 
 

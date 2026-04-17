@@ -223,35 +223,35 @@ const SocialProofSection = () => {
   }, [testimonials]);
 
   return (
-    <section className='w-full py-12 sm:py-16 md:py-20 lg:py-24 bg-[#F5F7F9]'>
-      <div className='container mx-auto px-4 sm:px-6 md:px-8'>
-        
+    <section className='w-full py-16 sm:py-20 lg:py-24 bg-[#F5F7F9]'>
+      <div className='w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12'>
+
         {/* Stats Section */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-          className='text-center mb-16 sm:mb-20'>
-          
-          <h2 className='text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-[#09391C] mb-4 sm:mb-6 font-display'>
+          transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
+          viewport={{ once: true, margin: "-100px" }}
+          className='text-center mb-12 sm:mb-16'>
+
+          <h2 className='text-3xl sm:text-4xl lg:text-5xl font-bold text-[#09391C] mb-4 sm:mb-5 tracking-tight'>
             Trusted by Thousands
           </h2>
-          <p className='text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto mb-8 sm:mb-10 md:mb-12 px-4 sm:px-0'>
+          <p className='text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto mb-10 sm:mb-12 leading-relaxed'>
             Join the growing community of satisfied customers who have found their perfect properties through Khabiteq.
           </p>
 
           {/* Stats Grid */}
-          <div className='grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8'>
+          <div className='grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6'>
             {stats.map((stat, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, scale: 0.5 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.08, ease: [0.25, 0.1, 0.25, 1] }}
                 viewport={{ once: true }}
-                className='text-center bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg'>
-                <div className='text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-[#8DDB90] mb-1 sm:mb-2'>
+                className='text-center bg-white rounded-xl sm:rounded-2xl p-5 sm:p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.12)] transition-all duration-300 hover:-translate-y-1'>
+                <div className='text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-[#8DDB90] mb-1 sm:mb-2'>
                   <CountUp end={stat.number} duration={2.5} />
                   {stat.suffix}
                 </div>
@@ -265,11 +265,11 @@ const SocialProofSection = () => {
 
         {/* Testimonials Section */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-          className='mb-16 sm:mb-20'>
+          transition={{ duration: 0.6, delay: 0.1, ease: [0.25, 0.1, 0.25, 1] }}
+          viewport={{ once: true, margin: "-50px" }}
+          className='mb-12 sm:mb-16'>
           
           <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 sm:mb-12 gap-4'>
             <h3 className='text-xl sm:text-2xl md:text-3xl font-bold text-[#09391C] font-display'>
@@ -413,26 +413,26 @@ const SocialProofSection = () => {
 
         {/* Trusted Partners */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.15, ease: [0.25, 0.1, 0.25, 1] }}
+          viewport={{ once: true, margin: "-50px" }}
           className='text-center'>
-          
-          <h3 className='text-lg sm:text-xl md:text-2xl font-bold text-[#09391C] mb-6 sm:mb-8'>
+
+          <h3 className='text-xl sm:text-2xl font-bold text-[#09391C] mb-6 sm:mb-8 tracking-tight'>
             Trusted Partners & Security
           </h3>
 
-          <div className='flex flex-wrap justify-center items-center gap-4 sm:gap-6 md:gap-8 lg:gap-12 mb-6 sm:mb-8'>
+          <div className='flex flex-wrap justify-center items-center gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8'>
             {partners.map((partner, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, scale: 0.8 }}
+                initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
+                transition={{ duration: 0.4, delay: index * 0.08, ease: [0.25, 0.1, 0.25, 1] }}
                 viewport={{ once: true }}
-                className='flex items-center gap-2 sm:gap-3 bg-white px-4 sm:px-6 py-2 sm:py-3 rounded-full shadow-md hover:shadow-lg transition-shadow duration-300'>
-                <div className='w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center'>{partner.logo}</div>
+                className='flex items-center gap-2 sm:gap-3 bg-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-full shadow-[0_2px_10px_-2px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_15px_-2px_rgba(0,0,0,0.12)] transition-all duration-300 hover:-translate-y-0.5'>
+                <div className='w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center'>{partner.logo}</div>
                 <span className='font-medium text-gray-700 text-sm sm:text-base'>{partner.name}</span>
               </motion.div>
             ))}
