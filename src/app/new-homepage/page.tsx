@@ -14,7 +14,6 @@ import NewHeroSection from "@/components/new-homepage/new-hero-section";
 
 // Non-critical: Lazy load lower sections
 const ValuePropositionSection = lazy(() => import("@/components/new-homepage/value-proposition-section"));
-const FeaturedPropertiesSection = lazy(() => import("@/components/new-homepage/featured-properties-section"));
 const SocialProofSection = lazy(() => import("@/components/new-homepage/social-proof-section"));
 const ForAgentsSection = lazy(() => import("@/components/new-homepage/for-agents-section"));
 const SecurityTransparencySection = lazy(() => import("@/components/new-homepage/security-transparency-section"));
@@ -111,22 +110,7 @@ const NewHomepage = ({
             </ErrorBoundary>
           </Suspense>
 
-          {/* 5. FEATURED PROPERTIES SECTION */}
-          <Suspense fallback={<div className="w-full py-16 bg-[#FFFEFB]" />}>
-            <ErrorBoundary
-              fallback={
-                <div className="w-full py-16 bg-[#FFFEFB]">
-                  <div className="container mx-auto px-4 text-center">
-                    <h2 className="text-3xl font-bold text-[#09391C] mb-4">Featured Properties</h2>
-                    <p className="text-gray-600">Unable to load featured properties section.</p>
-                  </div>
-                </div>
-              }>
-              <FeaturedPropertiesSection />
-            </ErrorBoundary>
-          </Suspense>
-
-          {/* 6. REVIEWS & COUNTERS (SOCIAL PROOF & TRUST SIGNALS) */}
+          {/* 5. REVIEWS & COUNTERS (SOCIAL PROOF & TRUST SIGNALS) */}
           <Suspense fallback={<div className="w-full py-16 bg-[#F5F7F9]" />}>
             <ErrorBoundary
               fallback={
@@ -141,7 +125,7 @@ const NewHomepage = ({
             </ErrorBoundary>
           </Suspense>
 
-          {/* 7. FOR REAL ESTATE AGENTS SECTION */}
+          {/* 6. FOR REAL ESTATE AGENTS SECTION */}
           <Suspense fallback={<div className="w-full py-16 bg-[#FFFEFB]" />}>
             <ErrorBoundary
               fallback={
@@ -156,7 +140,7 @@ const NewHomepage = ({
             </ErrorBoundary>
           </Suspense>
 
-          {/* 8. SECURITY & TRANSPARENCY SECTION */}
+          {/* 7. SECURITY & TRANSPARENCY SECTION */}
           <Suspense fallback={<div className="w-full py-16 bg-[#09391C]" />}>
             <ErrorBoundary
               fallback={
@@ -171,7 +155,7 @@ const NewHomepage = ({
             </ErrorBoundary>
           </Suspense>
 
-          {/* 9. FINAL CALL TO ACTION (BOTTOM) */}
+          {/* 8. FINAL CALL TO ACTION (BOTTOM) */}
           <Suspense fallback={<div className="w-full py-16 bg-[#8DDB90]" />}>
             <ErrorBoundary
               fallback={
