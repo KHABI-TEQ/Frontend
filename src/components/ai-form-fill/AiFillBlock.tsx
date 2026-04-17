@@ -71,7 +71,7 @@ export default function AiFillBlock({
   const [listening, setListening] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   /** Max allowed silence (ms) before we end the listening session and commit text. */
-  const SILENCE_GRACE_MS = 10_000;
+  const SILENCE_GRACE_MS = 5_000;
   /** Textarea snapshot when current mic session started — new speech appends after this. */
   const voiceBaseRef = useRef("");
   /** Final transcript accumulated across recognition restarts within one mic session. */
@@ -291,7 +291,7 @@ export default function AiFillBlock({
         Optionally describe in a few words or sentences; we&apos;ll suggest form fields. You can review and edit before
         submitting.{" "}
         <span className="text-[#09391C] font-medium">
-          Voice: speak clearly — text appears as you talk (no repeats). You can pause for up to 10 seconds before listening ends; at session end you&apos;ll hear a short beep. Tap the mic again to add more.
+          Voice: speak clearly — text appears as you talk (no repeats). You can pause for up to 5 seconds before listening ends; at session end you&apos;ll hear a short beep. Tap the mic again to add more.
         </span>
       </p>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
