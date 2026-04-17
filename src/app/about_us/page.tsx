@@ -99,7 +99,7 @@ const AboutUs = () => {
           </h2>
 
           <p className='font-normal text-[#5A5D63] lg:text-xl text-lg text-center leading-relaxed'>
-            At Khabiteq Realty, we are more than just a real estate company — we are a community builder, a lifestyle curator, and a trusted partner on your property journey. Founded with a bold vision to transform how Nigerians experience real estate, Khabiteq Realty operates at the intersection of innovation, trust, and service. Our company combines deep industry expertise with a passion for connecting people with properties that not only meet their needs but also exceed their expectations.
+            At Khabiteq, we are more than just a real estate company — we are a community builder, a lifestyle curator, and a trusted partner on your property journey. Founded with a bold vision to transform how Nigerians experience real estate, Khabiteq Realty operates at the intersection of innovation, trust, and service. Our company combines deep industry expertise with a passion for connecting people with properties that not only meet their needs but also exceed their expectations.
           </p>
         </div>
 
