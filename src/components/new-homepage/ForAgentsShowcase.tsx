@@ -86,6 +86,9 @@ const ForAgentsShowcase = () => {
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
                 Help close the deal and earn your commission.
               </h1>
+              <p className="text-lg sm:text-xl text-[#8DDB90] font-semibold mb-4">
+                With Khabiteq Every Agent is the Mandate
+              </p>
               <p className="text-lg sm:text-xl text-[#D6DDEB] max-w-2xl leading-relaxed">
                 Register and verify your account. Access properties to market and earn commission when you close deals.
               </p>
@@ -154,13 +157,22 @@ const ForAgentsShowcase = () => {
                     Join hundreds of agents already closing deals.
                   </p>
                 </div>
-                <Link
-                  href="/sign-up?type=agent"
-                  className="group inline-flex items-center gap-2 bg-[#09391C] hover:bg-[#0B423D] text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold text-sm sm:text-base transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
-                >
-                  Register as an Agent
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </Link>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Link
+                    href="/auth/register"
+                    className="group inline-flex items-center gap-2 bg-[#09391C] hover:bg-[#0B423D] text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold text-sm sm:text-base transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
+                  >
+                    Register as an Agent
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                  <Link
+                    href="/agent-marketplace"
+                    className="group inline-flex items-center gap-2 bg-white border-2 border-[#09391C] hover:bg-[#09391C] text-[#09391C] hover:text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold text-sm sm:text-base transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
+                  >
+                    Go to Agent Marketplace
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                </div>
               </div>
             </motion.div>
           </div>

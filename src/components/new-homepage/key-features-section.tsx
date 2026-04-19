@@ -39,7 +39,7 @@ const KeyFeaturesSection = () => {
       headline: "Show your project. Find the right partners.",
       description: "List your projects and joint ventures easily. Turn simple descriptions into full listings and reach serious investors.",
       bullets: [
-        "First 5 listings are free",
+        "First listing is free",
         "Control who can market your project",
         "Build trust with document verification",
         "Get more visibility through agents",
@@ -63,7 +63,7 @@ const KeyFeaturesSection = () => {
       headline: "Grow your business your way.",
       description: "Manage listings, attract clients, and promote properties — all from your own public page.",
       bullets: [
-        "First 5 listings are free",
+        "First listing is free",
         "Get your own public page with your listings",
         "Request to promote landlord and developer properties",
         "Confirm property locations on the map",
