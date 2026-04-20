@@ -1,5 +1,5 @@
 /**
- * Public Access Page - Overview Dashboard
+ * Practitioner Page - Overview Dashboard
  * Main dashboard view showing statistics and recent activity
  */
 
@@ -119,10 +119,10 @@ export default function OverviewPage() {
     try {
       if (confirmModal.action === "pause") {
         await pauseDealSite();
-        toast.success("Public Access Page paused successfully");
+        toast.success("Practitioner Page paused successfully");
       } else if (confirmModal.action === "resume") {
         await resumeDealSite();
-        toast.success("Public Access Page resumed successfully");
+        toast.success("Practitioner Page resumed successfully");
       }
       setConfirmModal({ isOpen: false });
     } catch (error) {
@@ -173,14 +173,14 @@ export default function OverviewPage() {
           <BarChart3 size={32} />
           Dashboard Overview
         </h1>
-        <p className="text-gray-600 mt-2">Monitor your public access page performance and activity</p>
+        <p className="text-gray-600 mt-2">Monitor your Practitioner page performance and activity</p>
       </div>
 
       {/* Pending Review Banner */}
       {dealSiteStatus === "pending" && (
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
           <div className="flex-1">
-            <h3 className="font-semibold text-amber-900">Public Access Page is Pending Review</h3>
+            <h3 className="font-semibold text-amber-900">Practitioner Page is Pending Review</h3>
             <p className="text-sm text-amber-800 mt-1">
               Your page is currently under review. You can continue customizing your settings, but the page will not be visible to the public until approved.
             </p>
@@ -192,9 +192,9 @@ export default function OverviewPage() {
       {dealSiteStatus === "on-hold" && (
         <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 flex items-start gap-3">
           <div className="flex-1">
-            <h3 className="font-semibold text-orange-900">Public Access Page is On Hold</h3>
+            <h3 className="font-semibold text-orange-900">Practitioner Page is On Hold</h3>
             <p className="text-sm text-orange-800 mt-1">
-              Your public access page is currently on hold. Please contact support for more information or to resolve any issues.
+              Your Practitioner page is currently on hold. Please contact support for more information or to resolve any issues.
             </p>
           </div>
         </div>
@@ -206,7 +206,7 @@ export default function OverviewPage() {
           <div className="flex-1">
             <h3 className="font-semibold text-amber-900">Setup Incomplete - Cannot Start Page</h3>
             <p className="text-sm text-amber-800 mt-2">
-              Before you can start your public access page, please configure the following required fields:
+              Before you can start your Practitioner page, please configure the following required fields:
             </p>
             <ul className="text-sm text-amber-800 mt-2 ml-4 list-disc space-y-1">
               {!settings.logoUrl && <li>Logo</li>}
@@ -269,7 +269,7 @@ export default function OverviewPage() {
             )}
             {isPaused && (
               <p className="mt-2 text-sm text-gray-600">
-                Your public access page is paused and not visible to visitors. Resume it to make it live again.
+                Your Practitioner page is paused and not visible to visitors. Resume it to make it live again.
               </p>
             )}
           </div>
@@ -419,11 +419,11 @@ export default function OverviewPage() {
       {/* Confirmation Modal for Pause/Resume */}
       <ConfirmationModal
         isOpen={confirmModal.isOpen}
-        title={confirmModal.action === "pause" ? "Pause Public Access Page?" : "Resume Public Access Page?"}
+        title={confirmModal.action === "pause" ? "Pause Practitioner Page?" : "Resume Practitioner Page?"}
         description={
           confirmModal.action === "pause"
-            ? "Your public access page will no longer be visible to visitors."
-            : "Your public access page will be live again for all visitors."
+            ? "Your Practitioner page will no longer be visible to visitors."
+            : "Your Practitioner page will be live again for all visitors."
         }
         message={
           confirmModal.action === "pause"

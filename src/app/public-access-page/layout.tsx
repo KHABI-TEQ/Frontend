@@ -1,5 +1,5 @@
 /**
- * Public Access Page Dashboard Layout
+ * Practitioner Page Dashboard Layout
  * Wraps all public-access-page routes with sidebar navigation
  * Handles setup completion guard logic and page gating modal
  */
@@ -90,7 +90,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             Access Denied
           </h2>
           <p className="text-gray-600 mb-6">
-            Only agents and developers can access the Public Access Page dashboard.
+            Only agents and developers can access the Practitioner Page dashboard.
           </p>
           <button
             onClick={() => router.back()}
@@ -127,7 +127,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
               Setup Your Public Page
             </h2>
             <p className="text-gray-600 mb-6">
-              Your public access page is not yet configured. Set it up now to get started.
+              Your Practitioner page is not yet configured. Set it up now to get started.
             </p>
             <button
               onClick={() => router.push("/public-access-page/setup")}

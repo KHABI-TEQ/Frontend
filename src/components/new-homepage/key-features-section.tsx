@@ -81,7 +81,7 @@ const KeyFeaturesSection = () => {
         </svg>
       ),
       color: "bg-[#8DDB90]",
-      btnCTA: "Activate your Public Access Page"
+      btnCTA: "Activate your Practitioner Page"
     },
     {
       id: 4,

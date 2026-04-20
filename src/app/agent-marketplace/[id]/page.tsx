@@ -741,7 +741,7 @@ const PreferenceDetailPage = () => {
                   <div className="flex-1">
                     <h3 className="font-medium text-[#09391C] text-sm mb-1">Auto-pair your listings</h3>
                     <p className="text-gray-600 text-xs">
-                      We&apos;ll compare this buyer&apos;s preference with properties on your public page and email them when there are matches (or if there are none).
+                      We&apos;ll compare this buyer&apos;s preference with properties on your Practitioner page and email them when there are matches (or if there are none).
                     </p>
                   </div>
                 </div>
@@ -751,13 +751,13 @@ const PreferenceDetailPage = () => {
               {publicPageCta && (
                 <div className="mb-4 p-3 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-900">
                   <p className="mb-2">
-                    Your public access page must be active (DealSite <strong>running</strong>) to match preferences.
+                    Your Practitioner page must be active (<strong>running</strong>) to match preferences.
                   </p>
                   <Link
                     href="/public-access-page"
                     className="inline-flex font-semibold text-[#09391C] underline hover:text-[#8DDB90]"
                   >
-                    Open public access settings
+                    Open Practitioner settings
                   </Link>
                 </div>
               )}

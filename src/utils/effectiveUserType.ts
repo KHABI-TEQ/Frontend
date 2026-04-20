@@ -1,5 +1,5 @@
 /**
- * Resolves whether the current session may use Agent/Developer-only features (e.g. Public Access Page).
+ * Resolves whether the current session may use Agent/Developer-only features (e.g. Practitioner Page).
  * Must stay aligned with `my-profile.tsx`: that UI can show "Developer" from localStorage while the
  * profile API still sends a different `userType` (or omits it). We OR all known sources so access matches what the user sees.
  */

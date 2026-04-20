@@ -82,7 +82,7 @@ const OverviewTab = memo(({
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold text-[#09391C]">
-              Your public access page is {isPaused ? 'paused' : slugLocked ? 'live' : 'in draft'}
+              Your Practitioner page is {isPaused ? 'paused' : slugLocked ? 'live' : 'in draft'}
             </h2>
             {previewUrl ? (
               <div className="mt-1 text-sm text-[#0B572B] flex items-center gap-2">

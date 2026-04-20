@@ -1,5 +1,5 @@
 /**
- * Public Access Page Setup Flow
+ * Practitioner Page Setup Flow
  * This page is only accessible before the initial setup is complete
  * Once setup is complete, users are redirected to the dashboard
  */
@@ -283,7 +283,7 @@ const Setup = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-8 flex flex-col items-center gap-4">
             <Loader size={40} className="animate-spin text-emerald-600" />
-            <p className="text-lg font-semibold text-gray-800">Setting up your deal site...</p>
+            <p className="text-lg font-semibold text-gray-800">Setting up your Practitioner Page...</p>
             <p className="text-sm text-gray-600 text-center">This may take a few moments</p>
           </div>
         </div>
@@ -293,7 +293,7 @@ const Setup = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-[#09391C] mb-2">
-            Launch Your Public Access Page
+            Launch Your Practitioner Page
           </h1>
           <p className="text-gray-600">
             Complete these 3 steps to go live. You can customize everything else later.

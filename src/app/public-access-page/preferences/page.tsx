@@ -242,7 +242,7 @@ export default function PreferencesRequestsPage() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-[#09391C] mb-2">Preferences Requests</h1>
-        <p className="text-gray-600">View and manage all buyer preference requests submitted through your public access page</p>
+        <p className="text-gray-600">View and manage all buyer preference requests submitted through your Practitioner page</p>
       </div>
 
       {/* Stats */}

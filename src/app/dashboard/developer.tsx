@@ -494,7 +494,7 @@ export default function DeveloperDashboard() {
                 </div>
                 <div className="flex-1">
                   <h3 className="font-semibold">Broadcast to Subscribers</h3>
-                  <p className="text-sm text-indigo-700/90">Send an email to all your DealSite subscribers</p>
+                  <p className="text-sm text-indigo-700/90">Send an email to all your Practitioner subscribers</p>
                 </div>
               </Link>
               <Link
@@ -589,8 +589,8 @@ export default function DeveloperDashboard() {
                   <LinkIcon size={20} className="text-emerald-600" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold">Public Access Page</h3>
-                  <p className="text-sm text-[#5A5D63]">Set up and manage your public access page</p>
+                  <h3 className="font-semibold">Practitioner Page</h3>
+                  <p className="text-sm text-[#5A5D63]">Set up and manage your Practitioner page</p>
                 </div>
               </Link>
             </div>

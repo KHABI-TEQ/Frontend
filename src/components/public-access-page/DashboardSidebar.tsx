@@ -1,6 +1,6 @@
 /**
  * Dashboard Sidebar Navigation
- * Displays menu items for the Public Access Page management dashboard
+ * Displays menu items for the Practitioner Page management dashboard
  */
 
 "use client";
@@ -220,7 +220,7 @@ export default function DashboardSidebar({ onNavigate }: DashboardSidebarProps) 
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-gray-200 h-screen sticky top-0">
         <div className="px-4 py-6 border-b border-gray-200">
-          <h2 className="text-lg font-bold text-[#09391C]">Public Access</h2>
+          <h2 className="text-lg font-bold text-[#09391C]">Practitioner Page</h2>
           <p className="text-xs text-gray-500 mt-1">Dashboard</p>
         </div>
         {SidebarContent}
@@ -238,7 +238,7 @@ export default function DashboardSidebar({ onNavigate }: DashboardSidebarProps) 
           {/* Sidebar Panel */}
           <aside className="absolute inset-y-0 left-0 w-64 bg-white flex flex-col">
             <div className="px-4 py-6 border-b border-gray-200">
-              <h2 className="text-lg font-bold text-[#09391C]">Public Access</h2>
+              <h2 className="text-lg font-bold text-[#09391C]">Practitioner Page</h2>
               <p className="text-xs text-gray-500 mt-1">Dashboard</p>
             </div>
             {SidebarContent}

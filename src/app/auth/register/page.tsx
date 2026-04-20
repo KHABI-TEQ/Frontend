@@ -475,8 +475,8 @@ const Register = () => {
                       </svg>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <span className="block text-base font-semibold text-[#09391C] truncate">Landlord</span>
-                      <span className="block text-xs text-[#5A5D63] truncate">List & sell properties</span>
+                      <span className="block text-base font-semibold text-[#09391C]">Landlord</span>
+                      <span className="block text-xs text-[#5A5D63]">List & sell properties</span>
                     </div>
                     <div className="w-5 h-5 rounded-full border-2 border-gray-300 peer-checked:border-[#8DDB90] peer-checked:bg-[#8DDB90] flex items-center justify-center shrink-0">
                       <svg className="w-3 h-3 text-white opacity-0 peer-checked:opacity-100" fill="currentColor" viewBox="0 0 20 20">
@@ -506,8 +506,8 @@ const Register = () => {
                       </svg>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <span className="block text-base font-semibold text-[#09391C] truncate">Agent</span>
-                      <span className="block text-xs text-[#5A5D63] truncate">Help clients buy/sell</span>
+                      <span className="block text-base font-semibold text-[#09391C]">Agent</span>
+                      <span className="block text-xs text-[#5A5D63]">Help clients buy/sell</span>
                     </div>
                     <div className="w-5 h-5 rounded-full border-2 border-gray-300 peer-checked:border-[#8DDB90] peer-checked:bg-[#8DDB90] flex items-center justify-center shrink-0">
                       <svg className="w-3 h-3 text-white opacity-0 peer-checked:opacity-100" fill="currentColor" viewBox="0 0 20 20">
@@ -537,8 +537,8 @@ const Register = () => {
                       </svg>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <span className="block text-base font-semibold text-[#09391C] truncate">Developer</span>
-                      <span className="block text-xs text-[#5A5D63] truncate">Showcase projects</span>
+                      <span className="block text-base font-semibold text-[#09391C]">Developer</span>
+                      <span className="block text-xs text-[#5A5D63]">Showcase projects</span>
                     </div>
                     <div className="w-5 h-5 rounded-full border-2 border-gray-300 peer-checked:border-[#8DDB90] peer-checked:bg-[#8DDB90] flex items-center justify-center shrink-0">
                       <svg className="w-3 h-3 text-white opacity-0 peer-checked:opacity-100" fill="currentColor" viewBox="0 0 20 20">

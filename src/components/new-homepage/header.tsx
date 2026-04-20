@@ -415,6 +415,9 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
         </motion.nav>
       </header>
 
+      {/* Spacer for navbar bottom spacing - ensures content has clearance */}
+      <div className="h-[80px] lg:h-[100px]" aria-hidden="true" />
+
       {/* Backdrop overlay for sidebar */}
       {isModalOpened && (
         <div

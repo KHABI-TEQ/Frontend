@@ -210,7 +210,7 @@ export const URLS = {
   aiSuggestPreference: "/ai/suggest-preference",
 
   /**
-   * Deal Site / Public Access Page Endpoints
+   * Practitioner Page Endpoints
    */
   dealSiteDetails: "/account/dealSite/details",
   dealSiteSetup: "/account/dealSite/setUp",

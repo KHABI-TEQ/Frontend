@@ -1,5 +1,5 @@
 /**
- * Public Access Page Payload Structures
+ * Practitioner Page Payload Structures
  * Organized by sections/pages for consistent form submission
  */
 

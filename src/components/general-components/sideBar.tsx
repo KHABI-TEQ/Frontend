@@ -44,10 +44,8 @@ const SideBar = ({
             <div className="flex justify-between w-full">
               {(user?._id || user?.id) ? (
                 <div className="flex items-center gap-[10px]">
-                  <button
-                    type="button"
-                    title="User"
-                    //onClick={() => setIsUserProfileModal(true)}
+                  <Link
+                    href="/public-access-page"
                     className="w-[61px] h-[61px] cursor-pointer rounded-full flex items-center justify-center bg-[#FAFAFA]"
                   >
                     <Image
@@ -57,7 +55,7 @@ const SideBar = ({
                       alt=""
                       className="w-[24px] h-[24px]"
                     />
-                  </button>
+                  </Link>
                   <div className="flex flex-col gap-[1px]">
                     <h2 className="text-base text-black font-medium">
                       {user.firstName} {user.lastName}

@@ -346,7 +346,7 @@ export default function AgentDashboard() {
 
               {(isKycApproved &&!hasActiveSub) && (
                 <div className="flex items-center justify-between bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg">
-                  <div>Subscribe for a plan to enjoy full features and get your public access page.</div>
+                  <div>Subscribe for a plan to enjoy full features and get your Practitioner page.</div>
                   <Link href="/agent-subscriptions?tab=plans" className="px-3 py-1.5 bg-yellow-600 text-white rounded hover:bg-yellow-700 text-sm">View Plans</Link>
                 </div>
               )}
@@ -656,8 +656,8 @@ export default function AgentDashboard() {
                   <LinkIcon size={20} className="text-emerald-600" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold">Public Access Page</h3>
-                  <p className="text-sm text-[#5A5D63]">Set up and manage your public access page</p>
+                  <h3 className="font-semibold">Practitioner Page</h3>
+                  <p className="text-sm text-[#5A5D63]">Set up and manage your Practitioner page</p>
                 </div>
               </Link>
             </div>

@@ -1,5 +1,5 @@
 /**
- * DealSite Context - Manages shared state for the Public Access Page dashboard
+ * Practitioner Context - Manages shared state for the Practitioner Page dashboard
  * This context stores form data and settings that are used across multiple routes
  */
 

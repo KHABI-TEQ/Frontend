@@ -139,7 +139,7 @@ export default function FeaturedPage() {
           Featured Listings
         </h1>
         <p className="text-gray-600 mt-2">
-          Select which properties appear as featured on your public access page
+          Select which properties appear as featured on your Practitioner page
         </p>
       </div>
 
@@ -299,7 +299,7 @@ export default function FeaturedPage() {
       {/* Info Box */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <p className="text-sm text-blue-800">
-          <strong>Tip:</strong> Featured listings are prominently displayed on your public access page and in your
+          <strong>Tip:</strong> Featured listings are prominently displayed on your Practitioner page and in your
           marketplace. Click on a property card to toggle its featured status.
         </p>
       </div>
