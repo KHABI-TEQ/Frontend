@@ -187,12 +187,15 @@ export default function ProfileSettingsPage() {
       setIsChangingPassword(true);
       try {
         const response = await api.put("/account/changePassword", {
-          currentPassword: values.currentPassword,
+          oldPassword: values.currentPassword,
           newPassword: values.newPassword,
         });
 
         if (response.data.success) {
           toast.success("Password changed successfully");
+          if (user) {
+            setUser(normalizeUser({ ...user, mustChangePassword: false }));
+          }
           passwordFormik.resetForm();
         } else {
           throw new Error(response.data.message || "Failed to change password");

@@ -455,9 +455,9 @@ const Register = () => {
               I want to join as a...
             </label>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:items-stretch">
               {/* Landlord Radio Button */}
-              <label className="relative cursor-pointer group h-full">
+              <label className="relative flex h-full min-h-0 cursor-pointer flex-col group">
                 <input
                   type="radio"
                   name="userType"
@@ -467,8 +467,8 @@ const Register = () => {
                   disabled={isDisabled}
                   className="sr-only peer"
                 />
-                <div className="bg-white border-2 border-gray-100 rounded-xl p-4 transition-all duration-300 hover:border-[#8DDB90]/50 hover:shadow-md peer-checked:border-[#8DDB90] peer-checked:bg-[#8DDB90]/5 peer-checked:shadow-md peer-disabled:opacity-50">
-                  <div className="flex items-center gap-3">
+                <div className="flex h-full min-h-0 flex-1 flex-col bg-white border-2 border-gray-100 rounded-xl p-4 transition-all duration-300 hover:border-[#8DDB90]/50 hover:shadow-md peer-checked:border-[#8DDB90] peer-checked:bg-[#8DDB90]/5 peer-checked:shadow-md peer-disabled:opacity-50">
+                  <div className="flex flex-1 items-center gap-3">
                     <div className="w-10 h-10 bg-[#8DDB90]/10 rounded-lg flex items-center justify-center shrink-0">
                       <svg className="w-5 h-5 text-[#09391C]" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
@@ -488,7 +488,7 @@ const Register = () => {
               </label>
 
               {/* Agent Radio Button */}
-              <label className="relative cursor-pointer group">
+              <label className="relative flex h-full min-h-0 cursor-pointer flex-col group">
                 <input
                   type="radio"
                   name="userType"
@@ -498,8 +498,8 @@ const Register = () => {
                   disabled={isDisabled}
                   className="sr-only peer"
                 />
-                <div className="bg-white border-2 border-gray-100 rounded-xl p-4 transition-all duration-300 hover:border-[#8DDB90]/50 hover:shadow-md peer-checked:border-[#8DDB90] peer-checked:bg-[#8DDB90]/5 peer-checked:shadow-md peer-disabled:opacity-50">
-                  <div className="flex items-center gap-3">
+                <div className="flex h-full min-h-0 flex-1 flex-col bg-white border-2 border-gray-100 rounded-xl p-4 transition-all duration-300 hover:border-[#8DDB90]/50 hover:shadow-md peer-checked:border-[#8DDB90] peer-checked:bg-[#8DDB90]/5 peer-checked:shadow-md peer-disabled:opacity-50">
+                  <div className="flex flex-1 items-center gap-3">
                     <div className="w-10 h-10 bg-[#8DDB90]/10 rounded-lg flex items-center justify-center shrink-0">
                       <svg className="w-5 h-5 text-[#09391C]" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
@@ -519,7 +519,7 @@ const Register = () => {
               </label>
 
               {/* Developer Radio Button */}
-              <label className="relative cursor-pointer group">
+              <label className="relative flex h-full min-h-0 cursor-pointer flex-col group">
                 <input
                   type="radio"
                   name="userType"
@@ -529,8 +529,8 @@ const Register = () => {
                   disabled={isDisabled}
                   className="sr-only peer"
                 />
-                <div className="bg-white border-2 border-gray-100 rounded-xl p-4 transition-all duration-300 hover:border-[#8DDB90]/50 hover:shadow-md peer-checked:border-[#8DDB90] peer-checked:bg-[#8DDB90]/5 peer-checked:shadow-md peer-disabled:opacity-50">
-                  <div className="flex items-center gap-3">
+                <div className="flex h-full min-h-0 flex-1 flex-col bg-white border-2 border-gray-100 rounded-xl p-4 transition-all duration-300 hover:border-[#8DDB90]/50 hover:shadow-md peer-checked:border-[#8DDB90] peer-checked:bg-[#8DDB90]/5 peer-checked:shadow-md peer-disabled:opacity-50">
+                  <div className="flex flex-1 items-center gap-3">
                     <div className="w-10 h-10 bg-[#8DDB90]/10 rounded-lg flex items-center justify-center shrink-0">
                       <svg className="w-5 h-5 text-[#09391C]" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd"/>

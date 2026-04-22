@@ -67,7 +67,7 @@ export interface PropertyData {
   jvConditions: string[];
 
   // Step 8: Ownership Declaration
-  isLegalOwner: boolean;
+  isLegalOwner: boolean | undefined;
   ownershipDocuments: string[];
   isTenanted: string;
   /** Standard agent commission % (0–5). Default 5. For Sale: Landlord fixed 5%; Developer can set 0–5%. */
@@ -207,7 +207,7 @@ const initialPropertyData: PropertyData = {
     email: "",
     phone: "",
   },
-  isLegalOwner: false,
+  isLegalOwner: undefined,
   ownershipDocuments: [],
   isTenanted: "",
   agentCommissionPercent: undefined,
@@ -388,7 +388,7 @@ export function PostPropertyProvider({ children }: { children: ReactNode }) {
         email: property.owner?.email || "",
         phone: property.owner?.phoneNumber || "",
       },
-      isLegalOwner: property.areYouTheOwner || false,
+      isLegalOwner: property.areYouTheOwner ?? undefined,
       ownershipDocuments: property.ownershipDocuments || [],
       isTenanted: property.isTenanted || "",
       agentCommissionPercent: property.agentCommissionPercent ?? 5,

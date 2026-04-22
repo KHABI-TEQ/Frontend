@@ -22,12 +22,13 @@ import { encodeRedirectTarget, resolveRedirectTarget } from "@/utils/authRedirec
 // Hooks & Context
 import { useLoading } from "@/hooks/useLoading";
 import { usePageContext } from "@/context/page-context";
-import { useUserContext, normalizeUser } from "@/context/user-context";
+import { useUserContext, normalizeUser, userMustChangePassword } from "@/context/user-context";
 import { useGoogleOAuthConfig } from "@/context/google-oauth-context";
 
 // Utilities & Assets
 import { POST_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
+import { extractLoginTokenAndUser, isSuccessfulLoginBody } from "@/utils/authLoginResponse";
 import mailIcon from "@/svgs/envelope.svg";
 import googleIcon from "@/svgs/googleIcon.svg";
 import facebookIcon from "@/svgs/facebookIcon.svg";
@@ -46,16 +47,12 @@ declare global {
 function GoogleLoginButton({
   setOverlayMessage,
   setOverlayVisible,
-  resolvedRedirectTarget,
-  setUser,
-  router,
+  finalizeAuthenticatedSession,
   isDisabled,
 }: {
   setOverlayMessage: (m: string) => void;
   setOverlayVisible: (v: boolean) => void;
-  resolvedRedirectTarget: string | null;
-  setUser: (u: any) => void;
-  router: ReturnType<typeof useRouter>;
+  finalizeAuthenticatedSession: (data: { token?: string; user: unknown }) => void;
   isDisabled: boolean;
 }) {
   const googleLogin = useGoogleLogin({
@@ -68,32 +65,23 @@ function GoogleLoginButton({
         const response = await POST_REQUEST(url, { idToken: codeResponse.code });
 
         if (response.success) {
-          Cookies.set("token", (response.data as any).token);
-          setUser(normalizeUser((response.data as any).user));
+          const payload = response.data as any;
+          finalizeAuthenticatedSession({
+            token: payload?.token,
+            user: payload?.user ?? payload,
+          });
 
           toast.success("Authentication successful via Google!");
-
-          const redirectUrl = resolvedRedirectTarget || sessionStorage.getItem("redirectAfterLogin");
-          if (redirectUrl) {
-            try {
-              sessionStorage.removeItem("redirectAfterLogin");
-            } catch {}
-            setOverlayVisible(false);
-            router.push(redirectUrl);
-            return;
-          }
-
-          setOverlayVisible(false);
-          router.push("/dashboard");
         } else if (response.error) {
           toast.error(response.error);
+          setOverlayVisible(false);
         } else {
           toast.error("Google authentication failed. Please try again.");
+          setOverlayVisible(false);
         }
       } catch (error) {
         console.error("Google login error:", error);
         toast.error("Google sign-in failed, please try again!");
-      } finally {
         setOverlayVisible(false);
       }
     },
@@ -142,11 +130,14 @@ const Login: FC = () => {
     password: Yup.string().required("Password is required"),
   });
 
-  // Redirect authenticated users to dashboard (only after user context is initialized)
+  // Redirect authenticated users away from login (dashboard, or forced password change)
   useEffect(() => {
-    if (isInitialized && user) {
-      router.replace("/dashboard");
+    if (!isInitialized || !user) return;
+    if (userMustChangePassword(user)) {
+      router.replace("/auth/change-password");
+      return;
     }
+    router.replace("/dashboard");
   }, [user, isInitialized, router]);
 
   useEffect(() => {
@@ -155,41 +146,72 @@ const Login: FC = () => {
     }
   }, [resolvedRedirectTarget]);
 
-  const handleAuthSuccess = useCallback((response: any) => {
-    const data = response?.data ?? response;
-    const userPayload = data?.user ?? data;
-    const token = data?.token;
+  const finalizeAuthenticatedSession = useCallback(
+    (data: { token?: string; user: unknown }) => {
+      const userPayload = data?.user;
+      const token = data?.token;
 
-    if (token) Cookies.set("token", token);
-    let user = normalizeUser(userPayload);
-    if (user && typeof window !== "undefined") {
-      try {
-        if (!user.userType) {
-          const stored = localStorage.getItem("userType");
-          if (stored) user = { ...user, userType: stored.trim() as "Agent" | "Landowners" | "FieldAgent" | "Developer" };
+      if (token) Cookies.set("token", token);
+      let normalized = normalizeUser(userPayload as any);
+      if (normalized && typeof window !== "undefined") {
+        try {
+          if (!normalized.userType) {
+            const stored = localStorage.getItem("userType");
+            if (stored)
+              normalized = {
+                ...normalized,
+                userType: stored.trim() as "Agent" | "Landowners" | "FieldAgent" | "Developer",
+              };
+          }
+          if (normalized.userType) localStorage.setItem("userType", normalized.userType);
+        } catch {}
+      }
+      setUser(normalized);
+
+      const forced = userMustChangePassword(normalized);
+      setOverlayMessage(
+        forced ? "You must update your password before continuing." : "Loading your dashboard...",
+      );
+      setOverlayVisible(true);
+
+      setTimeout(() => {
+        if (forced) {
+          router.push("/auth/change-password");
+          setOverlayVisible(false);
+          return;
         }
-        if (user.userType) localStorage.setItem("userType", user.userType);
-      } catch {}
-    }
-    setUser(user);
 
-    setOverlayMessage("Loading your dashboard...");
-    setOverlayVisible(true);
+        const redirectUrl = resolvedRedirectTarget || sessionStorage.getItem("redirectAfterLogin");
+        if (redirectUrl) {
+          try {
+            sessionStorage.removeItem("redirectAfterLogin");
+          } catch {}
+          router.push(redirectUrl);
+          setOverlayVisible(false);
+          return;
+        }
 
-    setTimeout(() => {
-      const redirectUrl = resolvedRedirectTarget || sessionStorage.getItem('redirectAfterLogin');
-      if (redirectUrl) {
-        try { sessionStorage.removeItem('redirectAfterLogin'); } catch {}
-        router.push(redirectUrl);
+        router.push("/dashboard");
         setOverlayVisible(false);
+      }, forced ? 400 : 1500);
+    },
+    [router, setUser, resolvedRedirectTarget],
+  );
+
+  const handleAuthSuccess = useCallback(
+    (response: any) => {
+      const extracted = extractLoginTokenAndUser(response);
+      if (extracted) {
+        finalizeAuthenticatedSession({ token: extracted.token, user: extracted.user });
         return;
       }
-
-      router.push("/dashboard");
-
-      setOverlayVisible(false);
-    }, 1500);
-  }, [router, setUser, resolvedRedirectTarget]);
+      const data = response?.data ?? response;
+      const userPayload = data?.user ?? response?.user ?? data;
+      const token = data?.token ?? response?.token;
+      finalizeAuthenticatedSession({ token, user: userPayload });
+    },
+    [finalizeAuthenticatedSession],
+  );
   
   const formik = useFormik({
     initialValues: {
@@ -201,12 +223,13 @@ const Login: FC = () => {
       setIsSubmitting(true);
       try {
         const url = URLS.BASE + URLS.authLogin;
- 
+        const payload = { email: values.email.trim(), password: values.password };
+
         await toast.promise(
           (async () => {
             let response: any;
             try {
-              response = await POST_REQUEST(url, values);
+              response = await POST_REQUEST(url, payload);
             } catch (err) {
               const raw = (err as Error)?.message || "Login failed";
               const msg =
@@ -216,17 +239,17 @@ const Login: FC = () => {
               throw new Error(msg);
             }
 
-            if (response.success) {
+            if (isSuccessfulLoginBody(response)) {
               handleAuthSuccess(response);
               return "Login successful";
-            } else {
-              const raw = (response as any).error || (response as any).message || "Login failed";
-              const msg =
-                /failed to fetch|network error|request timed out|network request failed|load failed/i.test(String(raw))
-                  ? "Unable to reach the server. Check your connection and try again."
-                  : raw;
-              throw new Error(msg);
             }
+
+            const raw = (response as any).error || (response as any).message || "Login failed";
+            const msg =
+              /failed to fetch|network error|request timed out|network request failed|load failed/i.test(String(raw))
+                ? "Unable to reach the server. Check your connection and try again."
+                : raw;
+            throw new Error(msg);
           })(),
           {
             loading: "Logging in...",
@@ -304,32 +327,24 @@ const Login: FC = () => {
                   const result = await POST_REQUEST(url, payload);
 
                   if (result.success) {
-                    Cookies.set("token", (result.data as any).token);
-                    setUser(normalizeUser((result.data as any).user));
+                    const d = result.data as any;
+                    finalizeAuthenticatedSession({
+                      token: d?.token,
+                      user: d?.user ?? d,
+                    });
 
                     toast.success("Authentication successful via Facebook!");
-
-                    const redirectUrl = resolvedRedirectTarget || sessionStorage.getItem('redirectAfterLogin');
-                    if (redirectUrl) {
-                      try { sessionStorage.removeItem('redirectAfterLogin'); } catch {}
-                      setOverlayVisible(false);
-                      router.push(redirectUrl);
-                      return;
-                    }
-
-                    setOverlayVisible(false);
-                    router.push("/dashboard");
-
                   } else if (result.error) {
                     toast.error(result.error);
+                    setOverlayVisible(false);
                   } else {
                     toast.error("Facebook authentication failed. Please try again.");
+                    setOverlayVisible(false);
                   }
                   
                 } catch (error) {
                   console.error("Facebook login API error:", error);
                   toast.error("Facebook login failed, please try again!");
-                } finally {
                   setOverlayVisible(false);
                 }
               },
@@ -509,9 +524,7 @@ const Login: FC = () => {
               <GoogleLoginButton
                 setOverlayMessage={setOverlayMessage}
                 setOverlayVisible={setOverlayVisible}
-                resolvedRedirectTarget={resolvedRedirectTarget}
-                setUser={setUser}
-                router={router}
+                finalizeAuthenticatedSession={finalizeAuthenticatedSession}
                 isDisabled={overlayVisible}
               />
             ) : (

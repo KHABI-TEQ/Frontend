@@ -473,6 +473,12 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
     try {
       setIsSubmitting(true);
 
+      if (propertyData.isLegalOwner === undefined) {
+        toast.error("Please confirm whether you are the legal owner or posting with a mandate.");
+        setCurrentStep(3);
+        return;
+      }
+
       // 1. Collect uploaded image URLs (images are auto-uploaded)
       const uploadedImageUrls: string[] = images
         .filter((img) => img.url)
@@ -542,7 +548,7 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
           phoneNumber: propertyData.contactInfo.phone,
           email: propertyData.contactInfo.email,
         },
-        areYouTheOwner: propertyData.isLegalOwner,
+        areYouTheOwner: Boolean(propertyData.isLegalOwner),
         ownershipDocuments: propertyData.ownershipDocuments || [],
         landSize: {
           measurementType: propertyData.propertyType === "shortlet" ? "" : propertyData.measurementType,

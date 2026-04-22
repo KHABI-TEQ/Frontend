@@ -67,6 +67,8 @@ export interface User {
     companyName: string;
     companyRegNumber: string;
   };
+  /** When true (e.g. admin-created account), user must change password before using the app. */
+  mustChangePassword?: boolean;
 }
 
 const CANONICAL_USER_TYPES = ["Agent", "Landowners", "FieldAgent", "Developer"] as const;
@@ -84,12 +86,29 @@ function toCanonicalUserType(value: unknown): User["userType"] | undefined {
   return CANONICAL_USER_TYPES.includes(s as CanonicalUserType) ? (s as CanonicalUserType) : undefined;
 }
 
+/** True when the account is restricted to change-password (and sign-out) until the flag clears. */
+export function userMustChangePassword(user: User | null | undefined): boolean {
+  return user?.mustChangePassword === true;
+}
+
 /** Ensures API/partial user has required User fields (e.g. accountApproved) and canonical userType before setUser. */
 export function normalizeUser(partial: Partial<User> | Record<string, unknown> | null): User | null {
   if (partial == null) return null;
   const p = partial as Record<string, unknown>;
   const userType = toCanonicalUserType(p.userType ?? p.user_type) ?? (p.userType as User["userType"]);
-  return { accountApproved: Boolean(p.accountApproved), ...p, userType } as User;
+  const rawFlag = p.mustChangePassword ?? p.must_change_password;
+  const mustChangePassword =
+    rawFlag === true || rawFlag === "true"
+      ? true
+      : rawFlag === false || rawFlag === "false"
+        ? false
+        : undefined;
+  return {
+    accountApproved: Boolean(p.accountApproved),
+    ...p,
+    userType,
+    ...(mustChangePassword !== undefined ? { mustChangePassword } : {}),
+  } as User;
 }
 
 interface UserContextType {
@@ -139,6 +158,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       const data = response?.data as any;
       const userPayload = data?.user ?? data; // some APIs return { data: { user } }, others { data: { id, userType, ... } }
       if (response?.success && (userPayload?.id || userPayload?._id)) {
+        const rawPayload = userPayload as Record<string, unknown>;
+        const profileDeclaresMustChange =
+          Object.prototype.hasOwnProperty.call(rawPayload, "mustChangePassword") ||
+          Object.prototype.hasOwnProperty.call(rawPayload, "must_change_password");
         const normalized = normalizeUser(userPayload);
         if (normalized && typeof window !== "undefined") {
           try {
@@ -149,7 +172,17 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             if (normalized.userType) localStorage.setItem("userType", normalized.userType);
           } catch {}
         }
-        setUserState(normalized ?? userPayload);
+        setUserState((prev) => {
+          const next = normalized ?? (userPayload as User);
+          const prevId = prev?.id ?? prev?._id;
+          const nextId = next ? ((next as User).id ?? (next as User)._id) : undefined;
+          const sameSessionUser =
+            prevId != null && nextId != null && String(prevId) === String(nextId);
+          if (!profileDeclaresMustChange && prev?.mustChangePassword === true && next && sameSessionUser) {
+            return { ...(next as User), mustChangePassword: true };
+          }
+          return next;
+        });
       } else if (
         typeof response?.message === "string" &&
         (response.message.toLowerCase().includes("unauthorized") ||

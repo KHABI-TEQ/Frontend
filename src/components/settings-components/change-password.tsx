@@ -3,16 +3,18 @@
 
 'use client';
 import { archivo } from '@/styles/font';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { motion } from 'framer-motion';
-import { GET_REQUEST, POST_REQUEST } from '@/utils/requests';
+import { PUT_REQUEST } from '@/utils/requests';
 import { URLS } from '@/utils/URLS';
 import Cookies from 'js-cookie';
 import toast from 'react-hot-toast';
+import { useUserContext, normalizeUser } from '@/context/user-context';
 
 const ChangePassword = () => {
+  const { user, setUser } = useUserContext();
   const validationSchema = Yup.object({
     currentPassword: Yup.string().required('Current Password is required'),
     newPassword: Yup.string().required('New Password is required'),
@@ -30,7 +32,7 @@ const ChangePassword = () => {
     onSubmit: async (values) => {
       setFormikStatus('pending');
       try {
-        const response = await POST_REQUEST(
+        const response = await PUT_REQUEST(
           URLS.BASE + URLS.accountSettingsBaseUrl + "/changePassword",
           {
             oldPassword: formik.values.currentPassword,
@@ -40,6 +42,9 @@ const ChangePassword = () => {
         );
         if (response.success) {
           toast.success('Password changed successfully');
+          if (user) {
+            setUser(normalizeUser({ ...user, mustChangePassword: false }));
+          }
           setFormikStatus('success');
           formik.values.currentPassword = ''; // Clear currentPassword field
           formik.values.newPassword = ''; // Clear newPassword field

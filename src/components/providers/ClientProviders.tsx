@@ -14,6 +14,7 @@ import { GlobalPropertyActionsProvider } from "@/context/global-property-actions
 import NegotiationContextWrapper from "@/components/common/NegotiationContextWrapper";
 import { PromoProvider } from "@/context/promo-context";
 import SubscriptionInitializer from "@/components/providers/SubscriptionInitializer";
+import MustChangePasswordEnforcer from "@/components/access/MustChangePasswordEnforcer";
 
 const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
 const hasValidGoogleClientId =
@@ -33,6 +34,7 @@ export default function ClientProviders({ children }: { children: React.ReactNod
     <GoogleOAuthConfigProvider isConfigured={hasValidGoogleClientId}>
     <ReduxWrapper>
       <UserProvider>
+        <MustChangePasswordEnforcer />
         <SubscriptionInitializer />
         <NotificationProvider>
           <ModalProvider>
