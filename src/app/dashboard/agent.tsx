@@ -334,7 +334,7 @@ export default function AgentDashboard() {
           return (
             <div className="space-y-3 mb-4">
               <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg text-sm">
-                <strong>Property posting:</strong> You can post your first 2 properties without a subscription. A subscription is required from the 3rd property onward.
+                <strong>Property posting:</strong> You can post your first property without a subscription. A subscription is required from the 2nd property onward.
               </div>
 
               {!isKycApproved && (
