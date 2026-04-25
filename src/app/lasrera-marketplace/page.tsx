@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useUserContext } from "@/context/user-context";
 import {
@@ -11,7 +11,7 @@ import { requestToMarketService } from "@/services/requestToMarketService";
 import { buildLocationTitle } from "@/utils/helpers";
 import toast from "react-hot-toast";
 import Loading from "@/components/loading-component/loading";
-import { ArrowLeft, MapPin, Tag, Handshake, CheckCircle, X } from "lucide-react";
+import { ArrowLeft, MapPin, Tag, Handshake, CheckCircle, X, Play, Pause } from "lucide-react";
 import PropertyLocationMap from "@/components/property/PropertyLocationMap";
 
 export default function LasreraMarketplacePage() {
@@ -26,6 +26,95 @@ export default function LasreraMarketplacePage() {
   const [propertyForMap, setPropertyForMap] = useState<LasreraMarketplaceProperty | null>(null);
 
   const isAgent = user?.userType === "Agent";
+
+  const PropertyMediaPreview = ({ prop, title }: { prop: LasreraMarketplaceProperty; title: string }) => {
+    const videoRef = useRef<HTMLVideoElement | null>(null);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const images = Array.isArray(prop.pictures) ? prop.pictures.filter(Boolean) : [];
+    const videos = Array.isArray(prop.videos) ? prop.videos.filter(Boolean) : [];
+    const img = images[0] || null;
+    const video = videos[0] || null;
+    const hasImage = Boolean(img);
+    const hasVideo = Boolean(video);
+
+    const toggleVideoPlayback = () => {
+      if (!videoRef.current) return;
+      if (videoRef.current.paused) {
+        videoRef.current.play().catch(() => {});
+      } else {
+        videoRef.current.pause();
+      }
+    };
+
+    if (!hasImage && !hasVideo) {
+      return (
+        <div className="w-full h-full flex items-center justify-center text-gray-400">
+          <Tag size={40} />
+        </div>
+      );
+    }
+
+    if (hasImage && hasVideo) {
+      return (
+        <div className="grid grid-cols-2 w-full h-full">
+          <img src={img!} alt={title} className="w-full h-full object-cover" />
+          <div className="relative h-full bg-black">
+            <video
+              ref={videoRef}
+              src={video!}
+              className="w-full h-full object-cover"
+              preload="metadata"
+              playsInline
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
+              onEnded={() => setIsPlaying(false)}
+            />
+            <button
+              type="button"
+              aria-label={isPlaying ? "Pause video" : "Play video"}
+              onClick={toggleVideoPlayback}
+              className="absolute inset-0 m-auto w-10 h-10 rounded-full bg-black/55 text-white flex items-center justify-center hover:bg-black/70 transition-colors"
+            >
+              {isPlaying ? <Pause size={16} /> : <Play size={16} className="ml-0.5" />}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    if (hasVideo) {
+      return (
+        <div className="relative h-full bg-black">
+          <video
+            ref={videoRef}
+            src={video!}
+            className="w-full h-full object-cover"
+            preload="metadata"
+            playsInline
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
+            onEnded={() => setIsPlaying(false)}
+          />
+          <button
+            type="button"
+            aria-label={isPlaying ? "Pause video" : "Play video"}
+            onClick={toggleVideoPlayback}
+            className="absolute inset-0 m-auto w-12 h-12 rounded-full bg-black/55 text-white flex items-center justify-center hover:bg-black/70 transition-colors"
+          >
+            {isPlaying ? <Pause size={18} /> : <Play size={18} className="ml-0.5" />}
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <img
+        src={img!}
+        alt={title}
+        className="w-full h-full object-cover"
+      />
+    );
+  };
 
   const fetchProperties = useCallback(async () => {
     setLoading(true);
@@ -172,24 +261,13 @@ export default function LasreraMarketplacePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {properties.map((prop) => {
                 const title = buildLocationTitle(prop.location) || prop.propertyType || "Property";
-                const img = (Array.isArray(prop.pictures) && prop.pictures[0]) ? prop.pictures[0] : null;
                 return (
                   <div
                     key={prop._id}
                     className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow"
                   >
                     <div className="aspect-[4/3] bg-gray-100 relative">
-                      {img ? (
-                        <img
-                          src={img}
-                          alt={title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400">
-                          <Tag size={40} />
-                        </div>
-                      )}
+                      <PropertyMediaPreview prop={prop} title={title} />
                       {prop.briefType && (
                         <span className="absolute top-2 left-2 px-2 py-1 bg-[#09391C] text-white text-xs font-medium rounded">
                           {prop.briefType}

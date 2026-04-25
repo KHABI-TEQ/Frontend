@@ -10,14 +10,20 @@ import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import { Save, DollarSign, Lock } from "lucide-react";
 import { useDealSite } from "@/context/deal-site-context";
-import { POST_REQUEST } from "@/utils/requests";
+import { PUT_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 
 export default function PaymentPage() {
   const { settings, updateSettings } = useDealSite();
   const [saving, setSaving] = useState(false);
+  const paymentDetailsAny = (settings.paymentDetails || {}) as Record<string, any>;
 
   const handleSave = useCallback(async () => {
+    if (!settings.publicSlug) {
+      toast.error("Set up your public page slug first before saving payment details.");
+      return;
+    }
+
     if (
       !settings.paymentDetails?.businessName ||
       !settings.paymentDetails?.accountNumber ||
@@ -31,19 +37,35 @@ export default function PaymentPage() {
     try {
       const token = Cookies.get("token");
       const payload = {
-        paymentDetails: settings.paymentDetails,
+        businessName: String(settings.paymentDetails?.businessName || "").trim(),
+        accountNumber: String(settings.paymentDetails?.accountNumber || "").trim(),
+        sortCode: String(settings.paymentDetails?.sortCode || "").trim(),
+        primaryContactName: String(settings.paymentDetails?.primaryContactName || "").trim(),
+        primaryContactEmail: String(settings.paymentDetails?.primaryContactEmail || "").trim(),
+        primaryContactPhone: String(settings.paymentDetails?.primaryContactPhone || "").trim(),
       };
 
-      const res = await POST_REQUEST(
-        `${URLS.BASE}${URLS.dealSiteUpdate}`,
+      const res = await PUT_REQUEST(
+        `${URLS.BASE}/account/dealSite/${settings.publicSlug}/paymentDetails/update`,
         payload,
         token
       );
 
       if (res?.success) {
-        toast.success("Payment details saved successfully");
+        const returned = (res.data as any)?.paymentDetails;
+        if (returned) {
+          updateSettings({
+            paymentDetails: returned,
+          });
+        }
+        toast.success("Payment details saved and verified successfully");
       } else {
-        toast.error(res?.message || "Failed to save payment details");
+        const msg = String(res?.message || res?.error || "Failed to save payment details");
+        if (/on hold|under review/i.test(msg)) {
+          toast.error("This page is currently under review. Payment details cannot be changed right now.");
+        } else {
+          toast.error(msg);
+        }
       }
     } catch (error) {
       console.error("Failed to save payment details:", error);
@@ -51,7 +73,7 @@ export default function PaymentPage() {
     } finally {
       setSaving(false);
     }
-  }, [settings.paymentDetails]);
+  }, [settings.publicSlug, settings.paymentDetails, updateSettings]);
 
   const inputBase =
     "w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400 text-gray-900";
@@ -208,13 +230,27 @@ export default function PaymentPage() {
       <div className="flex justify-end">
         <button
           onClick={handleSave}
-          disabled={saving}
+          disabled={saving || !settings.publicSlug}
           className="inline-flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         >
           <Save size={18} />
           {saving ? "Saving..." : "Save Payment Details"}
         </button>
       </div>
+
+      {!!paymentDetailsAny.subAccountCode && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-6 space-y-3">
+          <h3 className="text-lg font-semibold text-emerald-900">Verified payout account</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-emerald-900">
+            <p><span className="font-medium">Subaccount code:</span> {String(paymentDetailsAny.subAccountCode)}</p>
+            <p><span className="font-medium">Account name:</span> {String(paymentDetailsAny.accountName || "—")}</p>
+            <p><span className="font-medium">Bank name:</span> {String(paymentDetailsAny.accountBankName || "—")}</p>
+            <p><span className="font-medium">Charge (%):</span> {String(paymentDetailsAny.percentageCharge ?? "—")}</p>
+            <p><span className="font-medium">Verified:</span> {paymentDetailsAny.isVerified ? "Yes" : "No"}</p>
+            <p><span className="font-medium">Active:</span> {paymentDetailsAny.active ? "Yes" : "No"}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -336,6 +336,10 @@ const Step3ImageUpload: React.FC<StepProps> = ({ errors, touched }) => {
   const validImagesCount = images.filter(
     (img) => img.file !== null || img.url,
   ).length;
+  const validVideosCount = (videos || []).filter(
+    (video) => video.file !== null || video.url,
+  ).length;
+  const validMediaCount = validImagesCount + validVideosCount;
   const minRequired = getMinimumRequiredImages();
 
   return (
@@ -347,20 +351,24 @@ const Step3ImageUpload: React.FC<StepProps> = ({ errors, touched }) => {
     >
       <div className="mb-8">
         <h2 className="text-[24px] leading-[38.4px] font-semibold font-display text-[#09391C] mb-2">
-          Upload Picture
+          Upload Property Media
         </h2>
         <p className="text-[16px] text-[#5A5D63] mb-4">
-          Add high-quality images to showcase your property
+          You can continue with image only, video only, or both.
         </p>
+        <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          At least one media item is required (
+          <span className="font-medium">image or video</span>).
+        </div>
         <div className="flex items-center justify-center gap-4 text-sm">
           <span
             className={`font-medium ${areImagesValid() ? "text-green-600" : "text-red-600"}`}
           >
-            {validImagesCount} of {minRequired} minimum images uploaded
+            {validMediaCount} media item{validMediaCount === 1 ? "" : "s"} uploaded
           </span>
           {!areImagesValid() && (
             <span className="text-red-600 text-xs">
-              (At least {minRequired} images required)
+              (At least {minRequired} media item required)
             </span>
           )}
         </div>
@@ -423,11 +431,7 @@ const Step3ImageUpload: React.FC<StepProps> = ({ errors, touched }) => {
                 >
                   <XIcon size={16} />
                 </button>
-                {index < minRequired && (
-                  <div className="absolute bottom-2 left-2 bg-[#8DDB90] text-white text-xs px-2 py-1 rounded">
-                    Required
-                  </div>
-                )}
+                {/* Do not mark image slots as required; either image OR video now satisfies validation. */}
               </>
             ) : (
               <button
@@ -435,9 +439,7 @@ const Step3ImageUpload: React.FC<StepProps> = ({ errors, touched }) => {
                 className="w-full h-full flex flex-col items-center justify-center text-gray-500 hover:text-[#8DDB90] transition-colors"
               >
                 <PlusIcon size={24} className="mb-2" />
-                <span className="text-sm">
-                  {index < minRequired ? "Required" : "Add Image"}
-                </span>
+                <span className="text-sm">Add Image</span>
               </button>
             )}
           </motion.div>
@@ -455,7 +457,7 @@ const Step3ImageUpload: React.FC<StepProps> = ({ errors, touched }) => {
               Property Video Tour
             </h3>
             <p className="text-gray-600 text-sm max-w-md mx-auto">
-              Add a video to showcase your property (Optional)
+              Add a video to showcase your property
             </p>
           </div>
 
@@ -545,9 +547,6 @@ const Step3ImageUpload: React.FC<StepProps> = ({ errors, touched }) => {
               >
                 <VideoIcon size={16} />
                 Upload Property Video
-                <span className="bg-white bg-opacity-20 px-2 py-1 rounded-full text-xs">
-                  Optional
-                </span>
               </button>
             </div>
           )}
@@ -596,10 +595,10 @@ const Step3ImageUpload: React.FC<StepProps> = ({ errors, touched }) => {
       <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
         <h4 className="font-semibold text-blue-800 mb-2 flex items-center gap-2">
           <ImageIcon size={18} />
-          Image Guidelines
+          Media Guidelines
         </h4>
         <ul className="text-sm text-blue-700 space-y-1">
-          <li>• Upload at least {minRequired} high-quality images</li>
+          <li>• Upload at least {minRequired} media item (image or video)</li>
           <li>• Maximum file size: 5MB per image, 50MB per video</li>
           <li>
             • Recommended formats: JPG, PNG, WebP for images; MP4, MOV for video
@@ -613,15 +612,15 @@ const Step3ImageUpload: React.FC<StepProps> = ({ errors, touched }) => {
       </div>
 
       {/* Validation Message */}
-      {!areImagesValid() && validImagesCount > 0 && (
+      {!areImagesValid() && validMediaCount > 0 && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4 text-center"
         >
           <p className="text-red-700 font-medium">
-            Please upload at least {minRequired - validImagesCount} more
-            image(s) to continue
+            Please upload at least {Math.max(0, minRequired - validMediaCount)} more
+            media item(s) to continue
           </p>
         </motion.div>
       )}

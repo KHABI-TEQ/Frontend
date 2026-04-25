@@ -315,7 +315,11 @@ export function PostPropertyProvider({ children }: { children: ReactNode }) {
 
   const areImagesValid = () => {
     const validImages = images.filter((img) => img.file !== null || img.url);
-    return validImages.length >= getMinimumRequiredImages();
+    const validVideos = (propertyData.videos || []).filter(
+      (video) => video.file !== null || video.url,
+    );
+    // Backend now allows image-only, video-only, or both; reject only when there is no media at all.
+    return validImages.length + validVideos.length >= 1;
   };
 
   const validateCurrentStep = () => {

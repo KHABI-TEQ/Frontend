@@ -26,6 +26,7 @@ export interface LasreraMarketplaceProperty {
   location?: { state?: string; localGovernment?: string; area?: string; streetAddress?: string };
   additionalFeatures?: Record<string, unknown>;
   pictures?: string[];
+  videos?: string[];
   description?: string;
   briefType?: string;
   createdAt?: string;

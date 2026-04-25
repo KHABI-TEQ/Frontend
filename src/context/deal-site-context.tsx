@@ -190,6 +190,12 @@ export interface BankDetails {
   primaryContactEmail?: string;
   primaryContactName?: string;
   primaryContactPhone?: string;
+  subAccountCode?: string;
+  accountName?: string;
+  accountBankName?: string;
+  percentageCharge?: number;
+  isVerified?: boolean;
+  active?: boolean;
 }
 
 export interface SupportSection {

@@ -1,7 +1,8 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Check, X, Loader2 } from 'lucide-react';
+import Cookies from 'js-cookie';
 import { GET_REQUEST } from '@/utils/requests';
 import { URLS } from '@/utils/URLS';
 import toast from 'react-hot-toast';
@@ -18,35 +19,24 @@ const PaymentVerificationPage = () => {
   const reference = searchParams.get('reference');
   const transactionId = searchParams.get('trxref') || searchParams.get('transactionId');
 
-  useEffect(() => {
-    if (!reference && !transactionId) {
-      toast.error('No payment reference found');
-      router.push('/');
-      return;
-    }
-
-    verifyPayment();
-  }, [reference, transactionId]);
-
-  useEffect(() => {
-    if (!redirectAfterCountdown) return;
-
-    if (verificationStatus === 'success' && countdown > 0) {
-      const timer = setTimeout(() => {
-        setCountdown(prev => prev - 1);
-      }, 1000);
-      return () => clearTimeout(timer);
-    } else if (verificationStatus === 'success' && countdown === 0) {
-      handleRedirect();
-    }
-  }, [verificationStatus, countdown, redirectAfterCountdown]);
-
-  const verifyPayment = async () => {
+  const verifyPayment = useCallback(async () => {
     try {
       setVerificationStatus('verifying');
 
       const paymentReference = reference || transactionId;
-      const response = await GET_REQUEST<any>(`${URLS.BASE}${URLS.verifyPayment}?reference=${paymentReference}`);
+      if (!paymentReference) {
+        toast.error('No payment reference found');
+        return;
+      }
+
+      // Same JWT as login; backend verify route often requires auth. Without it, API returns 401
+      // and GET_REQUEST surfaces a generic "Failed to fetch data from server."
+      const token = Cookies.get('token') || undefined;
+      const qs = new URLSearchParams({ reference: paymentReference });
+      const response = await GET_REQUEST<any>(
+        `${URLS.BASE}${URLS.verifyPayment}?${qs.toString()}`,
+        token,
+      );
 
       if (response.success && response.data) {
         setVerificationData(response.data);
@@ -91,14 +81,45 @@ const PaymentVerificationPage = () => {
         toast.success('Payment verified successfully!');
       } else {
         setVerificationStatus('failed');
-        toast.error(response.message || 'Payment verification failed');
+        const msg = response.message || (response as any).error || 'Payment verification failed';
+        const isGeneric = /failed to fetch data from server/i.test(String(msg));
+        toast.error(
+          isGeneric && !Cookies.get('token')
+            ? 'You need to be signed in to complete verification. Please log in, then return to this page or use Try again.'
+            : isGeneric
+              ? 'Verification request was rejected. If you are signed in, the payment reference may be invalid or the server may be busy—try again or contact support.'
+              : msg,
+        );
       }
     } catch (error) {
       console.error('Payment verification error:', error);
       setVerificationStatus('failed');
       toast.error('Failed to verify payment. Please try again.');
     }
-  };
+  }, [reference, transactionId, router]);
+
+  useEffect(() => {
+    if (!reference && !transactionId) {
+      toast.error('No payment reference found');
+      router.push('/');
+      return;
+    }
+
+    verifyPayment();
+  }, [reference, transactionId, router, verifyPayment]);
+
+  useEffect(() => {
+    if (!redirectAfterCountdown) return;
+
+    if (verificationStatus === 'success' && countdown > 0) {
+      const timer = setTimeout(() => {
+        setCountdown(prev => prev - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else if (verificationStatus === 'success' && countdown === 0) {
+      handleRedirect();
+    }
+  }, [verificationStatus, countdown, redirectAfterCountdown]);
 
   const handleRedirect = () => {
     if (verificationData?.redirectUrl) {

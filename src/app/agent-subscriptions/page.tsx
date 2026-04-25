@@ -24,9 +24,34 @@ import { URLS } from '@/utils/URLS';
 import toast from 'react-hot-toast';
 import { AgentSubscription, SubscriptionPlan, SubscriptionTransaction } from '@/types/subscription.types';
 import { format } from 'date-fns';
-import { getCookie } from 'cookies-next';
+import Cookies from 'js-cookie';
 import Block from '@/components/access/Block';
 import Link from 'next/link';
+
+/** Build a user-visible error from API JSON (500s often include message + details for ops). */
+function subscriptionErrorMessage(res: unknown): string {
+  const r = res as Record<string, unknown> | null;
+  if (!r) return 'Failed to initiate subscription';
+  const msg = (r.message || r.error) as string | undefined;
+  const details = r.details;
+  const detailsStr =
+    details == null
+      ? ''
+      : typeof details === 'string'
+        ? details
+        : (() => {
+            try {
+              return JSON.stringify(details);
+            } catch {
+              return String(details);
+            }
+          })();
+  const base = (msg && String(msg).trim()) || 'Failed to initiate subscription';
+  if (detailsStr && !base.includes(detailsStr)) {
+    return `${base}${detailsStr.length < 200 ? ` (${detailsStr})` : ''}`;
+  }
+  return base;
+}
 
 export default function AgentSubscriptionsPage() {
   const router = useRouter();
@@ -55,13 +80,12 @@ export default function AgentSubscriptionsPage() {
   const [autoRenewal, setAutoRenewal] = useState<boolean>(false);
   const [isProcessingSubscribe, setIsProcessingSubscribe] = useState(false);
 
-  const token = (getCookie('token') as string) || undefined;
+  /** Must match login (`Cookies.set`); `cookies-next` getCookie can miss the same value and cause 401 on API calls. */
+  const token = (Cookies.get('token') as string | undefined) || undefined;
 
   const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   const urlTab = (searchParams.get('tab') || undefined) as ("subscriptions" | "plans" | "transactions") | undefined;
 
-  console.log(activeSubscriptionFromProfile, "all user data")
- 
   // Apply URL tab if provided
   useEffect(() => {
     if (urlTab) {
@@ -289,14 +313,18 @@ export default function AgentSubscriptionsPage() {
 
   const confirmSubscribe = async () => {
     if (!selectedPlanForSub) return;
+    const authToken = Cookies.get('token')?.trim();
+    if (!authToken) {
+      toast.error('You are not signed in. Please log in and try again.');
+      router.push('/auth/login?from=' + encodeURIComponent('/agent-subscriptions?tab=plans'));
+      return;
+    }
     setIsProcessingSubscribe(true);
     try {
       const planCode = selectedPlanCodeForSub;
-      const rawType = (user as { userType?: string })?.userType ?? (typeof window !== 'undefined' ? localStorage.getItem('userType') : null) ?? '';
-      const canonicalType = rawType.trim().toLowerCase() === 'developer' ? 'Developer' : 'Agent';
-
-      const payload = { planCode, autoRenewal, userType: canonicalType } as any;
-      const res = await POST_REQUEST<any>(`${URLS.BASE}/account/subscriptions/makeSub`, payload, token);
+      // Backend `createSubscription` only uses planCode + autoRenewal; user comes from JWT.
+      const payload = { planCode, autoRenewal };
+      const res = await POST_REQUEST<any>(`${URLS.BASE}/account/subscriptions/makeSub`, payload, authToken);
       if ((res as any)?.success && (res as any)?.data?.paymentUrl) {
         toast.success('Redirecting to payment...');
         window.location.href = (res as any).data.paymentUrl;
@@ -304,18 +332,18 @@ export default function AgentSubscriptionsPage() {
         toast.success((res as any)?.message || 'Subscription initiated');
         setShowSubscribeModal(false);
       } else {
-        let errMsg = (res as any)?.message || (res as any)?.error || 'Failed to initiate subscription';
+        let errMsg = subscriptionErrorMessage(res);
         if (/only registered agents can create subscription/i.test(String(errMsg))) {
           errMsg = 'Subscriptions are for Agents and Developers. The server may not yet allow Developer accounts—please contact support.';
         }
-        toast.error(errMsg);
+        toast.error(errMsg, { duration: 8000 });
       }
     } catch (e: any) {
       let errMsg = e?.message || 'Failed to initiate subscription';
       if (/only registered agents can create subscription/i.test(String(errMsg))) {
         errMsg = 'Subscriptions are for Agents and Developers. The server may not yet allow Developer accounts—please contact support.';
       }
-      toast.error(errMsg);
+      toast.error(errMsg, { duration: 8000 });
     } finally {
       setIsProcessingSubscribe(false);
     }

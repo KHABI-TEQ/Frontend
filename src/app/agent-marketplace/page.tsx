@@ -316,11 +316,6 @@ const AgentMarketplace = () => {
     const rowId = getPreferenceRowId(preference);
     const inactive = isPreferenceInactive(preference.status);
     const isDealSitePref = isDealSiteReceiverMode(preference);
-    const clientName =
-      preference.contactInfo?.fullName || preference.buyer?.fullName || "—";
-    const clientPhone =
-      preference.contactInfo?.phoneNumber || preference.buyer?.phoneNumber;
-    const clientEmail = preference.contactInfo?.email || preference.buyer?.email;
 
     return (
     <div className={`group relative bg-white border border-gray-200/80 hover:border-gray-300 rounded-lg overflow-hidden flex flex-col h-full transition-all duration-500 hover:translate-y-[-2px] ${inactive ? 'select-none' : ''}`}>
@@ -377,19 +372,15 @@ const AgentMarketplace = () => {
 
       {/* Content */}
       <div className="flex-1 p-5">
-        {/* Client contact (main-site preferences) */}
+        {/* Client identity is intentionally hidden on agent marketplace cards. */}
         <div className="mb-3 pb-3 border-b border-gray-100">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Client</p>
-          <p className="text-sm font-medium text-gray-900 truncate" title={clientName}>
-            {clientName}
+          <p className="text-sm font-medium text-gray-900">
+            Contact details are private
           </p>
-          {(clientPhone || clientEmail) && (
-            <p className="text-xs text-gray-600 mt-1 line-clamp-2">
-              {clientPhone ? <span>{clientPhone}</span> : null}
-              {clientPhone && clientEmail ? <span className="mx-1">·</span> : null}
-              {clientEmail ? <span className="break-all">{clientEmail}</span> : null}
-            </p>
-          )}
+          <p className="text-xs text-gray-600 mt-1">
+            Submit a match to connect with the preference owner.
+          </p>
         </div>
         {/* Key Details Grid */}
         <div className="space-y-3">
