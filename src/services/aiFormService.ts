@@ -10,6 +10,24 @@ import { wrapUserInputForAiSuggest } from "@/utils/wrapAiSuggestUserInput";
 /** LLM-backed routes often exceed the default 15s client timeout. */
 const AI_SUGGEST_POST_TIMEOUT_MS = 120_000;
 
+function sanitizeAiErrorMessage(raw: unknown): string {
+  const message = String(raw || "").trim();
+  if (!message) return "Could not get suggestions.";
+  const technicalPatterns: RegExp[] = [
+    /expected\s*','\s*or\s*'\}'\s*after\s*property\s*value\s*in\s*json/i,
+    /json\s+at\s+position\s+\d+/i,
+    /syntaxerror/i,
+    /unexpected\s+token/i,
+    /line\s+\d+\s+column\s+\d+/i,
+    /cannot\s+read\s+propert/i,
+    /stack\s+trace/i,
+  ];
+  if (technicalPatterns.some((re) => re.test(message))) {
+    return "I couldn't process that response properly. Please repeat the last answer in simple words.";
+  }
+  return message;
+}
+
 export interface SuggestPropertyResponse {
   success: boolean;
   message?: string;
@@ -49,11 +67,12 @@ export async function suggestProperty(
   if (response.success && response.data) {
     return { success: true, message: response.message, data: response.data as Record<string, unknown> };
   }
-  const message =
+  const rawMessage =
     (response as { message?: string }).message ||
     (response as { error?: string }).error ||
     "Could not get suggestions.";
-  const msg = typeof message === "string" ? message.toLowerCase() : "";
+  const message = sanitizeAiErrorMessage(rawMessage);
+  const msg = message.toLowerCase();
   if (msg.includes("404") || msg.includes("not found")) {
     return {
       success: false,
@@ -94,15 +113,16 @@ export async function suggestPreference(
   if (response.success && response.data) {
     return { success: true, message: response.message, data: response.data as Record<string, unknown> };
   }
-  const message =
+  const rawMessage =
     (response as { message?: string }).message ||
     (response as { error?: string }).error ||
     "Could not get suggestions.";
+  const message = sanitizeAiErrorMessage(rawMessage);
+  const messageText = String(message || "");
   const is503 =
-    typeof message === "string" &&
-    (message.toLowerCase().includes("not configured") ||
-      message.toLowerCase().includes("unavailable") ||
-      message.toLowerCase().includes("503"));
+    messageText.toLowerCase().includes("not configured") ||
+    messageText.toLowerCase().includes("unavailable") ||
+    messageText.toLowerCase().includes("503");
   return {
     success: false,
     message: is503

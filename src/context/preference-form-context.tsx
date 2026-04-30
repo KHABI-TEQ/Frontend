@@ -222,6 +222,8 @@ export interface PreferenceAiMessage {
   remainingMissingCount?: number;
   /** Short line for TTS only (no format hints, emojis stripped separately) */
   speakLine?: string;
+  /** Optional suggested replies for quick correction chips, e.g. ["Buy", "Rent"]. */
+  quickOptions?: string[];
 }
 
 // Context type

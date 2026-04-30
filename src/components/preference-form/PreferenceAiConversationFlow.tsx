@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import React, { useState, useRef, useCallback, useEffect, useMemo, useLayoutEffect } from "react";
 import { usePreferenceForm } from "@/context/preference-form-context";
 import { suggestPreference } from "@/services/aiFormService";
 import AiFillBlock from "@/components/ai-form-fill/AiFillBlock";
@@ -16,14 +16,41 @@ import { assistantMessageToSpeakable } from "@/utils/ttsText";
 import { buildPreferencePayload } from "@/utils/buildPreferencePayload";
 import { POST_REQUEST } from "@/utils/requests";
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
+import {
+  resolveVoiceArea,
+  resolveVoiceIntent,
+  resolveVoiceLga,
+  resolveVoiceState,
+} from "@/utils/voicePreferenceResolver";
 import toast from "react-hot-toast";
-import { ArrowLeft, MessageSquare, Bot, Loader2, CheckCircle, Volume2, VolumeX } from "lucide-react";
+import { ArrowLeft, MessageSquare, Bot, Loader2, CheckCircle, Volume2, VolumeX, ChevronDown } from "lucide-react";
 import nigerianStateLgaJson from "@/data/state-lga.json";
 
 /** Lowercase names as in the location form dataset (keys of state-lga.json). */
 const NIGERIAN_STATE_NAMES_LOWER = new Set(
   Object.keys(nigerianStateLgaJson as Record<string, unknown>).map((k) => k.trim().toLowerCase()),
 );
+const NIGERIAN_STATE_NAMES = Object.keys(nigerianStateLgaJson as Record<string, unknown>).map((k) => k.trim());
+
+function sanitizeAiFailureMessage(raw: unknown): string {
+  const message = String(raw || "").trim();
+  if (!message) {
+    return "I couldn't process that properly. Please repeat your last answer in simple words.";
+  }
+  const technicalPatterns: RegExp[] = [
+    /expected\s*','\s*or\s*'\}'\s*after\s*property\s*value\s*in\s*json/i,
+    /json\s+at\s+position\s+\d+/i,
+    /syntaxerror/i,
+    /unexpected\s+token/i,
+    /cannot\s+read\s+propert/i,
+    /stack\s+trace/i,
+    /line\s+\d+\s+column\s+\d+/i,
+  ];
+  if (technicalPatterns.some((re) => re.test(message))) {
+    return "I couldn't process that properly. Please repeat your last answer in simple words.";
+  }
+  return message;
+}
 
 function fieldLabelOnly(field: string): string {
   return field.replace(/\s*\([^)]*\)\s*$/, "").trim() || field;
@@ -108,6 +135,14 @@ function preferenceModeFromType(t: string): string {
 function detectPreferenceTypeFromText(text: string): string | null {
   const raw = text.trim();
   if (!raw) return null;
+  // Reuse voice resolver aliases even for typed/text responses (handles ASR words like "Bye" => buy).
+  const resolved = resolveVoiceIntent(raw);
+  if (resolved.kind === "normalized") {
+    const v = String(resolved.value || "").trim().toLowerCase();
+    if (v === "buy" || v === "rent" || v === "shortlet" || v === "joint-venture") {
+      return v;
+    }
+  }
   if (/\bjoint\s*venture\b|\bjv\b/i.test(raw)) return "joint-venture";
   if (/\bshortlet\b|\bshort\s*let\b/i.test(raw)) return "shortlet";
   if (/\bbuy\b|\bpurchase\b|\bto\s+buy\b/i.test(raw)) return "buy";
@@ -248,6 +283,124 @@ function applyPreferenceLandMeasurementFromFocusedAnswer(
   }
 
   return data;
+}
+
+/** Persist land size values when the user is answering land-size prompts (API can omit these). */
+function applyPreferenceLandSizeFromFocusedAnswer(
+  data: Record<string, unknown>,
+  trimmed: string,
+  focusedField: string | undefined,
+): Record<string, unknown> {
+  if (!focusedField || !trimmed) return data;
+  const f = normalizePreferenceFieldKey(focusedField);
+  const n = parseFloat(trimmed.replace(/,/g, "").trim());
+  if (!Number.isFinite(n) || n <= 0) return data;
+  const value = String(n);
+  const type = normalizedPreferenceType(data);
+
+  if (type === "buy") {
+    const pd = { ...((data.propertyDetails || {}) as Record<string, unknown>) };
+    if (f.includes("minimum land size")) {
+      return { ...data, propertyDetails: { ...pd, minLandSize: value } };
+    }
+    if (f.includes("maximum land size")) {
+      return { ...data, propertyDetails: { ...pd, maxLandSize: value } };
+    }
+    if (f.includes("land size")) {
+      return { ...data, propertyDetails: { ...pd, landSize: value } };
+    }
+  }
+
+  if (type === "joint-venture") {
+    const dev = { ...((data.developmentDetails || {}) as Record<string, unknown>) };
+    if (f.includes("minimum land size")) {
+      return { ...data, developmentDetails: { ...dev, minLandSize: value } };
+    }
+    if (f.includes("maximum land size")) {
+      return { ...data, developmentDetails: { ...dev, maxLandSize: value } };
+    }
+    if (f.includes("land size")) {
+      return { ...data, developmentDetails: { ...dev, minLandSize: value } };
+    }
+  }
+
+  return data;
+}
+
+function parseDocumentTypesFromUserText(text: string): string[] {
+  const raw = text.trim();
+  if (!raw) return [];
+  const normalized = raw
+    .replace(/\band\b/gi, ",")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const deduped: string[] = [];
+  const seen = new Set<string>();
+  for (const item of normalized) {
+    const key = item.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(item);
+  }
+  return deduped;
+}
+
+function parseBuyPropertySubtypeFromUserText(text: string): "land" | "residential" | "commercial" | null {
+  const t = text.trim().toLowerCase();
+  if (!t) return null;
+  if (/\bland\b/.test(t)) return "land";
+  if (/\bresiden/i.test(t)) return "residential";
+  if (/\bcommerc/i.test(t)) return "commercial";
+  return null;
+}
+
+/** Persist property subtype directly from focused subtype prompt to avoid AI flipping subtype later. */
+function applyPreferenceSubtypeFromFocusedAnswer(
+  data: Record<string, unknown>,
+  trimmed: string,
+  focusedField: string | undefined,
+): Record<string, unknown> {
+  if (!focusedField || !trimmed) return data;
+  const f = normalizePreferenceFieldKey(focusedField);
+  if (!f.includes("property subtype")) return data;
+  const type = normalizedPreferenceType(data);
+  if (type !== "buy" && type !== "rent") return data;
+
+  const pd = { ...((data.propertyDetails || {}) as Record<string, unknown>) };
+  if (type === "buy") {
+    const buySubtype = parseBuyPropertySubtypeFromUserText(trimmed);
+    if (!buySubtype) return data;
+    return { ...data, propertyDetails: { ...pd, propertySubtype: buySubtype, propertyType: buySubtype } };
+  }
+
+  return {
+    ...data,
+    propertyDetails: {
+      ...pd,
+      propertySubtype: trimmed.trim(),
+      propertyType: trimmed.trim(),
+    },
+  };
+}
+
+/** Persist document types from the focused documents prompt (prevents repeat asking). */
+function applyPreferenceDocumentTypesFromFocusedAnswer(
+  data: Record<string, unknown>,
+  trimmed: string,
+  focusedField: string | undefined,
+): Record<string, unknown> {
+  if (!focusedField || !trimmed) return data;
+  const f = normalizePreferenceFieldKey(focusedField);
+  if (!f.includes("document type") && !f.includes("documents do you need")) return data;
+  const docs = parseDocumentTypesFromUserText(trimmed);
+  if (docs.length === 0) return data;
+  if (normalizedPreferenceType(data) === "joint-venture") {
+    const dev = { ...((data.developmentDetails || {}) as Record<string, unknown>) };
+    return { ...data, developmentDetails: { ...dev, minimumTitleRequirements: docs } };
+  }
+  const pd = { ...((data.propertyDetails || {}) as Record<string, unknown>) };
+  return { ...data, propertyDetails: { ...pd, documentTypes: docs } };
 }
 
 /** Persist bedroom count when answering the bedrooms question (suggest API often omits or strips it). */
@@ -572,6 +725,73 @@ function keepBestPreferenceLocationProgress(
   if (prevLgas.length > 0 && nextLgas.length === 0) return prev;
   if ((prevAreas.length > 0 || prevHasCustom) && nextAreas.length === 0 && !nextHasCustom) return prev;
   return next;
+}
+
+/**
+ * Prevent non-related turns from dropping already captured property details
+ * (e.g. bedrooms disappearing and being asked again).
+ */
+function keepBestPreferencePropertyDetailsProgress(
+  previousData: Record<string, unknown>,
+  nextData: Record<string, unknown>,
+  focusedField: string | undefined,
+): Record<string, unknown> {
+  const prevPd = (previousData.propertyDetails || {}) as Record<string, unknown>;
+  const nextPd = (nextData.propertyDetails || {}) as Record<string, unknown>;
+  if (!prevPd || Object.keys(prevPd).length === 0) return nextData;
+
+  const mergedPd: Record<string, unknown> = { ...nextPd };
+  const carry = (key: string) => {
+    const prevVal = prevPd[key];
+    const nextVal = nextPd[key];
+    if (isMeaningful(prevVal) && !isMeaningful(nextVal)) {
+      mergedPd[key] = prevVal;
+    }
+  };
+
+  // Keep core progression fields stable unless user is actively answering them.
+  carry("propertySubtype");
+  carry("propertyType");
+  carry("measurementUnit");
+  carry("landSize");
+  carry("minLandSize");
+  carry("maxLandSize");
+  carry("documentTypes");
+  carry("propertyCondition");
+  carry("buildingType");
+  carry("bedrooms");
+  carry("minBedrooms");
+  carry("bathrooms");
+  carry("toilets");
+  carry("parkingSpaces");
+  carry("carParks");
+  carry("maxGuests");
+
+  // Normalize malformed documentTypes from AI (string/object) into string[].
+  const rawDocTypes = mergedPd.documentTypes;
+  if (!Array.isArray(rawDocTypes)) {
+    const fromRaw =
+      typeof rawDocTypes === "string"
+        ? parseDocumentTypesFromUserText(rawDocTypes)
+        : Array.isArray(prevPd.documentTypes)
+          ? (prevPd.documentTypes as string[])
+          : [];
+    if (fromRaw.length > 0) mergedPd.documentTypes = fromRaw;
+  }
+
+  // Keep previous valid numeric land-size values if AI returned invalid placeholders.
+  const keepValidPositive = (key: "landSize" | "minLandSize" | "maxLandSize") => {
+    const prevVal = prevPd[key];
+    const nextVal = mergedPd[key];
+    if (landSizeAmountPositive(prevVal) && !landSizeAmountPositive(nextVal)) {
+      mergedPd[key] = prevVal;
+    }
+  };
+  keepValidPositive("landSize");
+  keepValidPositive("minLandSize");
+  keepValidPositive("maxLandSize");
+
+  return { ...nextData, propertyDetails: mergedPd };
 }
 
 /** Step 0 complete: state, LGAs, and at least one area or custom (same as validateStep case 0). */
@@ -946,18 +1166,39 @@ function flattenPreferenceData(data: Record<string, unknown>): { key: string; la
     if (pd.propertyCondition) out.push({ key: "propertyCondition", label: "Condition", value: String(pd.propertyCondition) });
     if (pd.leaseTerm) out.push({ key: "leaseTerm", label: "Lease term", value: String(pd.leaseTerm) });
     if (pd.purpose) out.push({ key: "purpose", label: "Purpose", value: String(pd.purpose) });
+    if (Array.isArray(pd.documentTypes) && pd.documentTypes.length) {
+      out.push({
+        key: "documentTypes",
+        label: "Documents needed",
+        value: (pd.documentTypes as string[]).join(", "),
+      });
+    }
   }
   const dev = data.developmentDetails as Record<string, unknown> | undefined;
   if (dev) {
     if (dev.minLandSize || dev.maxLandSize) out.push({ key: "landSize", label: "Land size", value: [dev.minLandSize, dev.maxLandSize].filter(Boolean).join(" – ") });
     if (Array.isArray(dev.developmentTypes) && dev.developmentTypes.length) out.push({ key: "developmentTypes", label: "Development types", value: (dev.developmentTypes as string[]).join(", ") });
     if (dev.preferredSharingRatio) out.push({ key: "preferredSharingRatio", label: "Preferred sharing", value: String(dev.preferredSharingRatio) });
+    if (Array.isArray(dev.minimumTitleRequirements) && dev.minimumTitleRequirements.length) {
+      out.push({
+        key: "minimumTitleRequirements",
+        label: "Title documents needed",
+        value: (dev.minimumTitleRequirements as string[]).join(", "),
+      });
+    }
   }
   const bd = data.bookingDetails as Record<string, unknown> | undefined;
   if (bd) {
     if (bd.checkInDate) out.push({ key: "checkInDate", label: "Check-in", value: String(bd.checkInDate) });
     if (bd.checkOutDate) out.push({ key: "checkOutDate", label: "Check-out", value: String(bd.checkOutDate) });
     if (bd.numberOfGuests != null) out.push({ key: "numberOfGuests", label: "Guests", value: String(bd.numberOfGuests) });
+    if (Array.isArray(bd.documentTypes) && bd.documentTypes.length) {
+      out.push({
+        key: "bookingDocumentTypes",
+        label: "Documents needed",
+        value: (bd.documentTypes as string[]).join(", "),
+      });
+    }
   }
   const contact = data.contactInfo as Record<string, unknown> | undefined;
   if (contact) {
@@ -1008,6 +1249,8 @@ export default function PreferenceAiConversationFlow() {
   /** Default on: speak each assistant reply automatically; user can mute via toggle or stop via speaker icon. */
   const [playRepliesAloud, setPlayRepliesAloud] = useState(true);
   const prevMessageCountRef = useRef(0);
+  const conversationScrollRef = useRef<HTMLDivElement | null>(null);
+  const newestChipsRef = useRef<HTMLDivElement | null>(null);
   const { speak, stop, speaking } = useSpeechSynthesis({ lang: "en-NG", rate: 0.95 });
 
   /** Budget min/max steps: format amounts with commas; send digits-only to the flow / backend. */
@@ -1048,6 +1291,32 @@ export default function PreferenceAiConversationFlow() {
     prevMessageCountRef.current = n;
   }, [preferenceAiMessages, playRepliesAloud, speak]);
 
+  // Keep chat pinned to newest content (latest AI suggestion / user turn),
+  // while preventing parent-page scroll jumps.
+  useLayoutEffect(() => {
+    const container = conversationScrollRef.current;
+    if (!container) return;
+    container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+  }, [preferenceAiMessages, loading, submitting]);
+
+  // When clarification chips appear, bring that set into view for quick mobile taps.
+  useEffect(() => {
+    const container = conversationScrollRef.current;
+    const chips = newestChipsRef.current;
+    if (!container || !chips) return;
+    requestAnimationFrame(() => {
+      const chipTop = chips.offsetTop;
+      const chipBottom = chipTop + chips.offsetHeight;
+      const viewTop = container.scrollTop;
+      const viewBottom = viewTop + container.clientHeight;
+      if (chipBottom > viewBottom) {
+        container.scrollTo({ top: chipBottom - container.clientHeight + 12, behavior: "smooth" });
+      } else if (chipTop < viewTop) {
+        container.scrollTo({ top: Math.max(0, chipTop - 12), behavior: "smooth" });
+      }
+    });
+  }, [preferenceAiMessages]);
+
   const handleSend = useCallback(
     async (textOverride: string) => {
       const trimmed = textOverride.toString().trim();
@@ -1056,7 +1325,96 @@ export default function PreferenceAiConversationFlow() {
         return;
       }
 
-      if (SKIP_UTTERANCE_RE.test(trimmed)) {
+      const lastAssistForVoice = [...preferenceAiMessages]
+        .reverse()
+        .find((m) => m.role === "assistant");
+      const voiceFocus = lastAssistForVoice?.focusedMissingField;
+      const voiceFocusNorm = normalizePreferenceFieldKey(voiceFocus || "");
+      const currentState = String(
+        (((collectedDataRef.current || {}) as Record<string, unknown>).location as Record<string, unknown> | undefined)
+          ?.state || "",
+      ).trim();
+      let normalizedInput = trimmed;
+      if (voiceFocusNorm.includes("preference type")) {
+        const resolved = resolveVoiceIntent(trimmed);
+        if (resolved.kind === "clarify") {
+          setPreferenceAiMessages((prev) => [
+            ...prev,
+            { role: "user", content: trimmed },
+            {
+              role: "assistant",
+              content: resolved.prompt,
+              speakLine: resolved.prompt,
+              missingFields: voiceFocus ? [voiceFocus] : undefined,
+              focusedMissingField: voiceFocus,
+              remainingMissingCount: 0,
+              quickOptions: resolved.options,
+            },
+          ]);
+          return;
+        }
+        normalizedInput = resolved.value;
+      } else if (voiceFocusNorm.includes("preference location - state")) {
+        const resolved = resolveVoiceState(trimmed, NIGERIAN_STATE_NAMES);
+        if (resolved.kind === "clarify") {
+          setPreferenceAiMessages((prev) => [
+            ...prev,
+            { role: "user", content: trimmed },
+            {
+              role: "assistant",
+              content: resolved.prompt,
+              speakLine: resolved.prompt,
+              missingFields: voiceFocus ? [voiceFocus] : undefined,
+              focusedMissingField: voiceFocus,
+              remainingMissingCount: 0,
+              quickOptions: resolved.options,
+            },
+          ]);
+          return;
+        }
+        normalizedInput = resolved.value;
+      } else if (voiceFocusNorm.includes("preference location - lga")) {
+        const resolved = resolveVoiceLga(trimmed, currentState);
+        if (resolved.kind === "clarify") {
+          setPreferenceAiMessages((prev) => [
+            ...prev,
+            { role: "user", content: trimmed },
+            {
+              role: "assistant",
+              content: resolved.prompt,
+              speakLine: resolved.prompt,
+              missingFields: voiceFocus ? [voiceFocus] : undefined,
+              focusedMissingField: voiceFocus,
+              remainingMissingCount: 0,
+              quickOptions: resolved.options,
+            },
+          ]);
+          return;
+        }
+        normalizedInput = resolved.value;
+      } else if (voiceFocusNorm.includes("preference location - area")) {
+        const resolved = resolveVoiceArea(trimmed, currentState);
+        if (resolved.kind === "clarify") {
+          setPreferenceAiMessages((prev) => [
+            ...prev,
+            { role: "user", content: trimmed },
+            {
+              role: "assistant",
+              content: resolved.prompt,
+              speakLine: resolved.prompt,
+              missingFields: voiceFocus ? [voiceFocus] : undefined,
+              focusedMissingField: voiceFocus,
+              remainingMissingCount: 0,
+              quickOptions: resolved.options,
+            },
+          ]);
+          return;
+        }
+        normalizedInput = resolved.value;
+      }
+      const userText = normalizedInput;
+
+      if (SKIP_UTTERANCE_RE.test(userText)) {
         setLoading(true);
         try {
           setPreferenceAiMessages((prev) => {
@@ -1073,7 +1431,7 @@ export default function PreferenceAiConversationFlow() {
               const missingReq = missingBefore.filter((f) => !isPreferenceFieldSkippable(f));
               return [
                 ...prev,
-                { role: "user" as const, content: trimmed },
+                { role: "user" as const, content: userText },
                 {
                   role: "assistant" as const,
                   content: reqLine,
@@ -1089,7 +1447,7 @@ export default function PreferenceAiConversationFlow() {
             const reply = buildPreferenceInteractiveReply(data, skipped, 0);
             return [
               ...prev,
-              { role: "user" as const, content: trimmed },
+              { role: "user" as const, content: userText },
               {
                 role: "assistant" as const,
                 content: reply.content,
@@ -1107,13 +1465,13 @@ export default function PreferenceAiConversationFlow() {
         return;
       }
 
-      const accumulated = [...preferenceAiMessages, { role: "user", content: trimmed }]
+      const accumulated = [...preferenceAiMessages, { role: "user", content: userText }]
         .filter((m) => m.role === "user")
         .map((m) => m.content)
         .join(". ");
 
       const storedType = normalizedPreferenceType((collectedDataRef.current || {}) as Record<string, unknown>);
-      const detectedFromMsg = detectPreferenceTypeFromText(trimmed);
+      const detectedFromMsg = detectPreferenceTypeFromText(userText);
       const detectedFromAccum = detectPreferenceTypeFromText(accumulated);
       const effectiveType = storedType || detectedFromMsg || detectedFromAccum;
 
@@ -1123,7 +1481,7 @@ export default function PreferenceAiConversationFlow() {
         const prompt = getPreferenceFieldPrompt(typeFieldLabel, preferenceQuestionVariantRef.current++);
         setPreferenceAiMessages((prev) => [
           ...prev,
-          { role: "user", content: trimmed },
+          { role: "user", content: userText },
           {
             role: "assistant",
             content: prompt.displayLine,
@@ -1137,23 +1495,24 @@ export default function PreferenceAiConversationFlow() {
       }
 
       setLoading(true);
-      setPreferenceAiMessages((prev) => [...prev, { role: "user", content: trimmed }]);
+      setPreferenceAiMessages((prev) => [...prev, { role: "user", content: userText }]);
 
       try {
         const contextual =
           (() => {
             const lastAssist = [...preferenceAiMessages].reverse().find((m) => m.role === "assistant");
             const focus = lastAssist?.focusedMissingField;
-            if (!focus) return accumulated || trimmed;
-            return `${accumulated || trimmed}\n\n[The user is answering this specific field: ${focus}]`;
+            if (!focus) return accumulated || userText;
+            return `${accumulated || userText}\n\n[The user is answering this specific field: ${focus}]`;
           })();
         const res = await suggestPreference(contextual);
         if (!res.success) {
+          const safeMsg = sanitizeAiFailureMessage(res.message);
           setPreferenceAiMessages((prev) => [
             ...prev,
             {
               role: "assistant",
-              content: res.message || "Could not get suggestions. Please try again or add more detail.",
+              content: safeMsg || "Could not get suggestions. Please try again or add more detail.",
             },
           ]);
           return;
@@ -1171,12 +1530,15 @@ export default function PreferenceAiConversationFlow() {
           .reverse()
           .find((m) => m.role === "assistant");
         const lastFocusBeforeMerge = lastAssistBeforeTurn?.focusedMissingField;
-        data = applyPreferenceLandMeasurementFromFocusedAnswer(data, trimmed, lastFocusBeforeMerge);
-        data = applyPreferenceBedroomsFromFocusedAnswer(data, trimmed, lastFocusBeforeMerge);
-        data = applyPreferenceBuyResidentialCountFromFocusedAnswer(data, trimmed, lastFocusBeforeMerge);
+        data = applyPreferenceSubtypeFromFocusedAnswer(data, userText, lastFocusBeforeMerge);
+        data = applyPreferenceLandMeasurementFromFocusedAnswer(data, userText, lastFocusBeforeMerge);
+        data = applyPreferenceLandSizeFromFocusedAnswer(data, userText, lastFocusBeforeMerge);
+        data = applyPreferenceDocumentTypesFromFocusedAnswer(data, userText, lastFocusBeforeMerge);
+        data = applyPreferenceBedroomsFromFocusedAnswer(data, userText, lastFocusBeforeMerge);
+        data = applyPreferenceBuyResidentialCountFromFocusedAnswer(data, userText, lastFocusBeforeMerge);
 
-        const fromUser = extractContactFromText(trimmed);
-        const fromAccumulated = extractContactFromText(accumulated || trimmed);
+        const fromUser = extractContactFromText(userText);
+        const fromAccumulated = extractContactFromText(accumulated || userText);
         const parsedContact = {
           email: fromUser.email || fromAccumulated.email,
           phoneNumber: fromUser.phoneNumber || fromAccumulated.phoneNumber,
@@ -1195,20 +1557,42 @@ export default function PreferenceAiConversationFlow() {
           const lastFocusBeforeTurn = lastFocusBeforeMerge;
           const isLocationTurn = shouldApplyUserTextToPreferenceLocation(lastFocusBeforeTurn);
           const previousLocation = ((collectedDataRef.current || {}).location || {}) as Record<string, unknown>;
+          const normalizedFocus = normalizePreferenceFieldKey(lastFocusBeforeTurn || "");
+          const isAreaTurn = normalizedFocus.includes("preference location - area");
           let loc = (data.location || {}) as Record<string, unknown>;
           loc = normalizeCompoundPreferenceLocation(loc);
+          // Guardrail: when answering AREA, keep already-confirmed state/LGA from prior turns.
+          // AI merge can mistakenly overwrite LGA with the area text, which then causes
+          // sanitizers to drop the area as a duplicate and ask repeatedly.
+          if (isAreaTurn) {
+            const prevLoc = normalizeCompoundPreferenceLocation(previousLocation);
+            const prevState = String(prevLoc.state ?? "").trim();
+            const prevLgas = getMeaningfulLgas(prevLoc, prevState);
+            if (prevState) {
+              loc.state = prevState;
+            }
+            if (prevLgas.length > 0) {
+              loc.localGovernmentAreas = prevLgas;
+              loc.lgas = prevLgas;
+            }
+          }
           if (isLocationTurn) {
-            loc = applyPreferenceLocationFromFocusedAnswer(trimmed, lastFocusBeforeTurn, loc);
-            loc = applyPreferenceLocationFromNaturalText(trimmed, loc);
+            loc = applyPreferenceLocationFromFocusedAnswer(userText, lastFocusBeforeTurn, loc);
+            loc = applyPreferenceLocationFromNaturalText(userText, loc);
           }
           loc = stripImplausiblePreferenceLocationState(loc);
           // Always trust only what the user has mentioned (prevents AI-inserted area/LGA values).
-          loc = filterPreferenceLocationToUserMentionedOnly(loc, accumulated || trimmed);
+          loc = filterPreferenceLocationToUserMentionedOnly(loc, accumulated || userText);
           loc = coercePreferenceLocationFormHierarchy(loc);
           loc = stripPreferenceAreasUntilLgaSelected(loc);
           loc = keepBestPreferenceLocationProgress(previousLocation, loc, isLocationTurn);
           data = { ...data, location: loc };
         }
+        data = keepBestPreferencePropertyDetailsProgress(
+          (collectedDataRef.current || {}) as Record<string, unknown>,
+          data,
+          lastFocusBeforeMerge,
+        );
         setPreferenceAiCollectedData(data);
         const reply = buildPreferenceInteractiveReply(data, skippedFieldsRef.current, 0);
         setPreferenceAiMessages((prev) => [
@@ -1224,10 +1608,15 @@ export default function PreferenceAiConversationFlow() {
           },
         ]);
       } catch (e) {
-        toast.error((e as Error)?.message || "Something went wrong.");
+        const safeMsg = sanitizeAiFailureMessage((e as Error)?.message);
+        toast.error(safeMsg || "Something went wrong.");
         setPreferenceAiMessages((prev) => [
           ...prev,
-          { role: "assistant", content: "Something went wrong. Please try again or add more detail." },
+          {
+            role: "assistant",
+            content:
+              safeMsg || "Something went wrong. Please try again or add more detail.",
+          },
         ]);
       } finally {
         setLoading(false);
@@ -1492,12 +1881,48 @@ export default function PreferenceAiConversationFlow() {
         </button>
       </div>
       <p className="text-sm text-[#5A5D63]">
-        <strong>Start with the listing type</strong> — say <strong>Buy</strong>, <strong>Rent</strong>, <strong>Shortlet</strong>, or <strong>JV</strong> first (same as on the manual form). The AI then asks for <strong>one detail at a time</strong>, matching each listing type&apos;s form. For budgets, use commas (e.g.{" "}
-        <span className="whitespace-nowrap">20,000,000</span>). Say <strong>skip</strong> on optional lines. Use <strong>I&apos;m done</strong> to enter your name and email, then review the summary.
+        Tell us what you need. We&apos;ll guide you step-by-step.
       </p>
-      <p className="text-xs text-[#5A5D63] italic">
-        Tip: If voice input fails (e.g. network), type instead. Name and email are confirmed on the next step.
-      </p>
+
+      <div className="border border-[#8DDB90]/30 rounded-lg overflow-hidden bg-white">
+        <details className="group">
+          <summary className="flex items-center justify-between px-4 py-3 text-sm font-medium text-[#09391C] bg-[#8DDB90]/10 hover:bg-[#8DDB90]/20 cursor-pointer transition-colors list-none select-none">
+            <span>How to use</span>
+            <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
+          </summary>
+          <div className="px-4 py-3 space-y-3 text-sm text-[#5A5D63]">
+            <p>
+              <strong>Start with the listing type</strong> — say <strong>Buy</strong>, <strong>Rent</strong>, <strong>Shortlet</strong>, or <strong>JV</strong> first. The AI asks for one detail at a time. For budgets, use commas (e.g. <span className="whitespace-nowrap">20,000,000</span>). Say <strong>skip</strong> on optional lines. Use <strong>I&apos;m done</strong> to review and submit.
+            </p>
+            <div className="pt-2 border-t border-gray-100">
+              <p className="font-medium text-[#09391C] mb-2">What you need to get started:</p>
+              <p className="mb-2">1. Pick a Type: Buy · Rent · Shortlet · JV</p>
+              <p className="mb-1">2. Key Details to Mention:</p>
+              <ul className="space-y-1 ml-4 text-xs">
+                <li className="flex items-start gap-2">
+                  <span>📍</span>
+                  <span><strong>Location:</strong> Area & LGA (e.g. Ikate, Eti-Osa)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span>🏡</span>
+                  <span><strong>Property:</strong> Type & Features (Pool, Serviced, etc.)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span>💰</span>
+                  <span><strong>Budget:</strong> Your price range or daily rate</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span>📄</span>
+                  <span><strong>Title (For Buy/JV):</strong> e.g. C of O or Consent</span>
+                </li>
+              </ul>
+            </div>
+            <p className="text-xs italic pt-2 border-t border-gray-100">
+              Tip: If voice input fails, type instead. Name and email are confirmed on the next step.
+            </p>
+          </div>
+        </details>
+      </div>
 
       <label className="flex items-start gap-2 text-sm text-[#5A5D63] cursor-pointer">
         <input
@@ -1522,11 +1947,22 @@ export default function PreferenceAiConversationFlow() {
         </div>
       )}
 
-      <div className="bg-white rounded-lg border border-gray-200 max-h-64 overflow-y-auto p-4 space-y-3">
+      <div
+        ref={conversationScrollRef}
+        className="bg-white rounded-lg border border-gray-200 max-h-[400px] overflow-y-auto p-4 space-y-3"
+      >
         {preferenceAiMessages.length === 0 ? (
-          <p className="text-sm text-[#5A5D63] italic">
-            Example first message: &quot;Buy — 3 bedroom in Lekki…&quot; or &quot;Shortlet in Victoria Island…&quot; You must include Buy, Rent, Shortlet, or JV.
-          </p>
+          <div className="border border-[#8DDB90]/30 rounded-lg overflow-hidden">
+            <details className="group">
+              <summary className="flex items-center justify-between px-3 py-2.5 text-sm font-medium text-[#09391C] bg-[#8DDB90]/10 hover:bg-[#8DDB90]/20 cursor-pointer transition-colors list-none select-none">
+                <span>Example messages</span>
+                <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
+              </summary>
+              <div className="px-3 py-2.5 text-sm text-[#5A5D63] italic">
+                &quot;Buy — 3 bedroom in Lekki…&quot; or &quot;Shortlet in Victoria Island…&quot; You must include Buy, Rent, Shortlet, or JV.
+              </div>
+            </details>
+          </div>
         ) : (
           preferenceAiMessages.map((msg, i) => (
             <div
@@ -1562,6 +1998,30 @@ export default function PreferenceAiConversationFlow() {
                 (msg as { focusedMissingField?: string }).focusedMissingField ? (
                   <>
                     <p className="mb-2 whitespace-pre-line">{msg.content}</p>
+                    {(msg as { quickOptions?: string[] }).quickOptions &&
+                    (msg as { quickOptions?: string[] }).quickOptions!.length > 0 ? (
+                      <div
+                        ref={i === preferenceAiMessages.length - 1 ? newestChipsRef : null}
+                        className="mb-2"
+                      >
+                        <p className="mb-1 text-[11px] font-medium text-[#5A5D63]">
+                          Tap to choose
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                        {(msg as { quickOptions?: string[] }).quickOptions!.map((option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => handleSuggest(option)}
+                            disabled={loading}
+                            className="rounded-full border border-[#8DDB90] bg-white px-3 py-1 text-xs font-medium text-[#09391C] hover:bg-[#8DDB90]/15 disabled:opacity-50"
+                          >
+                            {option}
+                          </button>
+                        ))}
+                        </div>
+                      </div>
+                    ) : null}
                     {(msg as { remainingMissingCount?: number }).remainingMissingCount ? (
                       <p className="text-xs text-[#5A5D63] mt-2 pt-2 border-t border-gray-200">
                         {(msg as { remainingMissingCount: number }).remainingMissingCount} more item
