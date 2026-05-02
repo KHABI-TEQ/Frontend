@@ -29,6 +29,7 @@ import {
   Search as SearchIcon,
 } from "lucide-react";
 import Loading from "@/components/loading-component/loading";
+import { InspectionRepresentativesSection } from "@/components/dashboard/inspection-representatives-section";
 
 interface PendingBrief {
   _id: string;
@@ -333,6 +334,10 @@ export default function LandlordDashboard() {
               <div className="text-2xl font-bold text-gray-900">₦0</div>
             </div>
           </div>
+        </div>
+
+        <div className="mb-8">
+          <InspectionRepresentativesSection variant="landlord" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

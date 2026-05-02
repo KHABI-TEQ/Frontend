@@ -26,6 +26,7 @@ import {
   Users as UsersIcon,
 } from "lucide-react";
 import Loading from "@/components/loading-component/loading";
+import { InspectionRepresentativesSection } from "@/components/dashboard/inspection-representatives-section";
 
 interface PendingBrief {
   _id: string;
@@ -412,6 +413,10 @@ export default function DeveloperDashboard() {
               </motion.div>
             );
           })}
+        </div>
+
+        <div className="mb-8">
+          <InspectionRepresentativesSection variant="developer" />
         </div>
 
         {/* My Properties + Quick Actions (same layout as Agent: Recent Briefs + Quick Actions) */}

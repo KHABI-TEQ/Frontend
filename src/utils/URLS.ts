@@ -70,6 +70,10 @@ export const URLS = {
   accountMyInspectionGetOne: (inspectionId: string) => `/account/my-inspections/${inspectionId}`,
   /** POST /account/my-inspections/:inspectionId/respond { action: "accept" | "reject", note?: string, inspectionFee?: number } (guide §8.3) */
   accountInspectionRespond: (inspectionId: string) => `/account/my-inspections/${inspectionId}/respond`,
+  /** Landlord / Developer: CRUD for inspection notification contacts (email + WhatsApp) */
+  accountInspectionRepresentatives: "/account/inspection-representatives",
+  accountInspectionRepresentative: (representativeId: string) =>
+    `/account/inspection-representatives/${representativeId}`,
   accountBookingsBaseUrl: "/account/my-bookings",
   accountPropertyBaseUrl: "/account/properties",
   /** POST /account/properties/create (guide: listingScope for KHABITEQ marketplace, e.g. lasrera_marketplace) */
