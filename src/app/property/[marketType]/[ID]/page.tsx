@@ -47,6 +47,7 @@ import { kebabToTitleCase } from "@/utils/helpers";
 import ShortletBookingModal from "@/components/shortlet/ShortletBookingModal";
 import LOIUploadModal from "@/components/new-marketplace/modals/LOIUploadModal";
 import PropertyLocationMap from "@/components/property/PropertyLocationMap";
+import PropertyImageLightboxModal from "@/components/common/PropertyImageLightboxModal";
 
 interface PropertyDetails {
   _id: string;
@@ -200,40 +201,13 @@ const ImageGallery = ({ images }: { images: string[] }) => {
         </Swiper>
       )}
 
-      {/* Lightbox Modal */}
-      <AnimatePresence>
-        {isLightboxOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
-            onClick={() => setIsLightboxOpen(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.8 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.8 }}
-              className="relative max-w-7xl max-h-full"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Image
-                src={validImages[activeIndex]}
-                alt={`Property image ${activeIndex + 1}`}
-                width={1200}
-                height={800}
-                className="max-w-full max-h-[90vh] object-contain rounded-lg"
-              />
-              <button
-                onClick={() => setIsLightboxOpen(false)}
-                className="absolute top-4 right-4 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <PropertyImageLightboxModal
+        isOpen={isLightboxOpen}
+        images={validImages}
+        initialIndex={activeIndex}
+        onClose={() => setIsLightboxOpen(false)}
+        zIndexClass="z-50"
+      />
     </div>
   );
 };

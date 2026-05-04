@@ -55,6 +55,7 @@ export const LAGOS_MAJOR_AREAS = [
   "Mile 12",
   "Gbagada",
   "Anthony",
+  "Aboru",
 ] as const;
 
 /** Common ASR/typing variants -> canonical Lagos LGA names. */
@@ -91,4 +92,5 @@ export const LAGOS_AREA_ALIASES: Record<string, (typeof LAGOS_MAJOR_AREAS)[numbe
   "kettu": "Ketu",
   "osapa london": "Osapa",
   "ajah lagos": "Ajah",
+  "aboru":"Aboru",
 };

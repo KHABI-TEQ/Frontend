@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { speakUtteranceWithNigerianVoice, warmSpeechSynthesisVoices } from "@/utils/speechVoices";
 
 /**
  * Options for speech synthesis (Text-to-Speech).
@@ -8,7 +9,7 @@ import { useCallback, useRef, useState } from "react";
  * All usage is client-only (no window in SSR).
  */
 export interface UseSpeechSynthesisOptions {
-  /** Language code (e.g. "en-NG", "en-US"). Default "en-NG". */
+  /** Preferred BCP 47 tag when no matching voice is found. Default "en-NG". */
   lang?: string;
   /** Speech rate: 0.1–10, 1 = normal. Default 0.95. */
   rate?: number;
@@ -25,12 +26,16 @@ function getSynth(): SpeechSynthesis | null {
 
 /**
  * Hook for Text-to-Speech (reply playback) using the Web Speech API — SpeechSynthesis.
- * Use in browser only (e.g. inside components that run on the client).
+ * Uses the closest available Nigerian English voice when the engine exposes one.
  */
 export function useSpeechSynthesis(options: UseSpeechSynthesisOptions = {}) {
   const { lang = "en-NG", rate = 0.95, pitch = 1, volume = 1 } = options;
   const [speaking, setSpeaking] = useState(false);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+
+  useEffect(() => {
+    warmSpeechSynthesisVoices();
+  }, []);
 
   const stop = useCallback(() => {
     const synth = getSynth();
@@ -52,7 +57,6 @@ export function useSpeechSynthesis(options: UseSpeechSynthesisOptions = {}) {
       synth.cancel();
 
       const utterance = new SpeechSynthesisUtterance(trimmed);
-      utterance.lang = lang;
       utterance.rate = Math.max(0.1, Math.min(10, rate));
       utterance.pitch = Math.max(0, Math.min(2, pitch));
       utterance.volume = Math.max(0, Math.min(1, volume));
@@ -62,7 +66,7 @@ export function useSpeechSynthesis(options: UseSpeechSynthesisOptions = {}) {
       utterance.onerror = () => setSpeaking(false);
 
       utteranceRef.current = utterance;
-      synth.speak(utterance);
+      speakUtteranceWithNigerianVoice(synth, utterance, lang);
     },
     [lang, rate, pitch, volume]
   );

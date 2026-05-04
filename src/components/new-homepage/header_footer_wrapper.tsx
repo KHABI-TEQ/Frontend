@@ -8,7 +8,7 @@ import HeaderLogic from "@/logic/headerLogic";
 import NewFooter from "./new-footer";
 
 import { ReactNode } from "react";
-import ViewImage from "../general-components/viewImage";
+import PropertyGalleryOverlay from "@/components/common/PropertyGalleryOverlay";
 import { usePageContext } from "@/context/page-context";
 
 interface Props {
@@ -17,13 +17,13 @@ interface Props {
 
 export default function HeaderFooterWrapper({ children }: Props) {
 	const pathname = usePathname();
-	const { viewImage, imageData } = usePageContext();
+	const { viewImage } = usePageContext();
 	return (
 		<Fragment>
 			<HeaderLogic />
 			{children}
 			<NewFooter />
-			{viewImage && <ViewImage imageData={imageData} />}
+			{viewImage && <PropertyGalleryOverlay />}
 		</Fragment>
 	);
 }

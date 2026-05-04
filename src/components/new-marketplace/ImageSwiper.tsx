@@ -36,7 +36,8 @@ const getValidImageUrl = (url: any): string => {
 
 const ImageSwiper: React.FC<ImageSwiperProps> = ({ images }) => {
   const swiperRef = React.useRef<any>(null);
-  const { setViewImage, setImageData } = usePageContext();
+  const { setViewImage, setImageData, setGalleryInitialIndex } =
+    usePageContext();
 
   // Handle both images array and pictures array from API
   let imageArray = images;
@@ -79,6 +80,8 @@ const ImageSwiper: React.FC<ImageSwiperProps> = ({ images }) => {
             return (
               <SwiperSlide
                 onClick={() => {
+                  const idx = swiperRef.current?.realIndex ?? i;
+                  setGalleryInitialIndex(idx);
                   setImageData(validImages);
                   setViewImage(true);
                 }}

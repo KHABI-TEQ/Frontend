@@ -77,9 +77,9 @@ export function getPreferenceFieldPrompt(
   if (f.includes("preference type")) {
     const speak = pickVariant(
       [
-        "Start by saying whether this is Buy, Rent, Shortlet, or JV.",
-        "Say Buy, Rent, Shortlet, or JV first.",
-        "Which listing type is this: Buy, Rent, Shortlet, or Joint Venture? Say it at the beginning.",
+        "Start by saying whether this is Buy, Rent, Shortlet, or joint venture.",
+        "Say Buy, Rent, Shortlet, or joint venture first.",
+        "Which listing type is this: Buy, Rent, Shortlet, or joint venture? Say it at the beginning.",
       ],
       variant,
     );
@@ -92,12 +92,12 @@ export function getPreferenceFieldPrompt(
   }
 
   if (f.includes("preference location - lga")) {
-    const speak = "Which local government area (LGA)?";
+    const speak = "Which local government area?";
     return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
   }
 
   if (f.includes("preference location - area")) {
-    const speak = "Which area or neighbourhood within that LGA?";
+    const speak = "Which area or neighbourhood within that local government area?";
     return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
   }
 
@@ -118,7 +118,11 @@ export function getPreferenceFieldPrompt(
       !f.includes("property location"))
   ) {
     const speak = pickVariant(
-      ["Which LGA or area?", "What local government or area?", "Name an LGA or area."],
+      [
+        "Which local government area or area name?",
+        "What local government area or area?",
+        "Name a local government area or area.",
+      ],
       variant,
     );
     return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
@@ -132,9 +136,9 @@ export function getPreferenceFieldPrompt(
   if (f.includes("min price")) {
     const speak = pickVariant(
       [
-        "What's your minimum budget in Naira? Use comma-separated digits, e.g. 20,000,000.",
-        "Minimum price in Naira — comma-separated thousands.",
-        "Your budget floor in Naira?",
+        "What is your minimum budget in Naira? Use comma-separated digits, for example 20,000,000.",
+        "Minimum price in Naira, comma-separated thousands.",
+        "What is your budget floor in Naira?",
       ],
       variant,
     );
@@ -144,7 +148,7 @@ export function getPreferenceFieldPrompt(
   if (f.includes("max price must")) {
     const speak = pickVariant(
       [
-        "Maximum must be higher than minimum — enter max price in Naira with commas.",
+        "Maximum must be higher than minimum. Enter maximum price in Naira with commas.",
         "Enter a maximum above your minimum, comma-separated.",
         "What upper budget in Naira, comma-separated?",
       ],
@@ -156,9 +160,9 @@ export function getPreferenceFieldPrompt(
   if (f.includes("max price")) {
     const speak = pickVariant(
       [
-        "What's your maximum budget in Naira? Use commas, e.g. 50,000,000.",
+        "What is your maximum budget in Naira? Use commas, for example 50,000,000.",
         "Top of your budget in Naira, comma-separated.",
-        "Maximum price in Naira with comma thousands separators?",
+        "What is your maximum price in Naira with comma thousands separators?",
       ],
       variant,
     );
@@ -237,8 +241,8 @@ export function getPreferenceFieldPrompt(
     const speak = pickVariant(
       [
         "How many bathrooms? Say 1 to 10, or more for more than ten.",
-        "Bathroom count for your buy preference — 1 through 10, or more.",
-        "Minimum bathrooms — a number from 1 to 10, or say more.",
+        "Bathroom count for your buy preference: 1 through 10, or more.",
+        "Minimum bathrooms: a number from 1 to 10, or say more.",
       ],
       variant,
     );
@@ -268,7 +272,7 @@ export function getPreferenceFieldPrompt(
 
   if (f.includes("property subtype")) {
     const speak =
-      "Property subtype: land, residential, or commercial for a buy preference, or your rent subtype (e.g. flat, bungalow).";
+      "Property subtype: land, residential, or commercial for a buy preference, or your rent subtype such as flat or bungalow.";
     return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
   }
 
@@ -286,22 +290,44 @@ export function getPreferenceFieldPrompt(
   }
 
   if (f.includes("land measurement unit")) {
-    const speak = "Measurement unit for land size: plot, sqm, hectares, or acres?";
+    const speak =
+      "Measurement unit for land size: plot, square metres, hectares, or acres?";
     return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
   }
 
   if (f.includes("minimum land size") && f.includes("sqm")) {
-    const speak = pickVariant(["Minimum land size in square metres?", "Smallest SQM you want?", "Min land size number?"], variant);
+    const speak = pickVariant(
+      [
+        "Minimum land size in square metres?",
+        "Smallest square metres you want?",
+        "Minimum land size number?",
+      ],
+      variant,
+    );
     return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
   }
 
   if (f.includes("minimum land size") && f.includes("land requirements")) {
-    const speak = pickVariant(["Minimum land size for this JV requirement?", "How much land at minimum?", "Min land size number?"], variant);
+    const speak = pickVariant(
+      [
+        "Minimum land size for this joint venture requirement?",
+        "How much land at minimum?",
+        "Minimum land size number?",
+      ],
+      variant,
+    );
     return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
   }
 
   if (f.includes("maximum land size") && f.includes("buy")) {
-    const speak = pickVariant(["Maximum land size for buy?", "Largest land size in that unit?", "Max land size number?"], variant);
+    const speak = pickVariant(
+      [
+        "Maximum land size for buy?",
+        "Largest land size in that unit?",
+        "Maximum land size number?",
+      ],
+      variant,
+    );
     return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
   }
 
@@ -351,17 +377,24 @@ export function getPreferenceFieldPrompt(
   }
 
   if (f.includes("measurement unit for land")) {
-    const speak = "Which unit for land size: plot, sqm, hectares, or acres?";
+    const speak = "Which unit for land size: plot, square metres, hectares, or acres?";
     return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
   }
 
   if (f.includes("measurement unit")) {
-    const speak = "Which measurement unit: plot, sqm, hectares, or acres?";
+    const speak = "Which measurement unit: plot, square metres, hectares, or acres?";
     return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
   }
 
   if (f.includes("jv type")) {
-    const speak = pickVariant(["Which JV type?", "Equity split, lease-to-build, or development partner?", "JV structure?"], variant);
+    const speak = pickVariant(
+      [
+        "Which joint venture type?",
+        "Equity split, lease-to-build, or development partner?",
+        "Joint venture structure?",
+      ],
+      variant,
+    );
     return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
   }
 
@@ -425,9 +458,9 @@ export function getPropertyFieldPrompt(
   if (f.includes("property type") && (f.includes("sale") || f.includes("listing") || f.includes("start"))) {
     const speak = pickVariant(
       [
-        "Start with listing type: Sale, Rent, Shortlet, or JV.",
-        "Say whether you are listing for Sale, Rent, Shortlet, or Joint Venture first.",
-        "Which listing type is this: Sale, Rent, Shortlet, or JV?",
+        "Start with listing type: Sale, Rent, Shortlet, or joint venture.",
+        "Say whether you are listing for Sale, Rent, Shortlet, or joint venture first.",
+        "Which listing type is this: Sale, Rent, Shortlet, or joint venture?",
       ],
       variant,
     );
@@ -440,20 +473,26 @@ export function getPropertyFieldPrompt(
   }
 
   if (f.includes("location") && f.includes("state")) {
-    const speak = pickVariant(["State, area, and LGA?", "Full location?", "Where is it located?"], variant);
+    const speak = pickVariant(
+      ["State, area, and local government area?", "Full location?", "Where is it located?"],
+      variant,
+    );
     return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
   }
 
   if (f.includes("lga") || f.includes("local government")) {
-    const speak = pickVariant(["Which LGA?", "Local government area?", "LGA name?"], variant);
+    const speak = pickVariant(
+      ["Which local government area?", "Local government area name?", "Name the local government area."],
+      variant,
+    );
     return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
   }
 
   if (f.includes("price")) {
     const speak = pickVariant(
       [
-        "Price in Naira with commas, e.g. 85,000,000?",
-        "Asking price in Naira — comma-separated digits?",
+        "Price in Naira with commas, for example 85,000,000?",
+        "Asking price in Naira, comma-separated digits?",
         "How much in Naira? Use comma thousands separators.",
       ],
       variant,

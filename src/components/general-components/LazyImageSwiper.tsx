@@ -29,7 +29,8 @@ const getValidImageUrl = (url: StaticImageData | StaticImport | string | undefin
 
 const LazyImageSwiper: React.FC<LazyImageSwiperProps> = ({ images }) => {
   const swiperRef = React.useRef<any>(null);
-  const { setViewImage, setImageData } = usePageContext();
+  const { setViewImage, setImageData, setGalleryInitialIndex } =
+    usePageContext();
 
   const handleNext = () => {
     if (swiperRef.current) {
@@ -60,6 +61,7 @@ const LazyImageSwiper: React.FC<LazyImageSwiperProps> = ({ images }) => {
           return (
             <SwiperSlide
               onClick={() => {
+                setGalleryInitialIndex(swiperRef.current?.realIndex ?? i);
                 setImageData(images as string[]);
                 setViewImage(true);
               }}

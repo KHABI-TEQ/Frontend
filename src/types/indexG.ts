@@ -35,6 +35,9 @@ export interface GlobalContextTypes {
   //image data
   imageData: StaticImport[] | string[];
   setImageData: ([]: StaticImport[] | string[]) => void;
+  /** Which slide opens first when `viewImage` becomes true */
+  galleryInitialIndex: number;
+  setGalleryInitialIndex: (index: number) => void;
   //submitted successfully type
   isSubmittedSuccessfully: boolean;
   setIsSubmittedSuccessfully: (type: boolean) => void;

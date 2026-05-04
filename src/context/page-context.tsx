@@ -59,6 +59,7 @@ export const PageContextProvider = ({
    */
   const [viewImage, setViewImage] = useState<boolean>(false);
   const [imageData, setImageData] = useState<StaticImport[] | string[]>([]);
+  const [galleryInitialIndex, setGalleryInitialIndex] = useState(0);
 
   //Submitted successfully context logic.
   const [isSubmittedSuccessfully, setIsSubmittedSuccessfully] =
@@ -183,6 +184,8 @@ export const PageContextProvider = ({
         setViewImage,
         imageData,
         setImageData,
+        galleryInitialIndex,
+        setGalleryInitialIndex,
         isSubmittedSuccessfully,
         setIsSubmittedSuccessfully,
         propertyDetails,
