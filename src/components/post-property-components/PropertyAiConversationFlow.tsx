@@ -107,7 +107,7 @@ function buildLocationPagedReply(
       ...(hasMore ? [SHOW_MORE_LOCATION_OPTIONS] : []),
       ...(isAreaLabel ? [DONE_SELECTING_AREAS] : []),
     ],
-    locationAllOptions: all,
+    locationAllOptions: allOptions,
     locationOptionsOffset: start,
     locationOptionsLabel: label,
   };
