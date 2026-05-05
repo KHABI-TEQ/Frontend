@@ -136,9 +136,6 @@ export function resolveVoiceArea(raw: string, stateRaw: string | undefined): Res
   if (alias) return { kind: "normalized", value: alias };
   const match = bestCandidate(raw, LAGOS_MAJOR_AREAS);
   if (match) return { kind: "normalized", value: match };
-  return {
-    kind: "clarify",
-    prompt: "I couldn't match that Lagos area clearly. Please pick one:",
-    options: topCandidates(raw, LAGOS_MAJOR_AREAS, 5),
-  };
+  // Fall back to user-provided text; the conversation layer already presents canonical area options.
+  return { kind: "normalized", value: raw.trim() };
 }

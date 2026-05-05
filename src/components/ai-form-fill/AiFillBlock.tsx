@@ -71,7 +71,7 @@ export default function AiFillBlock({
   const [listening, setListening] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   /** Max allowed silence (ms) before we end the listening session and commit text. */
-  const SILENCE_GRACE_MS = 10_000;
+  const SILENCE_GRACE_MS = 5_000;
   /** Textarea snapshot when current mic session started — new speech appends after this. */
   const voiceBaseRef = useRef("");
   /** Final transcript accumulated across recognition restarts within one mic session. */
@@ -108,14 +108,55 @@ export default function AiFillBlock({
     }
   }, [amountEntryMode]);
 
+  const autoSubmitFromVoice = useCallback(
+    async (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed) return;
+      let toSend = trimmed;
+      if (amountEntryMode) {
+        if (!SKIP_AMOUNT_UTTERANCE_RE.test(trimmed)) {
+          const digits = stripNairaAmountToDigits(trimmed);
+          if (!digits) {
+            toast.error("Please enter a numeric amount (or say skip).");
+            return;
+          }
+          toSend = digits;
+        }
+      }
+      setLoading(true);
+      try {
+        await onSuggest(toSend);
+        toast.success("Suggestions applied. Review and edit as needed.");
+        setInput("");
+      } catch (e) {
+        toast.error((e as Error)?.message || "Something went wrong.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [amountEntryMode, onSuggest],
+  );
+
   const finishRecognitionSession = useCallback(() => {
     if (!sessionActiveRef.current) return;
     sessionActiveRef.current = false;
     recognitionRef.current = null;
     setListening(false);
-    updateInputFromVoiceBuffers();
+    const utterance = [finalTranscriptRef.current, runFinalTranscriptRef.current, interimTranscriptRef.current]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+    const composed = amountEntryMode
+      ? mergeVoiceTextWithSpokenAmount(voiceBaseRef.current, utterance).display
+      : combineBaseAndUtterance(voiceBaseRef.current, utterance);
+    if (composed.trim()) {
+      setInput(composed);
+      void autoSubmitFromVoice(composed);
+    } else {
+      updateInputFromVoiceBuffers();
+    }
     playEndBeepOnce();
-  }, [playEndBeepOnce, updateInputFromVoiceBuffers]);
+  }, [amountEntryMode, autoSubmitFromVoice, playEndBeepOnce, updateInputFromVoiceBuffers]);
 
   const startRecognitionRun = useCallback(() => {
     if (typeof window === "undefined" || !sessionActiveRef.current) return;
@@ -291,7 +332,7 @@ export default function AiFillBlock({
         Optionally describe in a few words or sentences; we&apos;ll suggest form fields. You can review and edit before
         submitting.{" "}
         <span className="text-[#09391C] font-medium">
-          Voice: speak clearly — text appears as you talk (no repeats). You can pause for up to 10 seconds before listening ends; at session end you&apos;ll hear a short beep. Tap the mic again to add more.
+          Voice: speak clearly — text appears as you talk (no repeats). You can pause for up to 5 seconds before listening ends; at session end you&apos;ll hear a short beep and your entry is sent automatically.
         </span>
       </p>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end">

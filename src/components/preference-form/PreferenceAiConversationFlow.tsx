@@ -25,6 +25,12 @@ import {
 import toast from "react-hot-toast";
 import { ArrowLeft, MessageSquare, Bot, Loader2, CheckCircle, Volume2, VolumeX, ChevronDown } from "lucide-react";
 import nigerianStateLgaJson from "@/data/state-lga.json";
+import { getAreasByStateLGA, getLGAsByState, getStates } from "@/utils/location-utils";
+
+const LOCATION_OPTIONS_PAGE_SIZE = Number.MAX_SAFE_INTEGER;
+const SHOW_MORE_LOCATION_OPTIONS = "Show more";
+const DONE_SELECTING_AREAS = "Done selecting areas";
+const AREA_DONE_MARKER = "__AREA_DONE__::";
 
 /** Lowercase names as in the location form dataset (keys of state-lga.json). */
 const NIGERIAN_STATE_NAMES_LOWER = new Set(
@@ -81,6 +87,10 @@ function buildPreferenceInteractiveReply(
   focusedMissingField?: string;
   missingFields: string[];
   remainingMissingCount: number;
+  quickOptions?: string[];
+  locationAllOptions?: string[];
+  locationOptionsOffset?: number;
+  locationOptionsLabel?: string;
 } {
   const missing = getMissingFieldsFromPreferenceData(data).filter((f) => !skipped.has(f));
   const missingRequiredForCount = missing.filter((f) => !isPreferenceFieldSkippable(f));
@@ -106,6 +116,98 @@ function buildPreferenceInteractiveReply(
     missingFields: [focus],
     remainingMissingCount: Math.max(0, missingRequiredForCount.length - 1),
   };
+}
+
+function buildLocationPagedReply(
+  baseReply: {
+    content: string;
+    speakLine?: string;
+    focusedMissingField?: string;
+    missingFields: string[];
+    remainingMissingCount: number;
+    quickOptions?: string[];
+  },
+  label: string,
+  allOptions: string[],
+  offset = 0,
+) {
+  const start = Math.max(0, offset);
+  const page = allOptions;
+  const hasMore = false;
+  const isAreaLabel = label.toLowerCase().includes("areas in ");
+  const range = page.length > 0 ? `${start + 1}-${start + page.length}` : "0";
+  return {
+    ...baseReply,
+    content: `${baseReply.content}\n\nAvailable ${label}:\n${page.join(", ")}${
+      hasMore
+        ? `\n\nShowing ${range} of ${allOptions.length}.`
+        : ""
+    }${isAreaLabel ? `\n\nYou can select multiple areas, then tap "${DONE_SELECTING_AREAS}".` : ""}`,
+    quickOptions: [
+      ...page,
+      ...(hasMore ? [SHOW_MORE_LOCATION_OPTIONS] : []),
+      ...(isAreaLabel ? [DONE_SELECTING_AREAS] : []),
+    ],
+    locationAllOptions: allOptions,
+    locationOptionsOffset: start,
+    locationOptionsLabel: label,
+  };
+}
+
+function resolveCanonicalStateName(rawState: string): string {
+  const state = rawState.trim();
+  if (!state) return "";
+  const match = getStates().find((s) => s.toLowerCase() === state.toLowerCase());
+  return match || state;
+}
+
+function resolveCanonicalLgaName(state: string, rawLga: string): string {
+  const lga = rawLga.trim();
+  if (!state || !lga) return "";
+  const match = getLGAsByState(state).find((x) => x.toLowerCase() === lga.toLowerCase());
+  return match || lga;
+}
+
+function withPreferenceLocationOptions(
+  reply: {
+    content: string;
+    speakLine?: string;
+    focusedMissingField?: string;
+    missingFields: string[];
+    remainingMissingCount: number;
+    quickOptions?: string[];
+    locationAllOptions?: string[];
+    locationOptionsOffset?: number;
+    locationOptionsLabel?: string;
+  },
+  data: Record<string, unknown>,
+) {
+  const focus = normalizePreferenceFieldKey(reply.focusedMissingField || "");
+  const loc = getSanitizedPreferenceLocation(data);
+  if (!focus || !loc) return reply;
+
+  if (focus.includes("preference location - lga")) {
+    const state = resolveCanonicalStateName(String(loc.state || ""));
+    const lgas = getLGAsByState(state);
+    if (lgas.length > 0) {
+      return buildLocationPagedReply(reply, `LGAs in ${state}`, lgas, 0);
+    }
+    return reply;
+  }
+
+  if (focus.includes("preference location - area")) {
+    const state = resolveCanonicalStateName(String(loc.state || ""));
+    const selectedLga = resolveCanonicalLgaName(
+      state,
+      getMeaningfulLgas(loc, state)[0] || "",
+    );
+    const areas = getAreasByStateLGA(state, selectedLga);
+    if (areas.length > 0) {
+      return buildLocationPagedReply(reply, `areas in ${selectedLga}, ${state}`, areas, 0);
+    }
+  }
+
+  return reply;
 }
 
 function isMeaningful(value: unknown): boolean {
@@ -560,8 +662,23 @@ function applyPreferenceLocationFromFocusedAnswer(
   }
 
   if (f.includes("preference location - area")) {
-    next.areas = [raw];
-    next.area = raw;
+    const current = Array.isArray(next.areas)
+      ? (next.areas as unknown[]).map((x) => String(x).trim()).filter(Boolean)
+      : [];
+    const additions = raw
+      .split(",")
+      .map((x) => x.trim())
+      .filter(Boolean);
+    const merged = [...current];
+    const seen = new Set(current.map((x) => x.toLowerCase()));
+    for (const item of additions) {
+      const key = item.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      merged.push(item);
+    }
+    next.areas = merged;
+    if (merged.length > 0) next.area = merged[0];
     return syncPreferenceLocationAreaKeys(syncPreferenceLocationLgaKeys(next));
   }
 
@@ -1248,6 +1365,7 @@ export default function PreferenceAiConversationFlow() {
   const preferenceQuestionVariantRef = useRef(0);
   /** Default on: speak each assistant reply automatically; user can mute via toggle or stop via speaker icon. */
   const [playRepliesAloud, setPlayRepliesAloud] = useState(true);
+  const [selectedAreaOptions, setSelectedAreaOptions] = useState<string[]>([]);
   const prevMessageCountRef = useRef(0);
   const conversationScrollRef = useRef<HTMLDivElement | null>(null);
   const newestChipsRef = useRef<HTMLDivElement | null>(null);
@@ -1275,8 +1393,19 @@ export default function PreferenceAiConversationFlow() {
     if (preferenceAiMessages.length === 0) {
       skippedFieldsRef.current = new Set();
       preferenceQuestionVariantRef.current = 0;
+      setSelectedAreaOptions([]);
     }
   }, [preferenceAiMessages.length]);
+
+  useEffect(() => {
+    const lastAssistant = [...preferenceAiMessages].reverse().find((m) => m.role === "assistant") as
+      | { focusedMissingField?: string }
+      | undefined;
+    const focus = normalizePreferenceFieldKey(lastAssistant?.focusedMissingField || "");
+    if (!focus.includes("preference location - area")) {
+      setSelectedAreaOptions([]);
+    }
+  }, [preferenceAiMessages]);
 
   // Auto-play latest assistant reply when TTS is enabled (Web Speech API — SpeechSynthesis).
   useEffect(() => {
@@ -1319,7 +1448,11 @@ export default function PreferenceAiConversationFlow() {
 
   const handleSend = useCallback(
     async (textOverride: string) => {
-      const trimmed = textOverride.toString().trim();
+      const rawInput = textOverride.toString().trim();
+      const doneMarkerPayload = rawInput.startsWith(AREA_DONE_MARKER)
+        ? rawInput.slice(AREA_DONE_MARKER.length).trim()
+        : "";
+      const trimmed = doneMarkerPayload || rawInput;
       if (!trimmed) {
         toast.error("Please enter or say something.");
         return;
@@ -1335,6 +1468,10 @@ export default function PreferenceAiConversationFlow() {
           ?.state || "",
       ).trim();
       let normalizedInput = trimmed;
+      const pulledLocationOptions =
+        Array.isArray((lastAssistForVoice as { locationAllOptions?: string[] } | undefined)?.locationAllOptions)
+          ? ((lastAssistForVoice as { locationAllOptions?: string[] }).locationAllOptions as string[])
+          : [];
       if (voiceFocusNorm.includes("preference type")) {
         const resolved = resolveVoiceIntent(trimmed);
         if (resolved.kind === "clarify") {
@@ -1374,45 +1511,205 @@ export default function PreferenceAiConversationFlow() {
         }
         normalizedInput = resolved.value;
       } else if (voiceFocusNorm.includes("preference location - lga")) {
-        const resolved = resolveVoiceLga(trimmed, currentState);
-        if (resolved.kind === "clarify") {
-          setPreferenceAiMessages((prev) => [
-            ...prev,
-            { role: "user", content: trimmed },
-            {
-              role: "assistant",
-              content: resolved.prompt,
-              speakLine: resolved.prompt,
-              missingFields: voiceFocus ? [voiceFocus] : undefined,
-              focusedMissingField: voiceFocus,
-              remainingMissingCount: 0,
-              quickOptions: resolved.options,
-            },
-          ]);
-          return;
+        if (pulledLocationOptions.some((o) => o.toLowerCase() === trimmed.toLowerCase())) {
+          normalizedInput = pulledLocationOptions.find(
+            (o) => o.toLowerCase() === trimmed.toLowerCase(),
+          ) as string;
+        } else {
+          const resolved = resolveVoiceLga(trimmed, currentState);
+          if (resolved.kind === "clarify") {
+            setPreferenceAiMessages((prev) => [
+              ...prev,
+              { role: "user", content: trimmed },
+              {
+                role: "assistant",
+                content: resolved.prompt,
+                speakLine: resolved.prompt,
+                missingFields: voiceFocus ? [voiceFocus] : undefined,
+                focusedMissingField: voiceFocus,
+                remainingMissingCount: 0,
+                quickOptions: resolved.options,
+              },
+            ]);
+            return;
+          }
+          normalizedInput = resolved.value;
         }
-        normalizedInput = resolved.value;
       } else if (voiceFocusNorm.includes("preference location - area")) {
-        const resolved = resolveVoiceArea(trimmed, currentState);
-        if (resolved.kind === "clarify") {
-          setPreferenceAiMessages((prev) => [
-            ...prev,
-            { role: "user", content: trimmed },
-            {
-              role: "assistant",
-              content: resolved.prompt,
-              speakLine: resolved.prompt,
-              missingFields: voiceFocus ? [voiceFocus] : undefined,
-              focusedMissingField: voiceFocus,
-              remainingMissingCount: 0,
-              quickOptions: resolved.options,
-            },
-          ]);
-          return;
+        if (
+          pulledLocationOptions.some((o) => o.toLowerCase() === trimmed.toLowerCase()) ||
+          /^\s*done(\s+selecting\s+areas)?\s*$/i.test(trimmed)
+        ) {
+          normalizedInput = trimmed;
+        } else {
+          const resolved = resolveVoiceArea(trimmed, currentState);
+          if (resolved.kind === "clarify") {
+            setPreferenceAiMessages((prev) => [
+              ...prev,
+              { role: "user", content: trimmed },
+              {
+                role: "assistant",
+                content: resolved.prompt,
+                speakLine: resolved.prompt,
+                missingFields: voiceFocus ? [voiceFocus] : undefined,
+                focusedMissingField: voiceFocus,
+                remainingMissingCount: 0,
+                quickOptions: resolved.options,
+              },
+            ]);
+            return;
+          }
+          normalizedInput = resolved.value;
         }
-        normalizedInput = resolved.value;
       }
       const userText = normalizedInput;
+      const doneSelectingAreas =
+        Boolean(doneMarkerPayload) || /^\s*done(\s+selecting\s+areas)?\s*$/i.test(userText);
+      if (/^\s*show\s+more\s*$/i.test(userText)) {
+        const lastAssistant = [...preferenceAiMessages].reverse().find((m) => m.role === "assistant") as
+          | {
+              content: string;
+              speakLine?: string;
+              data?: Record<string, unknown>;
+              missingFields?: string[];
+              focusedMissingField?: string;
+              remainingMissingCount?: number;
+              locationAllOptions?: string[];
+              locationOptionsOffset?: number;
+              locationOptionsLabel?: string;
+            }
+          | undefined;
+        const all = lastAssistant?.locationAllOptions || [];
+        if (all.length > 0) {
+          const nextOffset =
+            (lastAssistant?.locationOptionsOffset ?? 0) + LOCATION_OPTIONS_PAGE_SIZE;
+          if (nextOffset >= all.length) {
+            setPreferenceAiMessages((prev) => [
+              ...prev,
+              { role: "user", content: userText },
+              {
+                role: "assistant",
+                content: "No more options to show. Please select one from the list.",
+                focusedMissingField: lastAssistant?.focusedMissingField,
+                missingFields: lastAssistant?.missingFields,
+                remainingMissingCount: lastAssistant?.remainingMissingCount,
+                quickOptions: all.slice(
+                  Math.max(0, all.length - LOCATION_OPTIONS_PAGE_SIZE),
+                  all.length,
+                ),
+                locationAllOptions: all,
+                locationOptionsOffset: Math.max(0, all.length - LOCATION_OPTIONS_PAGE_SIZE),
+                locationOptionsLabel: lastAssistant?.locationOptionsLabel,
+              },
+            ]);
+            return;
+          }
+          const page = all.slice(nextOffset, nextOffset + LOCATION_OPTIONS_PAGE_SIZE);
+          const hasMore = nextOffset + LOCATION_OPTIONS_PAGE_SIZE < all.length;
+          const range = `${nextOffset + 1}-${nextOffset + page.length}`;
+          const label = lastAssistant?.locationOptionsLabel || "options";
+          const isAreaLabel = label.toLowerCase().includes("areas in ");
+          setPreferenceAiMessages((prev) => [
+            ...prev,
+            { role: "user", content: userText },
+            {
+              role: "assistant",
+              content: `Available ${label}:\n${page.join(", ")}${
+                hasMore
+                  ? `\n\nShowing ${range} of ${all.length}. Select one or tap "${SHOW_MORE_LOCATION_OPTIONS}".`
+                  : ""
+              }${isAreaLabel ? `\n\nYou can select multiple areas, then tap "${DONE_SELECTING_AREAS}".` : ""}`,
+              focusedMissingField: lastAssistant?.focusedMissingField,
+              missingFields: lastAssistant?.missingFields,
+              remainingMissingCount: lastAssistant?.remainingMissingCount,
+              quickOptions: [
+                ...page,
+                ...(hasMore ? [SHOW_MORE_LOCATION_OPTIONS] : []),
+                ...(isAreaLabel ? [DONE_SELECTING_AREAS] : []),
+              ],
+              locationAllOptions: all,
+              locationOptionsOffset: nextOffset,
+              locationOptionsLabel: label,
+            },
+          ]);
+          return;
+        }
+      }
+
+      if (voiceFocusNorm.includes("preference location - area")) {
+        const currentData = { ...(collectedDataRef.current || {}) } as Record<string, unknown>;
+        const currentLoc = (currentData.location || {}) as Record<string, unknown>;
+        const state = resolveCanonicalStateName(String(currentLoc.state || ""));
+        const selectedLga = resolveCanonicalLgaName(
+          state,
+          getMeaningfulLgas(currentLoc, state)[0] || "",
+        );
+        const availableAreas = getAreasByStateLGA(state, selectedLga);
+        const existingAreas = getMeaningfulAreas(currentLoc, state);
+
+        if (doneSelectingAreas && existingAreas.length > 0) {
+          const reply = withPreferenceLocationOptions(
+            buildPreferenceInteractiveReply(currentData, skippedFieldsRef.current, 0),
+            currentData,
+          );
+          setPreferenceAiMessages((prev) => [
+            ...prev,
+            { role: "user", content: userText },
+            {
+              role: "assistant",
+              content: reply.content,
+              speakLine: reply.speakLine,
+              data: currentData,
+              missingFields: reply.missingFields.length ? reply.missingFields : undefined,
+              focusedMissingField: reply.focusedMissingField,
+              remainingMissingCount: reply.remainingMissingCount,
+              quickOptions: reply.quickOptions,
+              locationAllOptions: reply.locationAllOptions,
+              locationOptionsOffset: reply.locationOptionsOffset,
+              locationOptionsLabel: reply.locationOptionsLabel,
+            },
+          ]);
+          return;
+        }
+
+        if (!doneSelectingAreas) {
+          const nextLoc = applyPreferenceLocationFromFocusedAnswer(userText, voiceFocus, currentLoc);
+          const nextData = { ...currentData, location: nextLoc };
+          setPreferenceAiCollectedData(nextData);
+          const selectedAreas = getMeaningfulAreas(nextLoc, state);
+          const remaining = availableAreas.filter(
+            (a) => !selectedAreas.some((s) => s.toLowerCase() === a.toLowerCase()),
+          );
+          const page = remaining;
+          const hasMore = false;
+          const followUp =
+            selectedAreas.length > 0
+              ? `Selected area(s): ${selectedAreas.join(", ")}.\nAdd another area or tap "${DONE_SELECTING_AREAS}" when finished.`
+              : `Please select at least one area from ${selectedLga}, ${state}.`;
+          setPreferenceAiMessages((prev) => [
+            ...prev,
+            { role: "user", content: userText },
+            {
+              role: "assistant",
+              content: followUp,
+              speakLine: followUp,
+              data: nextData,
+              missingFields: voiceFocus ? [voiceFocus] : undefined,
+              focusedMissingField: voiceFocus,
+              remainingMissingCount: 0,
+              quickOptions: [
+                ...page,
+                ...(hasMore ? [SHOW_MORE_LOCATION_OPTIONS] : []),
+                DONE_SELECTING_AREAS,
+              ],
+              locationAllOptions: remaining,
+              locationOptionsOffset: 0,
+              locationOptionsLabel: `areas in ${selectedLga}, ${state}`,
+            },
+          ]);
+          return;
+        }
+      }
 
       if (SKIP_UTTERANCE_RE.test(userText)) {
         setLoading(true);
@@ -1444,7 +1741,7 @@ export default function PreferenceAiConversationFlow() {
               ];
             }
             if (toSkip) skipped.add(toSkip);
-            const reply = buildPreferenceInteractiveReply(data, skipped, 0);
+            const reply = withPreferenceLocationOptions(buildPreferenceInteractiveReply(data, skipped, 0), data);
             return [
               ...prev,
               { role: "user" as const, content: userText },
@@ -1456,6 +1753,10 @@ export default function PreferenceAiConversationFlow() {
                 missingFields: reply.missingFields.length ? reply.missingFields : undefined,
                 focusedMissingField: reply.focusedMissingField,
                 remainingMissingCount: reply.remainingMissingCount,
+                quickOptions: reply.quickOptions,
+                locationAllOptions: reply.locationAllOptions,
+                locationOptionsOffset: reply.locationOptionsOffset,
+                locationOptionsLabel: reply.locationOptionsLabel,
               },
             ];
           });
@@ -1594,7 +1895,10 @@ export default function PreferenceAiConversationFlow() {
           lastFocusBeforeMerge,
         );
         setPreferenceAiCollectedData(data);
-        const reply = buildPreferenceInteractiveReply(data, skippedFieldsRef.current, 0);
+        const reply = withPreferenceLocationOptions(
+          buildPreferenceInteractiveReply(data, skippedFieldsRef.current, 0),
+          data,
+        );
         setPreferenceAiMessages((prev) => [
           ...prev,
           {
@@ -1605,6 +1909,10 @@ export default function PreferenceAiConversationFlow() {
             missingFields: reply.missingFields.length ? reply.missingFields : undefined,
             focusedMissingField: reply.focusedMissingField,
             remainingMissingCount: reply.remainingMissingCount,
+            quickOptions: reply.quickOptions,
+            locationAllOptions: reply.locationAllOptions,
+            locationOptionsOffset: reply.locationOptionsOffset,
+            locationOptionsLabel: reply.locationOptionsLabel,
           },
         ]);
       } catch (e) {
@@ -1630,6 +1938,45 @@ export default function PreferenceAiConversationFlow() {
       await handleSend(userInput.trim());
     },
     [handleSend]
+  );
+
+  const handlePreferenceQuickOptionClick = useCallback(
+    async (
+      option: string,
+      msg: { focusedMissingField?: string; quickOptions?: string[] },
+    ) => {
+      const focus = normalizePreferenceFieldKey(msg.focusedMissingField || "");
+      const isAreaMultiSelect =
+        focus.includes("preference location - area") &&
+        Array.isArray(msg.quickOptions) &&
+        msg.quickOptions.includes(DONE_SELECTING_AREAS);
+      if (!isAreaMultiSelect) {
+        await handleSuggest(option);
+        return;
+      }
+
+        if (option === DONE_SELECTING_AREAS) {
+        if (selectedAreaOptions.length === 0) {
+          toast.error("Select at least one area before tapping Done.");
+          return;
+        }
+          await handleSuggest(`${AREA_DONE_MARKER}${selectedAreaOptions.join(", ")}`);
+          setSelectedAreaOptions([]);
+          return;
+      }
+
+      if (option === SHOW_MORE_LOCATION_OPTIONS) {
+        await handleSuggest(option);
+        return;
+      }
+
+      setSelectedAreaOptions((prev) =>
+        prev.some((x) => x.toLowerCase() === option.toLowerCase())
+          ? prev.filter((x) => x.toLowerCase() !== option.toLowerCase())
+          : [...prev, option],
+      );
+    },
+    [handleSuggest, selectedAreaOptions],
   );
 
   const handleProceedToContactConfirm = useCallback(() => {
@@ -2012,9 +2359,20 @@ export default function PreferenceAiConversationFlow() {
                           <button
                             key={option}
                             type="button"
-                            onClick={() => handleSuggest(option)}
+                            onClick={() =>
+                              handlePreferenceQuickOptionClick(
+                                option,
+                                msg as { focusedMissingField?: string; quickOptions?: string[] },
+                              )
+                            }
                             disabled={loading}
-                            className="rounded-full border border-[#8DDB90] bg-white px-3 py-1 text-xs font-medium text-[#09391C] hover:bg-[#8DDB90]/15 disabled:opacity-50"
+                            className={`rounded-full border px-3 py-1 text-xs font-medium disabled:opacity-50 ${
+                              option === DONE_SELECTING_AREAS
+                                ? "border-[#09391C] bg-[#8DDB90] text-[#09391C] font-semibold shadow-sm hover:bg-[#7BC87F]"
+                                : selectedAreaOptions.some((x) => x.toLowerCase() === option.toLowerCase())
+                                  ? "border-[#09391C] bg-[#09391C] text-white"
+                                  : "border-[#8DDB90] bg-white text-[#09391C] hover:bg-[#8DDB90]/15"
+                            }`}
                           >
                             {option}
                           </button>
