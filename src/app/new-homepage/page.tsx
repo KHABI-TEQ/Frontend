@@ -1,7 +1,7 @@
 /** @format */
 
 "use client";
-import React, { Fragment, Suspense, lazy } from "react";
+import React, { Fragment, Suspense, lazy, useState, useEffect } from "react";
 import Loading from "@/components/loading-component/loading";
 import { useLoading } from "@/hooks/useLoading";
 import { useHomePageSettings } from "@/hooks/useSystemSettings";
@@ -11,6 +11,9 @@ import DevelopmentNotice from "@/components/general-components/DevelopmentNotice
 import AIAdvantageSection from "@/components/new-homepage/ai-advantage-section";
 import KeyFeaturesSection from "@/components/new-homepage/key-features-section";
 import NewHeroSection from "@/components/new-homepage/new-hero-section";
+import AnimatedUserTypes from "@/components/new-homepage/animated-user-types";
+import UserTypeOverlay from "@/components/new-homepage/UserTypeOverlay";
+import UserTypeFloatingButton from "@/components/new-homepage/UserTypeFloatingButton";
 
 // Non-critical: Lazy load lower sections
 const ValuePropositionSection = lazy(() => import("@/components/new-homepage/value-proposition-section"));
@@ -44,6 +47,19 @@ const NewHomepage = ({
   const isLoading = useLoading();
   // Get settings loading state 
   const { loading: settingsLoading } = useHomePageSettings();
+  // User type overlay state
+  const [showUserTypeOverlay, setShowUserTypeOverlay] = useState(false);
+
+  // Always show overlay on every visit (for testing)
+  useEffect(() => {
+    if (!isLoading && !settingsLoading) {
+      // Small delay for smooth entrance after loading
+      const timer = setTimeout(() => {
+        setShowUserTypeOverlay(true);
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading, settingsLoading]);
 
   /**
    * Loading state - show loading component for 3 seconds OR until settings are loaded
@@ -69,7 +85,20 @@ const NewHomepage = ({
             <NewHeroSection />
           </ErrorBoundary>
 
-          {/* 2. AI ADVANTAGE BANNER */}
+          {/* 2. ANIMATED USER TYPES SHOWCASE */}
+          <ErrorBoundary
+            fallback={
+              <div className="w-full py-16 bg-gradient-to-b from-[#F5F7F9] to-white">
+                <div className="container mx-auto px-4 text-center">
+                  <h2 className="text-3xl font-bold text-[#09391C] mb-4">Who is Khabiteq For?</h2>
+                  <p className="text-gray-600">Simple tools for everyone in real estate.</p>
+                </div>
+              </div>
+            }>
+            <AnimatedUserTypes />
+          </ErrorBoundary>
+
+          {/* 3. AI ADVANTAGE BANNER */}
           <ErrorBoundary
             fallback={
               <div className="w-full py-12 bg-gradient-to-r from-[#09391C] to-[#0B423D]">
@@ -173,6 +202,18 @@ const NewHomepage = ({
           </Suspense>
         </main>
       </section>
+
+      {/* User Type Selection Overlay */}
+      <UserTypeOverlay
+        isOpen={showUserTypeOverlay}
+        onClose={() => setShowUserTypeOverlay(false)}
+      />
+
+      {/* Floating Button to Reopen Overlay */}
+      <UserTypeFloatingButton
+        onClick={() => setShowUserTypeOverlay(true)}
+        isVisible={!showUserTypeOverlay}
+      />
 
       {/* Email Verification Modal */}
       <Suspense fallback={null}>

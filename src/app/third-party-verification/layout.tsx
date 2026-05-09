@@ -20,7 +20,7 @@ const VerificationHeader = () => {
           <div className="flex items-center space-x-3 sm:space-x-4 cursor-pointer" onClick={handleLogoClick}>
             <div className="bg-white p-2 sm:p-3 rounded-xl shadow-lg">
               <img
-                src="/khabi-teq.svg"
+                src="/khabi-teq.jpg"
                 alt="Khabi-Teq"
                 className="h-6 sm:h-8 w-auto"
               />
@@ -68,7 +68,7 @@ const VerificationFooter = () => {
             <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-3 sm:space-y-0 sm:space-x-3">
               <div className="bg-[#8DDB90] p-2 rounded-lg">
                 <img
-                  src="/khabi-teq.svg"
+                  src="/khabi-teq.jpg"
                   alt="Khabi-Teq"
                   className="h-6 w-auto"
                 />

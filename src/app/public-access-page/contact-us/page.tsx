@@ -8,7 +8,7 @@ import { POST_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import { useDealSite } from "@/context/deal-site-context";
 import OverlayPreloader from "@/components/general-components/OverlayPreloader";
-import ContactMessagesTab from "@/components/public-access-components/ContactMessagesTab";
+import ContactMessagesTab from "@/components/practitioner-page-components/ContactMessagesTab";
  
 export default function ContactUsPage() {
   const { settings, updateSettings } = useDealSite();
@@ -196,7 +196,7 @@ export default function ContactUsPage() {
             className="w-4 h-4 text-emerald-600 rounded"
           />
           <label htmlFor="enable-contact-form" className="text-sm font-medium text-gray-700">
-            Enable contact form on public page
+            Enable contact form on practitioner page
           </label>
         </div>
 
@@ -224,7 +224,7 @@ export default function ContactUsPage() {
               className="w-4 h-4 text-emerald-600 rounded"
             />
             <label htmlFor="show-email" className="text-sm font-medium text-gray-700">
-              Display email address on public page
+              Display email address on practitioner page
             </label>
           </div>
 
@@ -237,7 +237,7 @@ export default function ContactUsPage() {
               className="w-4 h-4 text-emerald-600 rounded"
             />
             <label htmlFor="show-phone" className="text-sm font-medium text-gray-700">
-              Display phone number on public page
+              Display phone number on practitioner page
             </label>
           </div>
 

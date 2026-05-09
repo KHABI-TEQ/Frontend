@@ -78,7 +78,7 @@ export class AgentVerificationService {
   }
 
   /**
-   * Get agent's public profile data
+   * Get agent's practitioner profile data
    */
   static async getAgentPublicProfile(agentId: string): Promise<PublicAgentProfile> {
     try {
@@ -89,7 +89,7 @@ export class AgentVerificationService {
 
       return response.data as any;
     } catch (error) {
-      console.error("Failed to get agent public profile:", error);
+      console.error("Failed to get agent practitioner profile:", error);
       throw error;
     }
   }
@@ -204,7 +204,7 @@ export class AgentVerificationService {
    */
   static checkAgentPermissions(agentState: AgentState) {
     const permissions = {
-      canCreatePublicPage: agentState === 'verified',
+      canCreatePractitionerPage: agentState === 'verified',
       canPostUnlimitedListings: agentState === 'verified',
       hasCommissionRemoved: agentState === 'verified',
       hasVerifiedBadge: agentState === 'verified',

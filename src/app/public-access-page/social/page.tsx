@@ -57,7 +57,7 @@ export default function SocialPage() {
       const payload = settings.socialLinks;
 
       const res = await PUT_REQUEST(
-        `${URLS.BASE}/account/dealSite/${settings.publicSlug}/socialLinks/update`,
+        `${URLS.BASE}/account/dealSite/${settings.practitionerPage}/socialLinks/update`,
         payload,
         token
       );
@@ -73,7 +73,7 @@ export default function SocialPage() {
     } finally {
       setSaving(false);
     }
-  }, [settings.socialLinks, settings.publicSlug]);
+  }, [settings.socialLinks, settings.practitionerPage]);
 
   const inputBase =
     "w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200 text-gray-900";
@@ -86,7 +86,7 @@ export default function SocialPage() {
           Social Links
         </h1>
         <p className="text-gray-600 mt-2">
-          Connect your social media profiles to your public page
+          Connect your social media profiles to your practitioner page
         </p>
       </div>
 

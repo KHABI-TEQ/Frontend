@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: "Khabiteq | Post Property - Shortlet",
   description: `List your property for shortlet on Khabi-Teq's trusted platform. Simplifying real estate transactions in Lagos.`,
   icons: {
-    icon: "/khabi-teq.svg",
+    icon: "/khabi.svg",
   },
 };
 

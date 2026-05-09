@@ -27,7 +27,7 @@ export const AGENT_STATE_PERMISSIONS: Record<AgentState, AgentStatePermissions> 
     canSetInspectionFee: true,
   },
   expired: {
-    canCreatePublicPage: false, // Public page disabled
+    canCreatePublicPage: false, // Practitioner page disabled
     canPostUnlimitedListings: false,
     hasCommissionRemoved: false, // Commission applies again
     hasVerifiedBadge: false,
@@ -228,7 +228,7 @@ export interface AgentUpgradeFormData {
   };
 }
 
-// Agent Profile for Public Page
+// Agent Profile for Practitioner Page
 export interface PublicAgentProfile {
   agentId: string;
   firstName: string;

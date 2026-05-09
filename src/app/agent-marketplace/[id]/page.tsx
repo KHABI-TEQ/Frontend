@@ -134,7 +134,7 @@ const PreferenceDetailPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [matchLoading, setMatchLoading] = useState(false);
   const [matchLockedAfterSuccess, setMatchLockedAfterSuccess] = useState(false);
-  const [publicPageCta, setPublicPageCta] = useState(false);
+  const [practitionerPageCta, setPractitionerPageCta] = useState(false);
   const [dealSiteGeneralMatchDenied, setDealSiteGeneralMatchDenied] = useState(false);
   const [dealSiteGeneralMatchMessage, setDealSiteGeneralMatchMessage] = useState<string | null>(null);
 
@@ -148,7 +148,7 @@ const PreferenceDetailPage = () => {
       (msg || "").toLowerCase(),
     );
 
-  const suggestsActivatePublicPage = (msg: string) => {
+  const suggestsActivatePractitionerPage = (msg: string) => {
     const m = (msg || "").toLowerCase();
     if (isDealSiteSubmissionRejection(msg)) return false;
     return /public\s*access|public\s*page|active.*public|must\s+activate|running|resume|paused|on\s*hold/.test(
@@ -213,7 +213,7 @@ const PreferenceDetailPage = () => {
     }
 
     setMatchLoading(true);
-    setPublicPageCta(false);
+    setPractitionerPageCta(false);
 
     try {
       const url = `${URLS.BASE}${URLS.accountMarketplaceMatchPreference(preferenceId)}`;
@@ -258,8 +258,8 @@ const PreferenceDetailPage = () => {
         return;
       }
 
-      if (suggestsActivatePublicPage(errText)) {
-        setPublicPageCta(true);
+      if (suggestsActivatePractitionerPage(errText)) {
+        setPractitionerPageCta(true);
       }
 
       toast.error(errText);
@@ -811,7 +811,7 @@ const PreferenceDetailPage = () => {
                         <span className="font-medium text-[#8DDB90]">log in</span> as an agent to match.
                       </>
                     ) : (
-                      <>Requires an active public page with running status.</>
+                      <>Requires an active practitioner page with running status.</>
                     )}
                   </p>
                 </>

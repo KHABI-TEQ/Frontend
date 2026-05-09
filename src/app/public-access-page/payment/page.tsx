@@ -19,8 +19,8 @@ export default function PaymentPage() {
   const paymentDetailsAny = (settings.paymentDetails || {}) as Record<string, any>;
 
   const handleSave = useCallback(async () => {
-    if (!settings.publicSlug) {
-      toast.error("Set up your public page slug first before saving payment details.");
+    if (!settings.practitionerPage) {
+      toast.error("Set up your practitioner page slug first before saving payment details.");
       return;
     }
 
@@ -46,7 +46,7 @@ export default function PaymentPage() {
       };
 
       const res = await PUT_REQUEST(
-        `${URLS.BASE}/account/dealSite/${settings.publicSlug}/paymentDetails/update`,
+        `${URLS.BASE}/account/dealSite/${settings.practitionerPage}/paymentDetails/update`,
         payload,
         token
       );
@@ -73,7 +73,7 @@ export default function PaymentPage() {
     } finally {
       setSaving(false);
     }
-  }, [settings.publicSlug, settings.paymentDetails, updateSettings]);
+  }, [settings.practitionerPage, settings.paymentDetails, updateSettings]);
 
   const inputBase =
     "w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400 text-gray-900";
@@ -230,7 +230,7 @@ export default function PaymentPage() {
       <div className="flex justify-end">
         <button
           onClick={handleSave}
-          disabled={saving || !settings.publicSlug}
+          disabled={saving || !settings.practitionerPage}
           className="inline-flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         >
           <Save size={18} />

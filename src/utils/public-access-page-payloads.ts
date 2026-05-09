@@ -48,7 +48,7 @@ export interface BrandingPayload {
 // ============================================================================
 
 export interface HomepagePayload {
-  publicPage?: {
+  practitionerPage?: {
     heroTitle: string;
     heroSubtitle: string;
     heroImage?: string;
@@ -314,7 +314,7 @@ export const buildBrandingPayload = (fields: Partial<BrandingPayload>): Branding
  */
 export const buildHomepagePayload = (fields: Partial<HomepagePayload>): HomepagePayload => {
   return {
-    publicPage: fields.publicPage,
+    practitionerPage: fields.practitionerPage,
     homeSettings: {
       testimonials: fields.homeSettings?.testimonials || {
         title: "",

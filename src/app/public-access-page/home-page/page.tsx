@@ -75,13 +75,13 @@ export default function HomePageSettings() {
 
   // Hero state
   const [formData, setFormData] = useState({
-    heroTitle: settings.publicPage?.heroTitle || "",
-    heroSubtitle: settings.publicPage?.heroSubtitle || "",
-    heroImageUrl: settings.publicPage?.heroImageUrl || "",
-    ctaText: settings.publicPage?.ctaText || "",
-    ctaLink: settings.publicPage?.ctaLink || "",
-    ctaText2: settings.publicPage?.ctaText2 || "",
-    ctaLink2: settings.publicPage?.ctaLink2 || "",
+    heroTitle: settings.practitionerPage?.heroTitle || "",
+    heroSubtitle: settings.practitionerPage?.heroSubtitle || "",
+    heroImageUrl: settings.practitionerPage?.heroImageUrl || "",
+    ctaText: settings.practitionerPage?.ctaText || "",
+    ctaLink: settings.practitionerPage?.ctaLink || "",
+    ctaText2: settings.practitionerPage?.ctaText2 || "",
+    ctaLink2: settings.practitionerPage?.ctaLink2 || "",
   });
 
   // Testimonials state
@@ -167,7 +167,7 @@ export default function HomePageSettings() {
   const handleUploadHeroImage = useCallback(async (file: File) => {
     const formDataUpload = new FormData();
     formDataUpload.append("file", file);
-    formDataUpload.append("for", "public-hero-image");
+    formDataUpload.append("for", "practitioner-hero-image");
     const token = Cookies.get("token");
 
     setUploading(true);
@@ -310,8 +310,8 @@ export default function HomePageSettings() {
       const supportCardsForBackend = supportCards.map(({ id, ...rest }) => rest);
 
       const payload = {
-        publicPage: {
-          ...settings.publicPage,
+        practitionerPage: {
+          ...settings.practitionerPage,
           heroTitle: formData.heroTitle,
           heroSubtitle: formData.heroSubtitle,
           heroImageUrl: formData.heroImageUrl,
@@ -349,7 +349,7 @@ export default function HomePageSettings() {
       if (res?.success) {
         // Update context with the full payload structure (backend won't have id, but frontend state has them)
         updateSettings({
-          publicPage: payload.publicPage,
+          practitionerPage: payload.practitionerPage,
           homeSettings: {
             testimonials: {
               title: testimonialsSection.title,

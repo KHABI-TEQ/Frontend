@@ -473,7 +473,7 @@ const POLICIES_DATA: PolicyData[] = [
         sectionNumber: '2',
         title: 'Subscription & Access Levels',
         items: [
-          { text: 'Subscribed Agents with a Public Page: Can display their WhatsApp and contact details. Clients may contact them directly for negotiations and inspections. Khabiteq still enforces compliance with all commission and platform rules.' },
+          { text: 'Subscribed Agents with a Practitioner Page: Can display their WhatsApp and contact details. Clients may contact them directly for negotiations and inspections. Khabiteq still enforces compliance with all commission and platform rules.' },
           { text: 'Trial/Unsubscribed Agents: Clients cannot contact them directly. All communications, inspections, and payments must go through Khabiteq. A ₦5,000 inspection fee is paid by the buyer or tenant to Khabiteq. Khabiteq acts as the intermediary for these transactions.' },
         ],
       },
@@ -503,7 +503,7 @@ const POLICIES_DATA: PolicyData[] = [
         items: [
           { text: 'Agents must treat clients professionally and transparently.' },
           { text: 'Agents must not divert clients off-platform to avoid fees.' },
-          { text: 'Subscribed agents with public pages may transact directly, but Khabiteq\'s commission and compliance policies still apply.' },
+          { text: 'Subscribed agents with practitioner pages may transact directly, but Khabiteq\'s commission and compliance policies still apply.' },
         ],
       },
       {
@@ -511,7 +511,7 @@ const POLICIES_DATA: PolicyData[] = [
         title: 'Shortlets',
         items: [
           { text: 'Hosts must ensure properties are safe, clean, and accurately described.' },
-          { text: 'Guests must pay the shortlet service fee, which applies whether the booking comes from an agent\'s public page or the marketplace.' },
+          { text: 'Guests must pay the shortlet service fee, which applies whether the booking comes from an agent\'s practitioner page or the marketplace.' },
           { text: 'Hosts are paid 12–24 hours after check-in is confirmed.' },
         ],
       },
@@ -575,7 +575,7 @@ const POLICIES_DATA: PolicyData[] = [
         sectionNumber: '2',
         title: 'Account Features (Premium Subscribers)',
         items: [
-          { text: 'Personal Agent Public Page with listings and profile.' },
+          { text: 'Personal Agent Practitioner Page with listings and profile.' },
           { text: 'Ability to set custom inspection fees (Khabiteq retains 15% as platform commission).' },
           { text: 'Zero sales/rental commission payable to Khabiteq (commission-free transactions).' },
           { text: 'Access to client preferences via Agent Marketplace.' },
@@ -705,7 +705,7 @@ const POLICIES_DATA: PolicyData[] = [
           { text: 'Where no LOI is signed, Khabiteq reserves the right to apply industry-standard sales commission as mutually agreed before closing.' },
           { text: 'Shortlet: 8% charged to guest and 7% charged to host.' },
           { text: 'Joint Venture (JV): Khabiteq receives 50% of the standard commission.' },
-          { text: 'C. Subscribed Agents (full subscribers with public page):' },
+          { text: 'C. Subscribed Agents (full subscribers with practitioner page):' },
           { text: 'No commission payable to Khabiteq on transactions.' },
           { text: 'Khabiteq collects 15% of the inspection fee set on the subscribed agent\'s public profile (see Inspection Fees below).' },
           { text: 'D. Trial/Unsubscribed Agents:' },
@@ -716,7 +716,7 @@ const POLICIES_DATA: PolicyData[] = [
         sectionNumber: '3',
         title: 'Inspection Fees',
         items: [
-          { text: 'Subscribed agents may set their own inspection fee on their public page; Khabiteq collects 15% of that stated inspection fee.' },
+          { text: 'Subscribed agents may set their own inspection fee on their practitioner page; Khabiteq collects 15% of that stated inspection fee.' },
           { text: 'Trial & non-subscribed agents: inspection fee is ₦5,000, paid to Khabiteq.' },
           { text: 'Refunds: Inspection fees are non-refundable unless the failure was caused by Khabiteq, the seller, or landlord. If the buyer/tenant cancels or defaults, the fee is forfeited.' },
         ],
@@ -725,7 +725,7 @@ const POLICIES_DATA: PolicyData[] = [
         sectionNumber: '4',
         title: 'Shortlet (Booking) Rules & Disbursement',
         items: [
-          { text: 'The guest service fee (8%) applies to all bookings regardless of source (subscribed agent, public page, agent marketplace, or general listing).' },
+          { text: 'The guest service fee (8%) applies to all bookings regardless of source (subscribed agent, practitioner page, agent marketplace, or general listing).' },
           { text: 'Hosts are also charged 7% per confirmed booking.' },
           { text: 'Disbursement: Host payout is released 12–24 hours after guest check-in confirmation.' },
           { text: 'Guest payment (including service fee) is charged at booking per platform payment flow.' },
@@ -746,7 +746,7 @@ const POLICIES_DATA: PolicyData[] = [
         title: 'Sales, Rent & JV Transactions',
         items: [
           { text: 'For transactions where Khabiteq is directly involved, commission terms are governed by the signed LOI.' },
-          { text: 'Transactions completed via an agent\'s public page (without Khabiteq involvement) are direct agent-to-client deals. Khabiteq is not responsible for payments or disputes.' },
+          { text: 'Transactions completed via an agent\'s practitioner page (without Khabiteq involvement) are direct agent-to-client deals. Khabiteq is not responsible for payments or disputes.' },
           { text: 'Buyers and tenants are strongly advised to use Khabiteq\'s document verification service before making payments or moving in.' },
         ],
       },
@@ -762,7 +762,7 @@ const POLICIES_DATA: PolicyData[] = [
         sectionNumber: '8',
         title: 'Communication Rules',
         items: [
-          { text: 'Subscribed agents with public pages may display their WhatsApp for direct communication.' },
+          { text: 'Subscribed agents with practitioner pages may display their WhatsApp for direct communication.' },
           { text: 'Non-subscribed or trial agents must transact via Khabiteq channels only.' },
         ],
       },

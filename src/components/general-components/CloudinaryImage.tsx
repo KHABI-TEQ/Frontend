@@ -30,7 +30,7 @@ const CloudinaryImage: React.FC<CloudinaryImageProps> = ({
   priority = false,
   sizes,
   style,
-  fallbackSrc = "/khabi-teq.svg",
+  fallbackSrc = "/khabi.svg",
   quality = 75,
   timeout = 10000, // 10 seconds default timeout
 }) => {

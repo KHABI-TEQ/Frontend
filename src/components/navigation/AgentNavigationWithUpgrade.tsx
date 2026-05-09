@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   User,
   Home,
-  Building,
   Star,
   Settings,
   LogOut,
@@ -23,6 +22,7 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useUserContext } from "@/context/user-context";
+import Image from "next/image";
 
 interface NavigationItem {
   id: string;
@@ -122,15 +122,17 @@ const AgentNavigationWithUpgrade: React.FC = () => {
   return (
     <>
       {/* Desktop Navigation */}
-      <nav className="hidden lg:flex items-center justify-between bg-white border-b border-gray-200 px-6 py-4">
+      <nav className="hidden lg:flex items-center justify-between bg-white border-b border-gray-200 px-6 py-6">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-[#8DDB90] rounded-lg flex items-center justify-center">
-            <Building size={20} className="text-white" />
+        <Link href="/" className="flex items-center gap-2 h-full">
+          <div className="relative w-[140px] h-[28px]">
+            <Image
+              src="/khabi-logo.svg"
+              fill
+              className="object-contain"
+              alt="Khabiteq"
+            />
           </div>
-          <span className="text-xl font-bold text-[#09391C] font-display">
-            Khabiteq
-          </span>
         </Link>
 
         {/* Navigation Items */}
@@ -194,16 +196,18 @@ const AgentNavigationWithUpgrade: React.FC = () => {
 
       {/* Mobile Navigation */}
       <nav className="lg:hidden bg-white border-b border-gray-200">
-        <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center justify-between px-4 py-5">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-[#8DDB90] rounded-lg flex items-center justify-center">
-              <Building size={20} className="text-white" />
-            </div>
-            <span className="text-xl font-bold text-[#09391C] font-display">
-              Khabiteq
-            </span>
-          </Link>
+          <Link href="/" className="flex items-center gap-2 h-full">
+          <div className="relative w-[140px] h-[28px]">
+            <Image
+              src="/khabi-logo.svg"
+              fill
+              className="object-contain"
+              alt="Khabiteq"
+            />
+          </div>
+        </Link>
 
           {/* Status Badge */}
           <div className="flex items-center gap-2">

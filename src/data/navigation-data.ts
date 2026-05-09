@@ -19,8 +19,13 @@ export const mainNavigationData: NavigationItem[] = [
     isClicked: false,
   },
   {
-    name: "Client",
-    url: "/for-clients",
+    name: "Agent",
+    url: "/for-agents",
+    isClicked: false,
+  },
+  {
+    name: "Developer",
+    url: "/for-developers",
     isClicked: false,
   },
   {
@@ -29,13 +34,8 @@ export const mainNavigationData: NavigationItem[] = [
     isClicked: false,
   },
   {
-    name: "Agent",
-    url: "/for-agents",
-    isClicked: false,
-  },
-  {
-    name: "Developer",
-    url: "/for-developers",
+    name: "Client",
+    url: "/for-clients",
     isClicked: false,
   },
   {
@@ -62,7 +62,7 @@ export const agentNavigationData: NavigationItem[] = [
     isClicked: true,
   },
   {
-    name: "Who is it for?",
+    name: "Who's it for",
     url: "/user-types",
     isClicked: false,
   },

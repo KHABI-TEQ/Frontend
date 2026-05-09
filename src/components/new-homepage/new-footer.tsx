@@ -6,7 +6,6 @@ import Link from 'next/link';
 const footerFontClass = 'font-[var(--font-archivo)]';
 import { motion } from 'framer-motion';
 import { useSocialLinskSettings } from '@/hooks/useSystemSettings';
-import khabiTeqIcon from '@/svgs/white-khabi-teq.svg';
 import toast from 'react-hot-toast';
 import SuccessModal from '@/components/modals/SuccessModal';
 import { POST_REQUEST } from '@/utils/requests';
@@ -219,7 +218,7 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
               viewport={{ once: true }}>
               <div className="flex items-center gap-3 mb-6">
                 <Image
-                  src={khabiTeqIcon}
+                  src="/khabi.svg"
                   width={140}
                   height={30}
                   alt='Khabiteq Logo'

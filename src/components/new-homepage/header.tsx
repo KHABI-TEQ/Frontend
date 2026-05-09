@@ -2,7 +2,6 @@
 
 "use client";
 import React, { Fragment, useEffect, useRef, useState } from "react";
-import khabiteqIcon from "@/svgs/khabi-teq.svg";
 import Button from "@/components/general-components/button";
 import Image from "next/image";
 import {
@@ -13,18 +12,15 @@ import Link from "next/link";
 import barIcon from "@/svgs/bars.svg";
 import { usePageContext } from "@/context/page-context";
 import { usePathname, useRouter } from "next/navigation";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Home } from "lucide-react";
 import useClickOutside from "@/hooks/clickOutside";
 import { motion, AnimatePresence } from "framer-motion";
 import { useUserContext } from "@/context/user-context";
-import { useNotifications } from "@/context/notification-context";
-import notificationBellIcon from "@/svgs/bell.svg";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
 
 // Lazy load heavy components that are only shown on interaction
 const SideBar = dynamic(() => import("../general-components/sideBar"), { ssr: false });
-const UserNotifications = dynamic(() => import("./user-notifications"), { ssr: false });
 // Import profile directly so dropdown always has latest logic (Developer/Landlord menu on /dashboard)
 import UserProfile from "./my-profile";
 
@@ -75,9 +71,6 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
         : mainNavigationData;
     setNavigationState(base);
   }, [user?.userType]);
-  const { unreadCount, fetchNotifications } = useNotifications();
-  const [isNotificationModalOpened, setIsNotificationModalOpened] =
-    useState<boolean>(false);
   const [isUserProfileModalOpened, setIsUserProfileModal] =
     useState<boolean>(false);
   const [userDetails, setUserDetails] = useState<{
@@ -93,12 +86,6 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
     // console.log(isModalOpened);
   }, [isModalOpened]);
 
-  // Fetch notifications when user is available
-  useEffect(() => {
-    if ((user?._id || user?.id) && !isComingSoon) {
-      fetchNotifications();
-    }
-  }, [user?._id || user?.id, fetchNotifications, isComingSoon]);
 
   useEffect(() => {
     const user = sessionStorage.getItem("user");
@@ -171,24 +158,23 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
           initial={{ y: -100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
-          className={`mx-4 sm:mx-6 lg:mx-8 mt-4 px-4 sm:px-6 py-3 rounded-2xl flex justify-between items-center transition-all duration-500 ${
+          className={`mx-4 sm:mx-6 lg:mx-8 mt-4 px-4 sm:px-6 py-5 rounded-2xl flex justify-between items-center transition-all duration-500 ${
             isScrolled 
               ? 'bg-white/80 backdrop-blur-xl shadow-lg shadow-black/5 border border-white/50 w-full max-w-7xl' 
               : 'bg-[#EEF1F1]/90 backdrop-blur-md w-full max-w-7xl'
           }`}>
-          <Link href="/" className="group flex items-center gap-2">
-            <div className="relative overflow-hidden">
-              <Image
-                src={khabiteqIcon}
-                width={1000}
-                height={1000}
-                className="md:w-[140px] md:h-[22px] w-[120px] h-[20px] transition-transform duration-300 group-hover:scale-105"
-                alt="Khabiteq"
-              />
-            </div>
-          </Link>
+          <Link href="/" className="flex items-center gap-2 h-full">
+          <div className="relative w-[140px] h-[28px] md:w-[180px] h-[32px]">
+            <Image
+              src="/khabi-logo.svg"
+              fill
+              className="object-contain"
+              alt="Khabiteq"
+            />
+          </div>
+        </Link>
           
-          <div className="lg:flex gap-1 hidden">
+          <div className="lg:flex gap-1 hidden items-center">
             {navigationState.map((item: NavigationItem, idx: number) => {
               if (item.subItems && item.subItems.length > 0) {
                 const isOpen = openDropdown === item.name;
@@ -297,47 +283,6 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
           <div className="hidden lg:flex items-center gap-4">
             {user?._id || user?.id ? (
               <>
-                {/* Notifications */}
-                <div className="relative notification-dropdown">
-                  <button
-                    type="button"
-                    title="Notifications"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsNotificationModalOpened(!isNotificationModalOpened);
-                      // Close other dropdowns
-                      setOpenDropdown(null);
-                      setIsUserProfileModal(false);
-                    }}
-                    className="w-10 h-10 rounded-full flex items-center justify-center bg-white shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 hover:border-[#8DDB90]/30 relative hover:scale-105"
-                  >
-                    <Image
-                      src={notificationBellIcon}
-                      width={20}
-                      height={20}
-                      alt="Notifications"
-                      className="w-5 h-5"
-                    />
-                    {/* Notification Badge */}
-                    {unreadCount > 0 && (
-                      <div className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center shadow-sm">
-                        <span className="text-white text-[10px] font-semibold">
-                          {unreadCount > 9 ? '9+' : unreadCount}
-                        </span>
-                      </div>
-                    )}
-                  </button>
-                  <AnimatePresence>
-                    {isNotificationModalOpened && (
-                      <Suspense fallback={null}>
-                        <UserNotifications
-                          closeNotificationModal={setIsNotificationModalOpened}
-                        />
-                      </Suspense>
-                    )}
-                  </AnimatePresence>
-                </div>
-
                 {/* User Profile */}
                 <div className="relative profile-dropdown">
                   <button

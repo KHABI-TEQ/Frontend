@@ -35,7 +35,7 @@ export interface FeatureSelection {
   featuredListings: string[];
 }
 
-export interface PublicPageDesign {
+export interface PractitionerPageDesign {
   heroTitle: string;
   heroSubtitle: string;
   ctaText: string;
@@ -219,7 +219,7 @@ export interface DealSiteSettings {
   description: string;
   logoUrl?: string;
   theme: { primaryColor: string; secondaryColor: string };
-  publicPage: PublicPageDesign;
+  practitionerPage: PractitionerPageDesign;
   homeSettings?: HomeSettings;
   footer?: FooterDetails;
   featureSelection: FeatureSelection;
@@ -270,7 +270,7 @@ const DEFAULT_SETTINGS: DealSiteSettings = {
   description: "",
   logoUrl: "",
   theme: { primaryColor: "#09391C", secondaryColor: "#8DDB90" },
-  publicPage: {
+  practitionerPage: {
     heroTitle: "Hi, I'm your trusted agent",
     heroSubtitle: "Browse my verified listings and book inspections easily.",
     ctaText: "Tell Us about property you want",
@@ -344,7 +344,7 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
             socialLinks: data.socialLinks || prev.socialLinks,
             contactVisibility: data.contactVisibility || prev.contactVisibility,
             featureSelection: data.featureSelection || prev.featureSelection,
-            publicPage: data.publicPage || prev.publicPage,
+            practitionerPage: data.practitionerPage || prev.practitionerPage,
             footer: data.footer || prev.footer,
             paymentDetails: data.paymentDetails || prev.paymentDetails,
             about: data.about || prev.about,

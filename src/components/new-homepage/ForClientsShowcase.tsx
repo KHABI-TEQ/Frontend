@@ -153,7 +153,7 @@ const ForClientsShowcase = () => {
                     Ready to find your dream property?
                   </h3>
                   <p className="text-sm text-gray-500">
-                    Browse thousands of verified listings today.
+                    Submit your preferences and get matched with verified properties.
                   </p>
                 </div>
                 <Link

@@ -22,7 +22,7 @@ export const PROMOTIONS: Promotion[] = [
   {
     id: 'promo-home-1',
     slot: 'homepage-top',
-    imageUrl: '/khabi-teq.svg',
+    imageUrl: '/khabi.svg',
     link: '/preference',
     active: true,
     pages: ['/'],

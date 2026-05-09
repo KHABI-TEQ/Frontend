@@ -1,6 +1,6 @@
 /**
  * Practitioner Page Dashboard Layout
- * Wraps all public-access-page routes with sidebar navigation
+ * Wraps all practitioner page routes with sidebar navigation
  * Handles setup completion guard logic and page gating modal
  */
 
@@ -11,7 +11,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { AlertCircle } from "lucide-react";
 import { DealSiteProvider, useDealSite } from "@/context/deal-site-context";
 import { useUserContext } from "@/context/user-context";
-import DashboardSidebar from "@/components/public-access-page/DashboardSidebar";
+import DashboardSidebar from "@/components/practitioner-page/DashboardSidebar";
 import { isAgentOrDeveloperEffective } from "@/utils/effectiveUserType";
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
@@ -30,15 +30,15 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     }
 
     // If trying to access setup and already setup complete, redirect to overview
-    if (pathname === "/public-access-page/setup" && isSetupComplete) {
-      router.replace("/public-access-page");
+    if (pathname === "/practitioner-page/setup" && isSetupComplete) {
+      router.replace("/practitioner-page");
     }
 
     // If trying to access dashboard but setup not complete, show modal
     if (
-      pathname !== "/public-access-page/setup" &&
+      pathname !== "/practitioner-page/setup" &&
       !isSetupComplete &&
-      pathname.startsWith("/public-access-page")
+      pathname.startsWith("/practitioner-page")
     ) {
       setShowSetupModal(true);
     }
@@ -46,14 +46,14 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
   // On the setup route, clear modal state so we never leave body scroll locked from the dashboard modal
   useEffect(() => {
-    if (pathname === "/public-access-page/setup") {
+    if (pathname === "/practitioner-page/setup") {
       setShowSetupModal(false);
     }
   }, [pathname]);
 
   // Prevent background scroll when modal is open (never lock scroll on the setup URL)
   useEffect(() => {
-    if (pathname === "/public-access-page/setup") {
+    if (pathname === "/practitioner-page/setup") {
       document.body.style.overflow = "";
       return () => {
         document.body.style.overflow = "";
@@ -113,7 +113,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   }
 
   // If on setup page, don't show sidebar
-  if (pathname === "/public-access-page/setup") {
+  if (pathname === "/practitioner-page/setup") {
     return <>{children}</>;
   }
 
@@ -124,16 +124,16 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 text-center">
             <h2 className="text-2xl font-bold text-[#09391C] mb-2">
-              Setup Your Public Page
+              Setup Your Practitioner Page
             </h2>
             <p className="text-gray-600 mb-6">
               Your Practitioner page is not yet configured. Set it up now to get started.
             </p>
             <button
-              onClick={() => router.push("/public-access-page/setup")}
+              onClick={() => router.push("/practitioner-page/setup")}
               className="w-full px-6 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-all"
             >
-              Set Up Your Public Page Now
+              Set Up Your Practitioner Page Now
             </button>
           </div>
         </div>

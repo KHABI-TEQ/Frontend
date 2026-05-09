@@ -93,7 +93,7 @@ export default function FeaturedPage() {
         featuredListings: Array.from(featuredIds),
       };
 
-      const res = await api.put(`/account/dealSite/${settings.publicSlug}/featureSelection/update`, payload);
+      const res = await api.put(`/account/dealSite/${settings.practitionerPage}/featureSelection/update`, payload);
 
       if (res?.data?.success) {
         updateSettings({
@@ -177,7 +177,7 @@ export default function FeaturedPage() {
           <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
             <p className="text-gray-600 mb-2">No properties found</p>
             <p className="text-sm text-gray-400">
-              Create and list properties first to feature them on your public page
+              Create and list properties first to feature them on your practitioner page
             </p>
           </div>
         ) : filteredProperties.length === 0 ? (

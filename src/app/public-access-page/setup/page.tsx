@@ -129,7 +129,7 @@ const Setup = () => {
       keywords: settings.keywords || [],
       logoUrl: settings.logoUrl || "",
       theme: settings.theme || { primaryColor: "#09391C", secondaryColor: "#8DDB90" },
-      publicPage: settings.publicPage || {
+      practitionerPage: settings.practitionerPage || {
         heroTitle: "Hi, I'm your trusted agent",
         heroSubtitle: "Browse my verified listings and book inspections easily.",
         ctaText: "Tell Us about property you want",
@@ -810,7 +810,7 @@ function Step3Review({ formik }: { formik: any }) {
 
       {/* Public Link Summary */}
       <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-200">
-        <h3 className="font-semibold text-emerald-900 mb-2">Your Public Page</h3>
+        <h3 className="font-semibold text-emerald-900 mb-2">Your Practitioner Page</h3>
         <p className="text-emerald-700 font-medium break-all">
           https://{formik.values.publicSlug}.khabiteq.com
         </p>

@@ -2,7 +2,6 @@
 
 'use client';
 import React, { Fragment, useEffect, useReducer } from 'react';
-import khabiteqIcon from '@/svgs/khabi-teq.svg';
 import Button from '@/components/button';
 import Image from 'next/image';
 import { navData } from '@/data';
@@ -43,13 +42,13 @@ const Header = () => {
           'filter brightness-[30%] transition-all duration-500 overflow-hidden'
         } ${'slide-from-top'}`}
       >
-        <nav className='h-[50px] container flex justify-between items-center'>
+        <nav className='h-[70px] container flex justify-between items-center'>
           <Image
-            src={khabiteqIcon}
-            width={1000}
-            height={1000}
+            src="/khabi-logo.svg"
+            width={169}
+            height={25}
             className='md:w-[169px] md:h-[25px] w-[144px] h-[30px]'
-            alt=''
+            alt='Khabiteq'
           />
           <div className='lg:flex gap-[27px] hidden'>
             {state.map((item: { name: string; url: string; isClicked: boolean }, idx: number) => {

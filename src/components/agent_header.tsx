@@ -2,7 +2,6 @@
 
 'use client';
 import React, { Fragment, useReducer, useState, useEffect, useRef } from 'react';
-import khabiteqIcon from '@/svgs/khabi-teq.svg';
 // import Button from '@/components/button';
 import Image from 'next/image';
 import { navData } from '@/data';
@@ -67,11 +66,11 @@ const AgentHeader = () => {
         } ${'slide-from-top'}`}>
         <nav className='h-[50px] container flex justify-between items-center lg:px-16'>
           <Image
-            src={khabiteqIcon}
-            width={1000}
-            height={1000}
+            src="/khabi.svg"
+            width={169}
+            height={25}
             className='md:w-[169px] md:h-[25px] w-[144px] h-[30px]'
-            alt=''
+            alt='Khabiteq'
           />
           <div className='lg:flex gap-[27px] hidden'>
             {state.map(

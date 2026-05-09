@@ -61,10 +61,10 @@ const KeyFeaturesSection = () => {
       id: 3,
       title: "For Agents",
       headline: "Grow your business your way.",
-      description: "Manage listings, attract clients, and promote properties — all from your own public page.",
+      description: "Manage listings, attract clients, and promote properties — all from your own practitioner page.",
       bullets: [
         "First listing is free",
-        "Get your own public page with your listings",
+        "Get your own practitioner page with your listings",
         "Request to promote landlord and developer properties",
         "Confirm property locations on the map",
         "Help clients with trusted, verified listings",

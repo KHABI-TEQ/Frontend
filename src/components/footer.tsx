@@ -2,7 +2,6 @@
 'use client';
 import Image from 'next/image';
 import React, { useReducer } from 'react';
-import khabiTeqIcon from '@/svgs/white-khabi-teq.svg';
 import { exploreData, iconsData, servicesData, supportData } from '@/data';
 import Link from 'next/link';
 import { usePageContext } from '@/context/page-context';
@@ -40,10 +39,10 @@ const Footer = () => {
             {/**Logo with some texts */}
             <div className='flex flex-col gap-[30px] lg:w-[376px] flex-wrap'>
               <Image
-                src={khabiTeqIcon}
-                width={1000}
-                height={1000}
-                alt=''
+                src="/khabi.svg"
+                width={169}
+                height={35}
+                alt='Khabiteq'
                 className='lg:w-[169px] lg:h-[35px] w-[144px] h-[30px]'
               />
               <p className='font-normal lg:text-base text-[14px] leading-[25px] text-[#D6DDEB]'>

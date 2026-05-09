@@ -23,12 +23,12 @@ export default function LogsPage() {
     try {
       const token = Cookies.get("token");
 
-      if (!token || !settings.publicSlug) {
+      if (!token || !settings.practitionerPage) {
         setLogs([]);
         return;
       }
 
-      let url = `${URLS.BASE}${URLS.dealSiteLogs}`.replace(":slug", settings.publicSlug) + `?limit=${limit}&page=${page}`;
+      let url = `${URLS.BASE}${URLS.dealSiteLogs}`.replace(":slug", settings.practitionerPage) + `?limit=${limit}&page=${page}`;
 
       if (filter !== "all") {
         url += `&category=${filter}`;
@@ -44,13 +44,13 @@ export default function LogsPage() {
     } finally {
       setLoading(false);
     }
-  }, [settings.publicSlug, filter, page, limit]);
+  }, [settings.practitionerPage, filter, page, limit]);
 
   useEffect(() => {
-    if (settings.publicSlug) {
+    if (settings.practitionerPage) {
       fetchLogs();
     }
-  }, [fetchLogs, settings.publicSlug]);
+  }, [fetchLogs, settings.practitionerPage]);
 
   const cleanLogText = (text: string | undefined) => {
     if (!text) return "";
@@ -127,7 +127,7 @@ export default function LogsPage() {
           Activity Logs
         </h1>
         <p className="text-gray-600 mt-2">
-          View all activities and changes made to your public page
+          View all activities and changes made to your practitioner page
         </p>
       </div>
 

@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: "Khabiteq | Post Property - Joint Venture",
   description: `List your property for joint venture on Khabi-Teq's trusted platform. Simplifying real estate transactions in Lagos.`,
   icons: {
-    icon: "/khabi-teq.svg",
+    icon: "/khabi.svg",
   },
 };
 

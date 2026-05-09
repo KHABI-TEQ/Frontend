@@ -15,7 +15,6 @@ import {
   faBullhorn,
   faUserShield, 
 } from "@fortawesome/free-solid-svg-icons";
-import khabiteqIcon from "@/svgs/khabi-teq.svg";
 
 const navItems = [
   { href: "/admin", label: "Dashboard Overview", icon: faBorderAll },
@@ -39,7 +38,7 @@ export default function AdminNavbar() {
         </button>
   
         <div className={`fixed z-50 h-full w-[270px] bg-white shadow-lg transition-transform duration-300 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
-          <Image src={khabiteqIcon} width={1000} height={1000} className="md:w-[169px] md:h-[40px] w-[144px] h-[40px] m-8 cursor-pointer" alt="Khabiteq Logo " onClick={() => setIsOpen(false)} />
+          <Image src="/khabi.svg" width={169} height={40} className="md:w-[169px] md:h-[40px] w-[144px] h-[40px] m-8 cursor-pointer" alt="Khabiteq Logo" onClick={() => setIsOpen(false)} />
           <nav className="flex flex-col space-y-2 border-t-2 p-2 pt-4">
             {navItems.map(({ href, label, icon }) => {
               const isActive = pathname === href;

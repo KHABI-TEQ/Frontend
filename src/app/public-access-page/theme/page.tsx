@@ -1,6 +1,6 @@
 /**
  * Theme Settings
- * Customize colors for the public page
+ * Customize colors for the practitioner page
  */
 
 "use client";
@@ -165,7 +165,7 @@ export default function ThemePage() {
               };
 
               const res = await PUT_REQUEST(
-                `${URLS.BASE}/account/dealSite/${settings.publicSlug}/theme/update`,
+                `${URLS.BASE}/account/dealSite/${settings.practitionerPage}/theme/update`,
                 payload,
                 token
               );
