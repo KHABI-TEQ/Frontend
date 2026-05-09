@@ -15,7 +15,7 @@ const userTypes = [
     headline: 'List your property',
     description: 'Post for sale, rent, shortlet, or joint venture',
     cta: 'List Property',
-    ctaUrl: '/post-property',
+    ctaUrl: '/for-landlords',
     color: 'from-amber-500 to-orange-600',
     bgColor: 'bg-amber-50',
     iconBg: 'bg-amber-100',
@@ -29,7 +29,7 @@ const userTypes = [
     headline: 'Showcase projects',
     description: 'List projects and find the right partners',
     cta: 'Publish Project',
-    ctaUrl: '/post-property',
+    ctaUrl: '/for-developers',
     color: 'from-emerald-600 to-teal-700',
     bgColor: 'bg-emerald-50',
     iconBg: 'bg-emerald-100',
@@ -71,8 +71,8 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.12,
-      delayChildren: 0.3,
+      staggerChildren: 0.08,
+      delayChildren: 0.15,
     },
   },
 };
@@ -88,7 +88,7 @@ const itemVariants = {
     y: 0,
     scale: 1,
     transition: {
-      duration: 0.7,
+      duration: 0.4,
       ease: [0.25, 0.1, 0.25, 1],
     },
   },
@@ -100,7 +100,7 @@ const titleVariants = {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.6,
+      duration: 0.4,
       ease: [0.25, 0.1, 0.25, 1],
     },
   },
@@ -110,7 +110,7 @@ const floatingVariants = {
   animate: {
     y: [-5, 5, -5],
     transition: {
-      duration: 4,
+      duration: 2,
       repeat: Infinity,
       ease: "easeInOut",
     },
@@ -136,20 +136,27 @@ export default function AnimatedUserTypes() {
         </div>
 
         {/* User Type Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-4">
+        <motion.div
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-4"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+          variants={containerVariants}
+        >
           {userTypes.map((userType, index) => {
             const Icon = userType.icon;
             const isHovered = hoveredId === userType.id;
             const hasHover = hoveredId !== null;
-            
+
             // When a card is hovered, it scales up; others scale down
             const scale = hasHover ? (isHovered ? 1.05 : 0.92) : 1;
             const opacity = hasHover ? (isHovered ? 1 : 0.6) : 1;
-            
+
             return (
               <motion.div
                 key={userType.id}
-                animate={{ 
+                variants={itemVariants}
+                animate={{
                   scale,
                   opacity,
                   y: isHovered ? -12 : 0,
@@ -193,7 +200,7 @@ export default function AnimatedUserTypes() {
               </motion.div>
             );
           })}
-        </div>
+        </motion.div>
 
         {/* Bottom Stats or Trust Indicators */}
         <div className="mt-12 sm:mt-16 flex flex-wrap justify-center gap-8 sm:gap-12">
