@@ -28,7 +28,8 @@ export default function LogsPage() {
         return;
       }
 
-      let url = `${URLS.BASE}${URLS.dealSiteLogs}`.replace(":slug", settings.practitionerPage) + `?limit=${limit}&page=${page}`;
+      const slug = typeof settings.practitionerPage === "string" ? settings.practitionerPage : (settings.practitionerPage as { slug?: string }).slug || "";
+      let url = `${URLS.BASE}${URLS.dealSiteLogs}`.replace(":slug", slug) + `?limit=${limit}&page=${page}`;
 
       if (filter !== "all") {
         url += `&category=${filter}`;

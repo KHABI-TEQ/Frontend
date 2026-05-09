@@ -18,6 +18,7 @@ import {
   TrendingUp,
   Shield,
   Mail,
+  Building,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";

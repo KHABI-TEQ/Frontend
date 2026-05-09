@@ -11,7 +11,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { AlertCircle } from "lucide-react";
 import { DealSiteProvider, useDealSite } from "@/context/deal-site-context";
 import { useUserContext } from "@/context/user-context";
-import DashboardSidebar from "@/components/practitioner-page/DashboardSidebar";
+import DashboardSidebar from "@/components/public-access-page/DashboardSidebar";
 import { isAgentOrDeveloperEffective } from "@/utils/effectiveUserType";
 
 function DashboardContent({ children }: { children: React.ReactNode }) {

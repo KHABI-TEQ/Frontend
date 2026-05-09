@@ -748,20 +748,6 @@ const PreferenceDetailPage = () => {
               </div>
               ) : null}
 
-              {publicPageCta && (
-                <div className="mb-4 p-3 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-900">
-                  <p className="mb-2">
-                    Your Practitioner page must be active (<strong>running</strong>) to match preferences.
-                  </p>
-                  <Link
-                    href="/public-access-page"
-                    className="inline-flex font-semibold text-[#09391C] underline hover:text-[#8DDB90]"
-                  >
-                    Open Practitioner settings
-                  </Link>
-                </div>
-              )}
-
               {isDealSiteReceiverModePref(preference) || dealSiteGeneralMatchDenied ? (
                 <p className="text-sm text-gray-600 text-center py-2">
                   {dealSiteGeneralMatchMessage || DEAL_SITE_GENERAL_MARKETPLACE_COPY}

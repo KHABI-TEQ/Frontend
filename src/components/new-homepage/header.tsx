@@ -73,6 +73,8 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
   }, [user?.userType]);
   const [isUserProfileModalOpened, setIsUserProfileModal] =
     useState<boolean>(false);
+  const [isNotificationModalOpened, setIsNotificationModalOpened] =
+    useState<boolean>(false);
   const [userDetails, setUserDetails] = useState<{
     firstName: string;
     lastName: string;

@@ -8,7 +8,7 @@ import { POST_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import { useDealSite } from "@/context/deal-site-context";
 import OverlayPreloader from "@/components/general-components/OverlayPreloader";
-import ContactMessagesTab from "@/components/practitioner-page-components/ContactMessagesTab";
+import ContactMessagesTab from "@/components/public-access-components/ContactMessagesTab";
  
 export default function ContactUsPage() {
   const { settings, updateSettings } = useDealSite();
