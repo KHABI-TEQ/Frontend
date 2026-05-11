@@ -387,8 +387,15 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
               whileInView={{ opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.5 }}
               viewport={{ once: true }}>
-              <p className={`text-[#D6DDEB]/60 text-xs sm:text-sm ${footerFontClass}`}>
-                © {new Date().getFullYear()} Khabi-Teq · <Link href="/policies_page" className="hover:text-[#8DDB90] transition-colors">Privacy</Link> · <Link href="/policies_page" className="hover:text-[#8DDB90] transition-colors">Terms</Link>
+              <p className={`text-[#D6DDEB]/60 text-xs sm:text-sm text-center sm:text-left ${footerFontClass}`}>
+                © {new Date().getFullYear()} Khabi-Teq ·{' '}
+                <Link href="/policies_page" className="hover:text-[#8DDB90] transition-colors">Privacy</Link>
+                {' · '}
+                <Link href="/policies_page" className="hover:text-[#8DDB90] transition-colors">Terms</Link>
+                {' · '}
+                <Link href="/partner-api" className="hover:text-[#8DDB90] transition-colors">Platform partners</Link>
+                {' · '}
+                <Link href="/syndication-integration-guide" className="hover:text-[#8DDB90] transition-colors">Syndication guide</Link>
               </p>
             </motion.div>
             {/* Social Links */}

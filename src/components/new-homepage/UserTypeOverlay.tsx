@@ -250,20 +250,24 @@ export default function UserTypeOverlay({ isOpen, onClose }: UserTypeOverlayProp
     <AnimatePresence>
       {isOpen && (
         <motion.div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="user-type-overlay-title"
           className="fixed inset-0 z-[9999] flex items-start sm:items-center justify-center overflow-y-auto overscroll-contain py-4 sm:py-8"
           variants={overlayVariants}
           initial="hidden"
           animate="visible"
           exit="exit"
+          onClick={onClose}
         >
           {/* Animated Backdrop */}
           <motion.div
-            className="absolute inset-0 bg-[#0B423D]/85"
+            className="absolute inset-0 bg-[#0B423D]/85 pointer-events-none"
             variants={backdropVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
-            onClick={onClose}
+            aria-hidden
           />
 
           {/* Decorative Background Elements */}
@@ -302,27 +306,33 @@ export default function UserTypeOverlay({ isOpen, onClose }: UserTypeOverlayProp
             />
           </div>
 
-          {/* Main Content Container */}
+          {/* Always-visible dismiss control (previous absolute -top placement was often clipped) */}
+          <motion.button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
+            className="fixed z-[10000] flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-white/20 bg-[#0B423D]/90 text-white shadow-lg backdrop-blur-md transition-colors hover:bg-[#09391C] hover:border-white/35 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8DDB90] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B423D] top-[max(1rem,env(safe-area-inset-top))] right-[max(1rem,env(safe-area-inset-right))] sm:top-[max(1.5rem,env(safe-area-inset-top))] sm:right-[max(1.5rem,env(safe-area-inset-right))]"
+            aria-label="Close and continue to homepage"
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.35, duration: 0.25 }}
+            whileHover={{ scale: 1.06 }}
+            whileTap={{ scale: 0.94 }}
+          >
+            <X className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2.25} aria-hidden />
+          </motion.button>
+
+          {/* Main Content Container — stopPropagation so outer overlay click dismisses */}
           <motion.div
             className="relative z-10 w-full max-w-6xl mx-4 sm:mx-6 lg:mx-8"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
+            onClick={(e) => e.stopPropagation()}
           >
-            {/* Close Button */}
-            <motion.button
-              onClick={onClose}
-              className="absolute -top-16 right-0 sm:-top-20 sm:right-0 p-3 rounded-full bg-white/10 backdrop-blur-sm text-white/80 hover:text-white hover:bg-white/20 transition-all duration-300 group"
-              whileHover={{ scale: 1.1, rotate: 90 }}
-              whileTap={{ scale: 0.9 }}
-              initial={{ opacity: 0, rotate: -90 }}
-              animate={{ opacity: 1, rotate: 0 }}
-              transition={{ delay: 0.8 }}
-            >
-              <X className="w-6 h-6" />
-            </motion.button>
-
             {/* Header Section */}
             <motion.div
               className="text-center mb-8 sm:mb-12"
@@ -343,6 +353,7 @@ export default function UserTypeOverlay({ isOpen, onClose }: UserTypeOverlayProp
 
               {/* Title */}
               <motion.h2
+                id="user-type-overlay-title"
                 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 tracking-tight"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -362,6 +373,16 @@ export default function UserTypeOverlay({ isOpen, onClose }: UserTypeOverlayProp
                 transition={{ delay: 0.6 }}
               >
                 Select your role to get started with AI-powered real estate
+              </motion.p>
+
+              <motion.p
+                className="mt-5 text-sm sm:text-base text-white/55 max-w-xl mx-auto leading-relaxed"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.75 }}
+              >
+                Click anywhere on the dimmed background, or the close button in the top-right
+                corner, to dismiss this window and browse the homepage.
               </motion.p>
             </motion.div>
 
@@ -506,7 +527,7 @@ export default function UserTypeOverlay({ isOpen, onClose }: UserTypeOverlayProp
               animate={{ opacity: 1 }}
               transition={{ delay: 1.2 }}
             >
-              Click any card above to explore your personalized experience
+              Or choose a path below — each card opens tailored information for that role.
             </motion.p>
           </motion.div>
         </motion.div>

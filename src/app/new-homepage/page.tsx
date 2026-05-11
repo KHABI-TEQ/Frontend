@@ -14,6 +14,7 @@ import NewHeroSection from "@/components/new-homepage/new-hero-section";
 import AnimatedUserTypes from "@/components/new-homepage/animated-user-types";
 import UserTypeOverlay from "@/components/new-homepage/UserTypeOverlay";
 import UserTypeFloatingButton from "@/components/new-homepage/UserTypeFloatingButton";
+import PartnerApiSection from "@/components/new-homepage/partner-api-section";
 
 // Non-critical: Lazy load lower sections
 const ValuePropositionSection = lazy(() => import("@/components/new-homepage/value-proposition-section"));
@@ -111,7 +112,7 @@ const NewHomepage = ({
             <AIAdvantageSection />
           </ErrorBoundary>
 
-          {/* 3. KEY FEATURES SECTION */}
+          {/* 4. KEY FEATURES SECTION */}
           <ErrorBoundary
             fallback={
               <div className="w-full py-16 bg-[#FFFEFB]">
@@ -124,7 +125,7 @@ const NewHomepage = ({
             <KeyFeaturesSection />
           </ErrorBoundary>
 
-          {/* 4. VALUE PROPOSITION SECTION */}
+          {/* 5. VALUE PROPOSITION SECTION */}
           <Suspense fallback={<div className="w-full py-16 bg-[#FFFEFB]" />}>
             <ErrorBoundary
               fallback={
@@ -139,7 +140,7 @@ const NewHomepage = ({
             </ErrorBoundary>
           </Suspense>
 
-          {/* 5. REVIEWS & COUNTERS (SOCIAL PROOF & TRUST SIGNALS) */}
+          {/* 6. REVIEWS & COUNTERS (SOCIAL PROOF & TRUST SIGNALS) */}
           <Suspense fallback={<div className="w-full py-16 bg-[#F5F7F9]" />}>
             <ErrorBoundary
               fallback={
@@ -154,7 +155,7 @@ const NewHomepage = ({
             </ErrorBoundary>
           </Suspense>
 
-          {/* 6. FOR REAL ESTATE AGENTS SECTION */}
+          {/* 7. FOR REAL ESTATE AGENTS SECTION */}
           <Suspense fallback={<div className="w-full py-16 bg-[#FFFEFB]" />}>
             <ErrorBoundary
               fallback={
@@ -169,7 +170,7 @@ const NewHomepage = ({
             </ErrorBoundary>
           </Suspense>
 
-          {/* 7. SECURITY & TRANSPARENCY SECTION */}
+          {/* 8. SECURITY & TRANSPARENCY SECTION */}
           <Suspense fallback={<div className="w-full py-16 bg-[#09391C]" />}>
             <ErrorBoundary
               fallback={
@@ -184,7 +185,7 @@ const NewHomepage = ({
             </ErrorBoundary>
           </Suspense>
 
-          {/* 8. FINAL CALL TO ACTION (BOTTOM) */}
+          {/* 9. FINAL CALL TO ACTION (BOTTOM) */}
           <Suspense fallback={<div className="w-full py-16 bg-[#8DDB90]" />}>
             <ErrorBoundary
               fallback={
@@ -200,6 +201,19 @@ const NewHomepage = ({
               <FinalCTASection />
             </ErrorBoundary>
           </Suspense>
+
+          {/* 10. Partner syndication (external listing platforms only) */}
+          <ErrorBoundary
+            fallback={
+              <div className="w-full py-12 bg-[#0B2A24]">
+                <div className="container mx-auto px-4 text-center">
+                  <h2 className="text-xl font-bold text-white mb-2">Listing platform partners</h2>
+                  <p className="text-sm text-white/70">Partner onboarding is temporarily unavailable.</p>
+                </div>
+              </div>
+            }>
+            <PartnerApiSection />
+          </ErrorBoundary>
         </main>
       </section>
 

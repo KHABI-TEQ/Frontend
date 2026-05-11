@@ -28,6 +28,7 @@ import {
   LogOut as LogOutIcon,
 } from "lucide-react";
 import Loading from "@/components/loading-component/loading";
+import SyndicationConnectionsPanel from "@/components/dashboard/SyndicationConnectionsPanel";
 
 interface Brief {
   _id: string;
@@ -386,6 +387,10 @@ export default function AgentDashboard() {
               <div className="mt-2 text-xs text-[#5A5D63]">{referral.totalReferred} referred • ₦{(referral.earnings ?? 0).toLocaleString()}</div>
             </div>
           </div>
+        </div>
+
+        <div className="mb-8">
+          <SyndicationConnectionsPanel />
         </div>
 
         {/* Stats Cards */}

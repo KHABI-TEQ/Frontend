@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import Loading from "@/components/loading-component/loading";
 import { InspectionRepresentativesSection } from "@/components/dashboard/inspection-representatives-section";
+import SyndicationConnectionsPanel from "@/components/dashboard/SyndicationConnectionsPanel";
 
 interface PendingBrief {
   _id: string;
@@ -413,6 +414,10 @@ export default function DeveloperDashboard() {
               </motion.div>
             );
           })}
+        </div>
+
+        <div className="mb-8">
+          <SyndicationConnectionsPanel />
         </div>
 
         <div className="mb-8">

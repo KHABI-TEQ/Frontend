@@ -172,6 +172,15 @@ export const URLS = {
    * Third Party Verification Endpoints
    */
   thirdPartyVerificationBaseUrl: "/third-party",
+  /** Public partner onboarding endpoint (no auth) */
+  syndicationPlatformApplications: "/third-party/syndication/platform-applications",
+  /** Account syndication: list approved platform blueprints */
+  accountSyndicationPlatforms: "/account/syndication/platforms",
+  /** Account syndication: create/list user's platform connections */
+  accountSyndicationConnections: "/account/syndication/connections",
+  /** Account syndication: enable/disable one connection */
+  accountSyndicationToggleConnection: (connectionId: string) =>
+    `/account/syndication/connections/${connectionId}/toggle`,
   verifyAccessCode: "/third-party/verifyAccessCode",
   getDocumentDetails: "/third-party/getDocumentDetails",
   submitReport: "/third-party/submit-report",
