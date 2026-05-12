@@ -14,6 +14,11 @@ export const mainNavigationData: NavigationItem[] = [
     isClicked: true,
   },
   {
+    name: "Document Verification",
+    url: "/document-verification",
+    isClicked: false,
+  },
+  {
     name: "Who is it for?",
     url: "/user-types",
     isClicked: false,
@@ -39,18 +44,8 @@ export const mainNavigationData: NavigationItem[] = [
     isClicked: false,
   },
   {
-    name: "Policies",
-    url: "/policies_page",
-    isClicked: false,
-  },
-  {
     name: "About us",
     url: "/about_us",
-    isClicked: false,
-  },
-  {
-    name: "Contact Us",
-    url: "/contact-us",
     isClicked: false,
   },
 ];
@@ -60,6 +55,11 @@ export const agentNavigationData: NavigationItem[] = [
     name: "Home",
     url: "/",
     isClicked: true,
+  },
+  {
+    name: "Document Verification",
+    url: "/document-verification",
+    isClicked: false,
   },
   {
     name: "Who's it for",
@@ -87,18 +87,8 @@ export const agentNavigationData: NavigationItem[] = [
     isClicked: false,
   },
   {
-    name: "Policies",
-    url: "/policies_page",
-    isClicked: false,
-  },
-  {
     name: "About us",
     url: "/about_us",
-    isClicked: false,
-  },
-  {
-    name: "Contact Us",
-    url: "/contact-us",
     isClicked: false,
   },
 ];
@@ -123,11 +113,6 @@ export const marketplaceDropdownData: NavigationItem[] = [
   {
     name: "Joint Venture",
     url: "/preference?type=joint-venture",
-    isClicked: false,
-  },
-  {
-    name: "Verify Documents",
-    url: "/document-verification",
     isClicked: false,
   },
 ];

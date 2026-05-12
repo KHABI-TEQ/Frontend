@@ -4,6 +4,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Check, Briefcase, Shield, FileCheck, Building, Wallet, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import DocumentVerificationPromoSection from '@/components/new-homepage/document-verification-promo-section';
 
 const ForAgentsShowcase = () => {
   const bullets = [
@@ -177,6 +178,8 @@ const ForAgentsShowcase = () => {
             </motion.div>
           </div>
         </motion.div>
+
+        <DocumentVerificationPromoSection />
 
         {/* Additional Info Cards */}
         <motion.div

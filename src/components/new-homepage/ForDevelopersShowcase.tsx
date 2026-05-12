@@ -2,8 +2,9 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Check, Building2, Shield, FileCheck, TrendingUp, Users, HardHat, ArrowRight } from 'lucide-react';
+import { Check, Building2, Shield, TrendingUp, HardHat, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import DocumentVerificationPromoSection from '@/components/new-homepage/document-verification-promo-section';
 
 const ForDevelopersShowcase = () => {
   const bullets = [
@@ -167,6 +168,8 @@ const ForDevelopersShowcase = () => {
             </motion.div>
           </div>
         </motion.div>
+
+        <DocumentVerificationPromoSection />
 
         {/* Additional Info Cards */}
         <motion.div
