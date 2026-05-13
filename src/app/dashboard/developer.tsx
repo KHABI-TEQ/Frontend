@@ -24,10 +24,14 @@ import {
   Mail as MailIcon,
   CheckCircle as CheckCircleIcon,
   Users as UsersIcon,
+  Globe2,
+  UserCircle,
 } from "lucide-react";
 import Loading from "@/components/loading-component/loading";
-import { InspectionRepresentativesSection } from "@/components/dashboard/inspection-representatives-section";
-import SyndicationConnectionsPanel from "@/components/dashboard/SyndicationConnectionsPanel";
+import {
+  InspectionRepresentativesSummary,
+  SyndicationIntegrationSummary,
+} from "@/components/dashboard/DashboardIntegrationSummaries";
 
 interface PendingBrief {
   _id: string;
@@ -271,6 +275,22 @@ export default function DeveloperDashboard() {
               <span className="hidden sm:inline">Broadcast</span>
             </Link>
             <Link
+              href="/dashboard/syndication"
+              className="bg-white hover:bg-gray-50 text-[#09391C] border border-[#8DDB90] px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
+              title="Syndication integrations"
+            >
+              <Globe2 size={20} />
+              Syndication
+            </Link>
+            <Link
+              href="/dashboard/inspection-representatives"
+              className="bg-white hover:bg-gray-50 text-[#09391C] border border-[#8DDB90] px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
+              title="Inspection representatives"
+            >
+              <UserCircle size={20} />
+              <span className="whitespace-nowrap">Inspection reps</span>
+            </Link>
+            <Link
               href="/post-property"
               className="bg-[#8DDB90] hover:bg-[#7BC87F] text-white px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
             >
@@ -294,7 +314,7 @@ export default function DeveloperDashboard() {
             const autoRenew = sub?.autoRenew === true;
             return (
               <>
-                {sub && (
+                {sub ? (
                   <div className="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-900">
                     <div className="flex-1">
                       <div className="flex flex-wrap items-center gap-2 text-sm">
@@ -313,6 +333,30 @@ export default function DeveloperDashboard() {
                     </div>
                     <Link href="/agent-subscriptions" className="px-3 py-1.5 bg-emerald-600 text-white rounded hover:bg-emerald-700 text-xs font-medium">Manage</Link>
                   </div>
+                ) : (
+                  <div className="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 rounded-lg border border-emerald-200/80 bg-emerald-50/90 text-emerald-950">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-[#09391C]">Subscription</p>
+                      <p className="mt-1 text-xs text-emerald-900/90 leading-relaxed">
+                        No active subscription on file. You can post your first property without one; a plan is required from
+                        the 2nd property onward.
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2 shrink-0">
+                      <Link
+                        href="/agent-subscriptions?tab=plans"
+                        className="px-3 py-1.5 bg-emerald-600 text-white rounded hover:bg-emerald-700 text-xs font-medium text-center"
+                      >
+                        View plans
+                      </Link>
+                      <Link
+                        href="/agent-subscriptions"
+                        className="px-3 py-1.5 border border-emerald-700 text-emerald-900 rounded hover:bg-emerald-100/80 text-xs font-medium text-center"
+                      >
+                        Manage
+                      </Link>
+                    </div>
+                  </div>
                 )}
                 <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${isVerified ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-700"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full ${isVerified ? "bg-blue-600" : "bg-gray-400"}`} />
@@ -323,23 +367,12 @@ export default function DeveloperDashboard() {
           })()}
         </div>
 
-        {/* Notices (subscription info and prompt for Developer) */}
-        {(() => {
-          const hasActiveSub = !!((user as any)?.activeSubscription && (user as any)?.activeSubscription.status === "active");
-          return (
-            <div className="space-y-3 mb-4">
-              <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg text-sm">
-                <strong>Property posting:</strong> You can post your first property without a subscription. A subscription is required from the 2nd property onward.
-              </div>
-              {!hasActiveSub && (
-                <div className="flex items-center justify-between bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg">
-                  <div>Subscribe for a plan to list more than 2 properties and access full features.</div>
-                  <Link href="/agent-subscriptions?tab=plans" className="px-3 py-1.5 bg-yellow-600 text-white rounded hover:bg-yellow-700 text-sm">View Plans</Link>
-                </div>
-              )}
-            </div>
-          );
-        })()}
+        {/* Notices (subscription info for Developer) */}
+        <div className="mb-4">
+          <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg text-sm">
+            <strong>Property posting:</strong> You can post your first property without a subscription. A subscription is required from the 2nd property onward.
+          </div>
+        </div>
 
         {/* Performance Overview + Referral (same as Agent) */}
         <div className="bg-white rounded-lg p-4 sm:p-6 mb-8 shadow-sm">
@@ -388,6 +421,12 @@ export default function DeveloperDashboard() {
           </div>
         </div>
 
+        {/* At-a-glance metrics; full forms live on /dashboard/syndication and /dashboard/inspection-representatives */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-8">
+          <SyndicationIntegrationSummary />
+          <InspectionRepresentativesSummary />
+        </div>
+
         {/* Stats Cards (same style as Agent) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
           {statCards.map((card, index) => {
@@ -416,14 +455,6 @@ export default function DeveloperDashboard() {
           })}
         </div>
 
-        <div className="mb-8">
-          <SyndicationConnectionsPanel />
-        </div>
-
-        <div className="mb-8">
-          <InspectionRepresentativesSection variant="developer" />
-        </div>
-
         {/* My Properties + Quick Actions (same layout as Agent: Recent Briefs + Quick Actions) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
           {/* My Properties */}
@@ -450,18 +481,18 @@ export default function DeveloperDashboard() {
                 </Link>
               </div>
             ) : (
-              <div className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
+              <div className="divide-y divide-gray-200">
                 {displayProperties.slice(0, 5).map((brief, index) => (
                   <motion.div
                     key={`property-${brief._id}`}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.1 }}
-                    className="p-4 hover:bg-gray-50 transition-colors"
+                    className="px-4 sm:px-6 py-4 sm:py-5 hover:bg-gray-50 transition-colors"
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-[#8DDB90] bg-opacity-10 rounded-lg flex items-center justify-center overflow-hidden">
+                    <div className="flex items-center justify-between gap-3 min-h-[4.5rem] sm:min-h-[5rem]">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 bg-[#8DDB90] bg-opacity-10 rounded-lg flex items-center justify-center overflow-hidden shrink-0">
                           {brief.pictures?.[0] ? (
                             <img src={brief.pictures[0]} alt={brief.briefType ?? "Property"} className="w-full h-full object-cover" />
                           ) : (
@@ -479,9 +510,11 @@ export default function DeveloperDashboard() {
                           )}
                         </div>
                       </div>
-                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${brief.isApproved ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>
-                        {brief.isApproved ? "Approved" : "Pending Review"}
-                      </span>
+                      <div className="text-right shrink-0">
+                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${brief.isApproved ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>
+                          {brief.isApproved ? "Approved" : "Pending Review"}
+                        </span>
+                      </div>
                     </div>
                   </motion.div>
                 ))}
@@ -541,6 +574,30 @@ export default function DeveloperDashboard() {
                 <div className="flex-1">
                   <h3 className="font-semibold">Inspection Requests</h3>
                   <p className="text-sm text-[#5A5D63]">Manage inspections</p>
+                </div>
+              </Link>
+              <Link
+                href="/dashboard/syndication"
+                className="w-full bg-white hover:bg-gray-50 text-[#09391C] border border-[#8DDB90] p-4 rounded-lg font-medium flex items-center gap-3 transition-colors group"
+              >
+                <div className="p-2 bg-[#09391C]/10 rounded-lg">
+                  <Globe2 size={20} className="text-[#09391C]" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold">Syndication integrations</h3>
+                  <p className="text-sm text-[#5A5D63]">Connect platforms and manage dispatch</p>
+                </div>
+              </Link>
+              <Link
+                href="/dashboard/inspection-representatives"
+                className="w-full bg-white hover:bg-gray-50 text-[#09391C] border border-[#8DDB90] p-4 rounded-lg font-medium flex items-center gap-3 transition-colors group"
+              >
+                <div className="p-2 bg-[#8DDB90]/20 rounded-lg">
+                  <UserCircle size={20} className="text-[#09391C]" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold">Inspection representatives</h3>
+                  <p className="text-sm text-[#5A5D63]">Notification contacts for inspections</p>
                 </div>
               </Link>
               <Link

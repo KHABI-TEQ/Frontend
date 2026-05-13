@@ -25,7 +25,7 @@ const initialForm = {
   contactPhone: "",
   platformName: "",
   platformKeySuggestion: "",
-  authType: "api_key",
+  authType: "partner_login",
   baseUrl: "",
   webhookSupport: true,
   docsUrl: "",
@@ -62,7 +62,7 @@ export default function PartnerApiPage() {
     try {
       const res = await POST_REQUEST(
         `${URLS.BASE}${URLS.syndicationPlatformApplications}`,
-        form,
+        { ...form, authType: "partner_login" },
       );
       if (res?.success) {
         toast.success(res.message || "Platform application submitted successfully.");
@@ -138,12 +138,21 @@ export default function PartnerApiPage() {
               </p>
               <ul className="mt-4 space-y-2 text-sm text-[#4A5560]">
                 <li className="flex gap-2">
-                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#8DDB90]" />
-                  What data we ask for at registration
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#8DDB90]" aria-hidden />
+                  <span className="min-w-0">What data we ask for at registration</span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#8DDB90]" />
-                  Partner vs account-level steps
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#8DDB90]" aria-hidden />
+                  <span className="min-w-0">
+                    <strong className="text-[#09391C]">Basic Login</strong> (
+                    <code className="text-[11px] font-mono">partner_login</code>): hub → your API using each user&apos;s{" "}
+                    <strong className="text-[#09391C]">email</strong> and{" "}
+                    <strong className="text-[#09391C]">password</strong> (HTTP Basic)
+                  </span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#8DDB90]" aria-hidden />
+                  <span className="min-w-0">Partner vs account-level steps</span>
                 </li>
               </ul>
               <Link
@@ -252,17 +261,30 @@ export default function PartnerApiPage() {
                         required
                       />
                     </Field>
-                    <Field label="Auth type">
-                      <select
-                        className={inputClass}
-                        value={form.authType}
-                        onChange={(e) => setForm((s) => ({ ...s, authType: e.target.value }))}
+                    <Field label="Authentication (hub → your API)">
+                      <div
+                        className={`${inputClass} bg-[#FAFCFE] text-[#3D454D] cursor-default`}
+                        role="group"
+                        aria-label="Authentication type"
                       >
-                        <option value="api_key">API key</option>
-                        <option value="oauth2">OAuth 2.0</option>
-                        <option value="bearer">Bearer token</option>
-                        <option value="other">Other (describe in notes)</option>
-                      </select>
+                        <p className="font-semibold text-[#09391C]">Basic Login</p>
+                        <p className="text-xs text-[#5A6570] mt-2 leading-relaxed">
+                          All partner integrations use{" "}
+                          <code className="font-mono text-[11px] bg-white/80 px-1 py-0.5 rounded border border-[#E3E8EF]">
+                            authType: &quot;partner_login&quot;
+                          </code>
+                          . After approval, hub agents and developers connect with their{" "}
+                          <strong className="text-[#09391C]">Basic Login email</strong> and{" "}
+                          <strong className="text-[#09391C]">Basic Login password</strong> — the same{" "}
+                          <strong className="text-[#09391C]">email</strong> and{" "}
+                          <strong className="text-[#09391C]">password</strong> they use on your platform. The hub stores that
+                          pair and sends syndication requests using standard HTTP Basic built from it (see the{" "}
+                          <Link href="/syndication-integration-guide" className="text-[#09391C] font-medium underline">
+                            integration guide
+                          </Link>
+                          ).
+                        </p>
+                      </div>
                     </Field>
                   </div>
                 </div>

@@ -6,6 +6,7 @@ import Agent from "./agent";
 import Landlord from "./landlord";
 import FieldAgent from "./field-agent";
 import Developer from "./developer";
+import { DealSiteSetupOverlay } from "@/components/dashboard/DealSiteSetupOverlay";
 
 function getEffectiveUserType(user: Record<string, unknown> | null): string | undefined {
   if (!user) return undefined;
@@ -69,6 +70,7 @@ export default function Dashboard() {
 
   return (
     <>
+      {!showLandlord && <DealSiteSetupOverlay user={user} />}
       {showAgentDashboard && <Agent />}
       {showDeveloper && <Developer />}
       {showLandlord && <Landlord />}

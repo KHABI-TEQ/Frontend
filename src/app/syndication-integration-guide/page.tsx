@@ -17,13 +17,14 @@ import {
   Webhook,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { PartnerReferenceHandlersSection } from "@/app/syndication-integration-guide/partner-reference-handlers";
 
 function GuideStep({
   description,
   index,
   isLast = false,
 }: {
-  description: string;
+  description: ReactNode;
   index: number;
   isLast?: boolean;
 }) {
@@ -59,7 +60,7 @@ function DataTable({
   monoColumns,
 }: {
   columns: string[];
-  rows: string[][];
+  rows: ReactNode[][];
   monoColumns?: number[];
 }) {
   return (
@@ -127,7 +128,7 @@ function SectionShell({
 }: {
   icon: LucideIcon;
   title: string;
-  subtitle?: string;
+  subtitle?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -145,7 +146,7 @@ function SectionShell({
         <div>
           <h2 className="text-xl font-bold text-[#09391C] tracking-tight">{title}</h2>
           {subtitle ? (
-            <p className="text-sm text-[#5A6570] mt-1 max-w-3xl leading-relaxed">{subtitle}</p>
+            <div className="text-sm text-[#5A6570] mt-1 max-w-3xl leading-relaxed">{subtitle}</div>
           ) : null}
         </div>
       </div>
@@ -164,18 +165,23 @@ function EndpointLine({ method, path }: { method: string; path: string }) {
 }
 
 export default function SyndicationIntegrationGuidePage() {
-  const implementationChecklistRows = [
-    [
-      "HTTPS",
-      "Production baseUrl and listing url must use TLS.",
-    ],
+  const implementationChecklistRows: ReactNode[][] = [
+    ["HTTPS", "Production baseUrl and listing url must use TLS."],
     [
       "Three POST routes",
       "/listings, /listings/unpublish, /listings/status under the registered baseUrl.",
     ],
     [
-      "Auth",
-      "Implement the authType you declared; reject missing/invalid credentials with 401/403.",
+      <>
+        Auth (<strong className="text-[#09391C]">Basic Login</strong>)
+      </>,
+      <>
+        For <code className="font-mono text-xs bg-[#EEF1F1] px-1 py-0.5 rounded">partner_login</code>, accept{" "}
+        <code className="font-mono text-xs bg-[#EEF1F1] px-1 py-0.5 rounded">Authorization: Basic</code> where the
+        user:pass pair is the hub user&apos;s <strong className="text-[#09391C]">Basic Login email</strong> and{" "}
+        <strong className="text-[#09391C]">Basic Login password</strong> (UTF-8, then Base64 — Section 5). Validate on every
+        inbound POST; respond with 401/403 when invalid.
+      </>,
     ],
     [
       "Idempotency",
@@ -187,18 +193,24 @@ export default function SyndicationIntegrationGuidePage() {
     ],
     [
       "Webhook to hub",
-      "POST JSON to /api/third-party/syndication/webhooks/{platformKey}; optional HMAC; include eventId, externalRef, listingId, url (see Section 5).",
+      "POST JSON to /api/third-party/syndication/webhooks/{platformKey}; optional HMAC; include eventId, externalRef, listingId, url (see Section 6).",
     ],
-    [
-      "Docs",
-      "Keep docsUrl accurate for reviewers and for your own mobile and web teams.",
-    ],
+    ["Docs", "Keep docsUrl accurate for reviewers and for your own mobile and web teams."],
   ];
 
-  const glossaryRows = [
+  const glossaryRows: ReactNode[][] = [
     ["platformKey", "Stable hub-side identifier for your brand in URLs and webhooks."],
     ["baseUrl", "Root URL to which /listings, /listings/unpublish, /listings/status are appended for outbound jobs."],
     ["SyndicationPlatform", "Hub catalog entry representing your integration once onboarding is complete."],
+    [
+      "partner_login",
+      <>
+        <strong className="text-[#09391C]">Basic Login</strong> (<code className="font-mono text-xs">partner_login</code>
+        ): the hub stores each hub user&apos;s <strong className="text-[#09391C]">email</strong> and{" "}
+        <strong className="text-[#09391C]">password</strong> for your platform (their Basic Login) and sends them as standard
+        HTTP Basic on outbound syndication jobs.
+      </>,
+    ],
     ["PlatformConnection", "Per-user link on the hub that stores the secrets the hub sends to your API on each job."],
     [
       "hubPropertyId / propertyId",
@@ -245,8 +257,14 @@ export default function SyndicationIntegrationGuidePage() {
               Partner integration guide
             </p>
             <p className="mt-4 text-sm sm:text-base text-[#B8C9C4] leading-relaxed">
-              What your listing platform must implement: public onboarding, receiving syndication jobs from the hub, and
-              optional callback webhooks to the hub. Hub-facing URLs in this guide use the hub API origin (typically under{" "}
+              What your listing platform must implement: public onboarding (with{" "}
+              <strong className="text-white/95">Basic Login</strong> —{" "}
+              <code className="text-[#8DDB90] font-mono text-xs">partner_login</code>
+              ). Each hub user&apos;s syndication connection is their platform{" "}
+              <strong className="text-white/95">email</strong> and{" "}
+              <strong className="text-white/95">password</strong> (their Basic Login), sent as HTTP Basic on every outbound
+              job (Section 5). You also receive syndication jobs from the hub and may send optional callback webhooks to the hub.
+              Hub-facing URLs in this guide use the hub API origin (typically under{" "}
               <code className="text-[#8DDB90] font-mono text-xs">/api</code>).
             </p>
           </motion.div>
@@ -290,7 +308,16 @@ export default function SyndicationIntegrationGuidePage() {
             />
             <GuideStep
               index={1}
-              description="After the hub onboards your integration, hub users can select your platform and paste credentials that your product issued (API keys, tokens, and so on)."
+              description={
+                <>
+                  After the hub onboards your integration, hub agents and developers connect using{" "}
+                  <strong className="text-[#09391C]">Basic Login</strong>: the same{" "}
+                  <strong className="text-[#09391C]">email</strong> and{" "}
+                  <strong className="text-[#09391C]">password</strong> they use on your platform (
+                  <code className="font-mono text-xs bg-[#EEF1F1] px-1.5 py-0.5 rounded">partner_login</code>). Those values are
+                  stored for outbound syndication only and are not re-verified with your login API on each request.
+                </>
+              }
             />
             <GuideStep
               index={2}
@@ -299,7 +326,7 @@ export default function SyndicationIntegrationGuidePage() {
             <GuideStep
               index={3}
               isLast
-              description="Optionally, when your side updates a mirrored listing, POST a callback to the hub so mappings stay accurate. See Section 5."
+              description="Optionally, when your side updates a mirrored listing, POST a callback to the hub so mappings stay accurate. See Section 6."
             />
           </div>
         </SectionShell>
@@ -324,7 +351,17 @@ export default function SyndicationIntegrationGuidePage() {
                 "string",
                 "Desired stable slug (lowercase, URL-safe); the hub may normalize or override it when your integration is approved.",
               ],
-              ["authType", "string", "How the hub authenticates outbound calls to you, for example api_key (see Section 4)."],
+              [
+                "authType",
+                "string",
+                <>
+                  Must be <code className="font-mono text-xs bg-[#EEF1F1] px-1 py-0.5 rounded">partner_login</code> (
+                  <strong className="text-[#09391C]">Basic Login</strong> on the Khabiteq partner form). The hub sends outbound
+                  syndication using HTTP Basic built from that hub user&apos;s{" "}
+                  <strong className="text-[#09391C]">Basic Login email</strong> and{" "}
+                  <strong className="text-[#09391C]">Basic Login password</strong> (Section 5).
+                </>,
+              ],
               [
                 "baseUrl",
                 "string",
@@ -333,13 +370,23 @@ export default function SyndicationIntegrationGuidePage() {
               [
                 "webhookSupport",
                 "boolean",
-                "Whether you will call the hub callback URL described in Section 5 for listing or status updates.",
+                "Whether you will call the hub callback URL described in Section 6 for listing or status updates.",
               ],
               ["docsUrl", "string", "Public URL to your technical documentation for reviewers."],
               ["notes", "string", "Free text (scopes, SLAs, contacts)."],
             ]}
           />
           <p className="mt-4 text-sm text-[#5A6570] leading-relaxed">
+            The public partner application at{" "}
+            <Link href="/partner-api" className="text-[#09391C] font-medium underline">
+              /partner-api
+            </Link>{" "}
+            submits <code className="font-mono text-xs bg-[#EEF1F1] px-1.5 py-0.5 rounded">partner_login</code> only,
+            labeled <strong className="text-[#09391C]">Basic Login</strong> on the form (no other auth types). End users store
+            their platform <strong className="text-[#09391C]">email</strong> and{" "}
+            <strong className="text-[#09391C]">password</strong> as the Basic Login the hub sends on syndication POSTs.
+          </p>
+          <p className="mt-3 text-sm text-[#5A6570] leading-relaxed">
             Success: the hub returns <code className="font-mono text-xs bg-[#EEF1F1] px-1.5 py-0.5 rounded">201</code> with
             an envelope <code className="font-mono text-xs bg-[#EEF1F1] px-1.5 py-0.5 rounded">{"{ success, message, data }"}</code>{" "}
             where <code className="font-mono text-xs bg-[#EEF1F1] px-1.5 py-0.5 rounded">data</code> includes at least
@@ -388,7 +435,14 @@ export default function SyndicationIntegrationGuidePage() {
               ["Content-Type", "application/json"],
               [
                 "Authorization",
-                "Set from the authType you declared and the user-supplied credentials; see Section 4 (for example Bearer and your API key).",
+                <>
+                  For <code className="font-mono text-xs bg-[#EEF1F1] px-1 py-0.5 rounded">partner_login</code> (
+                  <strong className="text-[#09391C]">Basic Login</strong>): HTTP Basic with Base64(UTF-8(
+                  <strong className="text-[#09391C]">Basic Login email</strong>
+                  {" + ':' + "}
+                  <strong className="text-[#09391C]">Basic Login password</strong>)) — same encoding as standard HTTP Basic
+                  user:pass (Section 5).
+                </>,
               ],
             ]}
           />
@@ -403,6 +457,10 @@ export default function SyndicationIntegrationGuidePage() {
             <li>
               <code className="font-mono text-xs bg-[#EEF1F1] px-1.5 py-0.5 rounded">eventType</code> appears at the top
               level for routing and logging.
+            </li>
+            <li>
+              Field-level semantics for each route (required keys, optional hub fields, and example handler logic) are documented in{" "}
+              <strong className="text-[#09391C]">Section 4</strong>.
             </li>
             <li>
               Other fields come from the hub job payload. Accept flexible nesting when present (for example under{" "}
@@ -439,66 +497,88 @@ export default function SyndicationIntegrationGuidePage() {
           </p>
         </SectionShell>
 
+        <PartnerReferenceHandlersSection />
+
         <SectionShell
           icon={KeyRound}
-          title="4. Authenticating inbound requests from the hub"
-          subtitle="Hub users paste secrets your product issued. Your API must validate them on every syndication POST."
+          title="5. Basic Login (partner_login) — authenticating inbound requests from the hub"
+          subtitle={
+            <>
+              New partner integrations use <code className="font-mono text-xs bg-[#EEF1F1] px-1 py-0.5 rounded">partner_login</code>{" "}
+              only. Hub users enter the same <strong className="text-[#09391C]">Basic Login email</strong> and{" "}
+              <strong className="text-[#09391C]">Basic Login password</strong> they use on your platform; your API must validate
+              standard HTTP Basic on every syndication POST.
+            </>
+          }
         >
-          <h3 className="text-sm font-bold text-[#09391C] mb-1">What the hub stores and sends (by authType)</h3>
-          <p className="text-sm text-[#5A6570] mb-2">
-            The hub persists the credential object the user provides and maps it to outbound headers when calling you.
+          <p className="text-sm text-[#5A6570] leading-relaxed mb-4">
+            When a hub user connects your platform from the dashboard, the hub stores their{" "}
+            <strong className="text-[#09391C]">Basic Login</strong> as{" "}
+            <code className="font-mono text-xs bg-[#EEF1F1] px-1.5 py-0.5 rounded">credentials.email</code> and{" "}
+            <code className="font-mono text-xs bg-[#EEF1F1] px-1.5 py-0.5 rounded">credentials.password</code> (the{" "}
+            <strong className="text-[#09391C]">email</strong> is normalized with trim and lowercase). Responses to the client
+            omit secrets. On each outbound syndication job the hub builds:
           </p>
           <DataTable
-            columns={["authType", "Credential keys", "Outbound Authorization (from hub to you)"]}
-            monoColumns={[0, 1]}
+            columns={["Field", "Role"]}
+            monoColumns={[0]}
             rows={[
-              ["api_key", "apiKey", "Bearer with the plaintext API key value."],
               [
-                "oauth2",
-                "accessToken; optionally refreshToken, tokenExpiresAt",
-                "Bearer with the current access token.",
+                "authType",
+                "Syndication platform catalog value partner_login (labeled Basic Login on the Khabiteq partner application form).",
               ],
-              ["basic", "apiKey or agreed field", "Basic authentication per hub rules."],
+              [
+                "credentials.email / credentials.password",
+                <>
+                  The hub user&apos;s <strong className="text-[#09391C]">Basic Login email</strong> and{" "}
+                  <strong className="text-[#09391C]">Basic Login password</strong> — the same sign-in they use on your site; used
+                  only to build the <code className="font-mono text-xs bg-[#EEF1F1] px-1 py-0.5 rounded">Authorization</code>{" "}
+                  header below.
+                </>,
+              ],
             ]}
           />
-          <p className="mt-4 text-sm text-[#5A6570] leading-relaxed">
-            <strong className="text-[#09391C]">Your responsibilities:</strong> issue, rotate, and revoke credentials in your
-            product; reject missing or invalid credentials with{" "}
-            <code className="font-mono text-xs bg-[#EEF1F1] px-1.5 py-0.5 rounded">401</code> or{" "}
-            <code className="font-mono text-xs bg-[#EEF1F1] px-1.5 py-0.5 rounded">403</code>.
+          <h3 className="text-sm font-bold text-[#09391C] mt-6 mb-2">Authorization header the hub sends</h3>
+          <p className="text-sm text-[#5A6570] mb-2">
+            The hub uses standard HTTP Basic: Base64 over UTF-8 of{" "}
+            <code className="font-mono text-xs bg-[#EEF1F1] px-1.5 py-0.5 rounded">email + &quot;:&quot; + password</code>{" "}
+            where <strong className="text-[#09391C]">email</strong> and <strong className="text-[#09391C]">password</strong> are
+            that user&apos;s <strong className="text-[#09391C]">Basic Login</strong> on your platform (same encoding Node would
+            use for user:pass).
           </p>
-          <h3 className="text-sm font-bold text-[#09391C] mt-6 mb-2">Recommended patterns</h3>
-          <div className="space-y-5 text-sm text-[#5A6570] leading-relaxed">
-            <div className="rounded-xl border border-[#E8EEF4] bg-[#FAFCFE] p-4">
-              <h3 className="font-bold text-[#09391C] mb-2">api_key (most common)</h3>
-              <p>
-                Expect <code className="font-mono text-xs bg-white px-1.5 py-0.5 rounded border">Authorization: Bearer &lt;plaintext api key&gt;</code> and{" "}
-                <code className="font-mono text-xs bg-white px-1.5 py-0.5 rounded border">Content-Type: application/json</code>.
-                Validate the token on every request (constant-time compare against a stored hash when you do not keep plaintext).
-                Prefer per-user keys: one secret per listing-eligible account, store only a hash, show the plaintext once at
-                creation for the user to paste into the hub, and map the resolved user to listing ownership.
-              </p>
-            </div>
-            <div className="rounded-xl border border-[#E8EEF4] bg-[#FAFCFE] p-4">
-              <h3 className="font-bold text-[#09391C] mb-2">oauth2</h3>
-              <p>
-                Expect <code className="font-mono text-xs bg-white px-1.5 py-0.5 rounded border">Authorization: Bearer &lt;access_token&gt;</code>.
-                Validate the token (signature, introspection, or equivalent), enforce scopes, and map to a tenant or user.
-              </p>
-            </div>
-            <div className="rounded-xl border border-[#E8EEF4] bg-[#FAFCFE] p-4">
-              <h3 className="font-bold text-[#09391C] mb-2">basic</h3>
-              <p>
-                Expect <code className="font-mono text-xs bg-white px-1.5 py-0.5 rounded border">Authorization: Basic &lt;base64&gt;</code> per hub rules.
-                Decode and verify credentials on every request.
-              </p>
-            </div>
-          </div>
+          <CodeBlock title="Pattern">{`Authorization: Basic <base64( utf8( email + ":" + password ) )>
+// email + password = hub user's Basic Login credentials on your site
+Content-Type: application/json`}</CodeBlock>
+          <h3 className="text-sm font-bold text-[#09391C] mt-6 mb-2">What you must implement</h3>
+          <ul className="text-sm text-[#5A6570] space-y-2 list-disc pl-5 leading-relaxed">
+            <li>
+              Decode the <code className="font-mono text-xs bg-[#EEF1F1] px-1.5 py-0.5 rounded">Authorization</code> header,
+              split the Basic user and password (the hub user&apos;s <strong className="text-[#09391C]">Basic Login email</strong>{" "}
+              and <strong className="text-[#09391C]">Basic Login password</strong>), and authenticate them the same way your own
+              login would (against your user store).
+            </li>
+            <li>
+              Reject missing or invalid credentials with{" "}
+              <code className="font-mono text-xs bg-[#EEF1F1] px-1.5 py-0.5 rounded">401</code> or{" "}
+              <code className="font-mono text-xs bg-[#EEF1F1] px-1.5 py-0.5 rounded">403</code> on every syndication route.
+            </li>
+            <li>
+              When users change their <strong className="text-[#09391C]">Basic Login password</strong> on your platform, they
+              should use the hub dashboard <strong>Reconnect</strong> flow so the stored{" "}
+              <strong className="text-[#09391C]">Basic Login password</strong> stays valid for syndication.
+            </li>
+          </ul>
+          <p className="mt-4 text-sm text-[#5A6570] leading-relaxed">
+            The hub does not call your login page to “test” credentials first; incorrect{" "}
+            <strong className="text-[#09391C]">Basic Login email</strong> or{" "}
+            <strong className="text-[#09391C]">Basic Login password</strong> means listings will not sync until the user
+            reconnects with the correct values.
+          </p>
         </SectionShell>
 
         <SectionShell
           icon={Webhook}
-          title="5. Callback webhooks to the hub"
+          title="6. Callback webhooks to the hub"
           subtitle="When your platform changes a listing that is linked to the hub, you can notify the hub so listing mappings and audit records stay aligned."
         >
           <CodeBlock title="Endpoint (on the hub)">{`POST {HUB_ORIGIN}/api/third-party/syndication/webhooks/{platformKey}
@@ -557,12 +637,12 @@ Content-Type: application/json`}</CodeBlock>
 
         <SectionShell
           icon={CheckCircle2}
-          title="6. Partner implementation checklist"
+          title="7. Partner implementation checklist"
         >
           <DataTable columns={["Item", "Detail"]} rows={implementationChecklistRows} />
         </SectionShell>
 
-        <SectionShell icon={BookOpen} title="7. Glossary">
+        <SectionShell icon={BookOpen} title="8. Glossary">
           <DataTable columns={["Term", "Meaning"]} monoColumns={[0]} rows={glossaryRows} />
         </SectionShell>
 

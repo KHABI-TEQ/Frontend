@@ -69,6 +69,8 @@ export interface User {
   };
   /** When true (e.g. admin-created account), user must change password before using the app. */
   mustChangePassword?: boolean;
+  /** From GET /account/profile; `null` means not configured yet (Deal Site / public page). */
+  dealSite?: Record<string, unknown> | null;
 }
 
 const CANONICAL_USER_TYPES = ["Agent", "Landowners", "FieldAgent", "Developer"] as const;

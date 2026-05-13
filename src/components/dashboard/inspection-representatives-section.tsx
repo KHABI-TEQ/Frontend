@@ -76,7 +76,13 @@ const VARIANT_STYLES: Record<
   },
 };
 
-export function InspectionRepresentativesSection({ variant }: { variant: Variant }) {
+export function InspectionRepresentativesSection({
+  variant,
+  anchorId = "inspection-representatives",
+}: {
+  variant: Variant;
+  anchorId?: string;
+}) {
   const s = VARIANT_STYLES[variant];
   const baseUrl = `${URLS.BASE}${URLS.accountInspectionRepresentatives}`;
 
@@ -237,7 +243,8 @@ export function InspectionRepresentativesSection({ variant }: { variant: Variant
   };
 
   return (
-    <div className={s.card + " overflow-hidden"}>
+    <section id={anchorId} className="scroll-mt-28">
+      <div className={s.card + " overflow-hidden"}>
       <div className="flex flex-col gap-4 border-b border-gray-100 p-5 sm:p-6 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex gap-3 min-w-0">
           <div className={s.iconWrap + " flex-shrink-0"}>
@@ -529,5 +536,6 @@ export function InspectionRepresentativesSection({ variant }: { variant: Variant
         ) : null}
       </AnimatePresence>
     </div>
+    </section>
   );
 }

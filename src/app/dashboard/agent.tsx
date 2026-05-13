@@ -26,22 +26,24 @@ import {
   Link as LinkIcon,
   Mail as MailIcon,
   LogOut as LogOutIcon,
+  Globe2,
 } from "lucide-react";
 import Loading from "@/components/loading-component/loading";
-import SyndicationConnectionsPanel from "@/components/dashboard/SyndicationConnectionsPanel";
+import { SyndicationIntegrationSummary } from "@/components/dashboard/DashboardIntegrationSummaries";
 
 interface Brief {
   _id: string;
   briefType: string;
   location: {
-    state: string;
-    localGovernment: string;
-    area: string;
+    state?: string;
+    localGovernment?: string;
+    area?: string;
   };
-  pictures: string[];
+  pictures?: string[];
   price: number;
   createdAt: string;
-  status: "pending";
+  /** When loaded from /account/properties/fetchAll (same as My Listings → All) */
+  isApproved?: boolean;
 }
 
 interface DashboardStats {
@@ -51,17 +53,67 @@ interface DashboardStats {
   totalViews: number;
   totalInspectionRequests: number;
   totalCompletedInspectionRequests: number;
-  newPendingBriefs: Brief[]; // This should hold the recent briefs
+  /** Legacy dashboard payload; Recent Briefs uses `recentListings` from fetchAll instead */
+  newPendingBriefs: Brief[];
   averageRating: number;
   completedDeals: number;
   totalCommission: number; // Added based on usage in statCards
+}
+
+/** Same extraction as `/my-listings` (fetchAll). */
+function extractPropertiesFromFetchAllResponse(response: unknown): unknown[] {
+  const r = response as { success?: boolean; data?: unknown };
+  if (!r?.success) return [];
+  const raw = r.data as Record<string, unknown> | unknown[] | null | undefined;
+  if (Array.isArray(raw)) return raw;
+  if (raw && typeof raw === "object") {
+    const o = raw as Record<string, unknown>;
+    if (Array.isArray(o.results)) return o.results as unknown[];
+    if (Array.isArray(o.properties)) return o.properties as unknown[];
+    if (Array.isArray(o.data)) return o.data as unknown[];
+  }
+  return [];
+}
+
+function sortListingsNewestFirst(list: unknown[]): unknown[] {
+  return [...list].sort((a, b) => {
+    const ra = a as { createdAt?: string; updatedAt?: string };
+    const rb = b as { createdAt?: string; updatedAt?: string };
+    const ta = new Date(ra?.updatedAt || ra?.createdAt || 0).getTime();
+    const tb = new Date(rb?.updatedAt || rb?.createdAt || 0).getTime();
+    return tb - ta;
+  });
+}
+
+function mapPropertyToBrief(p: unknown): Brief {
+  const x = p as {
+    _id?: string;
+    briefType?: string;
+    location?: { state?: string; localGovernment?: string; area?: string };
+    pictures?: string[];
+    price?: number;
+    createdAt?: string;
+    isApproved?: boolean;
+  };
+  return {
+    _id: String(x._id ?? ""),
+    briefType: x.briefType ?? "Property",
+    location: {
+      state: x.location?.state,
+      localGovernment: x.location?.localGovernment,
+      area: x.location?.area,
+    },
+    pictures: Array.isArray(x.pictures) ? x.pictures : undefined,
+    price: Number(x.price ?? 0),
+    createdAt: x.createdAt ?? "",
+    isApproved: Boolean(x.isApproved),
+  };
 }
 
 
 export default function AgentDashboard() {
   const router = useRouter();
   const { user, logout } = useUserContext();
-  // Briefs state will now be directly from stats.newPendingBriefs for "Recent Briefs" section
   const [stats, setStats] = useState<DashboardStats>({
     totalBriefs: 0,
     totalActiveBriefs: 0,
@@ -74,7 +126,9 @@ export default function AgentDashboard() {
     averageRating: 0,
     totalCommission: 0,
   });
-  /** Total property count from /account/properties/fetchAll (used when dashboard stats are 0) */
+  /** Same source & default order as My Listings → All (`/account/properties/fetchAll`, no filters). */
+  const [recentListings, setRecentListings] = useState<Brief[]>([]);
+  /** Total property count from fetchAll pagination (used when dashboard stats are 0) */
   const [propertiesTotalFromApi, setPropertiesTotalFromApi] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [referral, setReferral] = useState({ code: "", totalReferred: 0, points: 0, earnings: 0 });
@@ -92,7 +146,7 @@ export default function AgentDashboard() {
       setIsLoading(true);
       try {
         await fetchDashboardData();
-        await fetchPropertiesCount();
+        await fetchRecentListingsFromMyListingsApi();
         await fetchReferralData();
       } finally {
         setIsLoading(false);
@@ -101,19 +155,38 @@ export default function AgentDashboard() {
     load();
   }, [user, router]);
 
-  const fetchPropertiesCount = async () => {
+  const fetchRecentListingsFromMyListingsApi = async () => {
     try {
       const url = `${URLS.BASE}/account/properties/fetchAll?page=1&limit=5`;
       const response = await GET_REQUEST(url, Cookies.get("token"));
-      console.log("[fetchAll /account/properties/fetchAll] response (Agent dashboard)", response);
-      const raw = response as { success?: boolean; data?: unknown[]; pagination?: { total?: number } };
-      if (raw?.success && Array.isArray(raw.data)) {
-        const total = raw.pagination?.total ?? raw.data.length;
-        setPropertiesTotalFromApi(typeof total === "number" ? total : raw.data.length);
+      console.log("[fetchAll /account/properties/fetchAll] response (Agent dashboard Recent Briefs)", response);
+      const list = extractPropertiesFromFetchAllResponse(response);
+      const sorted = sortListingsNewestFirst(list);
+      const briefs = sorted.slice(0, 5).map(mapPropertyToBrief);
+      setRecentListings(briefs);
+
+      const raw = response as {
+        success?: boolean;
+        pagination?: { total?: number };
+        data?: unknown[] | { results?: unknown[]; properties?: unknown[]; data?: unknown[] };
+      };
+      if (raw?.success) {
+        let total: number | undefined;
+        if (typeof raw.pagination?.total === "number") {
+          total = raw.pagination.total;
+        } else if (Array.isArray(raw.data)) {
+          total = raw.data.length;
+        } else if (raw.data && typeof raw.data === "object" && !Array.isArray(raw.data)) {
+          const d = raw.data as { results?: unknown[]; properties?: unknown[]; data?: unknown[] };
+          const arr = Array.isArray(d.results) ? d.results : Array.isArray(d.properties) ? d.properties : Array.isArray(d.data) ? d.data : [];
+          total = arr.length;
+        }
+        setPropertiesTotalFromApi(typeof total === "number" ? total : briefs.length);
       } else {
         setPropertiesTotalFromApi(null);
       }
     } catch {
+      setRecentListings([]);
       setPropertiesTotalFromApi(null);
     }
   };
@@ -185,6 +258,7 @@ export default function AgentDashboard() {
     return null;
   }
 
+  const displayRecentBriefs = recentListings;
   const totalBriefs = Math.max(stats.totalBriefs ?? 0, propertiesTotalFromApi ?? 0);
   const totalActiveBriefs = Math.max(stats.totalActiveBriefs ?? 0, propertiesTotalFromApi ?? 0);
 
@@ -280,6 +354,14 @@ export default function AgentDashboard() {
               <MailIcon size={20} />
               <span className="hidden sm:inline">Broadcast</span>
             </Link>
+            <Link
+              href="/dashboard/syndication"
+              className="bg-white hover:bg-gray-50 text-[#09391C] border border-[#8DDB90] px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
+              title="Syndication integrations"
+            >
+              <Globe2 size={20} />
+              Syndication
+            </Link>
           </div>
         </div>
 
@@ -298,7 +380,7 @@ export default function AgentDashboard() {
 
             return (
               <>
-                {sub && (
+                {sub ? (
                   <div className="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-900">
                     <div className="flex-1">
                       <div className="flex flex-wrap items-center gap-2 text-sm">
@@ -316,6 +398,30 @@ export default function AgentDashboard() {
                       </div>
                     </div>
                     <Link href="/agent-subscriptions" className="px-3 py-1.5 bg-emerald-600 text-white rounded hover:bg-emerald-700 text-xs font-medium">Manage</Link>
+                  </div>
+                ) : (
+                  <div className="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 rounded-lg border border-emerald-200/80 bg-emerald-50/90 text-emerald-950">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-[#09391C]">Subscription</p>
+                      <p className="mt-1 text-xs text-emerald-900/90 leading-relaxed">
+                        No active subscription on file. You can post your first property without one; a plan unlocks full
+                        features and your Practitioner page.
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2 shrink-0">
+                      <Link
+                        href="/agent-subscriptions?tab=plans"
+                        className="px-3 py-1.5 bg-emerald-600 text-white rounded hover:bg-emerald-700 text-xs font-medium text-center"
+                      >
+                        View plans
+                      </Link>
+                      <Link
+                        href="/agent-subscriptions"
+                        className="px-3 py-1.5 border border-emerald-700 text-emerald-900 rounded hover:bg-emerald-100/80 text-xs font-medium text-center"
+                      >
+                        Manage
+                      </Link>
+                    </div>
                   </div>
                 )}
                 <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${isVerified ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-700'}`}>
@@ -389,8 +495,8 @@ export default function AgentDashboard() {
           </div>
         </div>
 
-        <div className="mb-8">
-          <SyndicationConnectionsPanel />
+        <div className="mb-8 max-w-3xl mx-auto sm:mx-0">
+          <SyndicationIntegrationSummary />
         </div>
 
         {/* Stats Cards */}
@@ -443,7 +549,7 @@ export default function AgentDashboard() {
               </div>
             </div>
 
-            {(stats.newPendingBriefs ?? []).length === 0 ? (
+            {(displayRecentBriefs ?? []).length === 0 ? (
               <div className="p-8 text-center">
                 <BriefcaseIcon
                   size={32}
@@ -464,36 +570,52 @@ export default function AgentDashboard() {
                 </Link>
               </div>
             ) : (
-              <div className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
-                {(stats.newPendingBriefs ?? []).slice(0, 5).map((brief, index) => (
+              <div className="divide-y divide-gray-200">
+                {(displayRecentBriefs ?? []).slice(0, 5).map((brief, index) => (
                   <motion.div
                     key={brief._id}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.1 }}
-                    className="p-4 hover:bg-gray-50 transition-colors"
+                    className="px-4 sm:px-6 py-4 sm:py-5 hover:bg-gray-50 transition-colors"
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-[#8DDB90] bg-opacity-10 rounded-lg flex items-center justify-center">
-                          <BriefcaseIcon size={16} className="text-[#8DDB90]" />
+                    <div className="flex items-center justify-between gap-3 min-h-[4.5rem] sm:min-h-[5rem]">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 bg-[#8DDB90] bg-opacity-10 rounded-lg flex items-center justify-center overflow-hidden shrink-0">
+                          {brief.pictures?.[0] ? (
+                            <img
+                              src={brief.pictures[0]}
+                              alt={brief.briefType ?? "Property"}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <BriefcaseIcon size={16} className="text-[#8DDB90]" />
+                          )}
                         </div>
                         <div>
                           <h3 className="font-medium text-[#09391C] capitalize text-sm">
                             {brief.briefType}
-                          </h3> {/* Changed from propertyType to briefType as per Brief interface */}
+                          </h3>
                           <div className="flex items-center gap-1 text-xs text-[#5A5D63]">
                             <MapPinIcon size={10} />
-                            {brief.location.area}
+                            {(brief.location?.area ?? "").trim() ||
+                              `${brief.location?.state ?? ""} ${brief.location?.localGovernment ?? ""}`.trim() ||
+                              "—"}
                           </div>
                           <p className="text-xs text-[#8DDB90] font-medium">
-                            ₦{brief.price.toLocaleString()}
+                            ₦{(brief.price ?? 0).toLocaleString()}
                           </p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                          Pending Review
+                      <div className="text-right shrink-0">
+                        <span
+                          className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
+                            brief.isApproved
+                              ? "bg-green-100 text-green-800"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}
+                        >
+                          {brief.isApproved ? "Approved" : "Pending Review"}
                         </span>
                       </div>
                     </div>
@@ -596,6 +718,19 @@ export default function AgentDashboard() {
                 <div className="flex-1">
                   <h3 className="font-semibold">Inspection Requests</h3>
                   <p className="text-sm text-[#5A5D63]">Manage inspections</p>
+                </div>
+              </Link>
+
+              <Link
+                href="/dashboard/syndication"
+                className="w-full bg-white hover:bg-gray-50 text-[#09391C] border border-[#8DDB90] p-4 rounded-lg font-medium flex items-center gap-3 transition-colors group"
+              >
+                <div className="p-2 bg-[#09391C]/10 rounded-lg">
+                  <Globe2 size={20} className="text-[#09391C]" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold">Syndication integrations</h3>
+                  <p className="text-sm text-[#5A5D63]">Connect platforms and manage dispatch</p>
                 </div>
               </Link>
 
