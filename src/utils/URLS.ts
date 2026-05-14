@@ -74,6 +74,11 @@ export const URLS = {
   accountInspectionRepresentatives: "/account/inspection-representatives",
   accountInspectionRepresentative: (representativeId: string) =>
     `/account/inspection-representatives/${representativeId}`,
+  /** Per approved listing: inspection notification contacts (Developer / Landowner publishers) */
+  propertyInspectionRepresentatives: (propertyId: string) =>
+    `/account/properties/${propertyId}/inspection-representatives`,
+  propertyInspectionRepresentative: (propertyId: string, representativeId: string) =>
+    `/account/properties/${propertyId}/inspection-representatives/${representativeId}`,
   accountBookingsBaseUrl: "/account/my-bookings",
   accountPropertyBaseUrl: "/account/properties",
   /** POST /account/properties/create (guide: listingScope for KHABITEQ marketplace, e.g. lasrera_marketplace) */

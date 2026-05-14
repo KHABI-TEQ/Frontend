@@ -18,6 +18,19 @@ import { motion } from "framer-motion";
 import { POST_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 
+/** Hub enum for syndication platform applications (`acceptedPropertyTypes`). */
+type SyndicationAcceptedPropertyType = "sell" | "rent" | "jv" | "shortlet";
+
+const ACCEPTED_PROPERTY_TYPE_OPTIONS: {
+  value: SyndicationAcceptedPropertyType;
+  label: string;
+}[] = [
+  { value: "sell", label: "Outright Sale" },
+  { value: "rent", label: "Rent" },
+  { value: "jv", label: "Joint Ventures" },
+  { value: "shortlet", label: "Shortlet" },
+];
+
 const initialForm = {
   companyName: "",
   contactName: "",
@@ -27,6 +40,7 @@ const initialForm = {
   platformKeySuggestion: "",
   authType: "partner_login",
   baseUrl: "",
+  acceptedPropertyTypes: [] as SyndicationAcceptedPropertyType[],
   webhookSupport: true,
   docsUrl: "",
   notes: "",
@@ -36,6 +50,43 @@ const inputClass =
   "w-full rounded-xl border border-[#D5DDE6] bg-white px-3.5 py-2.5 text-sm text-[#1a1d21] placeholder:text-[#8B9299] shadow-sm transition focus:border-[#09391C] focus:outline-none focus:ring-2 focus:ring-[#8DDB90]/35";
 
 const labelClass = "block text-xs font-semibold uppercase tracking-wide text-[#4A5560] mb-1.5";
+
+/** Partner must supply a full HTTPS URL whose path ends with /login. */
+function validateApiLoginFullUrl(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return "Enter your API login full URL.";
+
+  const lower = trimmed.toLowerCase();
+  if (!lower.startsWith("https://")) {
+    return "URL must start with https://";
+  }
+
+  let u: URL;
+  try {
+    u = new URL(trimmed);
+  } catch {
+    return "Enter a valid URL (e.g. https://api.example.com/v1/login).";
+  }
+
+  if (u.protocol !== "https:") {
+    return "Use https:// only.";
+  }
+
+  if (!u.hostname || u.hostname.length < 1) {
+    return "URL must include a host (e.g. api.yourplatform.com).";
+  }
+
+  const path = (u.pathname || "/").replace(/\/+$/, "") || "/";
+  if (!/\/login$/i.test(path)) {
+    return "Path must end with /login (e.g. …/v1/login or …/api/login).";
+  }
+
+  return null;
+}
+
+function normalizeApiLoginFullUrlForSubmit(raw: string): string {
+  return raw.trim();
+}
 
 function Field({
   label,
@@ -55,18 +106,49 @@ function Field({
 export default function PartnerApiPage() {
   const [form, setForm] = useState(initialForm);
   const [submitting, setSubmitting] = useState(false);
+  const [apiLoginUrlError, setApiLoginUrlError] = useState<string | null>(null);
+
+  const toggleAcceptedPropertyType = (value: SyndicationAcceptedPropertyType) => {
+    setForm((s) => {
+      const next = new Set(s.acceptedPropertyTypes);
+      if (next.has(value)) next.delete(value);
+      else next.add(value);
+      return { ...s, acceptedPropertyTypes: Array.from(next) as SyndicationAcceptedPropertyType[] };
+    });
+  };
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (form.acceptedPropertyTypes.length === 0) {
+      toast.error("Select at least one property type your platform accepts.");
+      return;
+    }
+    const urlErr = validateApiLoginFullUrl(form.baseUrl);
+    if (urlErr) {
+      setApiLoginUrlError(urlErr);
+      toast.error(urlErr);
+      return;
+    }
+    setApiLoginUrlError(null);
     setSubmitting(true);
     try {
+      const acceptedPropertyTypes = ACCEPTED_PROPERTY_TYPE_OPTIONS.map((o) => o.value).filter((v) =>
+        form.acceptedPropertyTypes.includes(v),
+      );
+      const baseUrl = normalizeApiLoginFullUrlForSubmit(form.baseUrl);
       const res = await POST_REQUEST(
         `${URLS.BASE}${URLS.syndicationPlatformApplications}`,
-        { ...form, authType: "partner_login" },
+        {
+          ...form,
+          baseUrl,
+          authType: "partner_login",
+          acceptedPropertyTypes,
+        },
       );
       if (res?.success) {
         toast.success(res.message || "Platform application submitted successfully.");
         setForm(initialForm);
+        setApiLoginUrlError(null);
       } else {
         toast.error(res?.message || "Unable to submit application.");
       }
@@ -261,6 +343,33 @@ export default function PartnerApiPage() {
                         required
                       />
                     </Field>
+                    <div className="md:col-span-2">
+                      <Field label="Property types you accept *">
+                        <fieldset className="rounded-xl border border-[#E8EEF4] bg-[#FAFCFE] p-4">
+                          <legend className="sr-only">Accepted property listing types</legend>
+                          <p className="text-xs text-[#5A6570] mb-3 leading-relaxed">
+                            Select every listing type you allow to be syndicated to your platform.
+                          </p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {ACCEPTED_PROPERTY_TYPE_OPTIONS.map(({ value, label }) => (
+                              <label
+                                key={value}
+                                className="flex cursor-pointer items-center gap-3 rounded-lg border border-[#DDE5EE] bg-white px-3 py-2.5 text-sm text-[#09391C] shadow-sm transition hover:border-[#8DDB90]/60"
+                              >
+                                <input
+                                  type="checkbox"
+                                  className="h-4 w-4 shrink-0 rounded border-gray-300 text-[#09391C] focus:ring-[#8DDB90]"
+                                  checked={form.acceptedPropertyTypes.includes(value)}
+                                  onChange={() => toggleAcceptedPropertyType(value)}
+                                />
+                                <span className="font-medium">{label}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </fieldset>
+                      </Field>
+                    </div>
+                    <div className="md:col-span-2">
                     <Field label="Authentication (hub → your API)">
                       <div
                         className={`${inputClass} bg-[#FAFCFE] text-[#3D454D] cursor-default`}
@@ -286,6 +395,7 @@ export default function PartnerApiPage() {
                         </p>
                       </div>
                     </Field>
+                    </div>
                   </div>
                 </div>
 
@@ -295,13 +405,35 @@ export default function PartnerApiPage() {
                     Technical details
                   </div>
                   <div className="grid grid-cols-1 gap-4">
-                    <Field label="Base URL">
+                    <Field label="API LOGIN FULL URL *">
                       <input
-                        className={inputClass}
-                        placeholder="https://api.yourplatform.com/v1"
+                        className={`${inputClass} ${apiLoginUrlError ? "border-red-400 focus:border-red-500 focus:ring-red-200/50" : ""}`}
+                        placeholder="https://api.yourplatform.com/v1/login"
                         value={form.baseUrl}
-                        onChange={(e) => setForm((s) => ({ ...s, baseUrl: e.target.value }))}
+                        onChange={(e) => {
+                          setApiLoginUrlError(null);
+                          setForm((s) => ({ ...s, baseUrl: e.target.value }));
+                        }}
+                        onBlur={() => {
+                          const err = validateApiLoginFullUrl(form.baseUrl);
+                          setApiLoginUrlError(form.baseUrl.trim() ? err : null);
+                        }}
+                        aria-invalid={Boolean(apiLoginUrlError)}
+                        aria-describedby={apiLoginUrlError ? "api-login-url-hint api-login-url-error" : "api-login-url-hint"}
+                        autoComplete="url"
+                        required
                       />
+                      <p id="api-login-url-hint" className="mt-1.5 text-xs text-[#5A6570] leading-relaxed">
+                        Must start with{" "}
+                        <code className="font-mono text-[11px] bg-[#F0F4F8] px-1 rounded">https://</code>, include your API
+                        host and path, and end with the login route (e.g.{" "}
+                        <code className="font-mono text-[11px] bg-[#F0F4F8] px-1 rounded">/login</code>).
+                      </p>
+                      {apiLoginUrlError ? (
+                        <p id="api-login-url-error" role="alert" className="mt-1.5 text-xs font-medium text-red-600">
+                          {apiLoginUrlError}
+                        </p>
+                      ) : null}
                     </Field>
                     <Field label="Documentation URL">
                       <input

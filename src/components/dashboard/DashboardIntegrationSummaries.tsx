@@ -97,11 +97,20 @@ export function SyndicationIntegrationSummary() {
   );
 }
 
-export function InspectionRepresentativesSummary() {
+export function InspectionRepresentativesSummary({
+  developerPropertyScoped = false,
+}: {
+  /** When true (Developer dashboard), representatives are managed per approved listing — skip account-level count. */
+  developerPropertyScoped?: boolean;
+}) {
   const [loading, setLoading] = useState(true);
   const [count, setCount] = useState(0);
 
   useEffect(() => {
+    if (developerPropertyScoped) {
+      setLoading(false);
+      return;
+    }
     const token = Cookies.get("token");
     if (!token) {
       setLoading(false);
@@ -127,7 +136,7 @@ export function InspectionRepresentativesSummary() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [developerPropertyScoped]);
 
   return (
     <div className="bg-white rounded-lg border border-[#E3E8EF] shadow-sm p-4 sm:p-5 flex flex-col h-full">
@@ -137,18 +146,26 @@ export function InspectionRepresentativesSummary() {
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="text-sm font-semibold text-[#09391C]">Inspection representatives</h3>
-          <p className="text-xs text-[#5A5D63] mt-0.5">Contacts for inspection notifications</p>
+          <p className="text-xs text-[#5A5D63] mt-0.5">
+            {developerPropertyScoped
+              ? "Contacts are set per approved listing"
+              : "Contacts for inspection notifications"}
+          </p>
         </div>
       </div>
       <div className="rounded-lg bg-[#FAFCFE] border border-[#E8EEF4] px-4 py-6 text-center flex-1 flex flex-col justify-center">
-        <p className="text-3xl font-bold text-[#09391C] tabular-nums">{loading ? "—" : count}</p>
-        <p className="text-sm text-[#5A5D63] mt-1">Saved representatives</p>
+        <p className="text-3xl font-bold text-[#09391C] tabular-nums">
+          {developerPropertyScoped ? "—" : loading ? "—" : count}
+        </p>
+        <p className="text-sm text-[#5A5D63] mt-1">
+          {developerPropertyScoped ? "Open manage to set per listing" : "Saved representatives"}
+        </p>
       </div>
       <Link
         href="/dashboard/inspection-representatives"
         className="mt-4 inline-flex items-center justify-center gap-1.5 text-sm font-semibold text-[#09391C] hover:text-[#0d4d27] py-2 rounded-lg border border-[#8DDB90]/60 hover:bg-[#F2FBF3] transition-colors"
       >
-        Manage contacts
+        {developerPropertyScoped ? "Manage per listing" : "Manage contacts"}
         <ArrowRight className="h-4 w-4" aria-hidden />
       </Link>
     </div>

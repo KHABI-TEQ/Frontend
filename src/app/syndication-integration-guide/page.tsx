@@ -14,6 +14,7 @@ import {
   Radio,
   Send,
   Sparkles,
+  UserCheck,
   Webhook,
 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -125,14 +126,17 @@ function SectionShell({
   title,
   subtitle,
   children,
+  id,
 }: {
   icon: LucideIcon;
   title: string;
   subtitle?: ReactNode;
   children: ReactNode;
+  id?: string;
 }) {
   return (
     <motion.section
+      id={id}
       initial={{ opacity: 0, y: 10 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
@@ -192,6 +196,15 @@ export default function SyndicationIntegrationGuidePage() {
       "Return 2xx with listingId and url (and optional data mirror) for mapping.",
     ],
     [
+      "User verification callback",
+      <>
+        After the hub calls your API Login Full URL, POST the standard authentication body to{" "}
+        <code className="font-mono text-xs bg-[#EEF1F1] px-1 py-0.5 rounded">{"{KHABITEQ_API_BASE_URL}/syndication/user/authentication/webhook"}</code>{" "}
+        (see <a href="#user-authentication-webhook" className="text-[#09391C] font-medium underline">User registration verification</a>
+        ).
+      </>,
+    ],
+    [
       "Webhook to hub",
       "POST JSON to /api/third-party/syndication/webhooks/{platformKey}; optional HMAC; include eventId, externalRef, listingId, url (see Section 6).",
     ],
@@ -200,7 +213,19 @@ export default function SyndicationIntegrationGuidePage() {
 
   const glossaryRows: ReactNode[][] = [
     ["platformKey", "Stable hub-side identifier for your brand in URLs and webhooks."],
-    ["baseUrl", "Root URL to which /listings, /listings/unpublish, /listings/status are appended for outbound jobs."],
+    [
+      "baseUrl",
+      <>
+        On the partner application JSON key <code className="font-mono text-xs bg-[#EEF1F1] px-1 py-0.5 rounded">baseUrl</code>
+        : your <strong className="text-[#09391C]">API Login Full URL</strong> (HTTPS, ending in{" "}
+        <code className="font-mono text-xs bg-[#EEF1F1] px-1 py-0.5 rounded">/login</code>) used for user verification. For
+        outbound <strong className="text-[#09391C]">listing</strong> jobs, the hub uses the separate{" "}
+        <strong className="text-[#09391C]">syndication API root</strong> from your approval pack, to which{" "}
+        <code className="font-mono text-xs bg-[#EEF1F1] px-1 py-0.5 rounded">/listings</code>,{" "}
+        <code className="font-mono text-xs bg-[#EEF1F1] px-1 py-0.5 rounded">/listings/unpublish</code>, and{" "}
+        <code className="font-mono text-xs bg-[#EEF1F1] px-1 py-0.5 rounded">/listings/status</code> are appended.
+      </>,
+    ],
     ["SyndicationPlatform", "Hub catalog entry representing your integration once onboarding is complete."],
     [
       "partner_login",
@@ -314,8 +339,11 @@ export default function SyndicationIntegrationGuidePage() {
                   <strong className="text-[#09391C]">Basic Login</strong>: the same{" "}
                   <strong className="text-[#09391C]">email</strong> and{" "}
                   <strong className="text-[#09391C]">password</strong> they use on your platform (
-                  <code className="font-mono text-xs bg-[#EEF1F1] px-1.5 py-0.5 rounded">partner_login</code>). Those values are
-                  stored for outbound syndication only and are not re-verified with your login API on each request.
+                  <code className="font-mono text-xs bg-[#EEF1F1] px-1.5 py-0.5 rounded">partner_login</code>). The hub uses your
+                  registered <strong className="text-[#09391C]">API Login Full URL</strong> to verify they are truly registered on
+                  your platform, then expects you to report the outcome to Khabiteq via the authentication webhook (see the
+                  section <strong className="text-[#09391C]">User registration verification</strong> below). Verified credentials
+                  are stored for outbound syndication; routine listing POSTs use HTTP Basic on each request (Section 5).
                 </>
               }
             />
@@ -336,7 +364,7 @@ export default function SyndicationIntegrationGuidePage() {
           title="2. Onboarding — public partner application"
           subtitle="No authentication required. Send JSON with the keys below."
         >
-          <EndpointLine method="POST" path="/api/third-party/syndication/platform-applications" />
+          {/* <EndpointLine method="POST" path="/api/third-party/syndication/platform-applications" /> */}
           <DataTable
             columns={["Key", "Type", "Description"]}
             monoColumns={[0]}
@@ -363,9 +391,32 @@ export default function SyndicationIntegrationGuidePage() {
                 </>,
               ],
               [
-                "baseUrl",
+                "loginFullUrl",
                 "string",
-                "Root URL for syndication traffic (no trailing slash recommended). The hub appends fixed paths from Section 3. Use HTTPS in production.",
+                <>
+                  <strong className="text-[#09391C]">API Login Full URL</strong> (HTTPS, path ending in{" "}
+                  <code className="font-mono text-xs bg-[#EEF1F1] px-1 py-0.5 rounded">/login</code>). Required: the hub calls this
+                  endpoint to confirm that hub <strong className="text-[#09391C]">Agents</strong> and{" "}
+                  <strong className="text-[#09391C]">Developers</strong> are registered on your platform before treating their
+                  Basic Login as valid. After you complete verification on your side, you must call Khabiteq&apos;s
+                  authentication webhook so we can show the correct result in the product (see{" "}
+                  <a href="#user-authentication-webhook" className="text-[#09391C] font-medium underline">
+                    User registration verification
+                  </a>
+                  ).
+                </>,
+              ],
+              [
+                "acceptedPropertyTypes",
+                "string[]",
+                <>
+                  <strong className="text-[#09391C]">Required.</strong> At least one of{" "}
+                  <code className="font-mono text-xs bg-[#EEF1F1] px-1 py-0.5 rounded">sell</code> (Outright Sale),{" "}
+                  <code className="font-mono text-xs bg-[#EEF1F1] px-1 py-0.5 rounded">rent</code>,{" "}
+                  <code className="font-mono text-xs bg-[#EEF1F1] px-1 py-0.5 rounded">jv</code> (Joint Ventures),{" "}
+                  <code className="font-mono text-xs bg-[#EEF1F1] px-1 py-0.5 rounded">shortlet</code> — listing types your
+                  platform allows to be syndicated.
+                </>,
               ],
               [
                 "webhookSupport",
@@ -399,17 +450,177 @@ export default function SyndicationIntegrationGuidePage() {
         </SectionShell>
 
         <SectionShell
-          icon={Code2}
-          title="3. Hub outbound jobs — requests your API must accept"
-          subtitle="The hub builds a URL from your registered base URL and the job event type, then POSTs JSON."
+          icon={UserCheck}
+          title="User registration verification & Khabiteq authentication callback"
+          subtitle="End-to-end check that hub Agents and Developers exist on your platform, and a single JSON shape Khabiteq ingests everywhere."
+          id="user-authentication-webhook"
         >
-          <h3 className="text-sm font-bold text-[#09391C] mb-2">URL resolution</h3>
-          <p className="text-sm text-[#5A6570] mb-2">
-            With <code className="font-mono text-xs bg-[#EEF1F1] px-1.5 py-0.5 rounded">baseUrl</code> normalized (trailing
-            slashes removed):
+          <h3 className="text-sm font-bold text-[#09391C] mb-2">Why we need your API Login Full URL</h3>
+          <p className="text-sm text-[#5A6570] leading-relaxed mb-4">
+            The <code className="font-mono text-xs bg-[#EEF1F1] px-1.5 py-0.5 rounded">loginFullUrl</code> you submit on the{" "}
+            <Link href="/partner-api" className="text-[#09391C] font-medium underline">
+              partner application
+            </Link>{" "}
+            is your <strong className="text-[#09391C]">API Login Full URL</strong> (HTTPS, ending with a{" "}
+            <code className="font-mono text-xs bg-[#EEF1F1] px-1 py-0.5 rounded">/login</code> route). Khabiteq calls it
+            when hub users want to connect to your platform so we can confirm that the <strong className="text-[#09391C]">Basic Login</strong>{" "}
+            email and password they send correspond to a real account on your side.
+          </p>
+          <h3 className="text-sm font-bold text-[#09391C] mb-2">Callback you must send to Khabiteq</h3>
+          <p className="text-sm text-[#5A6570] leading-relaxed mb-3">
+            After your API validates the user (or determines they are not registered),{" "}
+            <strong className="text-[#09391C]">POST JSON</strong> to Khabiteq so we can display the right message in the hub UI.
+            Use the exact path below; prepend the <strong className="text-[#09391C]">Khabiteq API base URL</strong> we issue when
+            your integration is approved (we send it to your contact email together with any auth headers or signing rules you
+            must follow).
+          </p>
+          <EndpointLine
+            method="POST"
+            path="{KHABITEQ_API_BASE_URL}/syndication/user/authentication/webhook"
+          />
+          <p className="mt-3 text-sm text-[#5A6570] leading-relaxed">
+            Replace <code className="font-mono text-xs bg-[#EEF1F1] px-1 py-0.5 rounded">{"{KHABITEQ_API_BASE_URL}"}</code> with
+            the value from your approval email (no trailing slash), for example{" "}
+            <code className="font-mono text-xs bg-[#EEF1F1] px-1 py-0.5 rounded">https://api.khabiteq.example.com</code> — your
+            pack will state the production and staging bases clearly.
+          </p>
+          <h3 className="text-sm font-bold text-[#09391C] mt-6 mb-2">Request the hub sends to your API Login Full URL</h3>
+          <p className="text-sm text-[#5A6570] mb-2 leading-relaxed">
+            The hub user (Agent or Developer) enters only their <strong className="text-[#09391C]">email</strong> and{" "}
+            <strong className="text-[#09391C]">password</strong> in Khabiteq. We forward those credentials to your registered
+            API Login Full URL with <code className="font-mono text-xs bg-[#EEF1F1] px-1 py-0.5 rounded">POST</code> and{" "}
+            <code className="font-mono text-xs bg-[#EEF1F1] px-1 py-0.5 rounded">Content-Type: application/json</code>. The{" "}
+            <strong className="text-[#09391C]">JSON body must contain only these two keys</strong> — no correlation id, no
+            platform key in the body. Implement your login route to accept exactly that shape (UTF-8 strings as your own login
+            would).
+          </p>
+          <p className="text-sm text-[#5A6570] mb-2 leading-relaxed">
+            On the same request, Khabiteq adds out-of-band headers so you can tie the result back when you call our webhook (see
+            below): echo <code className="font-mono text-xs bg-[#EEF1F1] px-1 py-0.5 rounded">X-Khabiteq-Correlation-Id</code> as{" "}
+            <code className="font-mono text-xs bg-[#EEF1F1] px-1 py-0.5 rounded">correlationId</code> in your callback JSON, and
+            echo <code className="font-mono text-xs bg-[#EEF1F1] px-1 py-0.5 rounded">X-Khabiteq-Platform-Key</code> as{" "}
+            <code className="font-mono text-xs bg-[#EEF1F1] px-1 py-0.5 rounded">platformKey</code> when present.
           </p>
           <DataTable
-            columns={["Hub eventType", "HTTP method", "Path appended to baseUrl"]}
+            columns={["Header", "Description"]}
+            monoColumns={[0]}
+            rows={[
+              [
+                "X-Khabiteq-Correlation-Id",
+                "UUID for this verification attempt; must be echoed as correlationId in your authentication webhook body.",
+              ],
+              [
+                "X-Khabiteq-Platform-Key",
+                "Your approved platform key for this integration; echo as platformKey in the webhook body.",
+              ],
+            ]}
+          />
+          <CodeBlock title="Verification request body (hub → partner) — only these fields">{`{
+  "email": "agent@partner.com",
+  "password": "<user-supplied password>"
+}`}</CodeBlock>
+          <h3 className="text-sm font-bold text-[#09391C] mt-6 mb-2">Expected authentication webhook body (partner → Khabiteq)</h3>
+          <p className="text-sm text-[#5A6570] mb-2 leading-relaxed">
+            This is the approved<strong className="text-[#09391C]"> JSON model</strong> for every platform so Khabiteq can parse results
+            consistently. All keys use camelCase. Send <code className="font-mono text-xs bg-[#EEF1F1] px-1 py-0.5 rounded">Content-Type: application/json</code>.
+          </p>
+          <DataTable
+            columns={["Key", "Type", "Required", "Description"]}
+            monoColumns={[0]}
+            rows={[
+              [
+                "success",
+                "boolean",
+                "Yes",
+                "true when your service produced a definitive verification outcome (even if the user failed verification). false only for internal/partner errors.",
+              ],
+              [
+                "verified",
+                "boolean",
+                "Yes",
+                "true if the email exists on your platform and the supplied Basic Login credentials are valid for that account; otherwise false.",
+              ],
+              [
+                "correlationId",
+                "string",
+                "Yes",
+                "Echo the value of the X-Khabiteq-Correlation-Id header from the verification POST so Khabiteq can match the round trip.",
+              ],
+              [
+                "email",
+                "string",
+                "Yes",
+                "Lowercase email from the verification JSON body (echo).",
+              ],
+              [
+                "platformKey",
+                "string",
+                "Yes",
+                "Echo the X-Khabiteq-Platform-Key header from the verification POST, or your approved key from the onboarding pack if agreed.",
+              ],
+              [
+                "message",
+                "string | null",
+                "No",
+                "Short, user-safe explanation when verified is false (for example “Unknown user” or “Invalid password”). Omit or null when verified is true.",
+              ],
+              [
+                "externalUserId",
+                "string",
+                "No",
+                "Your stable user id when verified is true, if you want the hub to store it for support and auditing.",
+              ],
+            ]}
+          />
+          <CodeBlock title="Example — user verified">{`{
+  "success": true,
+  "verified": true,
+  "correlationId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "email": "agent@partner.com",
+  "platformKey": "your_approved_platform_key",
+  "message": null,
+  "externalUserId": "usr_88421a"
+}`}</CodeBlock>
+          <CodeBlock title="Example — user not verified">{`{
+  "success": true,
+  "verified": false,
+  "correlationId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "email": "unknown@partner.com",
+  "platformKey": "your_approved_platform_key",
+  "message": "No account found for this email.",
+  "externalUserId": null
+}`}</CodeBlock>
+          <CodeBlock title="Example — partner-side error">{`{
+  "success": false,
+  "verified": false,
+  "correlationId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "email": "agent@partner.com",
+  "platformKey": "your_approved_platform_key",
+  "message": "Temporary database error; please retry.",
+  "externalUserId": null
+}`}</CodeBlock>
+          <p className="mt-4 text-sm text-[#5A6570] leading-relaxed">
+            Additional headers (API keys, HMAC signatures, or mTLS fingerprints) required to accept your callback will be
+            listed in the same approval email as the Khabiteq API base URL. If anything in this contract changes, the hub team
+            will communicate a versioned update before enforcement.
+          </p>
+        </SectionShell>
+
+        <SectionShell
+          icon={Code2}
+          title="3. Hub outbound jobs — requests your API must accept"
+          subtitle="The hub builds listing URLs from your approved syndication API root and the job event type, then POSTs JSON."
+        >
+          <h3 className="text-sm font-bold text-[#09391C] mb-2">URL resolution</h3>
+          <p className="text-sm text-[#5A6570] mb-2 leading-relaxed">
+            Listing syndication uses the <strong className="text-[#09391C]">syndication API root</strong> the hub associates with
+            your platform after approval (often the same origin as your API Login Full URL with the{" "}
+            <code className="font-mono text-xs bg-[#EEF1F1] px-1 py-0.5 rounded">/login</code> suffix removed, or a separate base
+            you confirm in your approval pack). With that root normalized (trailing slashes removed), paths are appended as
+            follows:
+          </p>
+          <DataTable
+            columns={["Hub eventType", "HTTP method", "Path appended to syndication root"]}
             monoColumns={[0, 2]}
             rows={[
               ["property.unpublished", "POST", "/listings/unpublish"],
@@ -418,14 +629,13 @@ export default function SyndicationIntegrationGuidePage() {
             ]}
           />
           <p className="mt-4 text-sm text-[#5A6570] leading-relaxed">
-            <strong className="text-[#09391C]">Example:</strong> if{" "}
-            <code className="font-mono text-xs bg-[#EEF1F1] px-1.5 py-0.5 rounded">baseUrl</code> is{" "}
+            <strong className="text-[#09391C]">Example:</strong> if your syndication root is{" "}
             <code className="font-mono text-xs bg-[#EEF1F1] px-1.5 py-0.5 rounded">https://api.partner.com/v1/syndication</code>,
             the hub calls{" "}
             <code className="font-mono text-xs bg-[#EEF1F1] px-1.5 py-0.5 rounded">…/listings</code>,{" "}
             <code className="font-mono text-xs bg-[#EEF1F1] px-1.5 py-0.5 rounded">…/listings/unpublish</code>, and{" "}
             <code className="font-mono text-xs bg-[#EEF1F1] px-1.5 py-0.5 rounded">…/listings/status</code>. You must expose
-            these three routes on the same host and path prefix you register.
+            these three routes on the same host and path prefix the hub has on file for listing jobs.
           </p>
           <h3 className="text-sm font-bold text-[#09391C] mt-6 mb-2">Headers</h3>
           <DataTable
@@ -569,10 +779,14 @@ Content-Type: application/json`}</CodeBlock>
             </li>
           </ul>
           <p className="mt-4 text-sm text-[#5A6570] leading-relaxed">
-            The hub does not call your login page to “test” credentials first; incorrect{" "}
-            <strong className="text-[#09391C]">Basic Login email</strong> or{" "}
-            <strong className="text-[#09391C]">Basic Login password</strong> means listings will not sync until the user
-            reconnects with the correct values.
+            Routine syndication traffic does not re-run the full registration handshake on every POST; the hub relies on HTTP
+            Basic on each listing request (above). If credentials are wrong, listings will not sync until the user reconnects.
+            When the user first connects or when a fresh check is required, the hub uses your{" "}
+            <strong className="text-[#09391C]">API Login Full URL</strong> and the authentication callback contract described in{" "}
+            <a href="#user-authentication-webhook" className="text-[#09391C] font-medium underline">
+              User registration verification
+            </a>
+            .
           </p>
         </SectionShell>
 

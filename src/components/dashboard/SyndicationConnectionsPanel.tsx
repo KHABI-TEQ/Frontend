@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
-import { Globe, Link2, Power, RefreshCw, X } from "lucide-react";
+import { Globe, Link2, Loader2, Power, RefreshCw, X } from "lucide-react";
 import { GET_REQUEST, PATCH_REQUEST, POST_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 
@@ -55,6 +55,60 @@ function getDeclaredAuthTypeFromConnection(c: Connection): string {
       : undefined;
   const raw = c.authType ?? (c as { auth_type?: string }).auth_type ?? nested;
   return normalizeAuthType(raw);
+}
+
+/**
+ * Backend may return `/api/account/...` while `NEXT_PUBLIC_API_URL` already ends with `/api`.
+ */
+function resolveHubApiUrlFromVerificationPath(verificationStatusPath: string): string {
+  const raw = verificationStatusPath.trim();
+  if (/^https?:\/\//i.test(raw)) return raw;
+  const base = URLS.BASE.replace(/\/+$/, "");
+  if (raw.startsWith("/api/")) {
+    return `${base}${raw.replace(/^\/api/, "")}`;
+  }
+  return `${base}${raw.startsWith("/") ? raw : `/${raw}`}`;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+interface SyndicationVerificationAcceptedData {
+  correlationId: string;
+  verificationStatusPath: string;
+  partnerLoginUrlUsed?: string;
+  authenticationCallbackUrl?: string | null;
+  hubApiBaseUrl?: string | null;
+}
+
+function isAcceptedVerificationPayload(data: unknown): data is SyndicationVerificationAcceptedData {
+  if (!data || typeof data !== "object") return false;
+  const d = data as Record<string, unknown>;
+  return typeof d.correlationId === "string" && typeof d.verificationStatusPath === "string";
+}
+
+function pickVerificationPollStatus(res: unknown): {
+  status: string | undefined;
+  partnerMessage: string | undefined;
+} {
+  const r = res as Record<string, unknown> | null;
+  if (!r?.success) {
+    const msg = typeof r?.message === "string" ? r.message : undefined;
+    return { status: undefined, partnerMessage: msg };
+  }
+  const data = r.data as Record<string, unknown> | undefined;
+  const inner =
+    data?.data && typeof data.data === "object" ? (data.data as Record<string, unknown>) : data;
+  const statusRaw = inner?.status ?? data?.status;
+  const status = typeof statusRaw === "string" ? statusRaw.toLowerCase() : undefined;
+  const pm =
+    typeof inner?.partnerMessage === "string"
+      ? inner.partnerMessage
+      : typeof data?.partnerMessage === "string"
+        ? data.partnerMessage
+        : undefined;
+  return { status, partnerMessage: pm };
 }
 
 function SyndicationConfirmDialog({
@@ -113,15 +167,19 @@ function SyndicationConfirmDialog({
           {isPartnerLogin ? (
             <ul className="mt-4 space-y-2 text-sm text-[#5A5D63] list-disc pl-5 leading-relaxed">
               <li>
-                The hub does not authenticate or verify these credentials with {platformName}. They are stored and used
-                only when sending syndication requests.
+                Khabi-Teq will call {platformName}&apos;s login API with your email and password so they can confirm you are
+                registered. This is a secure server-to-server step; your password is not stored until verification succeeds.
               </li>
               <li>
-                If the email or password is wrong, property listings and updates from this hub will{" "}
-                <strong className="text-[#09391C]">not</strong> appear or stay in sync on the connected platform.
+                After our servers reach {platformName}, their systems validate you and call Khabi-Teq back. You may wait a few
+                moments on this screen while we poll for the result.
+              </li>
+              <li>
+                If login fails or {platformName} rejects the check, you will see a clear message and can try again with the
+                correct credentials.
               </li>
               {isReconnect ? (
-                <li>You can reconnect here whenever you change your password on the partner platform.</li>
+                <li>Reconnecting sends a fresh verification; use this if you changed your password on {platformName}.</li>
               ) : null}
             </ul>
           ) : (
@@ -166,6 +224,14 @@ export function SyndicationConnectionsPanel(props?: { anchorId?: string }) {
   const [partnerLogin, setPartnerLogin] = useState<Record<string, { email: string; password: string }>>({});
   const [connectingPlatformId, setConnectingPlatformId] = useState<string | null>(null);
   const [togglingConnectionId, setTogglingConnectionId] = useState<string | null>(null);
+  const [pendingVerification, setPendingVerification] = useState<{
+    platformId: string;
+    platformName: string;
+    pollUrl: string;
+    hubMessage: string;
+    detail?: string;
+  } | null>(null);
+  const verificationPollRunId = useRef(0);
   const [confirmDialog, setConfirmDialog] = useState<{
     platformId: string;
     platformName: string;
@@ -238,6 +304,82 @@ export function SyndicationConnectionsPanel(props?: { anchorId?: string }) {
     }));
   }, []);
 
+  const runVerificationPoll = useCallback(
+    async (opts: { pollUrl: string; platformId: string; platformName: string; runId: number }) => {
+      const { pollUrl, platformId, platformName, runId } = opts;
+      const maxRounds = 130;
+
+      for (let i = 0; i < maxRounds; i++) {
+        if (verificationPollRunId.current !== runId) return;
+
+        const res = await GET_REQUEST(pollUrl, token);
+        if (verificationPollRunId.current !== runId) return;
+
+        const { status, partnerMessage } = pickVerificationPollStatus(res);
+
+        if (!res?.success) {
+          const msg =
+            typeof res?.message === "string"
+              ? res.message
+              : "Could not check verification status. Try refreshing this page in a moment.";
+          setPendingVerification((prev) =>
+            prev && prev.platformId === platformId ? { ...prev, detail: msg } : prev,
+          );
+          toast.error(msg);
+          verificationPollRunId.current += 1;
+          setPendingVerification(null);
+          await loadAll(true);
+          return;
+        }
+
+        if (status === "completed") {
+          toast.success(
+            `${platformName} confirmed your login through their systems. Your syndication connection is now active.`,
+          );
+          setPartnerLoginFields(platformId, { password: "" });
+          verificationPollRunId.current += 1;
+          setPendingVerification(null);
+          await loadAll(true);
+          return;
+        }
+
+        if (status === "failed") {
+          const msg =
+            partnerMessage?.trim() ||
+            "The partner platform could not verify your login. Please check your email and password, then try again.";
+          toast.error(msg);
+          verificationPollRunId.current += 1;
+          setPendingVerification(null);
+          await loadAll(true);
+          return;
+        }
+
+        setPendingVerification((prev) =>
+          prev && prev.platformId === platformId
+            ? {
+                ...prev,
+                detail:
+                  status === "pending" || !status
+                    ? "Waiting for the partner platform to validate your credentials and notify Khabi-Teq. This usually completes within a minute."
+                    : partnerMessage || "Checking verification status…",
+              }
+            : prev,
+        );
+
+        if (i < maxRounds - 1) await sleep(2000);
+      }
+
+      toast(
+        "Verification is taking longer than expected. You can leave this page; refresh “My connections” in a few minutes to see if your link is active.",
+        { duration: 9000 },
+      );
+      verificationPollRunId.current += 1;
+      setPendingVerification(null);
+      await loadAll(true);
+    },
+    [loadAll, setPartnerLoginFields, token],
+  );
+
   const submitConnect = useCallback(
     async (platformId: string, authType: string) => {
       if (!token) return;
@@ -273,7 +415,39 @@ export function SyndicationConnectionsPanel(props?: { anchorId?: string }) {
           `${URLS.BASE}${URLS.accountSyndicationConnections}`,
           { platformId, credentials },
           token,
+          undefined,
+          0,
+          30000,
         );
+
+        if (res?.success && at === "partner_login" && isAcceptedVerificationPayload(res.data)) {
+          const d = res.data;
+          const pollUrl = resolveHubApiUrlFromVerificationPath(d.verificationStatusPath);
+          const hubMsg =
+            typeof res.message === "string" && res.message.trim()
+              ? res.message.trim()
+              : "Verification started. Your partner platform will validate your credentials and notify Khabi-Teq.";
+
+          toast.success(hubMsg, { duration: 9000 });
+
+          verificationPollRunId.current += 1;
+          const runId = verificationPollRunId.current;
+          const platformName =
+            approvedPlatforms.find((x) => x._id === platformId)?.platformName || "Partner platform";
+
+          setPendingVerification({
+            platformId,
+            platformName,
+            pollUrl,
+            hubMessage: hubMsg,
+            detail:
+              "We’ve reached your partner’s login endpoint. When they confirm your account, your connection will appear under My connections.",
+          });
+
+          void runVerificationPoll({ pollUrl, platformId, platformName, runId });
+          return;
+        }
+
         if (res?.success) {
           toast.success(byPlatformId.has(platformId) ? "Connection updated." : "Platform connected.");
           setPartnerLoginFields(platformId, { password: "" });
@@ -291,7 +465,16 @@ export function SyndicationConnectionsPanel(props?: { anchorId?: string }) {
         setConfirmDialog(null);
       }
     },
-    [apiKeys, byPlatformId, getPartnerLoginFields, loadAll, setPartnerLoginFields, token],
+    [
+      apiKeys,
+      approvedPlatforms,
+      byPlatformId,
+      getPartnerLoginFields,
+      loadAll,
+      runVerificationPoll,
+      setPartnerLoginFields,
+      token,
+    ],
   );
 
   const requestConnect = useCallback(
@@ -385,6 +568,35 @@ export function SyndicationConnectionsPanel(props?: { anchorId?: string }) {
           </button>
         </div>
 
+        {pendingVerification ? (
+          <div className="mx-5 mb-4 flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50/95 px-4 py-3 text-sm text-[#3d3420] sm:flex-row sm:items-start">
+            <Loader2 className="h-5 w-5 shrink-0 text-amber-700 animate-spin sm:mt-0.5" aria-hidden />
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-[#09391C]">
+                Verifying with {pendingVerification.platformName}
+              </p>
+              <p className="mt-1 text-[#5A5D63] leading-relaxed">{pendingVerification.hubMessage}</p>
+              {pendingVerification.detail ? (
+                <p className="mt-2 text-xs text-[#5A6570] leading-relaxed">{pendingVerification.detail}</p>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                verificationPollRunId.current += 1;
+                setPendingVerification(null);
+                toast(
+                  "Stopped checking status on this page. If your connection completes, it will appear under My connections when you refresh.",
+                  { duration: 8000 },
+                );
+              }}
+              className="shrink-0 self-start rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-medium text-[#09391C] hover:bg-amber-100/80"
+            >
+              Dismiss
+            </button>
+          </div>
+        ) : null}
+
         <div className="p-5 grid grid-cols-1 xl:grid-cols-2 gap-6">
           <div className="space-y-4">
             <h4 className="text-sm font-semibold text-[#09391C] uppercase tracking-wide">
@@ -404,37 +616,27 @@ export function SyndicationConnectionsPanel(props?: { anchorId?: string }) {
                 const pl = getPartnerLoginFields(p._id);
                 const authLabelRaw = p.authType ?? p.auth_type;
 
+                const isVerifyingHere = pendingVerification?.platformId === p._id;
+                const isConnectingHere = connectingPlatformId === p._id;
+
                 return (
                   <article key={p._id} className="rounded-xl border border-[#E8EDF3] p-4 bg-[#FAFCFF]">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="font-semibold text-[#09391C]">{p.platformName}</p>
-                        <p className="text-xs text-[#5A5D63]">{p.platformKey}</p>
-                        {authLabelRaw ? (
-                          <p className="text-[11px] text-[#5A5D63] mt-1 uppercase tracking-wide">
-                            Auth: {authLabelRaw}
-                          </p>
-                        ) : null}
+          
                       </div>
                       <span className="px-2 py-1 rounded-full text-xs bg-[#E9F7EA] text-[#0F6F32]">
                         {connected ? "Connected" : "Available"}
                       </span>
                     </div>
-                    {p.description ? (
-                      <p className="text-sm text-[#5A5D63] mt-2">{p.description}</p>
-                    ) : null}
-                    {p.config?.baseUrl ? (
-                      <p className="text-xs text-[#5A5D63] mt-1 inline-flex items-center gap-1">
-                        <Globe className="h-3 w-3" />
-                        {p.config.baseUrl}
-                      </p>
-                    ) : null}
-
+                    
                     {isPartnerLogin ? (
                       <div className="mt-4 space-y-3">
                         <p className="text-xs text-[#5A5D63]">
-                          Use the same email and password you use to log in on {p.platformName}. The hub sends them using
-                          standard HTTP Basic when syndicating listings (your password is never shown again after you save).
+                          Use the same email and password you use on {p.platformName}. Khabi-Teq contacts their login API
+                          server-to-server to confirm you are registered; your password is only stored after they verify you and
+                          notify us.
                         </p>
                         <label className="block text-xs font-medium text-[#09391C]">
                           Partner account email
@@ -463,19 +665,27 @@ export function SyndicationConnectionsPanel(props?: { anchorId?: string }) {
                             <button
                               type="button"
                               onClick={() => requestConnect(p, false)}
-                              disabled={connectingPlatformId === p._id}
+                              disabled={isConnectingHere || isVerifyingHere}
                               className="px-4 py-2 rounded-lg bg-[#09391C] text-white text-sm font-medium hover:bg-[#0d4d27] disabled:opacity-50"
                             >
-                              {connectingPlatformId === p._id ? "Connecting…" : "Connect"}
+                              {isVerifyingHere
+                                ? "Verifying with partner…"
+                                : isConnectingHere
+                                  ? "Connecting…"
+                                  : "Connect"}
                             </button>
                           ) : (
                             <button
                               type="button"
                               onClick={() => requestConnect(p, true)}
-                              disabled={connectingPlatformId === p._id}
+                              disabled={isConnectingHere || isVerifyingHere}
                               className="px-4 py-2 rounded-lg border border-[#09391C] text-[#09391C] text-sm font-medium hover:bg-[#F2FBF3] disabled:opacity-50"
                             >
-                              {connectingPlatformId === p._id ? "Updating…" : "Reconnect with new password"}
+                              {isVerifyingHere
+                                ? "Verifying with partner…"
+                                : isConnectingHere
+                                  ? "Updating…"
+                                  : "Reconnect with new password"}
                             </button>
                           )}
                         </div>

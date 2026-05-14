@@ -424,7 +424,7 @@ export default function DeveloperDashboard() {
         {/* At-a-glance metrics; full forms live on /dashboard/syndication and /dashboard/inspection-representatives */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-8">
           <SyndicationIntegrationSummary />
-          <InspectionRepresentativesSummary />
+          <InspectionRepresentativesSummary developerPropertyScoped />
         </div>
 
         {/* Stats Cards (same style as Agent) */}
@@ -597,7 +597,7 @@ export default function DeveloperDashboard() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold">Inspection representatives</h3>
-                  <p className="text-sm text-[#5A5D63]">Notification contacts for inspections</p>
+                  <p className="text-sm text-[#5A5D63]">Per-listing contacts for inspection notifications</p>
                 </div>
               </Link>
               <Link

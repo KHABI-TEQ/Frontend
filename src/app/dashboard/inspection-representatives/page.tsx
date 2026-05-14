@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useUserContext } from "@/context/user-context";
 import Loading from "@/components/loading-component/loading";
-import { InspectionRepresentativesSection } from "@/components/dashboard/inspection-representatives-section";
+import { PropertyInspectionRepresentativesSection } from "@/components/dashboard/property-inspection-representatives-section";
 
 function isDeveloperUser(user: Record<string, unknown> | null): boolean {
   if (!user) return false;
@@ -42,7 +42,7 @@ export default function DashboardInspectionRepresentativesPage() {
 
   return (
     <div className="min-h-screen bg-[#EEF1F1] py-4 sm:py-8">
-      <div className="container mx-auto px-4 sm:px-6 max-w-3xl">
+      <div className="container mx-auto px-4 sm:px-6 max-w-4xl">
         <Link
           href="/dashboard"
           className="inline-flex items-center gap-2 text-sm text-[#09391C] hover:text-[#0d4d27] font-medium mb-6"
@@ -52,9 +52,10 @@ export default function DashboardInspectionRepresentativesPage() {
         </Link>
         <h1 className="text-2xl sm:text-3xl font-bold text-[#09391C] font-display mb-2">Inspection representatives</h1>
         <p className="text-[#5A5D63] text-sm sm:text-base mb-6 max-w-2xl">
-          Manage contacts who receive inspection-related notifications by email or WhatsApp.
+          For each approved listing, manage who receives inspection-related notifications by email or WhatsApp for that
+          property only.
         </p>
-        <InspectionRepresentativesSection variant="developer" />
+        <PropertyInspectionRepresentativesSection />
       </div>
     </div>
   );
