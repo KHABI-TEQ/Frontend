@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { usePostPropertyContext } from "@/context/post-property-context";
 import { suggestProperty } from "@/services/aiFormService";
 import AiFillBlock from "@/components/ai-form-fill/AiFillBlock";
@@ -10,6 +10,18 @@ import {
   getPropertyFieldPrompt,
   propertyAllDonePrompt,
 } from "@/utils/aiInteractivePrompts";
+import {
+  applyFocusedPropertyAnswer,
+  briefTypeLabelToPropertyType,
+  canonicalPropertyAiFieldKey,
+  getPropertyAiMissingFields,
+  isPropertyAiFieldSkippable,
+  normalizePropertyAiCollectedData,
+  mergePropertyAiCollectedData,
+  markPropertyAiUserAnswer,
+  filterMissingPropertyAiFields,
+  PROPERTY_AI_FIELD,
+} from "@/utils/propertyAiFieldGuide";
 import { assistantMessageToSpeakable } from "@/utils/ttsText";
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
 import Cookies from "js-cookie";
@@ -32,16 +44,12 @@ function getSpeakableAssistantText(msg: { content: string; speakLine?: string })
 
 const SKIP_UTTERANCE_RE = /^\s*(please\s+)?skip\b/i;
 
-function isPropertyFieldSkippable(field: string): boolean {
-  const f = field.toLowerCase();
-  if (f.includes("key features")) return true;
-  return false;
-}
 
 function buildPropertyInteractiveReply(
   data: Record<string, unknown>,
   skipped: Set<string>,
-  questionVariant: number,
+  listingTypePreset?: string | null,
+  userAnsweredFields?: Set<string>,
 ): {
   content: string;
   speakLine?: string;
@@ -53,7 +61,15 @@ function buildPropertyInteractiveReply(
   locationOptionsOffset?: number;
   locationOptionsLabel?: string;
 } {
-  const missing = getMissingFieldsFromData(data).filter((f) => !skipped.has(f));
+  const normalized = normalizePropertyAiCollectedData({
+    ...data,
+    ...(listingTypePreset && !data.propertyType ? { propertyType: listingTypePreset } : {}),
+  });
+  const missing = filterMissingPropertyAiFields(
+    getPropertyAiMissingFields(normalized, { listingTypePreset }),
+    skipped,
+    userAnsweredFields ?? new Set(),
+  );
 
   if (missing.length === 0) {
     const done = propertyAllDonePrompt();
@@ -66,7 +82,7 @@ function buildPropertyInteractiveReply(
   }
 
   const focus = missing[0];
-  const { displayLine, speakLine } = getPropertyFieldPrompt(focus, questionVariant);
+  const { displayLine, speakLine } = getPropertyFieldPrompt(focus, 0);
 
   return {
     content: displayLine,
@@ -209,15 +225,6 @@ function withPropertyLocationOptions(
   return reply;
 }
 
-/** Returns true only if the value is non-empty and meaningful (not placeholder) */
-function isMeaningful(value: unknown): boolean {
-  if (value === undefined || value === null) return false;
-  if (typeof value === "string") return value.trim().length > 0;
-  if (typeof value === "number") return !Number.isNaN(value) && value > 0;
-  if (Array.isArray(value)) return value.length > 0;
-  return false;
-}
-
 function normalizedListingPropertyType(data: Record<string, unknown>): string {
   const t = String(data.propertyType || "").toLowerCase().trim();
   if (["sell", "rent", "shortlet", "jv"].includes(t)) return t;
@@ -293,119 +300,6 @@ function extractDocumentsFromText(text: string): string[] {
   return out;
 }
 
-function getMissingFieldsFromData(data: Record<string, unknown>): string[] {
-  const missing: string[] = [];
-
-  const propertyType = data.propertyType;
-  if (!isMeaningful(propertyType)) {
-    missing.push("property type — start with Sale, Rent, Shortlet, or JV (listing type on the form)");
-  }
-
-  const propertyCategory = data.propertyCategory;
-  if (!isMeaningful(propertyCategory)) {
-    missing.push("property category (e.g. Residential, Commercial, Land)");
-  }
-
-  const loc = data.location as Record<string, unknown> | undefined;
-  const hasState = loc && isMeaningful(loc.state);
-  const hasArea = loc && isMeaningful(loc.area);
-  const hasLga = loc && isMeaningful(loc.localGovernment);
-  if (!hasState) {
-    missing.push("state (required)");
-  } else if (!hasLga) {
-    missing.push("local government / LGA (required by the form)");
-  } else if (!hasArea) {
-    missing.push("area (required by the form)");
-  }
-
-  const price = data.price;
-  const priceDigits =
-    typeof price === "string" ? price.replace(/,/g, "").replace(/\D/g, "") : "";
-  const priceOk =
-    (typeof price === "number" && price > 0) ||
-    (typeof price === "string" && price.trim() !== "" && Number(priceDigits) > 0);
-  if (!priceOk) {
-    missing.push("price in Naira (required — comma-separated e.g. 85,000,000, as on the form)");
-  }
-
-  const description = data.description;
-  if (!isMeaningful(description)) {
-    missing.push("description of the property");
-  }
-
-  const add = data.additionalFeatures as Record<string, unknown> | undefined;
-  const bedrooms = add && (typeof add.noOfBedroom === "number" || add.noOfBedroom !== undefined) ? Number(add.noOfBedroom) : undefined;
-  const bathrooms = add && (typeof add.noOfBathroom === "number" || add.noOfBathroom !== undefined) ? Number(add.noOfBathroom) : undefined;
-  const toilets = add && (typeof add.noOfToilet === "number" || add.noOfToilet !== undefined) ? Number(add.noOfToilet) : undefined;
-  const hasBedrooms = typeof bedrooms === "number" && bedrooms >= 0;
-  const hasBathrooms = typeof bathrooms === "number" && bathrooms >= 0;
-  const hasToilets = typeof toilets === "number" && toilets >= 0;
-  if (hasBedrooms && (!hasBathrooms || !hasToilets)) {
-    if (!hasBathrooms && !hasToilets) {
-      missing.push("number of bathrooms and toilets");
-    } else if (!hasBathrooms) {
-      missing.push("number of bathrooms");
-    } else {
-      missing.push("number of toilets");
-    }
-  }
-
-  const propertyCondition = data.propertyCondition;
-  if (!isMeaningful(propertyCondition)) {
-    missing.push("property condition (e.g. new, fairly used, renovated)");
-  }
-
-  const typeOfBuilding = data.typeOfBuilding;
-  if (!isMeaningful(typeOfBuilding)) {
-    missing.push("type of building (e.g. flat, duplex, terrace, detached house)");
-  }
-
-  if (!hasBedrooms && (hasBathrooms || hasToilets)) {
-    missing.push("number of bedrooms");
-  }
-  const isResidential = isMeaningful(propertyCategory) &&
-    String(propertyCategory).toLowerCase().includes("residential");
-  if (isResidential && !hasBedrooms && !hasBathrooms && !hasToilets) {
-    missing.push("number of bedrooms, bathrooms, and toilets");
-  }
-
-  const parking = add && (add.noOfCarPark !== undefined || add.parkingSpaces !== undefined)
-    ? Number(add.noOfCarPark ?? add.parkingSpaces) : undefined;
-  const hasParking = typeof parking === "number" && parking >= 0;
-  if (!hasParking && (hasBedrooms || isMeaningful(propertyCategory))) {
-    missing.push("parking (number of spaces or none)");
-  }
-
-  const documents = data.documents ?? data.docOnProperty;
-  const docList = Array.isArray(documents) ? documents : [];
-  const docNames = docList.map((d) => (typeof d === "string" ? d : (d as { docName?: string })?.docName)).filter(Boolean);
-  const hasDocuments = docNames.length > 0;
-  if (!hasDocuments) {
-    missing.push("property documents / title (e.g. C of O, governor's consent)");
-  }
-
-  const landSizeObj = data.landSize as { measurementType?: string; size?: number } | undefined;
-  const landSizeType = isMeaningful(landSizeObj?.measurementType);
-  const landSizeNum = landSizeObj?.size != null && typeof landSizeObj.size === "number" && !Number.isNaN(landSizeObj.size);
-  const landSizeFromAdd = add && (add.landSize !== undefined || add.plotSize !== undefined);
-  if (!landSizeType || !landSizeNum) {
-    if (!landSizeType && !landSizeFromAdd) {
-      missing.push("land size measurement type (e.g. Square Meter, Plot, Hectares)");
-    }
-    if (!landSizeNum && !landSizeFromAdd) {
-      missing.push("land size (numeric value, e.g. 500)");
-    }
-  }
-
-  const features = data.features;
-  const hasFeatures = Array.isArray(features) && features.length > 0;
-  if (!hasFeatures) {
-    missing.push("key features (e.g. parking, generator, security, water supply)");
-  }
-
-  return missing;
-}
-
 interface PropertyAiConversationFlowProps {
   /** Brief type label for display, e.g. "Outright Sales" */
   briefTypeLabel: string;
@@ -432,13 +326,45 @@ export default function PropertyAiConversationFlow({
 
   const [loading, setLoading] = useState(false);
   const skippedFieldsRef = useRef<Set<string>>(new Set());
+  /** Fields the user already answered — never ask again even if the suggest API omits them. */
+  const userAnsweredFieldsRef = useRef<Set<string>>(new Set());
   const collectedDataRef = useRef<Record<string, unknown> | null>(null);
-  const propertyQuestionVariantRef = useRef(0);
   /** Default on: speak each assistant reply automatically; user can mute via toggle or stop via speaker icon. */
   const [playRepliesAloud, setPlayRepliesAloud] = useState(true);
   const [selectedAreaOptions, setSelectedAreaOptions] = useState<string[]>([]);
   const prevMessageCountRef = useRef(0);
+  const conversationScrollRef = useRef<HTMLDivElement>(null);
+  const inputSectionRef = useRef<HTMLDivElement>(null);
   const { speak, stop, speaking } = useSpeechSynthesis({ lang: "en-NG", rate: 0.95 });
+
+  /** Scroll only the conversation panel — avoid scrollIntoView on the page (jumps to top). */
+  const scrollConversationToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
+    requestAnimationFrame(() => {
+      const container = conversationScrollRef.current;
+      if (container) {
+        container.scrollTo({ top: container.scrollHeight, behavior });
+      }
+    });
+  }, []);
+
+  const keepInputSectionInView = useCallback(() => {
+    requestAnimationFrame(() => {
+      inputSectionRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    });
+  }, []);
+
+  const listingTypePreset =
+    propertyData.propertyType || briefTypeLabelToPropertyType(briefTypeLabel) || null;
+
+  useEffect(() => {
+    if (!listingTypePreset) return;
+    setAiCollectedData((prev) =>
+      normalizePropertyAiCollectedData({
+        ...(prev || {}),
+        propertyType: listingTypePreset,
+      }),
+    );
+  }, [listingTypePreset, setAiCollectedData]);
 
   useEffect(() => {
     collectedDataRef.current = aiCollectedData;
@@ -447,7 +373,7 @@ export default function PropertyAiConversationFlow({
   useEffect(() => {
     if (aiConversationMessages.length === 0) {
       skippedFieldsRef.current = new Set();
-      propertyQuestionVariantRef.current = 0;
+      userAnsweredFieldsRef.current = new Set();
       setSelectedAreaOptions([]);
     }
   }, [aiConversationMessages.length]);
@@ -567,7 +493,8 @@ export default function PropertyAiConversationFlow({
           buildPropertyInteractiveReply(
             currentData,
             skippedFieldsRef.current,
-            propertyQuestionVariantRef.current++,
+            listingTypePreset,
+            userAnsweredFieldsRef.current,
           ),
           currentData,
         );
@@ -645,10 +572,14 @@ export default function PropertyAiConversationFlow({
           const lastFocus = lastAssist?.focusedMissingField;
           const data = { ...(collectedDataRef.current || {}) } as Record<string, unknown>;
           const skipped = skippedFieldsRef.current;
-          const missingBefore = getMissingFieldsFromData(data).filter((f) => !skipped.has(f));
+          const missingBefore = filterMissingPropertyAiFields(
+            getPropertyAiMissingFields(data, { listingTypePreset }),
+            skipped,
+            userAnsweredFieldsRef.current,
+          );
           const toSkip =
             lastFocus && missingBefore.includes(lastFocus) ? lastFocus : missingBefore[0];
-          if (toSkip && !isPropertyFieldSkippable(toSkip)) {
+          if (toSkip && !isPropertyAiFieldSkippable(canonicalPropertyAiFieldKey(toSkip))) {
             const label = fieldLabelOnly(toSkip);
             const reqLine = `${label} is required. Please answer in your next message.`;
             return [
@@ -665,12 +596,13 @@ export default function PropertyAiConversationFlow({
               },
             ];
           }
-          if (toSkip) skipped.add(toSkip);
+          if (toSkip) skipped.add(canonicalPropertyAiFieldKey(toSkip));
           const reply = withPropertyLocationOptions(
             buildPropertyInteractiveReply(
               data,
               skipped,
-              propertyQuestionVariantRef.current++,
+              listingTypePreset,
+              userAnsweredFieldsRef.current,
             ),
             data,
           );
@@ -706,11 +638,11 @@ export default function PropertyAiConversationFlow({
     const storedListing = normalizedListingPropertyType((collectedDataRef.current || {}) as Record<string, unknown>);
     const detectedListing =
       detectListingPropertyTypeFromText(trimmed) || detectListingPropertyTypeFromText(accumulated);
-    const effectiveListing = storedListing || detectedListing;
+    const effectiveListing = storedListing || listingTypePreset || detectedListing;
 
     if (!effectiveListing) {
       const typeField = "property type — start with Sale, Rent, Shortlet, or JV (listing type on the form)";
-      const prompt = getPropertyFieldPrompt(typeField, propertyQuestionVariantRef.current++);
+      const prompt = getPropertyFieldPrompt(typeField, 0);
       setAiConversationMessages((prev) => [
         ...prev,
         { role: "user", content: trimmed },
@@ -732,6 +664,18 @@ export default function PropertyAiConversationFlow({
     try {
       const lastAssist = [...aiConversationMessages].reverse().find((m) => m.role === "assistant");
       const focus = lastAssist?.focusedMissingField;
+      markPropertyAiUserAnswer(userAnsweredFieldsRef.current, focus, trimmed);
+      const localBeforeApi = applyFocusedPropertyAnswer(
+        trimmed,
+        focus,
+        normalizePropertyAiCollectedData({
+          ...(collectedDataRef.current || {}),
+          propertyType: effectiveListing,
+        }),
+      );
+      setAiCollectedData(localBeforeApi);
+      collectedDataRef.current = localBeforeApi;
+
       const contextual = focus
         ? `${accumulated || trimmed}\n\n[The user is answering this specific field: ${focus}]`
         : accumulated || trimmed;
@@ -744,7 +688,8 @@ export default function PropertyAiConversationFlow({
         ]);
         return;
       }
-      let data = { ...(res.data || {}), propertyType: effectiveListing } as Record<string, unknown>;
+      let data = mergePropertyAiCollectedData(localBeforeApi, res.data || {}, effectiveListing);
+      data = applyFocusedPropertyAnswer(trimmed, focus, data);
       const lgaUser = extractLocalGovernmentFromText(trimmed);
       const lgaAccumulated = extractLocalGovernmentFromText(accumulated || trimmed);
       const parsedLga = lgaUser || lgaAccumulated;
@@ -779,12 +724,22 @@ export default function PropertyAiConversationFlow({
           },
         };
       }
+      data = normalizePropertyAiCollectedData(data);
+      const focusKey = canonicalPropertyAiFieldKey(focus || "");
+      const stillMissing = getPropertyAiMissingFields(data, { listingTypePreset }).map((f) =>
+        canonicalPropertyAiFieldKey(f),
+      );
+      if (!stillMissing.includes(focusKey)) {
+        userAnsweredFieldsRef.current.add(focusKey);
+      }
       setAiCollectedData(data);
+      collectedDataRef.current = data;
       const reply = withPropertyLocationOptions(
         buildPropertyInteractiveReply(
           data,
           skippedFieldsRef.current,
-          propertyQuestionVariantRef.current++,
+          listingTypePreset,
+          userAnsweredFieldsRef.current,
         ),
         data,
       );
@@ -813,7 +768,13 @@ export default function PropertyAiConversationFlow({
     } finally {
       setLoading(false);
     }
-  }, [aiCollectedData, aiConversationMessages, setAiConversationMessages, setAiCollectedData]);
+  }, [
+    aiCollectedData,
+    aiConversationMessages,
+    listingTypePreset,
+    setAiConversationMessages,
+    setAiCollectedData,
+  ]);
 
   // Auto-play latest assistant reply when TTS is enabled (Web Speech API — SpeechSynthesis).
   useEffect(() => {
@@ -827,6 +788,33 @@ export default function PropertyAiConversationFlow({
     }
     prevMessageCountRef.current = n;
   }, [aiConversationMessages, playRepliesAloud, speak]);
+
+  // Scroll the thread inside its panel; keep the send box in view on the main page.
+  useEffect(() => {
+    if (aiConversationMessages.length === 0 && !loading) return;
+    const behavior: ScrollBehavior =
+      aiConversationMessages.length <= 2 ? "auto" : "smooth";
+    scrollConversationToBottom(behavior);
+    keepInputSectionInView();
+    const t = window.setTimeout(() => {
+      scrollConversationToBottom(behavior);
+      keepInputSectionInView();
+    }, 120);
+    return () => window.clearTimeout(t);
+  }, [
+    aiConversationMessages,
+    loading,
+    scrollConversationToBottom,
+    keepInputSectionInView,
+  ]);
+
+  /** Price step: digits-only field with commas; otherwise format long digit runs in free text. */
+  const propertyAmountEntryMode = useMemo(() => {
+    const last = [...aiConversationMessages].reverse().find((m) => m.role === "assistant") as
+      | { focusedMissingField?: string }
+      | undefined;
+    return canonicalPropertyAiFieldKey(last?.focusedMissingField ?? "") === PROPERTY_AI_FIELD.PRICE;
+  }, [aiConversationMessages]);
 
   const handleSuggest = useCallback(
     async (userInput: string) => {
@@ -889,7 +877,7 @@ export default function PropertyAiConversationFlow({
 
   const handleBackToMode = useCallback(() => {
     skippedFieldsRef.current = new Set();
-    propertyQuestionVariantRef.current = 0;
+    userAnsweredFieldsRef.current = new Set();
     setPostingMode(null);
     setAiConversationMessages([]);
     setAiCollectedData(null);
@@ -912,7 +900,7 @@ export default function PropertyAiConversationFlow({
   }
 
   return (
-    <div className="rounded-xl border border-[#8DDB90]/40 bg-[#f0fdf4]/60 p-4 md:p-6 space-y-4">
+    <div className="w-full rounded-xl border border-[#8DDB90]/40 bg-[#f0fdf4]/60 p-4 md:p-6 space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-[#09391C] flex items-center gap-2">
           <MessageSquare className="h-5 w-5 text-[#8DDB90]" />
@@ -927,8 +915,9 @@ export default function PropertyAiConversationFlow({
         </button>
       </div>
       <p className="text-sm text-[#5A5D63]">
-        <strong>Start with the listing type</strong> — <strong>Sale</strong>, <strong>Rent</strong>, <strong>Shortlet</strong>, or <strong>JV</strong> (same as the manual form). The AI then asks for <strong>one detail at a time</strong>. Use comma-separated Naira amounts (e.g.{" "}
-        <span className="whitespace-nowrap">85,000,000</span>). Say <strong>skip</strong> where allowed. When you&apos;re ready, use <strong>I&apos;m done</strong> for the summary and image upload.
+        The AI asks for <strong>one form field at a time</strong> (category, location, price, rooms, parking, documents, etc.) based on your{" "}
+        <strong>{briefTypeLabel}</strong> listing type and property category — same fields as the manual form. Use comma-separated Naira amounts (e.g.{" "}
+        <span className="whitespace-nowrap">85,000,000</span>). Say <strong>skip</strong> only for optional key features. When ready, use <strong>I&apos;m done</strong> for the summary and image upload.
       </p>
       <p className="text-xs text-[#5A5D63] italic">
         Tip: If voice input fails (e.g. network), type instead.
@@ -950,14 +939,13 @@ export default function PropertyAiConversationFlow({
         </span>
       </label>
 
-      {loading && (
-        <div className="flex items-center gap-3 rounded-lg border border-[#8DDB90]/50 bg-[#f0fdf4] px-4 py-3 text-sm text-[#09391C]">
-          <Loader2 className="h-5 w-5 flex-shrink-0 animate-spin text-[#8DDB90]" aria-hidden />
-          <span>Reading your description and preparing suggestions…</span>
-        </div>
-      )}
-
-      <div className="bg-white rounded-lg border border-gray-200 max-h-64 overflow-y-auto p-4 space-y-3">
+      <div
+        ref={conversationScrollRef}
+        className="bg-white rounded-lg border border-gray-200 w-full min-h-[20rem] max-h-[min(70vh,36rem)] overflow-y-auto overscroll-contain scroll-smooth p-4 md:p-5 space-y-3"
+        role="log"
+        aria-live="polite"
+        aria-label="Property listing conversation"
+      >
         {aiConversationMessages.length === 0 ? (
           <p className="text-sm text-[#5A5D63] italic">
             Example: &quot;Sale — duplex in Ikoyi…&quot; or &quot;Rent, 3-bed in Surulere…&quot; You must include Sale, Rent, Shortlet, or JV.
@@ -989,10 +977,10 @@ export default function PropertyAiConversationFlow({
                 </div>
               )}
               <div
-                className={`max-w-[85%] rounded-lg px-4 py-2 text-sm ${
+                className={`rounded-lg px-4 py-2.5 text-sm ${
                   msg.role === "user"
-                    ? "bg-[#09391C] text-white"
-                    : "bg-gray-100 text-[#09391C]"
+                    ? "max-w-[min(100%,28rem)] bg-[#09391C] text-white"
+                    : "max-w-[min(100%,42rem)] bg-gray-100 text-[#09391C]"
                 }`}
               >
                 {msg.role === "assistant" &&
@@ -1046,16 +1034,33 @@ export default function PropertyAiConversationFlow({
             </div>
           ))
         )}
+        {loading && (
+          <div className="flex gap-2 justify-start">
+            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#8DDB90]/20 flex items-center justify-center">
+              <Bot className="h-4 w-4 text-[#09391C]" aria-hidden />
+            </div>
+            <div className="flex items-center gap-2 rounded-lg bg-gray-100 px-4 py-2.5 text-sm text-[#09391C]">
+              <Loader2 className="h-4 w-4 flex-shrink-0 animate-spin text-[#8DDB90]" aria-hidden />
+              <span>Reading your description and preparing suggestions…</span>
+            </div>
+          </div>
+        )}
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div ref={inputSectionRef} className="flex flex-col gap-3 scroll-mt-4">
         <AiFillBlock
           title=""
-          placeholder="e.g. Sale — 3-bedroom in Lekki, Lagos, price 85,000,000…"
+          placeholder={
+            propertyAmountEntryMode
+              ? "e.g. 85,000,000"
+              : "e.g. Sale — 3-bedroom in Lekki, Lagos, price 85,000,000…"
+          }
           buttonLabel={loading ? "Sending…" : "Send"}
           onSuggest={handleSuggest}
           disabled={loading}
           maxHeight="80px"
+          amountEntryMode={propertyAmountEntryMode}
+          formatAmountRunsInText={!propertyAmountEntryMode}
         />
         <div className="flex flex-wrap gap-2 items-center">
           {aiConversationMessages.some((m) => m.role === "assistant") && (

@@ -61,6 +61,15 @@ export function normalizeNairaAmountTyping(raw: string, maxDigits = 15): string 
   return formatNairaThousands(d);
 }
 
+/**
+ * In mixed sentences, format digit runs of 4+ as comma-separated thousands
+ * (e.g. "Lekki 50000000" → "Lekki 50,000,000") while preserving other text.
+ */
+export function formatAmountRunsInText(raw: string, minDigits = 4): string {
+  const re = new RegExp(`\\d{${minDigits},}`, "g");
+  return (raw || "").replace(re, (match) => formatNairaThousands(match));
+}
+
 function tokenizeMoneyPhrase(text: string): string[] {
   let t = text
     .toLowerCase()

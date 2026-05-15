@@ -5,6 +5,7 @@ import { Sparkles, Mic, Loader2, Send } from "lucide-react";
 import toast from "react-hot-toast";
 import { playSpeechEndBeep } from "@/utils/playSpeechEndBeep";
 import {
+  formatAmountRunsInText,
   mergeVoiceTextWithSpokenAmount,
   normalizeNairaAmountTyping,
   stripNairaAmountToDigits,
@@ -30,6 +31,11 @@ export interface AiFillBlockProps {
    * become comma-formatted digits in the box; submit sends digits only. Typing is auto-formatted with commas.
    */
   amountEntryMode?: boolean;
+  /**
+   * When true (and not amountEntryMode): format digit runs of 4+ with commas as the user types
+   * (e.g. "Lekki 50000000" → "Lekki 50,000,000").
+   */
+  formatAmountRunsInText?: boolean;
 }
 
 /** Rebuild full utterance from all results each event — avoids repeating / duplicating partials. */
@@ -64,6 +70,7 @@ export default function AiFillBlock({
   disabled = false,
   maxHeight = "120px",
   amountEntryMode = false,
+  formatAmountRunsInText: formatAmountRunsInTextProp = false,
 }: AiFillBlockProps) {
   const [input, setInput] = useState("");
   const canSend = input.trim().length > 0;
@@ -259,6 +266,7 @@ export default function AiFillBlock({
         toSend = digits;
       }
     }
+    const pageScrollY = typeof window !== "undefined" ? window.scrollY : 0;
     setLoading(true);
     try {
       await onSuggest(toSend);
@@ -268,6 +276,9 @@ export default function AiFillBlock({
       toast.error((e as Error)?.message || "Something went wrong.");
     } finally {
       setLoading(false);
+      if (typeof window !== "undefined") {
+        requestAnimationFrame(() => window.scrollTo({ top: pageScrollY, behavior: "auto" }));
+      }
     }
   }, [amountEntryMode, input, onSuggest]);
 
@@ -339,9 +350,16 @@ export default function AiFillBlock({
         <div className="relative flex-1">
           <textarea
             value={input}
-            onChange={(e) =>
-              setInput(amountEntryMode ? normalizeNairaAmountTyping(e.target.value) : e.target.value)
-            }
+            onChange={(e) => {
+              const v = e.target.value;
+              if (amountEntryMode) {
+                setInput(normalizeNairaAmountTyping(v));
+              } else if (formatAmountRunsInTextProp) {
+                setInput(formatAmountRunsInText(v));
+              } else {
+                setInput(v);
+              }
+            }}
             placeholder={placeholder}
             disabled={disabled || listening}
             rows={3}

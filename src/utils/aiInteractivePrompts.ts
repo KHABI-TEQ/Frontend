@@ -505,6 +505,18 @@ export function getPropertyFieldPrompt(
     return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
   }
 
+  if (f.includes("bedroom") && f.includes("bathroom") && f.includes("toilet")) {
+    const speak = pickVariant(
+      [
+        "How many bedrooms, bathrooms, and toilets?",
+        "Bedrooms, bathrooms, and toilet counts?",
+        "Room counts: bedrooms, bathrooms, and toilets?",
+      ],
+      variant,
+    );
+    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+  }
+
   if (f.includes("bathroom") && f.includes("toilet")) {
     const speak = pickVariant(["How many bathrooms and toilets?", "Bath and toilet counts?", "Bathrooms and toilets?"], variant);
     return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
@@ -536,7 +548,14 @@ export function getPropertyFieldPrompt(
   }
 
   if (f.includes("parking")) {
-    const speak = pickVariant(["Parking spaces?", "How many car parks?", "Parking?"], variant);
+    const speak = pickVariant(
+      [
+        "How many parking spaces? Say a number, or 0 for none.",
+        "Number of car parks? Use 0 if there is no parking.",
+        "Parking spaces count?",
+      ],
+      variant,
+    );
     return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
   }
 
@@ -545,13 +564,20 @@ export function getPropertyFieldPrompt(
     return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
   }
 
-  if (f.includes("measurement type")) {
-    const speak = pickVariant(["Land measured in what unit?", "Measurement type?", "Plot or square metres?"], variant);
+  if (f.includes("land size")) {
+    const speak = pickVariant(
+      [
+        "Land size: give the measurement unit and numeric size, e.g. 500 Square Meter or 2 Acres.",
+        "What is the land size and unit (Plot, Acres, Square Meter)?",
+        "Land size with unit?",
+      ],
+      variant,
+    );
     return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
   }
 
-  if (f.includes("land size")) {
-    const speak = pickVariant(["Land size number?", "Size of the land?", "Numeric land size?"], variant);
+  if (f.includes("measurement type")) {
+    const speak = pickVariant(["Land measured in what unit?", "Measurement type?", "Plot or square metres?"], variant);
     return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
   }
 
