@@ -40,6 +40,7 @@ const initialForm = {
   platformKeySuggestion: "",
   authType: "partner_login",
   baseUrl: "",
+  loginUrl: "",
   acceptedPropertyTypes: [] as SyndicationAcceptedPropertyType[],
   webhookSupport: true,
   docsUrl: "",
@@ -52,6 +53,34 @@ const inputClass =
 const labelClass = "block text-xs font-semibold uppercase tracking-wide text-[#4A5560] mb-1.5";
 
 /** Partner must supply a full HTTPS URL whose path ends with /login. */
+function validateBaseUrl(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return "Enter your API BASE URL.";
+
+  const lower = trimmed.toLowerCase();
+  if (!lower.startsWith("https://")) {
+    return "URL must start with https://";
+  }
+
+  let u: URL;
+  try {
+    u = new URL(trimmed);
+  } catch {
+    return "Enter a valid URL (e.g. https://api.example.com/syndication).";
+  }
+
+  if (u.protocol !== "https:") {
+    return "Use https:// only.";
+  }
+
+  if (!u.hostname || u.hostname.length < 1) {
+    return "URL must include a host (e.g. api.yourplatform.com).";
+  }
+
+  return null;
+}
+
+
 function validateApiLoginFullUrl(raw: string): string | null {
   const trimmed = raw.trim();
   if (!trimmed) return "Enter your API login full URL.";
@@ -88,6 +117,10 @@ function normalizeApiLoginFullUrlForSubmit(raw: string): string {
   return raw.trim();
 }
 
+function normalizeBaseUrlForSubmit(raw: string): string {
+  return raw.trim();
+}
+
 function Field({
   label,
   children,
@@ -107,7 +140,8 @@ export default function PartnerApiPage() {
   const [form, setForm] = useState(initialForm);
   const [submitting, setSubmitting] = useState(false);
   const [apiLoginUrlError, setApiLoginUrlError] = useState<string | null>(null);
-
+  const [baseUrlError, setBaseUrlError] = useState<string | null>(null);
+  
   const toggleAcceptedPropertyType = (value: SyndicationAcceptedPropertyType) => {
     setForm((s) => {
       const next = new Set(s.acceptedPropertyTypes);
@@ -120,35 +154,58 @@ export default function PartnerApiPage() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (form.acceptedPropertyTypes.length === 0) {
-      toast.error("Select at least one property type your platform accepts.");
+      toast.error("Select at least one property use case your platform accepts.");
       return;
     }
-    const urlErr = validateApiLoginFullUrl(form.baseUrl);
+    const urlErr = validateBaseUrl(form.baseUrl);
+    const loginUrlErr = validateApiLoginFullUrl(form.loginUrl);
     if (urlErr) {
-      setApiLoginUrlError(urlErr);
+      setBaseUrlError(urlErr);
       toast.error(urlErr);
+      return;
+    }
+    setBaseUrlError(null);
+    if (loginUrlErr) {
+      setApiLoginUrlError(loginUrlErr);
+      toast.error(loginUrlErr);
       return;
     }
     setApiLoginUrlError(null);
     setSubmitting(true);
+
     try {
       const acceptedPropertyTypes = ACCEPTED_PROPERTY_TYPE_OPTIONS.map((o) => o.value).filter((v) =>
         form.acceptedPropertyTypes.includes(v),
       );
-      const baseUrl = normalizeApiLoginFullUrlForSubmit(form.baseUrl);
+      const baseUrl = normalizeBaseUrlForSubmit(form.baseUrl);
+      const loginUrl = normalizeApiLoginFullUrlForSubmit(form.loginUrl);
+
+      /** Explicit body so `baseUrl` and `loginUrl` are always present (camelCase) for the syndication application API. */
+      const payload = {
+        companyName: form.companyName.trim(),
+        contactName: form.contactName.trim(),
+        contactEmail: form.contactEmail.trim(),
+        contactPhone: form.contactPhone.trim(),
+        platformName: form.platformName.trim(),
+        platformKeySuggestion: form.platformKeySuggestion.trim(),
+        authType: "partner_login" as const,
+        baseUrl,
+        loginUrl,
+        acceptedPropertyTypes,
+        webhookSupport: form.webhookSupport,
+        docsUrl: form.docsUrl.trim() || undefined,
+        notes: form.notes.trim() || undefined,
+      };
+
       const res = await POST_REQUEST(
         `${URLS.BASE}${URLS.syndicationPlatformApplications}`,
-        {
-          ...form,
-          baseUrl,
-          authType: "partner_login",
-          acceptedPropertyTypes,
-        },
+        payload,
       );
       if (res?.success) {
         toast.success(res.message || "Platform application submitted successfully.");
         setForm(initialForm);
         setApiLoginUrlError(null);
+        setBaseUrlError(null);
       } else {
         toast.error(res?.message || "Unable to submit application.");
       }
@@ -344,11 +401,11 @@ export default function PartnerApiPage() {
                       />
                     </Field>
                     <div className="md:col-span-2">
-                      <Field label="Property types you accept *">
+                      <Field label="Property use cases you accept *">
                         <fieldset className="rounded-xl border border-[#E8EEF4] bg-[#FAFCFE] p-4">
                           <legend className="sr-only">Accepted property listing types</legend>
                           <p className="text-xs text-[#5A6570] mb-3 leading-relaxed">
-                            Select every listing type you allow to be syndicated to your platform.
+                            Select every listing use cases you allow to be syndicated to your platform.
                           </p>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {ACCEPTED_PROPERTY_TYPE_OPTIONS.map(({ value, label }) => (
@@ -370,31 +427,6 @@ export default function PartnerApiPage() {
                       </Field>
                     </div>
                     <div className="md:col-span-2">
-                    <Field label="Authentication (hub → your API)">
-                      <div
-                        className={`${inputClass} bg-[#FAFCFE] text-[#3D454D] cursor-default`}
-                        role="group"
-                        aria-label="Authentication type"
-                      >
-                        <p className="font-semibold text-[#09391C]">Basic Login</p>
-                        <p className="text-xs text-[#5A6570] mt-2 leading-relaxed">
-                          All partner integrations use{" "}
-                          <code className="font-mono text-[11px] bg-white/80 px-1 py-0.5 rounded border border-[#E3E8EF]">
-                            authType: &quot;partner_login&quot;
-                          </code>
-                          . After approval, hub agents and developers connect with their{" "}
-                          <strong className="text-[#09391C]">Basic Login email</strong> and{" "}
-                          <strong className="text-[#09391C]">Basic Login password</strong> — the same{" "}
-                          <strong className="text-[#09391C]">email</strong> and{" "}
-                          <strong className="text-[#09391C]">password</strong> they use on your platform. The hub stores that
-                          pair and sends syndication requests using standard HTTP Basic built from it (see the{" "}
-                          <Link href="/syndication-integration-guide" className="text-[#09391C] font-medium underline">
-                            integration guide
-                          </Link>
-                          ).
-                        </p>
-                      </div>
-                    </Field>
                     </div>
                   </div>
                 </div>
@@ -405,18 +437,43 @@ export default function PartnerApiPage() {
                     Technical details
                   </div>
                   <div className="grid grid-cols-1 gap-4">
+                  <Field label="API BASE URL *">
+                      <input
+                        className={`${inputClass} ${baseUrlError ? "border-red-400 focus:border-red-500 focus:ring-red-200/50" : ""}`}
+                        placeholder="https://api.yourplatform.com/syndication"
+                        value={form.baseUrl}
+                        onChange={(e) => setForm((s) => ({ ...s, baseUrl: e.target.value }))}
+                        onBlur={() => {
+                          const err = validateBaseUrl(form.baseUrl);
+                          setBaseUrlError(form.baseUrl.trim() ? err : null);
+                        }}
+                        aria-invalid={Boolean(baseUrlError)}
+                        aria-describedby={baseUrlError ? "base-url-hint base-url-error" : "base-url-hint"}
+                        autoComplete="url"
+                        required
+                      />
+                      <p id="base-url-hint" className="mt-1.5 text-xs text-[#5A6570] leading-relaxed">Must start with{" "}
+                        <code className="font-mono text-[11px] bg-[#F0F4F8] px-1 rounded">https://</code>, include your API
+                        host and path.
+                      </p>
+                    {baseUrlError ? (
+                      <p id="base-url-error" role="alert" className="mt-1.5 text-xs font-medium text-red-600">
+                        {baseUrlError}
+                      </p>
+                    ) : null}
+                    </Field> 
                     <Field label="API LOGIN FULL URL *">
                       <input
                         className={`${inputClass} ${apiLoginUrlError ? "border-red-400 focus:border-red-500 focus:ring-red-200/50" : ""}`}
                         placeholder="https://api.yourplatform.com/v1/login"
-                        value={form.baseUrl}
+                        value={form.loginUrl}
                         onChange={(e) => {
                           setApiLoginUrlError(null);
-                          setForm((s) => ({ ...s, baseUrl: e.target.value }));
+                          setForm((s) => ({ ...s, loginUrl: e.target.value }));
                         }}
                         onBlur={() => {
-                          const err = validateApiLoginFullUrl(form.baseUrl);
-                          setApiLoginUrlError(form.baseUrl.trim() ? err : null);
+                          const err = validateApiLoginFullUrl(form.loginUrl);
+                          setApiLoginUrlError(form.loginUrl.trim() ? err : null);
                         }}
                         aria-invalid={Boolean(apiLoginUrlError)}
                         aria-describedby={apiLoginUrlError ? "api-login-url-hint api-login-url-error" : "api-login-url-hint"}
@@ -435,6 +492,7 @@ export default function PartnerApiPage() {
                         </p>
                       ) : null}
                     </Field>
+                    
                     <Field label="Documentation URL">
                       <input
                         className={inputClass}
@@ -468,6 +526,32 @@ export default function PartnerApiPage() {
                     </span>
                   </label>
                 </div>
+
+                <Field label="Authentication (hub → your API)">
+                      <div
+                        className={`${inputClass} bg-[#FAFCFE] text-[#3D454D] cursor-default`}
+                        role="group"
+                        aria-label="Authentication type"
+                      >
+                        <p className="font-semibold text-[#09391C]">Basic Login</p>
+                        <p className="text-xs text-[#5A6570] mt-2 leading-relaxed">
+                          All partner integrations use{" "}
+                          <code className="font-mono text-[11px] bg-white/80 px-1 py-0.5 rounded border border-[#E3E8EF]">
+                            authType: &quot;partner_login&quot;
+                          </code>
+                          . After approval, hub agents and developers connect with their{" "}
+                          <strong className="text-[#09391C]">Basic Login email</strong> and{" "}
+                          <strong className="text-[#09391C]">Basic Login password</strong> — the same{" "}
+                          <strong className="text-[#09391C]">email</strong> and{" "}
+                          <strong className="text-[#09391C]">password</strong> they use on your platform. The hub stores that
+                          pair and sends syndication requests using standard HTTP Basic built from it (see the{" "}
+                          <Link href="/syndication-integration-guide" className="text-[#09391C] font-medium underline">
+                            integration guide
+                          </Link>
+                          ).
+                        </p>
+                      </div>
+                    </Field>
 
                 <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4 pt-2 border-t border-[#EEF2F6]">
                   <p className="text-xs text-[#7A8490] max-w-md">

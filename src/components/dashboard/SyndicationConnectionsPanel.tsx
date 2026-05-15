@@ -7,6 +7,9 @@ import { Globe, Link2, Loader2, Power, RefreshCw, X } from "lucide-react";
 import { GET_REQUEST, PATCH_REQUEST, POST_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 
+/** Partner connect / reconnect success: keep on screen long enough to read (ms). */
+const SYNDICATION_CONNECTION_SUCCESS_TOAST_MS = 16000;
+
 interface ApprovedPlatform {
   _id: string;
   platformKey: string;
@@ -335,6 +338,7 @@ export function SyndicationConnectionsPanel(props?: { anchorId?: string }) {
         if (status === "completed") {
           toast.success(
             `${platformName} confirmed your login through their systems. Your syndication connection is now active.`,
+            { duration: SYNDICATION_CONNECTION_SUCCESS_TOAST_MS },
           );
           setPartnerLoginFields(platformId, { password: "" });
           verificationPollRunId.current += 1;
@@ -449,7 +453,12 @@ export function SyndicationConnectionsPanel(props?: { anchorId?: string }) {
         }
 
         if (res?.success) {
-          toast.success(byPlatformId.has(platformId) ? "Connection updated." : "Platform connected.");
+          toast.success(
+            byPlatformId.has(platformId)
+              ? "Your partner platform connection was updated successfully. Syndication will use your new credentials."
+              : "You are now connected to this partner platform. Your listings can be syndicated when you enable this connection.",
+            { duration: SYNDICATION_CONNECTION_SUCCESS_TOAST_MS },
+          );
           setPartnerLoginFields(platformId, { password: "" });
           if (at !== "partner_login") {
             setApiKeys((prev) => ({ ...prev, [platformId]: "" }));

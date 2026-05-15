@@ -391,7 +391,19 @@ export default function SyndicationIntegrationGuidePage() {
                 </>,
               ],
               [
-                "loginFullUrl",
+                "baseUrl",
+                "string",
+                <>
+                  <strong className="text-[#09391C]">API BASE URL</strong> of your partner platform (HTTPS): the syndication root
+                  the hub uses for outbound listing POSTs (see Section 3). Same value as the &quot;API BASE URL&quot; field on{" "}
+                  <Link href="/partner-api" className="text-[#09391C] font-medium underline">
+                    /partner-api
+                  </Link>
+                  .
+                </>,
+              ],
+              [
+                "loginUrl",
                 "string",
                 <>
                   <strong className="text-[#09391C]">API Login Full URL</strong> (HTTPS, path ending in{" "}
@@ -457,7 +469,7 @@ export default function SyndicationIntegrationGuidePage() {
         >
           <h3 className="text-sm font-bold text-[#09391C] mb-2">Why we need your API Login Full URL</h3>
           <p className="text-sm text-[#5A6570] leading-relaxed mb-4">
-            The <code className="font-mono text-xs bg-[#EEF1F1] px-1.5 py-0.5 rounded">loginFullUrl</code> you submit on the{" "}
+            The <code className="font-mono text-xs bg-[#EEF1F1] px-1.5 py-0.5 rounded">loginUrl</code> you submit on the{" "}
             <Link href="/partner-api" className="text-[#09391C] font-medium underline">
               partner application
             </Link>{" "}
