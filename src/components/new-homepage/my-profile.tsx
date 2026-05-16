@@ -16,7 +16,7 @@ import {
   Calendar,
   Handshake,
 } from "lucide-react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { usePageContext } from "@/context/page-context";
 import { AgentNavData } from "@/enums";
 
@@ -36,70 +36,61 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
   const [position, setPosition] = useState({ top: 0, right: 0 });
 
   const router = useRouter();
-  const pathname = usePathname();
 
   useClickOutside(ref, () => closeUserProfileModal(false));
 
-  // Normalize any string to canonical UserTypeValue (API may return "developer", "Developer ", etc.)
-  const normalizeToUserType = (value: unknown): UserTypeValue => {
-    if (value == null) return "Agent";
+  // Normalize platform role (Agent | Developer | Landowners | FieldAgent) — not agentData.agentType (Individual/Company).
+  const normalizeToUserType = (value: unknown): UserTypeValue | null => {
+    if (value == null) return null;
     const s = String(value).trim();
-    if (!s) return "Agent";
+    if (!s) return null;
     const lower = s.toLowerCase();
     if (lower === "developer") return "Developer";
     if (lower === "landowners" || lower === "landowner") return "Landowners";
     if (lower === "fieldagent" || lower === "field_agent") return "FieldAgent";
     if (lower === "agent") return "Agent";
     if (["Agent", "Landowners", "Developer", "FieldAgent"].includes(s)) return s as UserTypeValue;
-    return "Agent";
+    return null;
   };
 
-  // Derive userType: on /dashboard prefer localStorage (set by Developer/Landlord dashboard on mount), else user object then localStorage then sessionStorage
-  const userType: UserTypeValue = (() => {
-    const onDashboard = pathname === "/dashboard";
-    if (typeof window !== "undefined") {
-      try {
-        const stored = localStorage.getItem("userType");
-        const normalized = normalizeToUserType(stored);
-        if (stored != null && stored !== "" && normalized !== "Agent") return normalized;
-        if (onDashboard && normalized !== "Agent") return normalized;
-      } catch {}
-    }
+  const resolvePlatformUserType = (): UserTypeValue => {
     const u = userDetails ?? contextUser;
-    const raw =
-      (u as any)?.userType ??
-      (u as any)?.user_type ??
-      (u as any)?.role ??
-      (u as any)?.type ??
-      (u as any)?.accountType;
-    let normalized = normalizeToUserType(raw);
-    if (normalized !== "Agent") return normalized;
+    const fromUser = normalizeToUserType(
+      u?.userType ?? (u as { user_type?: string } | null)?.user_type,
+    );
+    if (fromUser) return fromUser;
+
     if (typeof window !== "undefined") {
       try {
-        const stored = localStorage.getItem("userType");
-        if (stored != null && stored !== "") {
-          normalized = normalizeToUserType(stored);
-          if (normalized !== "Agent") return normalized;
-        }
+        const fromStorage = normalizeToUserType(localStorage.getItem("userType"));
+        if (fromStorage) return fromStorage;
         const sessionUser = sessionStorage.getItem("user");
         if (sessionUser) {
           const parsed = JSON.parse(sessionUser) as Record<string, unknown>;
-          const sessionType = parsed?.userType ?? parsed?.user_type ?? parsed?.role ?? parsed?.type;
-          normalized = normalizeToUserType(sessionType);
-          if (normalized !== "Agent") return normalized;
+          const fromSession = normalizeToUserType(parsed?.userType ?? parsed?.user_type);
+          if (fromSession) return fromSession;
         }
-      } catch {}
+      } catch {
+        /* ignore */
+      }
     }
     return "Agent";
-  })();
+  };
 
-  // When on /dashboard and we still ended up as Agent (e.g. localStorage was empty), treat as Publisher so dropdown shows Inspection + Agent Requests.
-  // Use both pathname and window.location so we detect /dashboard even if router context is stale (e.g. dynamic import).
-  const isOnDashboard =
-    pathname === "/dashboard" ||
-    (typeof window !== "undefined" && window.location.pathname === "/dashboard");
-  const effectiveUserType: UserTypeValue =
-    isOnDashboard && userType === "Agent" ? "Developer" : userType;
+  const userType = resolvePlatformUserType();
+  const effectiveUserType = userType;
+
+  /** Label for the profile overlay "Type" row — platform role, not Individual/Company agent subtype. */
+  const profileTypeLabel =
+    effectiveUserType === "Agent"
+      ? "Agent"
+      : effectiveUserType === "Landowners"
+        ? "Landowner"
+        : effectiveUserType === "Developer"
+          ? "Developer"
+          : effectiveUserType === "FieldAgent"
+            ? "Field Agent"
+            : effectiveUserType;
 
   // Calculate position based on screen size
   useEffect(() => {
@@ -298,17 +289,7 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
         <div className="grid grid-cols-2 gap-3 text-xs">
           <div>
             <span className="text-gray-500 block">Type</span>
-            <span className="font-semibold text-gray-800">
-              {effectiveUserType === "Agent"
-                ? userDetails?.agentData?.agentType || "Agent"
-                : effectiveUserType === "Landowners"
-                ? "Landowner"
-                : effectiveUserType === "Developer"
-                ? "Developer"
-                : effectiveUserType === "FieldAgent"
-                ? "Field Agent"
-                : ""}
-            </span>
+            <span className="font-semibold text-gray-800">{profileTypeLabel}</span>
           </div>
           <div>
             <span className="text-gray-500 block">ID</span>
