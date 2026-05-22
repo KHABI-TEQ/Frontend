@@ -153,17 +153,23 @@ function mergeAdditionalFeaturesRecords(
 
 function getRoomCounts(data: Record<string, unknown>): {
   bedrooms?: number;
+  sittingRooms?: number;
   bathrooms?: number;
   toilets?: number;
 } {
   const add = additionalFeatures(data);
-  const out: { bedrooms?: number; bathrooms?: number; toilets?: number } = {};
+  const out: { bedrooms?: number; sittingRooms?: number; bathrooms?: number; toilets?: number } = {};
   const bed = add.noOfBedroom ?? data.bedrooms;
+  const sitting = add.noOfSittingRoom ?? data.sittingRooms;
   const bath = add.noOfBathroom ?? data.bathrooms;
   const toilet = add.noOfToilet ?? data.toilets;
   if (bed !== undefined && bed !== null && bed !== "") {
     const n = Number(bed);
     if (!Number.isNaN(n) && n >= 0) out.bedrooms = n;
+  }
+  if (sitting !== undefined && sitting !== null && sitting !== "") {
+    const n = Number(sitting);
+    if (!Number.isNaN(n) && n >= 0) out.sittingRooms = n;
   }
   if (bath !== undefined && bath !== null && bath !== "") {
     const n = Number(bath);
@@ -209,6 +215,10 @@ export function normalizePropertyAiCollectedData(data: Record<string, unknown>):
     add.noOfBedroom = rooms.bedrooms;
     next.bedrooms = rooms.bedrooms;
   }
+  if (rooms.sittingRooms !== undefined) {
+    add.noOfSittingRoom = rooms.sittingRooms;
+    next.sittingRooms = rooms.sittingRooms;
+  }
   if (rooms.bathrooms !== undefined) {
     add.noOfBathroom = rooms.bathrooms;
     next.bathrooms = rooms.bathrooms;
@@ -248,16 +258,18 @@ function extractCountFromText(text: string): number | null {
   return null;
 }
 
-function extractRoomsFromText(text: string): Partial<{ bedrooms: number; bathrooms: number; toilets: number }> {
+function extractRoomsFromText(text: string): Partial<{ bedrooms: number; sittingRooms: number; bathrooms: number; toilets: number }> {
   const t = text.trim();
-  const out: Partial<{ bedrooms: number; bathrooms: number; toilets: number }> = {};
+  const out: Partial<{ bedrooms: number; sittingRooms: number; bathrooms: number; toilets: number }> = {};
   const bed = t.match(/(\d+)\s*(?:bed(?:room)?s?)/i);
+  const sitting = t.match(/(\d+)\s*(?:sitting(?:\s*room)?s?)/i);
   const bath = t.match(/(\d+)\s*(?:bath(?:room)?s?)/i);
   const toilet = t.match(/(\d+)\s*(?:toilet)s?/i);
   if (bed) out.bedrooms = Number(bed[1]);
+  if (sitting) out.sittingRooms = Number(sitting[1]);
   if (bath) out.bathrooms = Number(bath[1]);
   if (toilet) out.toilets = Number(toilet[1]);
-  if (!bed && !bath && !toilet) {
+  if (!bed && !sitting && !bath && !toilet) {
     const lone = extractCountFromText(t);
     if (lone !== null && /bathroom|toilet/i.test(t)) {
       if (/toilet/i.test(t)) out.toilets = lone;
@@ -359,6 +371,10 @@ export function applyFocusedPropertyAnswer(
       add.noOfBedroom = rooms.bedrooms;
       next.bedrooms = rooms.bedrooms;
     }
+    if (rooms.sittingRooms !== undefined) {
+      add.noOfSittingRoom = rooms.sittingRooms;
+      next.sittingRooms = rooms.sittingRooms;
+    }
     if (rooms.bathrooms !== undefined) {
       add.noOfBathroom = rooms.bathrooms;
       next.bathrooms = rooms.bathrooms;
@@ -370,12 +386,16 @@ export function applyFocusedPropertyAnswer(
     const lone = extractCountFromText(value);
     if (lone !== null) {
       const existing = getRoomCounts({ ...next, additionalFeatures: add });
-      const parsedAny = rooms.bedrooms !== undefined || rooms.bathrooms !== undefined || rooms.toilets !== undefined;
+      const parsedAny = rooms.bedrooms !== undefined || rooms.sittingRooms !== undefined || rooms.bathrooms !== undefined || rooms.toilets !== undefined;
       if (!parsedAny) {
         // Combined prompt ("bedrooms, bathrooms, and toilets") — one number fills all still missing.
         if (existing.bedrooms === undefined) {
           add.noOfBedroom = lone;
           next.bedrooms = lone;
+        }
+        if (existing.sittingRooms === undefined) {
+          add.noOfSittingRoom = lone;
+          next.sittingRooms = lone;
         }
         if (existing.bathrooms === undefined) {
           add.noOfBathroom = lone;
@@ -389,6 +409,10 @@ export function applyFocusedPropertyAnswer(
         if (rooms.bedrooms === undefined && existing.bedrooms === undefined && /bed/i.test(focusedMissingField)) {
           add.noOfBedroom = lone;
           next.bedrooms = lone;
+        }
+        if (rooms.sittingRooms === undefined && existing.sittingRooms === undefined && /sitting/i.test(focusedMissingField)) {
+          add.noOfSittingRoom = lone;
+          next.sittingRooms = lone;
         }
         if (rooms.bathrooms === undefined && existing.bathrooms === undefined && /bath/i.test(focusedMissingField)) {
           add.noOfBathroom = lone;
@@ -481,6 +505,10 @@ export function mergePropertyAiCollectedData(
   if (localRooms.bedrooms !== undefined) {
     add.noOfBedroom = localRooms.bedrooms;
     merged.bedrooms = localRooms.bedrooms;
+  }
+  if (localRooms.sittingRooms !== undefined) {
+    add.noOfSittingRoom = localRooms.sittingRooms;
+    merged.sittingRooms = localRooms.sittingRooms;
   }
   if (localRooms.bathrooms !== undefined) {
     add.noOfBathroom = localRooms.bathrooms;

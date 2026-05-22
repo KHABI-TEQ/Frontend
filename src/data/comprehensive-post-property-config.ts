@@ -433,6 +433,9 @@ export const shouldShowField = (
       briefType !== BRIEF_TYPES.JV &&
       (propertyCategory === PROPERTY_CATEGORIES.RESIDENTIAL ||
         propertyCategory === PROPERTY_CATEGORIES.COMMERCIAL),
+    sittingRooms:
+      briefType !== BRIEF_TYPES.JV &&
+      propertyCategory === PROPERTY_CATEGORIES.COMMERCIAL,
     bathrooms:
       briefType !== BRIEF_TYPES.JV &&
       (propertyCategory === PROPERTY_CATEGORIES.RESIDENTIAL ||
@@ -517,6 +520,7 @@ export const getFieldsToClearOnCategoryChange = (briefType: string) => {
     "propertyCondition",
     "typeOfBuilding",
     "bedrooms",
+    "sittingRooms",
     "bathrooms",
     "toilets",
     "parkingSpaces",

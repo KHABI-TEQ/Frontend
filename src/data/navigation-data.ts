@@ -115,4 +115,9 @@ export const marketplaceDropdownData: NavigationItem[] = [
     url: "/preference?type=joint-venture",
     isClicked: false,
   },
+  {
+    name: "Off-Plan",
+    url: "/preference?type=off-plan",
+    isClicked: false,
+  },
 ];

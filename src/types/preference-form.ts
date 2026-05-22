@@ -25,7 +25,7 @@ export interface BasePreferenceForm {
   location: LocationSelection;
   budget: BudgetRange;
   features: FeatureSelection;
-  preferenceType: "buy" | "rent" | "joint-venture" | "shortlet";
+  preferenceType: "buy" | "rent" | "joint-venture" | "shortlet" | "off-plan";
   contactInfo: {
     fullName: string;
     email: string;
@@ -94,12 +94,30 @@ export interface ShortletPreferenceForm extends BasePreferenceForm {
   };
 }
 
+// Off-plan preference specific fields
+export interface OffPlanPreferenceForm extends BasePreferenceForm {
+  preferenceType: "off-plan";
+  propertyDetails: {
+    propertyType: "Land" | "Residential" | "Commercial";
+    buildingType: string;
+    minBedrooms: number | "More";
+    minBathrooms: number;
+    propertyCondition: string;
+    purpose: "Investment" | "For living" | "Resale";
+    expectedCompletionDate: string;
+    developmentStage: string;
+    paymentPlan: string;
+  };
+  nearbyLandmark?: string;
+}
+
 // Union type for all preference forms
 export type PreferenceForm =
   | BuyPreferenceForm
   | RentPreferenceForm
   | JointVenturePreferenceForm
-  | ShortletPreferenceForm;
+  | ShortletPreferenceForm
+  | OffPlanPreferenceForm;
 
 // API payload interfaces
 export interface LgaWithAreasPayload {
@@ -264,12 +282,41 @@ export interface ShortletPreferencePayload {
   additionalNotes?: string;
 }
 
+export interface OffPlanPreferencePayload {
+  preferenceType: "off-plan";
+  preferenceMode: "buy";
+  location: LocationPayload;
+  budget: BudgetPayload;
+  propertyDetails: {
+    propertyType: string;
+    buildingType: string;
+    minBedrooms: number | string;
+    minBathrooms: number;
+    propertyCondition: string;
+    purpose: string;
+    landSize: string;
+    minLandSize: string;
+    maxLandSize: string;
+    measurementUnit: string;
+    documentTypes: string[];
+    landConditions: string[];
+    expectedCompletionDate: string;
+    developmentStage: string;
+    paymentPlan: string;
+  };
+  features: FeaturesPayload;
+  contactInfo: ContactInfoPayload;
+  nearbyLandmark?: string;
+  additionalNotes?: string;
+}
+
 // Union type for all API payloads
 export type PreferencePayload =
   | BuyPreferencePayload
   | RentPreferencePayload
   | JointVenturePreferencePayload
-  | ShortletPreferencePayload;
+  | ShortletPreferencePayload
+  | OffPlanPreferencePayload;
 
 // Validation error types
 export interface ValidationError {

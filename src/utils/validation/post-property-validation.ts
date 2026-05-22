@@ -108,6 +108,14 @@ const sellPropertySchema = Yup.object({
         .required(messages.required("Number of bedrooms")),
     otherwise: (schema) => schema.nullable(),
   }),
+  sittingRooms: Yup.number().when("propertyCategory", {
+    is: "Commercial",
+    then: (schema) =>
+      schema
+        .min(1, messages.min("Number of sitting rooms", 1))
+        .required(messages.required("Number of sitting rooms")),
+    otherwise: (schema) => schema.nullable(),
+  }),
   measurementType: Yup.string().when("propertyCategory", {
     is: "Land",
     then: (schema) => schema.required(messages.required("Type of measurement")),
@@ -146,6 +154,14 @@ const rentPropertySchema = Yup.object({
   bedrooms: Yup.number()
     .min(1, messages.min("Number of bedrooms", 1))
     .required(messages.required("Number of bedrooms")),
+  sittingRooms: Yup.number().when("propertyCategory", {
+    is: "Commercial",
+    then: (schema) =>
+      schema
+        .min(1, messages.min("Number of sitting rooms", 1))
+        .required(messages.required("Number of sitting rooms")),
+    otherwise: (schema) => schema.nullable(),
+  }),
   isTenanted: Yup.string()
     .oneOf(["Yes", "No"], "Please specify if property is currently tenanted")
     .required(messages.required("Tenancy status")),
@@ -287,6 +303,11 @@ export const step1ValidationSchema = (propertyType: string) => {
           then: (schema) => schema.min(1).required(),
           otherwise: (schema) => schema.nullable(),
         }),
+        sittingRooms: Yup.number().when("propertyCategory", {
+          is: "Commercial",
+          then: (schema) => schema.min(1).required(),
+          otherwise: (schema) => schema.nullable(),
+        }),
         landSize: Yup.string().when("propertyCategory", {
           is: (category: string) => category === "Commercial",
           then: (schema) => schema.required(),
@@ -344,6 +365,11 @@ export const step1ValidationSchema = (propertyType: string) => {
         }),
         bedrooms: Yup.number().when("propertyCategory", {
           is: (category: string) => category !== "Land",
+          then: (schema) => schema.min(1).required(),
+          otherwise: (schema) => schema.nullable(),
+        }),
+        sittingRooms: Yup.number().when("propertyCategory", {
+          is: "Commercial",
           then: (schema) => schema.min(1).required(),
           otherwise: (schema) => schema.nullable(),
         }),

@@ -59,7 +59,7 @@ const getStepsForPreferenceType = (preferenceType?: string) => {
     ];
   }
 
-  // Default steps for buy, rent, shortlet
+  // Default steps for buy, rent, shortlet, off-plan
   return [
     {
       id: "location",

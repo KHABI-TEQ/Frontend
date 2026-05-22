@@ -209,6 +209,7 @@ const RentStep1BasicDetails: React.FC = () => {
                     updatePropertyData("propertyCondition", "");
                     updatePropertyData("typeOfBuilding", "");
                     updatePropertyData("bedrooms", 0);
+                    updatePropertyData("sittingRooms", 0);
                     updatePropertyData("bathrooms", 0);
                     updatePropertyData("toilets", 0);
                     updatePropertyData("parkingSpaces", 0);
@@ -501,36 +502,109 @@ const RentStep1BasicDetails: React.FC = () => {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-[#707281] mb-2">
-                  Number of Bedrooms <span className="text-red-500">*</span>
-                </label>
-                <ReactSelect
-                  options={numberOptions}
-                  value={
-                    propertyData.bedrooms
-                      ? {
-                          value: propertyData.bedrooms.toString(),
-                          label: propertyData.bedrooms.toString(),
-                        }
-                      : null
-                  }
-                  onChange={(option) => {
-                    const value = parseInt(option?.value || "0") || 0;
-                    setFieldTouched("bedrooms", true);
-                    updatePropertyData("bedrooms", value);
-                    setFieldValue("bedrooms", value);
-                  }}
-                  placeholder="Select bedrooms"
-                  styles={{
-                    ...customStyles,
-                    control: (provided, state) => ({
-                      ...customStyles.control?.(provided, state),
-                      borderColor: getSelectBorderClass("bedrooms", true),
-                    }),
-                  }}
-                />
-              </div>
+              {propertyData.propertyCategory === "Commercial" && (
+                <>
+                  <div className="sm:col-span-2">
+                    <h4 className="text-md font-semibold text-[#09391C] mb-4">
+                      Number of Rooms <span className="text-red-500">*</span>
+                    </h4>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#707281] mb-2">
+                      Number of Bedrooms <span className="text-red-500">*</span>
+                    </label>
+                    <ReactSelect
+                      options={numberOptions}
+                      value={
+                        propertyData.bedrooms
+                          ? {
+                              value: propertyData.bedrooms.toString(),
+                              label: propertyData.bedrooms.toString(),
+                            }
+                          : null
+                      }
+                      onChange={(option) => {
+                        const value = parseInt(option?.value || "0") || 0;
+                        setFieldTouched("bedrooms", true);
+                        updatePropertyData("bedrooms", value);
+                        setFieldValue("bedrooms", value);
+                      }}
+                      placeholder="Select bedrooms"
+                      styles={{
+                        ...customStyles,
+                        control: (provided, state) => ({
+                          ...customStyles.control?.(provided, state),
+                          borderColor: getSelectBorderClass("bedrooms", true),
+                        }),
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[#707281] mb-2">
+                      Number of Sitting Rooms <span className="text-red-500">*</span>
+                    </label>
+                    <ReactSelect
+                      options={numberOptions}
+                      value={
+                        propertyData.sittingRooms
+                          ? {
+                              value: propertyData.sittingRooms.toString(),
+                              label: propertyData.sittingRooms.toString(),
+                            }
+                          : null
+                      }
+                      onChange={(option) => {
+                        const value = parseInt(option?.value || "0") || 0;
+                        setFieldTouched("sittingRooms", true);
+                        updatePropertyData("sittingRooms", value);
+                        setFieldValue("sittingRooms", value);
+                      }}
+                      placeholder="Select sitting rooms"
+                      styles={{
+                        ...customStyles,
+                        control: (provided, state) => ({
+                          ...customStyles.control?.(provided, state),
+                          borderColor: getSelectBorderClass("sittingRooms", true),
+                        }),
+                      }}
+                    />
+                  </div>
+                </>
+              )}
+
+              {propertyData.propertyCategory !== "Commercial" && (
+                <div>
+                  <label className="block text-sm font-medium text-[#707281] mb-2">
+                    Number of Bedrooms <span className="text-red-500">*</span>
+                  </label>
+                  <ReactSelect
+                    options={numberOptions}
+                    value={
+                      propertyData.bedrooms
+                        ? {
+                            value: propertyData.bedrooms.toString(),
+                            label: propertyData.bedrooms.toString(),
+                          }
+                        : null
+                    }
+                    onChange={(option) => {
+                      const value = parseInt(option?.value || "0") || 0;
+                      setFieldTouched("bedrooms", true);
+                      updatePropertyData("bedrooms", value);
+                      setFieldValue("bedrooms", value);
+                    }}
+                    placeholder="Select bedrooms"
+                    styles={{
+                      ...customStyles,
+                      control: (provided, state) => ({
+                        ...customStyles.control?.(provided, state),
+                        borderColor: getSelectBorderClass("bedrooms", true),
+                      }),
+                    }}
+                  />
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -72,6 +72,14 @@ const PREFERENCE_CONFIGS = {
     preferenceType: "shortlet" as const,
     preferenceMode: "shortlet" as const,
   },
+  "off-plan": {
+    label: "Off-Plan Properties",
+    shortLabel: "Off-Plan",
+    icon: "🏗️",
+    description: "Invest in properties under development",
+    preferenceType: "off-plan" as const,
+    preferenceMode: "buy" as const,
+  },
 } as const;
 
 // Loading Overlay Component - Memoized to prevent unnecessary re-renders
@@ -348,7 +356,7 @@ const StepProgressIndicator = memo(
 StepProgressIndicator.displayName = "StepProgressIndicator";
 
 // Form content component
-const VALID_PREFERENCE_TYPES = ["buy", "rent", "shortlet", "joint-venture"] as const;
+const VALID_PREFERENCE_TYPES = ["buy", "rent", "shortlet", "joint-venture", "off-plan"] as const;
 
 const PreferenceFormContent: React.FC = () => {
   const router = useRouter();
@@ -691,6 +699,60 @@ const PreferenceFormContent: React.FC = () => {
           additionalNotes: (shortletData.additionalNotes || "").trim(),
         };
         return cleanObject(shortletPayload) as ShortletPreferencePayload;
+      }
+
+      case "off-plan": {
+        const offPlanData = formData as any;
+        const offPlanPayload = {
+          ...basePayload,
+          preferenceType: "off-plan",
+          preferenceMode: "buy",
+          propertyDetails: {
+            propertyType:
+              offPlanData.propertyDetails?.propertySubtype ||
+              offPlanData.propertyDetails?.propertyType ||
+              "",
+            buildingType: offPlanData.propertyDetails?.buildingType || "",
+            minBedrooms:
+              offPlanData.propertyDetails?.bedrooms ||
+              offPlanData.propertyDetails?.minBedrooms ||
+              "",
+            minBathrooms:
+              offPlanData.propertyDetails?.bathrooms ||
+              offPlanData.propertyDetails?.minBathrooms ||
+              0,
+            propertyCondition: offPlanData.propertyDetails?.propertyCondition || "",
+            purpose: offPlanData.propertyDetails?.purpose || "Investment",
+            landSize: offPlanData.propertyDetails?.landSize || "",
+            minLandSize: offPlanData.propertyDetails?.minLandSize || "",
+            maxLandSize: offPlanData.propertyDetails?.maxLandSize || "",
+            measurementUnit: offPlanData.propertyDetails?.measurementUnit || "",
+            documentTypes:
+              offPlanData.propertyDetails?.documentTypes?.filter(
+                (doc: string) => doc.trim() !== "",
+              ) || [],
+            landConditions:
+              offPlanData.propertyDetails?.landConditions?.filter(
+                (condition: string) => condition.trim() !== "",
+              ) || [],
+            // Off-plan specific fields
+            expectedCompletionDate: offPlanData.propertyDetails?.expectedCompletionDate || "",
+            developmentStage: offPlanData.propertyDetails?.developmentStage || "",
+            paymentPlan: offPlanData.propertyDetails?.paymentPlan || "",
+          },
+          contactInfo: {
+            fullName: offPlanData.contactInfo?.fullName?.trim() || "",
+            email: offPlanData.contactInfo?.email?.trim() || "",
+            phoneNumber: offPlanData.contactInfo?.phoneNumber?.trim() || "",
+          },
+          nearbyLandmark: (
+            offPlanData.propertyDetails?.nearbyLandmark ||
+            offPlanData.nearbyLandmark ||
+            ""
+          ).trim(),
+          additionalNotes: (offPlanData.additionalNotes || "").trim(),
+        };
+        return cleanObject(offPlanPayload) as any;
       }
 
       default:

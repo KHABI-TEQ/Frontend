@@ -207,6 +207,9 @@ const Step1BasicDetails: React.FC<StepProps> = () => {
       requiredFields.push("rentalType");
       if (propertyData.propertyCategory !== "Land") {
         requiredFields.push("propertyCondition", "typeOfBuilding", "bedrooms");
+        if (propertyData.propertyCategory === "Commercial") {
+          requiredFields.push("sittingRooms");
+        }
       }
       if (propertyData.propertyCategory === "Commercial") {
         requiredFields.push("measurementType", "landSize");
@@ -234,6 +237,9 @@ const Step1BasicDetails: React.FC<StepProps> = () => {
     if (propertyData.propertyType === "sell") {
       if (propertyData.propertyCategory !== "Land") {
         requiredFields.push("propertyCondition", "typeOfBuilding", "bedrooms");
+        if (propertyData.propertyCategory === "Commercial") {
+          requiredFields.push("sittingRooms");
+        }
       }
       requiredFields.push("measurementType", "landSize");
     }
@@ -823,6 +829,43 @@ const Step1BasicDetails: React.FC<StepProps> = () => {
                       control: (provided, state) => ({
                         ...customStyles.control?.(provided, state),
                         borderColor: getSelectBorderClass("bedrooms", true),
+                      }),
+                    }}
+                  />
+                </div>
+              )}
+
+              {shouldShowField(
+                "sittingRooms",
+                propertyData.propertyType,
+                propertyData.propertyCategory,
+              ) && (
+                <div>
+                  <label className="block text-sm font-medium text-[#707281] mb-2">
+                    Number of Sitting Rooms <span className="text-red-500">*</span>
+                  </label>
+                  <ReactSelect
+                    options={numberOptions}
+                    value={
+                      propertyData.sittingRooms
+                        ? {
+                            value: propertyData.sittingRooms.toString(),
+                            label: propertyData.sittingRooms.toString(),
+                          }
+                        : null
+                    }
+                    onChange={(option) => {
+                      const value = parseInt(option?.value || "0") || 0;
+                      setFieldTouched("sittingRooms", true);
+                      updatePropertyData("sittingRooms", value);
+                      setFieldValue("sittingRooms", value);
+                    }}
+                    placeholder="Select sitting rooms"
+                    styles={{
+                      ...customStyles,
+                      control: (provided, state) => ({
+                        ...customStyles.control?.(provided, state),
+                        borderColor: getSelectBorderClass("sittingRooms", true),
                       }),
                     }}
                   />

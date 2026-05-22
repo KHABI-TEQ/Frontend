@@ -97,6 +97,9 @@ const checkRentStep1RequiredFields = (propertyData: any) => {
 
   if (propertyData.propertyCategory !== "Land") {
     requiredFields.push("propertyCondition", "typeOfBuilding", "bedrooms");
+    if (propertyData.propertyCategory === "Commercial") {
+      requiredFields.push("sittingRooms");
+    }
   }
   
   // Land size and measurement type are not required for rent properties
@@ -348,6 +351,7 @@ const UpdateRentPropertyForm: React.FC<UpdateRentPropertyFormProps> = ({
         briefType: "Rent",
         additionalFeatures: {
           noOfBedroom: propertyData.bedrooms?.toString() || "0",
+          noOfSittingRoom: propertyData.sittingRooms?.toString() || "0",
           noOfBathroom: propertyData.bathrooms?.toString() || "0",
           noOfToilet: propertyData.toilets?.toString() || "0",
           noOfCarPark: propertyData.parkingSpaces?.toString() || "0",

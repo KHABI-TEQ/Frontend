@@ -18,7 +18,7 @@ interface Option {
 }
 
 interface PropertyDetailsProps {
-  preferenceType: "buy" | "rent" | "joint-venture" | "shortlet";
+  preferenceType: "buy" | "rent" | "joint-venture" | "shortlet" | "off-plan";
   className?: string;
 }
 
@@ -90,6 +90,20 @@ const PROPERTY_CONDITIONS = {
       { value: "uncompleted", label: "Uncompleted" },
     ],
   },
+  "off-plan": {
+    residential: [
+      { value: "foundation-stage", label: "Foundation Stage" },
+      { value: "framing-stage", label: "Framing Stage" },
+      { value: "finishing-stage", label: "Finishing Stage" },
+      { value: "near-completion", label: "Near Completion" },
+    ],
+    commercial: [
+      { value: "foundation-stage", label: "Foundation Stage" },
+      { value: "framing-stage", label: "Framing Stage" },
+      { value: "finishing-stage", label: "Finishing Stage" },
+      { value: "near-completion", label: "Near Completion" },
+    ],
+  },
 };
 
 // Building types
@@ -136,6 +150,23 @@ const BUILDING_TYPES = {
       { value: "office-complex", label: "Office Complex" },
       { value: "warehouse", label: "Warehouse" },
       { value: "shop-space", label: "Shop Space" },
+    ],
+  },
+  "off-plan": {
+    residential: [
+      { value: "bungalow", label: "Bungalow" },
+      { value: "duplex-fully-detached", label: "Duplex (Fully Detached)" },
+      { value: "duplex-semi-detached", label: "Duplex (Semi Detached)" },
+      { value: "duplex-terrace", label: "Duplex (Terrace)" },
+      { value: "blocks-of-flat", label: "Blocks of Flat" },
+      { value: "penthouse", label: "Penthouse" },
+    ],
+    commercial: [
+      { value: "office-complex", label: "Office Complex" },
+      { value: "warehouse", label: "Warehouse" },
+      { value: "plaza", label: "Plaza" },
+      { value: "shop", label: "Shop" },
+      { value: "shopping-mall", label: "Shopping Mall" },
     ],
   },
 };
@@ -193,6 +224,24 @@ const TRAVEL_TYPES = [
   { value: "family", label: "Family" },
   { value: "group", label: "Group" },
   { value: "business", label: "Business" },
+];
+
+// Off-plan specific fields
+const PAYMENT_PLANS = [
+  { value: "outright", label: "Outright Payment" },
+  { value: "installment-6-months", label: "6 Months Installment" },
+  { value: "installment-12-months", label: "12 Months Installment" },
+  { value: "installment-18-months", label: "18 Months Installment" },
+  { value: "installment-24-months", label: "24 Months Installment" },
+  { value: "installment-36-months", label: "36 Months Installment" },
+];
+
+const DEVELOPMENT_STAGES = [
+  { value: "planning", label: "Planning Stage" },
+  { value: "foundation", label: "Foundation Stage" },
+  { value: "structural", label: "Structural Stage" },
+  { value: "finishing", label: "Finishing Stage" },
+  { value: "near-completion", label: "Near Completion" },
 ];
 
 // Custom select styles
@@ -265,6 +314,8 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
       [],
     );
     const travelTypeOptions = useMemo(() => TRAVEL_TYPES, []);
+    const paymentPlanOptions = useMemo(() => PAYMENT_PLANS, []);
+    const developmentStageOptions = useMemo(() => DEVELOPMENT_STAGES, []);
 
     // Form state
     const [propertySubtype, setPropertySubtype] = useState<Option | null>(null);
@@ -287,6 +338,11 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
     const [travelType, setTravelType] = useState<Option | null>(null);
     const [nearbyLandmark, setNearbyLandmark] = useState<string>("");
 
+    // Off-plan specific fields
+    const [expectedCompletionDate, setExpectedCompletionDate] = useState<string>("");
+    const [developmentStage, setDevelopmentStage] = useState<Option | null>(null);
+    const [paymentPlan, setPaymentPlan] = useState<Option | null>(null);
+
     // Clear all fields when form is reset or preference type changes
     useEffect(() => {
       if (!state.formData || Object.keys(state.formData).length === 0) {
@@ -305,6 +361,9 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
         setMaxGuests("");
         setTravelType(null);
         setNearbyLandmark("");
+        setExpectedCompletionDate("");
+        setDevelopmentStage(null);
+        setPaymentPlan(null);
       } else {
         // Initialize from existing form data
         const propertyDetails = state.formData.propertyDetails as any;
@@ -334,6 +393,68 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
             setTravelType(travelTypeOption || null);
 
             setNearbyLandmark(propertyDetails.nearbyLandmark || "");
+          } else if (preferenceType === "off-plan") {
+            // Find proper label from options instead of using kebab-case value
+            const propertySubtypeOption = PROPERTY_SUBTYPES.find(
+              (opt) => opt.value === propertyDetails.propertySubtype
+            );
+            setPropertySubtype(propertySubtypeOption || null);
+
+            setLandSize(propertyDetails.landSize || "");
+            setMinLandSize(propertyDetails.minLandSize || "");
+            setMaxLandSize(propertyDetails.maxLandSize || "");
+
+            const measurementUnitOption = MEASUREMENT_UNITS.find(
+              (opt) => opt.value === propertyDetails.measurementUnit
+            );
+            setMeasurementUnit(measurementUnitOption || null);
+
+            setDocumentTypes(propertyDetails.documentTypes || []);
+
+            const propertyConditionOption = (
+              PROPERTY_CONDITIONS[preferenceType]?.[
+                propertyDetails.propertySubtype as keyof (typeof PROPERTY_CONDITIONS)[typeof preferenceType]
+              ] || []
+            ).find((opt) => opt.value === propertyDetails.propertyCondition);
+            setPropertyCondition(propertyConditionOption || null);
+
+            const buildingTypeOption = (
+              BUILDING_TYPES[preferenceType]?.[
+                propertyDetails.propertySubtype as keyof (typeof BUILDING_TYPES)[typeof preferenceType]
+              ] || []
+            ).find((opt) => opt.value === propertyDetails.buildingType);
+            setBuildingType(buildingTypeOption || null);
+
+            const bedroomOption = BEDROOM_OPTIONS.find(
+              (opt) => opt.value === propertyDetails.bedrooms
+            );
+            setBedrooms(bedroomOption || null);
+
+            const bathroomOption = BATHROOM_OPTIONS.find(
+              (opt) => opt.value === propertyDetails.bathrooms?.toString()
+            );
+            setBathrooms(bathroomOption || null);
+
+            // Map land conditions to proper labels
+            const landConditionOptions = propertyDetails.landConditions
+              ? propertyDetails.landConditions
+                  .map((lc: string) =>
+                    LAND_CONDITIONS.find((opt) => opt.value === lc)
+                  )
+                  .filter(Boolean) as Option[]
+              : [];
+            setLandConditions(landConditionOptions);
+
+            // Off-plan specific fields
+            setExpectedCompletionDate(propertyDetails.expectedCompletionDate || "");
+            const developmentStageOption = DEVELOPMENT_STAGES.find(
+              (opt) => opt.value === propertyDetails.developmentStage
+            );
+            setDevelopmentStage(developmentStageOption || null);
+            const paymentPlanOption = PAYMENT_PLANS.find(
+              (opt) => opt.value === propertyDetails.paymentPlan
+            );
+            setPaymentPlan(paymentPlanOption || null);
           } else {
             // Find proper label from options instead of using kebab-case value
             const propertySubtypeOption = PROPERTY_SUBTYPES.find(
@@ -402,6 +523,24 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
           nearbyLandmark,
         };
         updateFormData({ propertyDetails: shortletData } as any);
+      } else if (preferenceType === "off-plan") {
+        const offPlanData = {
+          propertySubtype: propertySubtype?.value || "",
+          landSize,
+          minLandSize,
+          maxLandSize,
+          measurementUnit: measurementUnit?.value || "",
+          documentTypes: documentTypes || [],
+          propertyCondition: propertyCondition?.value || "",
+          buildingType: buildingType?.value || "",
+          bedrooms: bedrooms?.value || "",
+          bathrooms: bathrooms?.value || "",
+          landConditions: landConditions.map((lc) => lc.value) || [],
+          expectedCompletionDate,
+          developmentStage: developmentStage?.value || "",
+          paymentPlan: paymentPlan?.value || "",
+        };
+        updateFormData({ propertyDetails: offPlanData } as any);
       } else {
         const propertyData = {
           propertySubtype: propertySubtype?.value || "",
@@ -435,6 +574,9 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
       maxGuests,
       travelType,
       nearbyLandmark,
+      expectedCompletionDate,
+      developmentStage,
+      paymentPlan,
       updateFormData,
     ]);
 
@@ -876,6 +1018,49 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
                   />
                 </div>
               )}
+
+            {/* Off-Plan Specific Fields */}
+            {preferenceType === "off-plan" && (
+              <>
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-800">
+                    Expected Completion Date <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={expectedCompletionDate}
+                    onChange={(e) => setExpectedCompletionDate(e.target.value)}
+                    className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-800">
+                    Development Stage <span className="text-red-500">*</span>
+                  </label>
+                  <Select
+                    options={developmentStageOptions}
+                    value={developmentStage}
+                    onChange={setDevelopmentStage}
+                    placeholder="Select development stage..."
+                    styles={customSelectStyles}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-800">
+                    Payment Plan <span className="text-red-500">*</span>
+                  </label>
+                  <Select
+                    options={paymentPlanOptions}
+                    value={paymentPlan}
+                    onChange={setPaymentPlan}
+                    placeholder="Select payment plan..."
+                    styles={customSelectStyles}
+                  />
+                </div>
+              </>
+            )}
           </>
         )}
       </div>

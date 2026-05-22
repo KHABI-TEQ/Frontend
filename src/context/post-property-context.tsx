@@ -50,6 +50,7 @@ export interface PropertyData {
 
   // Step 5: Room Details (for Residential/Commercial)
   bedrooms: number;
+  sittingRooms?: number; // For Commercial properties
   bathrooms: number;
   toilets: number;
   parkingSpaces: number;
@@ -190,6 +191,7 @@ const initialPropertyData: PropertyData = {
   landSize: "",
   measurementType: "",
   bedrooms: 0,
+  sittingRooms: 0,
   bathrooms: 0,
   toilets: 0,
   parkingSpaces: 0,

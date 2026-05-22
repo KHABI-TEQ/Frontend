@@ -111,6 +111,9 @@ const checkSellStep1RequiredFields = (propertyData: any) => {
   // Add conditional required fields based on property category
   if (propertyData.propertyCategory !== "Land") {
     requiredFields.push("propertyCondition", "typeOfBuilding", "bedrooms");
+    if (propertyData.propertyCategory === "Commercial") {
+      requiredFields.push("sittingRooms");
+    }
   }
 
   return requiredFields.every((field) => {
@@ -369,6 +372,7 @@ const OutrightSalesPropertyForm: React.FC<OutrightSalesPropertyFormProps> = ({
         briefType: "Outright Sales",
         additionalFeatures: {
           noOfBedroom: propertyData.bedrooms?.toString() || "0",
+          noOfSittingRoom: propertyData.sittingRooms?.toString() || "0",
           noOfBathroom: propertyData.bathrooms?.toString() || "0",
           noOfToilet: propertyData.toilets?.toString() || "0",
           noOfCarPark: propertyData.parkingSpaces?.toString() || "0",

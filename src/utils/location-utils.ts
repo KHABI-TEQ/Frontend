@@ -7,14 +7,14 @@ export interface LocationData {
 }
 
 export const getStates = (): string[] => {
-  return Object.keys(nigeriaLocationData);
+  return Object.keys(nigeriaLocationData).sort();
 };
 
 export const getLGAsByState = (state: string): string[] => {
   return state
     ? Object.keys(
         nigeriaLocationData[state as keyof typeof nigeriaLocationData] || {},
-      )
+      ).sort()
     : [];
 };
 
@@ -23,7 +23,8 @@ export const getAreasByStateLGA = (state: string, lga: string): string[] => {
   const stateData =
     nigeriaLocationData[state as keyof typeof nigeriaLocationData];
   if (!stateData) return [];
-  return stateData[lga as keyof typeof stateData] || [];
+  const areas = stateData[lga as keyof typeof stateData] || [];
+  return (areas as string[]).sort();
 };
 
 export const searchLocations = (

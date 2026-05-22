@@ -23,6 +23,7 @@ export interface PropertyFormData {
   
   // Features
   bedrooms?: number;
+  sittingRooms?: number;
   bathrooms?: number;
   toilets?: number;
   parkingSpace?: number;

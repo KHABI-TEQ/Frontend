@@ -75,6 +75,7 @@ export function mergeSuggestPropertyIntoForm(
 
   if (add) {
     if (typeof add.noOfBedroom === "number" || !empty(add.noOfBedroom)) out.bedrooms = Number(add.noOfBedroom) || 0;
+    if (typeof add.noOfSittingRoom === "number" || !empty(add.noOfSittingRoom)) out.sittingRooms = Number(add.noOfSittingRoom) || 0;
     if (typeof add.noOfBathroom === "number" || !empty(add.noOfBathroom)) out.bathrooms = Number(add.noOfBathroom) || 0;
     if (typeof add.noOfToilet === "number" || !empty(add.noOfToilet)) out.toilets = Number(add.noOfToilet) || 0;
     if (typeof add.noOfCarPark === "number" || !empty(add.noOfCarPark)) out.parkingSpaces = Number(add.noOfCarPark) || 0;
