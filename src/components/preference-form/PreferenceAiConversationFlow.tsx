@@ -233,7 +233,7 @@ function preferenceModeFromType(t: string): string {
   }
 }
 
-/** Detect Buy / Rent / Shortlet / JV from natural text so the user can start with a type, as the form requires. */
+/** Detect Buy / Rent / Shortlet / JV / Off-Plan from natural text so the user can start with a type, as the form requires. */
 function detectPreferenceTypeFromText(text: string): string | null {
   const raw = text.trim();
   if (!raw) return null;
@@ -241,10 +241,11 @@ function detectPreferenceTypeFromText(text: string): string | null {
   const resolved = resolveVoiceIntent(raw);
   if (resolved.kind === "normalized") {
     const v = String(resolved.value || "").trim().toLowerCase();
-    if (v === "buy" || v === "rent" || v === "shortlet" || v === "joint-venture") {
+    if (v === "buy" || v === "rent" || v === "shortlet" || v === "joint-venture" || v === "off-plan") {
       return v;
     }
   }
+  if (/\boff\s*plan\b|\boff-plan\b/i.test(raw)) return "off-plan";
   if (/\bjoint\s*venture\b|\bjv\b/i.test(raw)) return "joint-venture";
   if (/\bshortlet\b|\bshort\s*let\b/i.test(raw)) return "shortlet";
   if (/\bbuy\b|\bpurchase\b|\bto\s+buy\b/i.test(raw)) return "buy";
@@ -338,7 +339,7 @@ function shortletMaxGuestsPresent(
 
 function normalizedPreferenceType(data: Record<string, unknown>): string {
   const t = String(data.preferenceType || "").toLowerCase().trim();
-  if (["buy", "rent", "shortlet", "joint-venture"].includes(t)) return t;
+  if (["buy", "rent", "shortlet", "joint-venture", "off-plan"].includes(t)) return t;
   return "";
 }
 

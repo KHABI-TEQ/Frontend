@@ -17,7 +17,7 @@ import {
 } from "@/types/preference-form";
 
 interface FeatureSelectionProps {
-  preferenceType: "buy" | "rent" | "joint-venture" | "shortlet";
+  preferenceType: "buy" | "rent" | "joint-venture" | "shortlet" | "off-plan";
   className?: string;
 }
 

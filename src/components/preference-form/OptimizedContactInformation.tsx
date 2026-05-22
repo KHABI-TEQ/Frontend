@@ -15,7 +15,7 @@ import {
 import * as Yup from "yup";
 
 interface ContactInformationProps {
-  preferenceType: "buy" | "rent" | "joint-venture" | "shortlet";
+  preferenceType: "buy" | "rent" | "joint-venture" | "shortlet" | "off-plan";
   className?: string;
 }
 

@@ -13,7 +13,7 @@ import { motion } from "framer-motion";
 import { usePreferenceForm } from "@/context/preference-form-context";
 
 interface BudgetSelectionProps {
-  preferenceType: "buy" | "rent" | "joint-venture" | "shortlet";
+  preferenceType: "buy" | "rent" | "joint-venture" | "shortlet" | "off-plan";
   className?: string;
 }
 
@@ -23,6 +23,7 @@ const BUDGET_PERIOD_LABELS = {
   rent: "Yearly Rent Budget",
   "joint-venture": "Investment Budget",
   shortlet: "Per Night Budget",
+  "off-plan": "Total Purchase Budget",
 };
  
 const OptimizedBudgetSelection: React.FC<BudgetSelectionProps> = memo(
@@ -164,7 +165,7 @@ const OptimizedBudgetSelection: React.FC<BudgetSelectionProps> = memo(
           </h3>
           <p className="text-sm sm:text-base text-gray-600">
             Select your preferred budget range for{" "}
-            {preferenceType === "buy"
+            {preferenceType === "buy" || preferenceType === "off-plan"
               ? "purchasing"
               : preferenceType === "rent"
                 ? "renting"
@@ -302,7 +303,7 @@ const OptimizedBudgetSelection: React.FC<BudgetSelectionProps> = memo(
             💡 Budget Tips
           </h4>
           <ul className="text-sm text-gray-600 space-y-1">
-            {preferenceType === "buy" && (
+            {(preferenceType === "buy" || preferenceType === "off-plan") && (
               <>
                 <li>
                   • Consider additional costs like legal fees, agency fees, and

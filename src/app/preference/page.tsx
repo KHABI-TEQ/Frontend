@@ -1034,9 +1034,9 @@ const PreferenceFormContent: React.FC = () => {
                   className="space-y-6 sm:space-y-8"
                 >
                   <div className="space-y-6 sm:space-y-8">
-                    <PropertyDetails preferenceType={selectedPreferenceType} />
+                    <PropertyDetails preferenceType={selectedPreferenceType as "buy" | "rent" | "joint-venture" | "shortlet" | "off-plan"} />
                     <OptimizedBudgetSelection
-                      preferenceType={selectedPreferenceType}
+                      preferenceType={selectedPreferenceType as "buy" | "rent" | "joint-venture" | "shortlet" | "off-plan"}
                     />
                   </div>
                 </OptimizedStepWrapper>
@@ -1049,7 +1049,7 @@ const PreferenceFormContent: React.FC = () => {
                   className="space-y-6 sm:space-y-8"
                 >
                   <div className="space-y-6 sm:space-y-8">
-                    <FeatureSelection preferenceType={selectedPreferenceType} />
+                    <FeatureSelection preferenceType={selectedPreferenceType as "buy" | "rent" | "joint-venture" | "shortlet" | "off-plan"} />
                     {selectedPreferenceType === "shortlet" && <DateSelection />}
                   </div>
                 </OptimizedStepWrapper>
@@ -1061,7 +1061,7 @@ const PreferenceFormContent: React.FC = () => {
                   targetStep={3}
                 >
                   <OptimizedContactInformation
-                    preferenceType={selectedPreferenceType}
+                    preferenceType={selectedPreferenceType as "buy" | "rent" | "joint-venture" | "shortlet" | "off-plan"}
                   />
                 </OptimizedStepWrapper>
               </>

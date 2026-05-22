@@ -358,7 +358,7 @@ export interface FormStep {
   isRequired: boolean;
 }
 
-type PreferenceType = "rent" | "shortlet" | "buy" | "joint-venture";
+type PreferenceType = "rent" | "shortlet" | "buy" | "joint-venture" | "off-plan";
  
 // Flexible form data interface that can handle all preference types
 export interface FlexibleFormData {
