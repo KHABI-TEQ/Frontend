@@ -189,7 +189,7 @@ Implement a function that returns a **string[]** of human-readable missing/incom
 
 **By preference type:**
 
-- **Buy:** propertyType (land/residential/commercial), buildingType, propertyCondition, bedrooms (if residential), documentTypes (at least one).
+- **Buy:** propertyType (land/residential/commercial), buildingType, propertyCondition, bedrooms (if residential/commercial), documentTypes (at least one).
 - **Rent:** propertyType, buildingType, propertyCondition, leaseTerm, bedrooms (if residential).
 - **Shortlet:** checkInDate, checkOutDate, propertyType, bedrooms, bathrooms, numberOfGuests, travelType.
 - **Joint-venture:** minLandSize, measurementUnit, jvType or developmentTypes (at least one), preferredSharingRatio, minimumTitleRequirements (at least one).

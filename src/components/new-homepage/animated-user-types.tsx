@@ -54,7 +54,7 @@ const userTypes = [
     id: 'buyers',
     icon: Search,
     title: 'Buyers & Clients',
-    headline: 'Find your dream',
+    headline: 'Find your dream property',
     description: 'Describe what you need in simple words',
     cta: 'Submit Preference',
     ctaUrl: '/preference',

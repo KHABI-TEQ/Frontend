@@ -80,7 +80,7 @@ const userTypes: UserType[] = [
     id: "buyers",
     icon: Search,
     title: "Buyers & Clients",
-    headline: "Find your dream",
+    headline: "Find your dream property",
     description: "Describe what you need and let AI find your perfect match",
     cta: "Get Started",
     ctaUrl: "/for-clients",

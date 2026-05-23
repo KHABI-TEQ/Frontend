@@ -952,7 +952,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
             )}
 
             {/* Bedrooms and Bathrooms (for residential) */}
-            {propertySubtype.value === "residential" && (
+            {propertySubtype.value !== "land" && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="block text-sm font-semibold text-gray-800">
@@ -983,7 +983,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
             )}
 
             {/* Bathrooms only (for commercial) */}
-            {propertySubtype.value === "commercial" && (
+            {/* {propertySubtype.value === "commercial" && (
               <div className="space-y-2">
                 <label className="block text-sm font-semibold text-gray-800">
                   Bathrooms <span className="text-gray-500">(Optional)</span>
@@ -997,7 +997,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
                   isClearable
                 />
               </div>
-            )}
+            )} */}
 
             {/* Land Conditions (for Joint Venture Land) */}
             {preferenceType === "joint-venture" &&
