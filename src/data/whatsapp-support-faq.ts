@@ -6,6 +6,16 @@ export type SupportFaqAudience =
   | "field_agent"
   | "client";
 
+/** Roles shown in the support widget — maps to `SupportFaqAudience` (except client label). */
+export type SupportFaqRoleTab = "agent" | "developer" | "landlord" | "client";
+
+export const SUPPORT_FAQ_ROLE_TABS: { id: SupportFaqRoleTab; label: string; description: string }[] = [
+  { id: "agent", label: "Agent", description: "Listings, marketplace, verification, subscriptions" },
+  { id: "developer", label: "Developer", description: "Projects, inspections, agent requests" },
+  { id: "landlord", label: "Landlord", description: "Listings, commissions, agent requests" },
+  { id: "client", label: "Client / Buyer", description: "Preferences, inspections, buying or renting" },
+];
+
 export type SupportFaqItem = {
   id: string;
   question: string;
@@ -37,7 +47,7 @@ export const WHATSAPP_SUPPORT_FAQ: SupportFaqItem[] = [
     question: "How do I tell the platform what property I want (as a buyer or renter)?",
     answer:
       "Use Submit Your Property Preference from the website menu. Choose whether you want to buy, rent, shortlet, joint venture, or off-plan, then fill in location, budget, and property details. You do not need a professional account. After you submit, your request may be reviewed before agents can see it.",
-    audiences: ["client", "all"],
+    audiences: ["client"],
     whatsappMessage: "Hi, I need help submitting or updating my property preference on Khabi-Teq.",
   },
   {
@@ -45,7 +55,7 @@ export const WHATSAPP_SUPPORT_FAQ: SupportFaqItem[] = [
     question: "When will agents see my submitted preference?",
     answer:
       "Your preference is checked automatically by the preference-listing matching engine to match your preference with relevant listings that matches your preference. You will get a notification immediately via submitted email either a match is found now or later. The system stores your preference in-memory to notifiy you anytime a match is found.",
-    audiences: ["client", "all"],
+    audiences: ["client"],
     whatsappMessage: "Hi, i didn't get a match notification for my preference. Please assist.",
   },
   {
@@ -84,15 +94,15 @@ export const WHATSAPP_SUPPORT_FAQ: SupportFaqItem[] = [
     id: "agent-marketplace",
     question: "What is the Agent Marketplace?",
     answer:
-      "The Agent Marketplace shows what buyers and renters are looking for. You can respond to those requests or list a property that matches a specific buyer need. This is different from Lasrera Marketplace, where you ask permission to market someone else’s property.",
+      "The Agent Marketplace shows what buyers and renters are looking for. You can respond to those requests or list a property that matches a specific buyer need. This is different from the Publisher Properties, where you ask permission to market someone else’s property.",
     audiences: ["agent"],
     whatsappMessage: "Hi, I am an Agent and need help using the Agent Marketplace or matching a brief.",
   },
   {
     id: "agent-lasrera-request",
-    question: "What is Lasrera Marketplace and request-to-market?",
+    question: "Where will get Developers and Landlords properties and request-to-market?",
     answer:
-      "Lasrera Marketplace lists properties published by landlords and developers. You can request permission to market a listing on their behalf. Track your outgoing requests under My Request to Market. The property owner approves or declines from their Agent Requests area.",
+      "You will get from the Publishers Properties tab on your dashboard. You can request permission to market a listing on their behalf. Track your outgoing requests under My Request to Market. The property owner approves or declines from their Agent Requests area.",
     audiences: ["agent"],
     whatsappMessage: "Hi, I am an Agent and need help with Lasrera or request-to-market.",
   },
@@ -153,12 +163,20 @@ export const WHATSAPP_SUPPORT_FAQ: SupportFaqItem[] = [
     whatsappMessage: "Hi, I am a Field Agent and need help with assigned inspections on Khabi-Teq.",
   },
   {
-    id: "publisher-request-to-market",
-    question: "Request-to-market workflow (Landlords & Developers)",
+    id: "developer-landlord-agent-request-to-market",
+    question: "Agent Request-to-market workflow",
     answer:
-      "Agents may ask to market your listing through Lasrera or a similar request. You review each request under Agent Requests, accept agents you trust, and complete any payment or sale steps required for that deal. Agents can track progress on their own request list.",
+      "When an agent requests to market your listed property, you’ll see the request in your dashboard. Review the agent’s profile, set a temporary commission fee of up to 5%, and approve agents you trust. Once approved, the property will automatically appear on their practitioner page and become available for inspection bookings.",
     audiences: ["landlord", "developer"],
     whatsappMessage: "Hi, I need help with the request-to-market workflow on Khabi-Teq.",
+  },
+  {
+    id: "agent-request-to-market",
+    question: "How does my Request-to-market property works",
+    answer:
+      "You can submit a marketing request for any listing from your dashboard. The Developer or Landlord will review it, set a temporary commission fee capped at 5%, and approve trusted agents. Once approved, the property will appear on your practitioner page and be open for inspection bookings",
+    audiences: ["agent"],
+    whatsappMessage: "Hi, As an Agent, I need help with the request-to-market workflow on Khabi-Teq.",
   },
   {
     id: "partner-api",
@@ -185,3 +203,21 @@ export const WHATSAPP_SUPPORT_FAQ: SupportFaqItem[] = [
     whatsappMessage: "Hi, I am having access or wrong user role issues on Khabi-Teq. My email is: ",
   },
 ];
+
+export function faqsForRole(role: SupportFaqRoleTab): SupportFaqItem[] {
+  return WHATSAPP_SUPPORT_FAQ.filter(
+    (item) => item.audiences.includes("all") || item.audiences.includes(role),
+  );
+}
+
+export function partitionFaqsForRole(role: SupportFaqRoleTab): {
+  general: SupportFaqItem[];
+  forYou: SupportFaqItem[];
+} {
+  const filtered = faqsForRole(role);
+  const general = filtered.filter(
+    (item) => item.audiences.includes("all") && !item.audiences.includes(role),
+  );
+  const forYou = filtered.filter((item) => item.audiences.includes(role));
+  return { general, forYou };
+}
