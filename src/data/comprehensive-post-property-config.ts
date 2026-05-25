@@ -3,10 +3,35 @@
 // Comprehensive Post Property Form Configuration
 export const BRIEF_TYPES = {
   SELL: "sell",
+  OFF_PLAN: "off-plan",
   RENT: "rent",
   JV: "jv",
   SHORTLET: "shortlet",
 } as const;
+
+/** Outright sale and off-plan share the same listing form fields. */
+export const isSellLikeBriefType = (briefType: string): boolean =>
+  briefType === BRIEF_TYPES.SELL || briefType === BRIEF_TYPES.OFF_PLAN;
+
+export const isSellLikePropertyType = (propertyType: string): boolean =>
+  propertyType === BRIEF_TYPES.SELL || propertyType === BRIEF_TYPES.OFF_PLAN;
+
+export function propertyTypeToBriefTypeLabel(propertyType: string): string {
+  switch (propertyType) {
+    case BRIEF_TYPES.SELL:
+      return "Outright Sales";
+    case BRIEF_TYPES.OFF_PLAN:
+      return "Off-Plan";
+    case BRIEF_TYPES.RENT:
+      return "Rent";
+    case BRIEF_TYPES.SHORTLET:
+      return "Shortlet";
+    case BRIEF_TYPES.JV:
+      return "Joint Venture";
+    default:
+      return "";
+  }
+}
 
 export const PROPERTY_CATEGORIES = {
   RESIDENTIAL: "Residential",
@@ -29,6 +54,20 @@ export const briefTypeConfig = {
     commission: {
       landowner: 10,
       agent: 50, // 50% of agent's commission
+    },
+  },
+  [BRIEF_TYPES.OFF_PLAN]: {
+    label: "Off-Plan Property",
+    description: "I want to list a property that is under development or not yet completed",
+    icon: "🏗️",
+    propertyCategories: [
+      PROPERTY_CATEGORIES.RESIDENTIAL,
+      PROPERTY_CATEGORIES.COMMERCIAL,
+      PROPERTY_CATEGORIES.LAND,
+    ],
+    commission: {
+      landowner: 10,
+      agent: 50,
     },
   },
   [BRIEF_TYPES.RENT]: {
@@ -71,6 +110,23 @@ export const briefTypeConfig = {
     },
   },
 };
+
+export const offPlanPaymentPlanOptions = [
+  { value: "outright", label: "Outright Payment" },
+  { value: "installment-6-months", label: "6 Months Installment" },
+  { value: "installment-12-months", label: "12 Months Installment" },
+  { value: "installment-18-months", label: "18 Months Installment" },
+  { value: "installment-24-months", label: "24 Months Installment" },
+  { value: "installment-36-months", label: "36 Months Installment" },
+];
+
+export const offPlanDevelopmentStageOptions = [
+  { value: "planning", label: "Planning Stage" },
+  { value: "foundation", label: "Foundation Stage" },
+  { value: "structural", label: "Structural Stage" },
+  { value: "finishing", label: "Finishing Stage" },
+  { value: "near-completion", label: "Near Completion" },
+];
 
 // Property Condition Options
 export const propertyConditionOptions = [
@@ -416,7 +472,7 @@ export const shouldShowField = (
         // Property Condition - only for Residential/Commercial (not Land), and NEVER for JV
     propertyCondition:
       briefType !== BRIEF_TYPES.JV &&
-      (briefType === BRIEF_TYPES.SELL ||
+      (isSellLikeBriefType(briefType) ||
         briefType === BRIEF_TYPES.RENT ||
         briefType === BRIEF_TYPES.SHORTLET) &&
       (propertyCategory === PROPERTY_CATEGORIES.RESIDENTIAL ||
@@ -447,10 +503,14 @@ export const shouldShowField = (
 
         // Land Size - for all Sell properties, for Commercial Rent, and all JV (NOT for shortlet)
     landSize:
-      briefType === BRIEF_TYPES.SELL ||
+      isSellLikeBriefType(briefType) ||
       (briefType === BRIEF_TYPES.RENT &&
         propertyCategory === PROPERTY_CATEGORIES.COMMERCIAL) ||
       briefType === BRIEF_TYPES.JV,
+
+    expectedCompletionDate: briefType === BRIEF_TYPES.OFF_PLAN,
+    developmentStage: briefType === BRIEF_TYPES.OFF_PLAN,
+    paymentPlan: briefType === BRIEF_TYPES.OFF_PLAN,
 
     // Rental Type - only for Rent
     rentalType: briefType === BRIEF_TYPES.RENT,
@@ -459,8 +519,8 @@ export const shouldShowField = (
     leaseHold:
       briefType === BRIEF_TYPES.RENT && dependencies?.rentalType === "Lease",
 
-    // Documents - for Sell and JV
-    documents: briefType === BRIEF_TYPES.SELL || briefType === BRIEF_TYPES.JV,
+    // Documents - for Sell-like and JV
+    documents: isSellLikeBriefType(briefType) || briefType === BRIEF_TYPES.JV,
 
     // JV Conditions - only for JV
     jvConditions: briefType === BRIEF_TYPES.JV,
@@ -570,7 +630,7 @@ export const getCommissionText = (
       return `I, ${userName}, agree that Khabiteq Realty shall earn ${rate}% of the total value generated from this transaction when the deal is closed.`;
     } else if (briefType === BRIEF_TYPES.RENT) {
       return `I, ${userName}, agree that Khabiteq Realty shall earn ${rate}% of the final rental deal value as commission when the deal is closed.`;
-    } else if (briefType === BRIEF_TYPES.SELL) {
+    } else if (isSellLikeBriefType(briefType)) {
       return `I, ${userName}, agree that Khabiteq Realty shall earn ${rate}% of the total value generated from this transaction as commission when the deal is closed.`;
     } else {
       return `I, ${userName}, agree that Khabiteq Realty shall earn ${rate}% of the total value generated from this transaction as commission when the deal is closed.`;

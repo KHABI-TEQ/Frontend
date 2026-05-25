@@ -13,7 +13,7 @@ import { FEATURE_KEYS } from "@/hooks/useFeatureGate";
 import FeatureGate from "@/components/access/FeatureGate";
 
 interface PropertyTypeCard {
-  type: "sell" | "rent" | "shortlet" | "jv";
+  type: "sell" | "off-plan" | "rent" | "shortlet" | "jv";
   title: string;
   description: string;
   route: string;
@@ -29,6 +29,14 @@ const propertyTypes: PropertyTypeCard[] = [
     route: "/post-property/outright-sales",
     icon: "🏠",
     color: "bg-blue-50 border-blue-200 hover:bg-blue-100",
+  },
+  {
+    type: "off-plan",
+    title: "Off-Plan",
+    description: "List a property under development with completion and payment details",
+    route: "/post-property/off-plan",
+    icon: "🏗️",
+    color: "bg-amber-50 border-amber-200 hover:bg-amber-100",
   },
   {
     type: "rent",

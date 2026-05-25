@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from 'react';
-import { MessageCircle, X, Phone, Send } from 'lucide-react';
-import { WHATSAPP_CONFIG, getWhatsAppUrl, isBusinessHours } from '@/config/whatsapp-config';
+import React, { useState } from "react";
+import { ChevronDown, MessageCircle, Send, X } from "lucide-react";
+import { WHATSAPP_CONFIG, getWhatsAppUrl, isBusinessHours } from "@/config/whatsapp-config";
+import { WHATSAPP_SUPPORT_FAQ, type SupportFaqItem } from "@/data/whatsapp-support-faq";
 
 interface WhatsAppChatWidgetProps {
   phoneNumber?: string;
@@ -11,36 +12,40 @@ interface WhatsAppChatWidgetProps {
 
 const WhatsAppChatWidget: React.FC<WhatsAppChatWidgetProps> = ({
   phoneNumber = WHATSAPP_CONFIG.phoneNumber,
-  message = WHATSAPP_CONFIG.defaultMessages.general
+  message = WHATSAPP_CONFIG.defaultMessages.general,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isVisible, setIsVisible] = useState(true);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const openWhatsAppChat = () => {
-    const whatsappUrl = getWhatsAppUrl(phoneNumber, message);
-    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+  const openWhatsAppChat = (customMessage?: string) => {
+    const whatsappUrl = getWhatsAppUrl(phoneNumber, customMessage ?? message);
+    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+  };
+
+  const toggleFaq = (id: string) => {
+    setExpandedId((prev) => (prev === id ? null : id));
   };
 
   const toggleChat = () => {
     setIsOpen(!isOpen);
+    if (isOpen) setExpandedId(null);
   };
-
-  const minimizeWidget = () => {
-    setIsVisible(false);
-  };
-
-  if (!isVisible) return null;
 
   return (
-    <div className="fixed bottom-6 left-6 z-50">
-      {/* Chat Popup */}
+    <div className="fixed bottom-6 left-6 z-50 flex max-h-[calc(100dvh-1.5rem)] flex-col items-start justify-end">
       {isOpen && (
-        <div className="mb-4 bg-white rounded-2xl shadow-2xl border border-gray-200 w-80 max-w-[calc(100vw-3rem)]">
-          {/* Header */}
-          <div className="text-white p-4 rounded-t-2xl flex items-center justify-between" style={{backgroundColor: WHATSAPP_CONFIG.appearance.primaryColor}}>
+        <div
+          role="dialog"
+          aria-label="Khabi-Teq support"
+          className="mb-4 flex max-h-[calc(100dvh-7.5rem)] w-[22rem] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl"
+        >
+          <div
+            className="flex shrink-0 items-center justify-between rounded-t-2xl p-4 text-white"
+            style={{ backgroundColor: WHATSAPP_CONFIG.appearance.primaryColor }}
+          >
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                <MessageCircle className="w-5 h-5" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
+                <MessageCircle className="h-5 w-5" />
               </div>
               <div>
                 <h3 className="font-semibold text-white">{WHATSAPP_CONFIG.team.name}</h3>
@@ -49,171 +54,161 @@ const WhatsAppChatWidget: React.FC<WhatsAppChatWidgetProps> = ({
                 </p>
               </div>
             </div>
-            <button 
+            <button
+              type="button"
               onClick={toggleChat}
-              className="text-white/80 hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors"
+              className="rounded-full p-1 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+              aria-label="Close support panel"
             >
-              <X className="w-5 h-5" />
+              <X className="h-5 w-5" />
             </button>
           </div>
 
-          {/* Chat Content */}
-          <div className="p-4 space-y-4">
-            {/* Welcome Message */}
-            <div className="bg-gray-50 rounded-lg p-3">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 scroll-smooth">
+            <div className="mb-4 rounded-lg bg-gray-50 p-3">
               <div className="flex items-start space-x-2">
-                <div className="w-8 h-8 bg-[#25D366] rounded-full flex items-center justify-center flex-shrink-0">
-                  <MessageCircle className="w-4 h-4 text-white" />
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#25D366]">
+                  <MessageCircle className="h-4 w-4 text-white" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm text-gray-800 mb-2">
-                    👋 Hi there! Welcome to Khabi-Teq support.
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    How can we help you with document verification today?
-                  </p>
+                  <p className="mb-1 text-sm text-gray-800">Hi there! Welcome to Khabi-Teq support.</p>
+                  <p className="text-sm text-gray-600">Browse answers below, or chat with us on WhatsApp.</p>
                 </div>
               </div>
             </div>
 
-            {/* Quick Actions */}
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                Quick Actions
-              </p>
-              <div className="grid grid-cols-1 gap-2">
-                <button
-                  onClick={() => {
-                    const whatsappUrl = getWhatsAppUrl(phoneNumber, WHATSAPP_CONFIG.defaultMessages.documentVerification);
-                    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-                  }}
-                  className="text-left p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors group"
-                >
-                  <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      📄
-                    </div>
-                    <span className="text-sm text-gray-700 group-hover:text-gray-900">
-                      Document Verification Help
-                    </span>
-                  </div>
-                </button>
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold text-gray-900">
+                What would you like to know about Khabi-Teq?
+              </h4>
+              <div
+                className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5"
+                role="note"
+                aria-label="How to use support topics"
+              >
+                <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                  How to use this guide
+                </p>
+                <ul className="mt-1.5 list-disc space-y-1 pl-4 text-sm leading-relaxed text-gray-600">
+                  <li>
+                    Open the question that matches your situation—many mention
+                    Agent, Landlord, Developer, buyer, or renter in the title.
+                  </li>
+                  <li>Tap a question to expand and read the answer.</li>
+                  <li>
+                    If you need more help, use the WhatsApp button under any answer.
+                  </li>
+                </ul>
+              </div>
 
-                <button
-                  onClick={() => {
-                    const whatsappUrl = getWhatsAppUrl(phoneNumber, WHATSAPP_CONFIG.defaultMessages.paymentSupport);
-                    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-                  }}
-                  className="text-left p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors group"
-                >
-                  <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                      💳
-                    </div>
-                    <span className="text-sm text-gray-700 group-hover:text-gray-900">
-                      Payment Support
-                    </span>
-                  </div>
-                </button>
+              <div className="space-y-2">
+                {WHATSAPP_SUPPORT_FAQ.map((item: SupportFaqItem) => {
+                  const isExpanded = expandedId === item.id;
+                  return (
+                    <div
+                      key={item.id}
+                      className="overflow-hidden rounded-lg border border-gray-100 bg-gray-50"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => toggleFaq(item.id)}
+                        className="flex w-full items-start justify-between gap-2 p-3 text-left transition-colors hover:bg-gray-100"
+                        aria-expanded={isExpanded}
+                      >
+                        <span className="text-sm font-medium text-gray-800">{item.question}</span>
+                        <ChevronDown
+                          className={`mt-0.5 h-4 w-4 shrink-0 text-gray-500 transition-transform ${
+                            isExpanded ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
 
-                <button
-                  onClick={() => {
-                    const whatsappUrl = getWhatsAppUrl(phoneNumber, WHATSAPP_CONFIG.defaultMessages.technicalIssue);
-                    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-                  }}
-                  className="text-left p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors group"
-                >
-                  <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                      🔧
+                      {isExpanded && (
+                        <div className="space-y-3 border-t border-gray-100 bg-white px-3 pb-3 pt-2">
+                          <p className="text-sm leading-relaxed text-gray-700">{item.answer}</p>
+                          <button
+                            type="button"
+                            onClick={() => openWhatsAppChat(item.whatsappMessage)}
+                            className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[#25D366]/30 bg-[#25D366]/5 px-3 py-2 text-sm font-medium text-[#128C7E] transition-colors hover:bg-[#25D366]/10"
+                          >
+                            <MessageCircle className="h-4 w-4" />
+                            Still need help? Chat on WhatsApp
+                          </button>
+                        </div>
+                      )}
                     </div>
-                    <span className="text-sm text-gray-700 group-hover:text-gray-900">
-                      Technical Support
-                    </span>
-                  </div>
-                </button>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Contact Info */}
-            <div className="border-t pt-4">
-              <div className="flex items-center justify-between text-sm text-gray-500">
-                <span>{WHATSAPP_CONFIG.team.availability}</span>
-                <div className="flex items-center space-x-1">
-                  <div className={`w-2 h-2 rounded-full ${isBusinessHours() ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
-                  <span>{isBusinessHours() ? "Online" : "Offline"}</span>
-                </div>
-              </div>
-            </div>
           </div>
 
-          {/* Footer */}
-          <div className="border-t p-4">
+          <div className="shrink-0 border-t bg-white p-4">
+            <div className="mb-3 flex items-center justify-between text-sm text-gray-500">
+              <span>{WHATSAPP_CONFIG.team.availability}</span>
+              <div className="flex items-center space-x-1">
+                <div
+                  className={`h-2 w-2 rounded-full ${
+                    isBusinessHours() ? "animate-pulse bg-green-500" : "bg-gray-400"
+                  }`}
+                />
+                <span>{isBusinessHours() ? "Online" : "Offline"}</span>
+              </div>
+            </div>
             <button
-              onClick={openWhatsAppChat}
-              className="w-full text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
-              style={{
-                backgroundColor: WHATSAPP_CONFIG.appearance.primaryColor
+              type="button"
+              onClick={() => openWhatsAppChat()}
+              className="flex w-full items-center justify-center space-x-2 rounded-lg px-4 py-3 font-medium text-white transition-colors"
+              style={{ backgroundColor: WHATSAPP_CONFIG.appearance.primaryColor }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = WHATSAPP_CONFIG.appearance.hoverColor;
               }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = WHATSAPP_CONFIG.appearance.hoverColor}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = WHATSAPP_CONFIG.appearance.primaryColor}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = WHATSAPP_CONFIG.appearance.primaryColor;
+              }}
             >
-              <Send className="w-4 h-4" />
+              <Send className="h-4 w-4" />
               <span>Start WhatsApp Chat</span>
             </button>
           </div>
         </div>
       )}
 
-      {/* Chat Button */}
       <button
+        type="button"
         onClick={toggleChat}
-        className="text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 group relative"
-        style={{
-          backgroundColor: WHATSAPP_CONFIG.appearance.primaryColor
+        className="group relative transform rounded-full p-4 text-white shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl"
+        style={{ backgroundColor: WHATSAPP_CONFIG.appearance.primaryColor }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = WHATSAPP_CONFIG.appearance.hoverColor;
         }}
-        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = WHATSAPP_CONFIG.appearance.hoverColor}
-        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = WHATSAPP_CONFIG.appearance.primaryColor}
-        aria-label="Open WhatsApp Chat"
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = WHATSAPP_CONFIG.appearance.primaryColor;
+        }}
+        aria-label="Open WhatsApp support"
       >
-        {/* Pulse Animation */}
-        <div className="absolute inset-0 rounded-full animate-ping opacity-30" style={{backgroundColor: WHATSAPP_CONFIG.appearance.primaryColor}}></div>
-        
-        {/* Icon */}
+        <div
+          className="absolute inset-0 animate-ping rounded-full opacity-30"
+          style={{ backgroundColor: WHATSAPP_CONFIG.appearance.primaryColor }}
+        />
         <div className="relative">
-          {isOpen ? (
-            <X className="w-6 h-6" />
-          ) : (
-            <MessageCircle className="w-6 h-6" />
-          )}
+          {isOpen ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
         </div>
 
-        {/* Badge */}
         {!isOpen && (
-          <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
-            <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+          <div className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500">
+            <div className="h-2 w-2 animate-pulse rounded-full bg-white" />
           </div>
         )}
 
-        {/* Tooltip */}
         {!isOpen && (
-          <div className="absolute right-full mr-3 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white text-sm py-2 px-3 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
+          <div className="absolute right-full top-1/2 mr-3 -translate-y-1/2 whitespace-nowrap rounded-lg bg-gray-900 px-3 py-2 text-sm text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
             Chat with us on WhatsApp
-            <div className="absolute left-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-l-gray-900"></div>
+            <div className="absolute left-full top-1/2 -translate-y-1/2 border-4 border-transparent border-l-gray-900" />
           </div>
         )}
       </button>
-
-      {/* Minimize button when widget is open */}
-      {isOpen && (
-        <button
-          onClick={minimizeWidget}
-          className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 p-1"
-          aria-label="Minimize widget"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      )}
     </div>
   );
 };

@@ -227,7 +227,7 @@ function withPropertyLocationOptions(
 
 function normalizedListingPropertyType(data: Record<string, unknown>): string {
   const t = String(data.propertyType || "").toLowerCase().trim();
-  if (["sell", "rent", "shortlet", "jv"].includes(t)) return t;
+  if (["sell", "off-plan", "rent", "shortlet", "jv"].includes(t)) return t;
   return "";
 }
 
@@ -238,6 +238,7 @@ function detectListingPropertyTypeFromText(text: string): string | null {
   if (/\bjoint\s*venture\b|\bjv\b/i.test(raw)) return "jv";
   if (/\bshortlet\b|\bshort\s*let\b/i.test(raw)) return "shortlet";
   if (/\brent\b|\bletting\b|\blease\b/i.test(raw)) return "rent";
+  if (/\boff\s*plan\b|\boff-plan\b/i.test(raw)) return "off-plan";
   if (/\bsale\b|\bsell\b|\boutright\b|\bbuy\b/i.test(raw)) return "sell";
   return null;
 }

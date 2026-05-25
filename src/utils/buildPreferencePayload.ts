@@ -135,7 +135,7 @@ export function buildPreferencePayload(
   const basePayload = {
     preferenceType: selectedPreferenceType,
     preferenceMode:
-      selectedPreferenceType === "buy"
+      selectedPreferenceType === "buy" || selectedPreferenceType === "off-plan"
         ? "buy"
         : selectedPreferenceType === "rent"
           ? "tenant"
@@ -285,6 +285,44 @@ export function buildPreferencePayload(
         additionalNotes: toStr(jvData.additionalNotes),
       };
       return compactPayload(jvPayload) as PreferencePayload;
+    }
+
+    case "off-plan": {
+      const offPlanData = fd;
+      const pd = (offPlanData.propertyDetails || {}) as Record<string, unknown>;
+      const offPlanPayload = {
+        ...basePayload,
+        preferenceType: "off-plan" as const,
+        preferenceMode: "buy" as const,
+        propertyDetails: {
+          propertyType: toStr(pd.propertySubtype ?? pd.propertyType),
+          buildingType: toStr(pd.buildingType),
+          minBedrooms: minBedroomsStr(pd),
+          minBathrooms: Number(pd.bathrooms ?? pd.minBathrooms) || 0,
+          propertyCondition: toStr(pd.propertyCondition),
+          purpose: toStr(pd.purpose) || "Investment",
+          landSize: toStr(pd.landSize),
+          minLandSize: toStr(pd.minLandSize),
+          maxLandSize: toStr(pd.maxLandSize),
+          measurementUnit: normalizeMeasurementUnitForApi(pd.measurementUnit),
+          documentTypes: filterStringArray(pd.documentTypes),
+          landConditions: filterStringArray(pd.landConditions),
+          expectedCompletionDate: toStr(pd.expectedCompletionDate),
+          developmentStage: toStr(pd.developmentStage),
+          paymentPlan: toStr(pd.paymentPlan),
+        },
+        contactInfo: {
+          fullName: toStr(contact.fullName),
+          email: toStr(contact.email),
+          phoneNumber: toStr(contact.phoneNumber),
+        },
+        nearbyLandmark: toStr(
+          (pd as Record<string, unknown>).nearbyLandmark ?? offPlanData.nearbyLandmark,
+        ),
+        additionalNotes: toStr(offPlanData.additionalNotes),
+      };
+      ensurePreferencePayloadStrings(offPlanPayload as unknown as Record<string, unknown>);
+      return compactPayload(offPlanPayload) as PreferencePayload;
     }
 
     case "shortlet": {

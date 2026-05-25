@@ -39,9 +39,13 @@ import Breadcrumb from "@/components/extrals/Breadcrumb";
 import PropertyPostModeSelector from "@/components/post-property-components/PropertyPostModeSelector";
 import PropertyAiConversationFlow from "@/components/post-property-components/PropertyAiConversationFlow";
 
+export type OutrightListingMode = "sell" | "off-plan";
+
 interface OutrightSalesPropertyFormProps {
   pageTitle: string;
   pageDescription: string;
+  /** Uses outright-sale steps; off-plan differs at summary and API payload only. */
+  listingMode?: OutrightListingMode;
 }
 
 // Validation schemas for each step
@@ -96,7 +100,7 @@ const isStepValid = (
   }
 };
 
-// Helper function to check step 1 required fields for sell
+// Helper function to check step 1 required fields for sell / off-plan
 const checkSellStep1RequiredFields = (propertyData: any) => {
   const requiredFields = [
     "propertyCategory",
@@ -114,6 +118,14 @@ const checkSellStep1RequiredFields = (propertyData: any) => {
     if (propertyData.propertyCategory === "Commercial") {
       requiredFields.push("sittingRooms");
     }
+  }
+
+  if (propertyData.propertyType === "off-plan") {
+    requiredFields.push(
+      "expectedCompletionDate",
+      "developmentStage",
+      "paymentPlan",
+    );
   }
 
   return requiredFields.every((field) => {
@@ -148,7 +160,10 @@ const checkStep4RequiredFields = (propertyData: any) => {
 const OutrightSalesPropertyForm: React.FC<OutrightSalesPropertyFormProps> = ({
   pageTitle,
   pageDescription,
+  listingMode = "sell",
 }) => {
+  const isOffPlan = listingMode === "off-plan";
+  const briefTypeLabel = isOffPlan ? "Off-Plan" : "Outright Sales";
   const router = useRouter();
   const { user } = useUserContext();
   const {
@@ -176,8 +191,8 @@ const OutrightSalesPropertyForm: React.FC<OutrightSalesPropertyFormProps> = ({
 
   // Set property type on component mount
   useEffect(() => {
-    updatePropertyData("initializePropertyType", "sell");
-  }, [updatePropertyData]);
+    updatePropertyData("initializePropertyType", listingMode);
+  }, [updatePropertyData, listingMode]);
 
   // Scroll to top on page load
   useEffect(() => {
@@ -343,7 +358,7 @@ const OutrightSalesPropertyForm: React.FC<OutrightSalesPropertyFormProps> = ({
       const isLand = propertyData.propertyCategory === "Land";
       const payload = {
         listingScope,
-        propertyType: "sell",
+        propertyType: isOffPlan ? "off-plan" : "sell",
         propertyCategory: propertyData.propertyCategory,
         ...(isLand
           ? {}
@@ -369,7 +384,14 @@ const OutrightSalesPropertyForm: React.FC<OutrightSalesPropertyFormProps> = ({
           measurementType: propertyData.measurementType,
           size: propertyData.landSize,
         },
-        briefType: "Outright Sales",
+        briefType: isOffPlan ? "Off-Plan" : "Outright Sales",
+        ...(isOffPlan
+          ? {
+              expectedCompletionDate: propertyData.expectedCompletionDate || "",
+              developmentStage: propertyData.developmentStage || "",
+              paymentPlan: propertyData.paymentPlan || "",
+            }
+          : {}),
         additionalFeatures: {
           noOfBedroom: propertyData.bedrooms?.toString() || "0",
           noOfSittingRoom: propertyData.sittingRooms?.toString() || "0",
@@ -398,7 +420,11 @@ const OutrightSalesPropertyForm: React.FC<OutrightSalesPropertyFormProps> = ({
       );
 
       if (response.success) {
-        toast.success("Outright sales property created successfully!");
+        toast.success(
+          isOffPlan
+            ? "Off-plan property listed successfully!"
+            : "Outright sales property created successfully!",
+        );
         resetForm();
         setShowSuccessModal(true);
       } else {
@@ -471,7 +497,9 @@ const OutrightSalesPropertyForm: React.FC<OutrightSalesPropertyFormProps> = ({
             </h1>
             <p className="text-[#5A5D63] text-sm md:text-lg max-w-2xl mx-auto px-4">
               {showPropertySummary
-                ? "Review your outright sales property listing before submission"
+                ? isOffPlan
+                  ? "Review your off-plan property listing before submission"
+                  : "Review your outright sales property listing before submission"
                 : showCommissionModal
                   ? "Review and accept the commission terms"
                   : pageDescription}
@@ -500,7 +528,7 @@ const OutrightSalesPropertyForm: React.FC<OutrightSalesPropertyFormProps> = ({
 
           {!showPropertySummary && !showCommissionModal && postingMode === "ai" && currentStep === 0 && (
             <div className="mb-6 md:mb-8">
-              <PropertyAiConversationFlow briefTypeLabel="Outright Sales" imageStepIndex={2} />
+              <PropertyAiConversationFlow briefTypeLabel={briefTypeLabel} imageStepIndex={2} />
             </div>
           )}
 

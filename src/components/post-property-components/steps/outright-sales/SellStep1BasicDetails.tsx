@@ -15,10 +15,13 @@ import {
   getAreasByStateLGA,
 } from "@/utils/location-utils";
 import {
+  BRIEF_TYPES,
   briefTypeConfig,
   propertyConditionOptions,
   buildingTypeOptions,
   numberOptions,
+  offPlanDevelopmentStageOptions,
+  offPlanPaymentPlanOptions,
 } from "@/data/comprehensive-post-property-config";
 import { PropertyFormData } from "@/types/post-property.types";
 import {
@@ -33,6 +36,8 @@ interface Option {
 
 const SellStep1BasicDetails: React.FC = () => {
   const { propertyData, updatePropertyData } = usePostPropertyContext();
+  const isOffPlan = propertyData.propertyType === BRIEF_TYPES.OFF_PLAN;
+  const briefKey = isOffPlan ? BRIEF_TYPES.OFF_PLAN : BRIEF_TYPES.SELL;
   const { errors, touched, setFieldTouched, setFieldValue } =
     useFormikContext<PropertyFormData>();
   const [stateOptions, setStateOptions] = useState<Option[]>([]);
@@ -180,10 +185,14 @@ const SellStep1BasicDetails: React.FC = () => {
     >
       <div className="mb-8">
         <h2 className="text-[24px] leading-[38.4px] font-semibold font-display text-[#09391C] mb-2">
-          Submit brief details for Outright Sales
+          {isOffPlan
+            ? "Submit brief details for Off-Plan"
+            : "Submit brief details for Outright Sales"}
         </h2>
         <p className="text-[16px] text-[#5A5D63]">
-          Provide basic information about your property for sale
+          {isOffPlan
+            ? "Provide basic information about your off-plan development or unit"
+            : "Provide basic information about your property for sale"}
         </p>
       </div>
 
@@ -194,7 +203,7 @@ const SellStep1BasicDetails: React.FC = () => {
             Property Category <span className="text-red-500">*</span>
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {briefTypeConfig.sell?.propertyCategories.map((category) => (
+            {briefTypeConfig[briefKey]?.propertyCategories.map((category) => (
               <button
                 key={category}
                 type="button"
@@ -263,7 +272,7 @@ const SellStep1BasicDetails: React.FC = () => {
             <div>
               <EnhancedPriceInput
                 name="price"
-                label="Selling Price"
+                label={isOffPlan ? "Purchase / Listing Price" : "Selling Price"}
                 value={formatPriceForDisplay(propertyData.price)}
                 onChange={handlePriceChange}
                 placeholder="Enter amount"
@@ -674,13 +683,87 @@ const SellStep1BasicDetails: React.FC = () => {
           </div>
         )}
 
+        {/* Off-plan specific fields */}
+        {isOffPlan && (
+          <div className="space-y-6 rounded-xl border border-[#C7CAD0]/60 bg-[#F8FAF8] p-4 md:p-6">
+            <h3 className="text-lg font-semibold text-[#09391C]">
+              Off-Plan Details <span className="text-red-500">*</span>
+            </h3>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-[#707281]">
+                  Expected Completion Date <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={propertyData.expectedCompletionDate || ""}
+                  onChange={(e) =>
+                    updatePropertyData("expectedCompletionDate", e.target.value)
+                  }
+                  className={`w-full rounded-md border p-[12px] text-[14px] focus:border-[#8DDB90] focus:ring-2 focus:ring-[#8DDB90] ${getFieldBorderClass("expectedCompletionDate", true)}`}
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-[#707281]">
+                  Development Stage <span className="text-red-500">*</span>
+                </label>
+                <ReactSelect
+                  options={offPlanDevelopmentStageOptions}
+                  value={
+                    propertyData.developmentStage
+                      ? offPlanDevelopmentStageOptions.find(
+                          (o) => o.value === propertyData.developmentStage,
+                        ) ?? {
+                          value: propertyData.developmentStage,
+                          label: propertyData.developmentStage,
+                        }
+                      : null
+                  }
+                  onChange={(option) =>
+                    updatePropertyData("developmentStage", option?.value || "")
+                  }
+                  placeholder="Select development stage"
+                  styles={customStyles}
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="mb-2 block text-sm font-medium text-[#707281]">
+                  Payment Plan <span className="text-red-500">*</span>
+                </label>
+                <ReactSelect
+                  options={offPlanPaymentPlanOptions}
+                  value={
+                    propertyData.paymentPlan
+                      ? offPlanPaymentPlanOptions.find(
+                          (o) => o.value === propertyData.paymentPlan,
+                        ) ?? {
+                          value: propertyData.paymentPlan,
+                          label: propertyData.paymentPlan,
+                        }
+                      : null
+                  }
+                  onChange={(option) =>
+                    updatePropertyData("paymentPlan", option?.value || "")
+                  }
+                  placeholder="Select payment plan"
+                  styles={customStyles}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Description */}
         <div>
           <label className="block text-sm font-medium text-[#707281] mb-2">
             Property Description (Optional)
           </label>
           <textarea
-            placeholder="Describe your property for sale in detail..."
+            placeholder={
+              isOffPlan
+                ? "Describe the off-plan project, location advantages, and what buyers get..."
+                : "Describe your property for sale in detail..."
+            }
             value={propertyData.description}
             onChange={(e) => updatePropertyData("description", e.target.value)}
             rows={4}

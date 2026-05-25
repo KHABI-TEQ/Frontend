@@ -6,6 +6,12 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { usePostPropertyContext } from "@/context/post-property-context";
 import { getBriefTypeConfig } from "@/data/post-property-form-config";
+import {
+  isSellLikePropertyType,
+  offPlanDevelopmentStageOptions,
+  offPlanPaymentPlanOptions,
+  propertyTypeToBriefTypeLabel,
+} from "@/data/comprehensive-post-property-config";
 import Button from "@/components/general-components/button";
 import { kebabToTitleCase } from "@/utils/helpers";
 import { getPostingAgreementUserTypeLabel } from "@/utils/postingUserTypeLabel";
@@ -62,7 +68,10 @@ const EnhancedPropertySummary: React.FC = () => {
       items: [
         {
           label: "Brief Type",
-          value: briefConfig?.label || propertyData.propertyType,
+          value:
+            briefConfig?.label ||
+            propertyTypeToBriefTypeLabel(propertyData.propertyType) ||
+            propertyData.propertyType,
         },
         { label: "Property Category", value: propertyData.propertyCategory },
         { label: "Price", value: formatPrice(propertyData.price) },
@@ -138,9 +147,43 @@ const EnhancedPropertySummary: React.FC = () => {
       }
     }
 
-    // Land Information (for sell/jv)
+    if (propertyData.propertyType === "off-plan") {
+      const offPlanItems = [];
+      if (propertyData.expectedCompletionDate) {
+        offPlanItems.push({
+          label: "Expected Completion",
+          value: propertyData.expectedCompletionDate,
+        });
+      }
+      if (propertyData.developmentStage) {
+        const stageLabel = offPlanDevelopmentStageOptions.find(
+          (o) => o.value === propertyData.developmentStage,
+        )?.label;
+        offPlanItems.push({
+          label: "Development Stage",
+          value: stageLabel || propertyData.developmentStage,
+        });
+      }
+      if (propertyData.paymentPlan) {
+        const planLabel = offPlanPaymentPlanOptions.find(
+          (o) => o.value === propertyData.paymentPlan,
+        )?.label;
+        offPlanItems.push({
+          label: "Payment Plan",
+          value: planLabel || propertyData.paymentPlan,
+        });
+      }
+      if (offPlanItems.length > 0) {
+        summary.push({
+          title: "Off-Plan Details",
+          items: offPlanItems,
+        });
+      }
+    }
+
+    // Land Information (for sell-like / jv)
     if (
-      (propertyData.propertyType === "sell" ||
+      (isSellLikePropertyType(propertyData.propertyType) ||
         propertyData.propertyType === "jv") &&
       propertyData.landSize
     ) {
@@ -168,9 +211,9 @@ const EnhancedPropertySummary: React.FC = () => {
       });
     }
 
-    // Documents (for sell/jv)
+    // Documents (for sell-like / jv)
     if (
-      (propertyData.propertyType === "sell" ||
+      (isSellLikePropertyType(propertyData.propertyType) ||
         propertyData.propertyType === "jv") &&
       propertyData.documents.length > 0
     ) {

@@ -26,6 +26,12 @@ import toast from "react-hot-toast";
 import { ArrowLeft, MessageSquare, Bot, Loader2, CheckCircle, Volume2, VolumeX, ChevronDown } from "lucide-react";
 import nigerianStateLgaJson from "@/data/state-lga.json";
 import { getAreasByStateLGA, getLGAsByState, getStates } from "@/utils/location-utils";
+import {
+  OFF_PLAN_DEVELOPMENT_STAGE_LABELS,
+  OFF_PLAN_PAYMENT_PLAN_LABELS,
+  OFF_PLAN_PREFERENCE_DEVELOPMENT_STAGES,
+  OFF_PLAN_PREFERENCE_PAYMENT_PLANS,
+} from "@/data/off-plan-preference-options";
 
 const LOCATION_OPTIONS_PAGE_SIZE = Number.MAX_SAFE_INTEGER;
 const SHOW_MORE_LOCATION_OPTIONS = "Show more";
@@ -207,6 +213,23 @@ function withPreferenceLocationOptions(
     }
   }
 
+  return withPreferenceOffPlanQuickOptions(reply, data);
+}
+
+function withPreferenceOffPlanQuickOptions<T extends { quickOptions?: string[] }>(
+  reply: T,
+  data: Record<string, unknown>,
+): T {
+  if (normalizedPreferenceType(data) !== "off-plan") return reply;
+  const focus = normalizePreferenceFieldKey(
+    (reply as { focusedMissingField?: string }).focusedMissingField || "",
+  );
+  if (focus.includes("development stage") && focus.includes("off-plan")) {
+    return { ...reply, quickOptions: [...OFF_PLAN_DEVELOPMENT_STAGE_LABELS] };
+  }
+  if (focus.includes("payment plan") && focus.includes("off-plan")) {
+    return { ...reply, quickOptions: [...OFF_PLAN_PAYMENT_PLAN_LABELS] };
+  }
   return reply;
 }
 
@@ -221,6 +244,7 @@ function isMeaningful(value: unknown): boolean {
 function preferenceModeFromType(t: string): string {
   switch (t) {
     case "buy":
+    case "off-plan":
       return "buy";
     case "rent":
       return "tenant";
@@ -375,7 +399,7 @@ function applyPreferenceLandMeasurementFromFocusedAnswer(
   const unit = parseLandMeasurementUnitFromUserText(trimmed);
   if (!unit) return data;
 
-  if (type === "buy" && f.includes("land measurement unit")) {
+  if ((type === "buy" || type === "off-plan") && f.includes("land measurement unit")) {
     const pd = { ...((data.propertyDetails || {}) as Record<string, unknown>), measurementUnit: unit };
     return { ...data, propertyDetails: pd };
   }
@@ -401,7 +425,7 @@ function applyPreferenceLandSizeFromFocusedAnswer(
   const value = String(n);
   const type = normalizedPreferenceType(data);
 
-  if (type === "buy") {
+  if (type === "buy" || type === "off-plan") {
     const pd = { ...((data.propertyDetails || {}) as Record<string, unknown>) };
     if (f.includes("minimum land size")) {
       return { ...data, propertyDetails: { ...pd, minLandSize: value } };
@@ -468,10 +492,10 @@ function applyPreferenceSubtypeFromFocusedAnswer(
   const f = normalizePreferenceFieldKey(focusedField);
   if (!f.includes("property subtype")) return data;
   const type = normalizedPreferenceType(data);
-  if (type !== "buy" && type !== "rent") return data;
+  if (type !== "buy" && type !== "rent" && type !== "off-plan") return data;
 
   const pd = { ...((data.propertyDetails || {}) as Record<string, unknown>) };
-  if (type === "buy") {
+  if (type === "buy" || type === "off-plan") {
     const buySubtype = parseBuyPropertySubtypeFromUserText(trimmed);
     if (!buySubtype) return data;
     return { ...data, propertyDetails: { ...pd, propertySubtype: buySubtype, propertyType: buySubtype } };
@@ -506,6 +530,86 @@ function applyPreferenceDocumentTypesFromFocusedAnswer(
   return { ...data, propertyDetails: { ...pd, documentTypes: docs } };
 }
 
+function parseExpectedCompletionDateFromUserText(text: string): string | null {
+  const t = text.trim();
+  if (!t) return null;
+  const iso = t.match(/\b(20\d{2})-(\d{1,2})-(\d{1,2})\b/);
+  if (iso) {
+    const y = iso[1];
+    const m = iso[2].padStart(2, "0");
+    const d = iso[3].padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+  const dmy = t.match(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](20\d{2})\b/);
+  if (dmy) {
+    const d = dmy[1].padStart(2, "0");
+    const m = dmy[2].padStart(2, "0");
+    return `${dmy[3]}-${m}-${d}`;
+  }
+  return null;
+}
+
+function parseOffPlanDevelopmentStageFromUserText(text: string): string | null {
+  const t = text.trim().toLowerCase();
+  if (!t) return null;
+  for (const opt of OFF_PLAN_PREFERENCE_DEVELOPMENT_STAGES) {
+    const label = opt.label.toLowerCase();
+    const value = opt.value.toLowerCase();
+    if (t === value || t === label || t.includes(label) || t.includes(value)) {
+      return opt.value;
+    }
+  }
+  if (/\bplanning\b/.test(t)) return "planning";
+  if (/\bfoundation\b/.test(t)) return "foundation";
+  if (/\bstructural\b/.test(t)) return "structural";
+  if (/\bfinishing\b/.test(t)) return "finishing";
+  if (/\bnear[\s-]*completion\b/.test(t)) return "near-completion";
+  return null;
+}
+
+function parseOffPlanPaymentPlanFromUserText(text: string): string | null {
+  const t = text.trim().toLowerCase();
+  if (!t) return null;
+  for (const opt of OFF_PLAN_PREFERENCE_PAYMENT_PLANS) {
+    const label = opt.label.toLowerCase();
+    const value = opt.value.toLowerCase();
+    if (t === value || t === label || t.includes(label)) return opt.value;
+  }
+  if (/\boutright\b/.test(t)) return "outright";
+  const months = t.match(/(\d+)\s*month/);
+  if (months) {
+    const n = months[1];
+    const key = `installment-${n}-months`;
+    if (OFF_PLAN_PREFERENCE_PAYMENT_PLANS.some((o) => o.value === key)) return key;
+  }
+  return null;
+}
+
+/** Persist off-plan completion date, development stage, and payment plan from focused answers. */
+function applyPreferenceOffPlanFieldsFromFocusedAnswer(
+  data: Record<string, unknown>,
+  trimmed: string,
+  focusedField: string | undefined,
+): Record<string, unknown> {
+  if (!focusedField || !trimmed || normalizedPreferenceType(data) !== "off-plan") return data;
+  const f = normalizePreferenceFieldKey(focusedField);
+  const pd = { ...((data.propertyDetails || {}) as Record<string, unknown>) };
+
+  if (f.includes("expected completion date")) {
+    const date = parseExpectedCompletionDateFromUserText(trimmed);
+    if (date) return { ...data, propertyDetails: { ...pd, expectedCompletionDate: date } };
+  }
+  if (f.includes("development stage") && f.includes("off-plan")) {
+    const stage = parseOffPlanDevelopmentStageFromUserText(trimmed);
+    if (stage) return { ...data, propertyDetails: { ...pd, developmentStage: stage } };
+  }
+  if (f.includes("payment plan") && f.includes("off-plan")) {
+    const plan = parseOffPlanPaymentPlanFromUserText(trimmed);
+    if (plan) return { ...data, propertyDetails: { ...pd, paymentPlan: plan } };
+  }
+  return data;
+}
+
 /** Persist bedroom count when answering the bedrooms question (suggest API often omits or strips it). */
 function applyPreferenceBedroomsFromFocusedAnswer(
   data: Record<string, unknown>,
@@ -533,22 +637,25 @@ function applyPreferenceBuyResidentialCountFromFocusedAnswer(
   focusedField: string | undefined,
 ): Record<string, unknown> {
   if (!focusedField || !trimmed) return data;
-  if (normalizedPreferenceType(data) !== "buy") return data;
+  const type = normalizedPreferenceType(data);
+  if (type !== "buy" && type !== "off-plan") return data;
   const pd = (data.propertyDetails || {}) as Record<string, unknown>;
   if (getPropertySubtype(pd) !== "residential") return data;
 
   const f = normalizePreferenceFieldKey(focusedField);
   const nextPd = () => ({ ...pd });
+  const isResidential =
+    f.includes("residential buy") || f.includes("residential off-plan");
 
-  if (f.includes("number of bathrooms") && f.includes("residential buy")) {
+  if (f.includes("number of bathrooms") && isResidential) {
     const b = parseBuyBathroomChoiceFromUserText(trimmed);
     if (b) return { ...data, propertyDetails: { ...nextPd(), bathrooms: b } };
   }
-  if (f.includes("number of toilets") && f.includes("residential buy")) {
+  if (f.includes("number of toilets") && isResidential && type === "buy") {
     const n = parseFirstCountFromUserText(trimmed);
     if (n != null && n >= 0 && n <= 99) return { ...data, propertyDetails: { ...nextPd(), toilets: n } };
   }
-  if (f.includes("car park") && f.includes("residential buy")) {
+  if (f.includes("car park") && isResidential && type === "buy") {
     const n = parseFirstCountFromUserText(trimmed);
     if (n != null && n >= 0 && n <= 99) return { ...data, propertyDetails: { ...nextPd(), parkingSpaces: n } };
   }
@@ -1060,7 +1167,7 @@ function getMissingFieldsFromPreferenceData(data: Record<string, unknown>): stri
 
   if (!type) {
     missing.push(
-      "preference type (required: start with Buy, Rent, Shortlet, or JV — same as choosing listing type on the form)",
+      "preference type (required: start with Buy, Rent, Shortlet, Off-Plan, or JV — same as choosing listing type on the form)",
     );
     return missing;
   }
@@ -1136,12 +1243,14 @@ function getMissingFieldsFromPreferenceData(data: Record<string, unknown>): stri
 
     // Form order: step 0 Location must be complete before Property details & Budget (step 1).
     if (isPreferenceLocationCompleteForData(data)) {
-      if (type === "buy" || type === "rent") {
+      if (type === "buy" || type === "rent" || type === "off-plan") {
         if (!pd || !isMeaningful(pd.propertySubtype ?? pd.propertyType)) {
           missing.push(
             type === "buy"
               ? "property subtype (required — land, residential, or commercial, as on Property details & Budget)"
-              : "property subtype (required — e.g. self-con, flat, as on Property details & Budget)",
+              : type === "off-plan"
+                ? "property subtype (required for off-plan — land, residential, or commercial, as on Property details & Budget)"
+                : "property subtype (required — e.g. self-con, flat, as on Property details & Budget)",
           );
         }
       }
@@ -1183,6 +1292,57 @@ function getMissingFieldsFromPreferenceData(data: Record<string, unknown>): stri
               missing.push("number of car parks (required for residential buy — after toilets)");
             }
           }
+        }
+      }
+
+      if (type === "off-plan" && subtype) {
+        if (!pd || !isValidLandMeasurementUnitValue(pd.measurementUnit)) {
+          missing.push("land measurement unit (required for off-plan — plot, sqm, hectares, or acres)");
+        } else if (String(pd.measurementUnit).toLowerCase() === "sqm") {
+          if (!landSizeAmountPositive(pd.minLandSize)) {
+            missing.push("minimum land size (required for off-plan when unit is sqm — same as form min land size)");
+          }
+          if (!landSizeAmountPositive(pd.maxLandSize)) {
+            missing.push("maximum land size (required for off-plan when unit is sqm — same as form max land size)");
+          }
+        } else if (!landSizeAmountPositive(pd.landSize)) {
+          missing.push("land size (required for off-plan — single size when unit is not sqm, same as form)");
+        }
+
+        if (!pd || !Array.isArray(pd.documentTypes) || (pd.documentTypes as unknown[]).length === 0) {
+          missing.push("document type(s) (required for off-plan — at least one, same as form)");
+        }
+
+        if (subtype !== "land") {
+          if (!isMeaningful(pd?.propertyCondition)) {
+            missing.push("property condition (required for off-plan when not land — same as form)");
+          }
+          if (!isMeaningful(pd?.buildingType)) {
+            missing.push("building type (required for off-plan when not land — same as form)");
+          }
+          if (subtype === "residential") {
+            if (!bedroomsPresent(pd)) {
+              missing.push("number of bedrooms (required for residential off-plan — same as form)");
+            } else if (!bathroomsPositive(pd)) {
+              missing.push("number of bathrooms (required for residential off-plan — same as form)");
+            }
+          }
+        }
+
+        if (!isMeaningful(pd?.expectedCompletionDate)) {
+          missing.push(
+            "expected completion date (required for off-plan — when should the project be ready, e.g. 2027-06-30)",
+          );
+        }
+        if (!isMeaningful(pd?.developmentStage)) {
+          missing.push(
+            "development stage (required for off-plan — e.g. foundation, structural, or near-completion)",
+          );
+        }
+        if (!isMeaningful(pd?.paymentPlan)) {
+          missing.push(
+            "payment plan (required for off-plan — e.g. outright payment or 12 months installment)",
+          );
         }
       }
 
@@ -1284,6 +1444,19 @@ function flattenPreferenceData(data: Record<string, unknown>): { key: string; la
     if (pd.propertyCondition) out.push({ key: "propertyCondition", label: "Condition", value: String(pd.propertyCondition) });
     if (pd.leaseTerm) out.push({ key: "leaseTerm", label: "Lease term", value: String(pd.leaseTerm) });
     if (pd.purpose) out.push({ key: "purpose", label: "Purpose", value: String(pd.purpose) });
+    if (pd.expectedCompletionDate) {
+      out.push({
+        key: "expectedCompletionDate",
+        label: "Expected completion",
+        value: String(pd.expectedCompletionDate),
+      });
+    }
+    if (pd.developmentStage) {
+      out.push({ key: "developmentStage", label: "Development stage", value: String(pd.developmentStage) });
+    }
+    if (pd.paymentPlan) {
+      out.push({ key: "paymentPlan", label: "Payment plan", value: String(pd.paymentPlan) });
+    }
     if (Array.isArray(pd.documentTypes) && pd.documentTypes.length) {
       out.push({
         key: "documentTypes",
@@ -1779,7 +1952,7 @@ export default function PreferenceAiConversationFlow() {
 
       if (!effectiveType) {
         const typeFieldLabel =
-          "preference type (required: start with Buy, Rent, Shortlet, or JV — same as choosing listing type on the form)";
+          "preference type (required: start with Buy, Rent, Shortlet, Off-Plan, or JV — same as choosing listing type on the form)";
         const prompt = getPreferenceFieldPrompt(typeFieldLabel, preferenceQuestionVariantRef.current++);
         setPreferenceAiMessages((prev) => [
           ...prev,
@@ -1838,6 +2011,7 @@ export default function PreferenceAiConversationFlow() {
         data = applyPreferenceDocumentTypesFromFocusedAnswer(data, userText, lastFocusBeforeMerge);
         data = applyPreferenceBedroomsFromFocusedAnswer(data, userText, lastFocusBeforeMerge);
         data = applyPreferenceBuyResidentialCountFromFocusedAnswer(data, userText, lastFocusBeforeMerge);
+        data = applyPreferenceOffPlanFieldsFromFocusedAnswer(data, userText, lastFocusBeforeMerge);
 
         const fromUser = extractContactFromText(userText);
         const fromAccumulated = extractContactFromText(accumulated || userText);
@@ -2034,8 +2208,10 @@ export default function PreferenceAiConversationFlow() {
     if (!preferenceAiCollectedData) return;
     const merged = mergeSuggestPreferenceIntoForm(preferenceAiCollectedData) as Record<string, unknown>;
     const type = String(preferenceAiCollectedData.preferenceType ?? "buy").toLowerCase();
-    if (!["buy", "rent", "shortlet", "joint-venture"].includes(type)) {
-      toast.error("Invalid preference type. Please go back and specify buy, rent, shortlet, or joint venture.");
+    if (!["buy", "rent", "shortlet", "joint-venture", "off-plan"].includes(type)) {
+      toast.error(
+        "Invalid preference type. Please go back and specify buy, rent, shortlet, off-plan, or joint venture.",
+      );
       return;
     }
     setSubmitting(true);

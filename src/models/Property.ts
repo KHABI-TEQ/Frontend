@@ -84,7 +84,7 @@ export interface IPropertyHouseRules {
 
 // Main Property Interface
 export interface IProperty {
-  briefType: 'Outright Sales' | 'Rent' | 'Shortlet' | 'Joint Venture';
+  briefType: 'Outright Sales' | 'Off-Plan' | 'Rent' | 'Shortlet' | 'Joint Venture';
   propertyType: string;
   propertyCategory: 'Residential' | 'Commercial' | 'Land' | 'Mixed Development';
   propertyCondition?: string;
@@ -362,7 +362,7 @@ export class Property {
       {
         briefType: {
           type: String,
-          enum: ['Outright Sales', 'Rent', 'Shortlet', 'Joint Venture'],
+          enum: ['Outright Sales', 'Off-Plan', 'Rent', 'Shortlet', 'Joint Venture'],
           required: true,
           index: true,
         },

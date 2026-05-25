@@ -57,6 +57,7 @@ const UpdatePropertyRedirect = () => {
 
           // Determine property type from briefType
           const propertyType = property.briefType === "Outright Sales" ? "outright-sales" :
+                              property.briefType === "Off-Plan" ? "off-plan" :
                               property.briefType === "Rent" ? "rent" :
                               property.briefType === "Shortlet" ? "shortlet" :
                               property.briefType === "Joint Venture" ? "joint-venture" : "outright-sales";

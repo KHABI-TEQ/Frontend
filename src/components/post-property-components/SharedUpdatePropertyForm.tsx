@@ -38,7 +38,7 @@ import { URLS } from "@/utils/URLS";
 import Breadcrumb from "@/components/extrals/Breadcrumb";
 
 interface SharedUpdatePropertyFormProps {
-  propertyType: "sell" | "rent" | "jv" | "shortlet";
+  propertyType: "sell" | "off-plan" | "rent" | "jv" | "shortlet";
   pageTitle: string;
   pageDescription: string;
 }
@@ -275,14 +275,17 @@ const SharedUpdatePropertyForm: React.FC<SharedUpdatePropertyFormProps> = ({
           
           // Transform API response to property type
           const actualPropertyType = (property.briefType === "Outright Sales" ? "sell" :
+                        property.briefType === "Off-Plan" ? "off-plan" :
                         property.briefType === "Rent" ? "rent" :
                         property.briefType === "Shortlet" ? "shortlet" :
-                        property.briefType === "Joint Venture" ? "jv" : "sell") as "rent" | "shortlet" | "jv" | "sell";
+                        property.briefType === "Joint Venture" ? "jv" : "sell") as
+                        "rent" | "shortlet" | "jv" | "sell" | "off-plan";
           
           // Check if property type matches the route
           if (actualPropertyType !== propertyType) {
             // Redirect to the correct route for this property type
-            const correctRoute = actualPropertyType === "sell" ? "outright-sales" : 
+            const correctRoute = actualPropertyType === "sell" ? "outright-sales" :
+                                actualPropertyType === "off-plan" ? "off-plan" :
                                 actualPropertyType === "jv" ? "joint-venture" : 
                                 actualPropertyType;
             router.replace(`/update-property/${propertyId}/${correctRoute}`);
@@ -568,9 +571,12 @@ const SharedUpdatePropertyForm: React.FC<SharedUpdatePropertyFormProps> = ({
       // 3. Determine brief type
       let briefType = "";
       if (propertyData.propertyType === "sell") briefType = "Outright Sales";
+      else if (propertyData.propertyType === "off-plan") briefType = "Off-Plan";
       else if (propertyData.propertyType === "rent") briefType = "Rent";
       else if (propertyData.propertyType === "shortlet") briefType = "Shortlet";
       else if (propertyData.propertyType === "jv") briefType = "Joint Venture";
+
+      const isOffPlan = propertyData.propertyType === "off-plan";
 
       // 4. Prepare property payload
       const payload = {
@@ -605,6 +611,13 @@ const SharedUpdatePropertyForm: React.FC<SharedUpdatePropertyFormProps> = ({
           size: propertyData.propertyType === "shortlet" ? "" : propertyData.landSize,
         },
         briefType: briefType,
+        ...(isOffPlan
+          ? {
+              expectedCompletionDate: propertyData.expectedCompletionDate || "",
+              developmentStage: propertyData.developmentStage || "",
+              paymentPlan: propertyData.paymentPlan || "",
+            }
+          : {}),
         additionalFeatures: {
           noOfBedroom: propertyData.bedrooms.toString(),
           noOfBathroom: propertyData.bathrooms.toString(),

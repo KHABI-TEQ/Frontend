@@ -66,6 +66,16 @@ export const briefTypesConfig: BriefTypeConfig[] = [
     },
   },
   {
+    value: "off-plan",
+    label: "Off-Plan Property",
+    description: "I want to list a property under development",
+    icon: "🏗️",
+    commissionRate: {
+      landowner: 10,
+      agent: 20,
+    },
+  },
+  {
     value: "rent",
     label: "Rent Property",
     description: "I want to rent out my property to tenants",

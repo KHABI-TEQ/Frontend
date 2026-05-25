@@ -197,6 +197,7 @@ const MyListingPage = () => {
   const handleEditProperty = async (property: Property) => {
     // Determine property type route from briefType
     const propertyType = property.briefType === "Outright Sales" ? "outright-sales" :
+                        property.briefType === "Off-Plan" ? "off-plan" :
                         property.briefType === "Rent" ? "rent" :
                         property.briefType === "Shortlet" ? "shortlet" :
                         property.briefType === "Joint Venture" ? "joint-venture" : "outright-sales";
@@ -206,7 +207,7 @@ const MyListingPage = () => {
 
   const handleViewProperty = (property: Property) => {
     const briefType =
-      property.briefType === "Outright Sales"
+      property.briefType === "Outright Sales" || property.briefType === "Off-Plan"
         ? "Buy"
         : property.briefType === "Rent"
           ? "Rent"

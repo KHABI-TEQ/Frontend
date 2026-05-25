@@ -21,7 +21,7 @@ interface PropertyVideo {
 
 export interface PropertyData {
   // Step 1: Brief Type Selection
-  propertyType: "sell" | "rent" | "jv" | "shortlet" | "";
+  propertyType: "sell" | "off-plan" | "rent" | "jv" | "shortlet" | "";
 
   // Step 2: Property Category and Basic Info
   propertyCategory:
@@ -73,6 +73,11 @@ export interface PropertyData {
   isTenanted: string;
   /** Standard agent commission % (0–5). Default 5. For Sale: Landlord fixed 5%; Developer can set 0–5%. */
   agentCommissionPercent?: number;
+
+  /** Off-plan listing fields (same form as outright sale). */
+  expectedCompletionDate?: string;
+  developmentStage?: string;
+  paymentPlan?: string;
 
   // Additional Fields
   description: string;
@@ -213,6 +218,9 @@ const initialPropertyData: PropertyData = {
   ownershipDocuments: [],
   isTenanted: "",
   agentCommissionPercent: undefined,
+  expectedCompletionDate: "",
+  developmentStage: "",
+  paymentPlan: "",
   description: "",
   additionalInfo: "",
   availability: {
@@ -292,7 +300,7 @@ export function PostPropertyProvider({ children }: { children: ReactNode }) {
       setImages([]);
     } else if (field === "initializePropertyType") {
       // Initialize property type when entering a specific property type page
-      const newPropertyType = value as "sell" | "rent" | "jv" | "shortlet";
+      const newPropertyType = value as "sell" | "off-plan" | "rent" | "jv" | "shortlet";
 
       // Only reset if we're changing to a different property type
       if (propertyData.propertyType !== newPropertyType) {
@@ -359,6 +367,7 @@ export function PostPropertyProvider({ children }: { children: ReactNode }) {
   const populatePropertyData = (property: any) => {
     const populatedData: PropertyData = {
       propertyType: property.briefType === "Outright Sales" ? "sell" :
+                   property.briefType === "Off-Plan" ? "off-plan" :
                    property.briefType === "Rent" ? "rent" :
                    property.briefType === "Shortlet" ? "shortlet" :
                    property.briefType === "Joint Venture" ? "jv" : "",
@@ -398,6 +407,9 @@ export function PostPropertyProvider({ children }: { children: ReactNode }) {
       ownershipDocuments: property.ownershipDocuments || [],
       isTenanted: property.isTenanted || "",
       agentCommissionPercent: property.agentCommissionPercent ?? 5,
+      expectedCompletionDate: property.expectedCompletionDate || "",
+      developmentStage: property.developmentStage || "",
+      paymentPlan: property.paymentPlan || "",
       description: property.description || "",
       additionalInfo: property.addtionalInfo || "",
       videos: property.videos || [],

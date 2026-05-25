@@ -8,6 +8,9 @@ export function fieldPromptLabel(field: string): string {
 function preferenceSample(focusLower: string): string {
   const f = focusLower.toLowerCase().replace(/\u2013|\u2014/g, "-");
   if (f.includes("preference type")) return "Buy";
+  if (f.includes("expected completion date")) return "2027-06-30";
+  if (f.includes("development stage") && f.includes("off-plan")) return "Foundation Stage";
+  if (f.includes("payment plan") && f.includes("off-plan")) return "12 Months Installment";
   if (f.includes("preference location - state")) return "Lagos";
   if (f.includes("preference location - lga")) return "Ikeja";
   if (f.includes("preference location - area")) return "Lekki Phase 1";
@@ -77,9 +80,45 @@ export function getPreferenceFieldPrompt(
   if (f.includes("preference type")) {
     const speak = pickVariant(
       [
-        "Start by saying whether this is Buy, Rent, Shortlet, or joint venture.",
-        "Say Buy, Rent, Shortlet, or joint venture first.",
-        "Which listing type is this: Buy, Rent, Shortlet, or joint venture? Say it at the beginning.",
+        "Start by saying whether this is Buy, Rent, Shortlet, Off-Plan, or joint venture.",
+        "Say Buy, Rent, Shortlet, Off-Plan, or joint venture first.",
+        "Which listing type is this: Buy, Rent, Shortlet, Off-Plan, or joint venture? Say it at the beginning.",
+      ],
+      variant,
+    );
+    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+  }
+
+  if (f.includes("expected completion date")) {
+    const speak = pickVariant(
+      [
+        "When do you expect the off-plan property to be completed? Use a date like year-month-day, for example 2027-06-30.",
+        "What is your expected completion date for this off-plan project?",
+        "By when should the property be ready? Enter a date, for example 2027-12-01.",
+      ],
+      variant,
+    );
+    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+  }
+
+  if (f.includes("development stage") && f.includes("off-plan")) {
+    const speak = pickVariant(
+      [
+        "What development stage is the project at now? For example planning, foundation, structural, finishing, or near completion.",
+        "Which stage best describes the build: planning, foundation, structural, finishing, or near completion?",
+        "Current development stage for this off-plan property?",
+      ],
+      variant,
+    );
+    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+  }
+
+  if (f.includes("payment plan") && f.includes("off-plan")) {
+    const speak = pickVariant(
+      [
+        "Which payment plan do you prefer? Outright payment, or an installment plan such as 6, 12, 18, 24, or 36 months.",
+        "How would you like to pay: outright or installments over several months?",
+        "Preferred off-plan payment plan?",
       ],
       variant,
     );
@@ -271,8 +310,9 @@ export function getPreferenceFieldPrompt(
   }
 
   if (f.includes("property subtype")) {
-    const speak =
-      "Property subtype: land, residential, or commercial for a buy preference, or your rent subtype such as flat or bungalow.";
+    const speak = f.includes("off-plan")
+      ? "Property subtype for off-plan: land, residential, or commercial."
+      : "Property subtype: land, residential, or commercial for a buy preference, or your rent subtype such as flat or bungalow.";
     return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
   }
 

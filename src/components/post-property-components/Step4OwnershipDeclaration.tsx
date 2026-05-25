@@ -95,7 +95,9 @@ const Step4OwnershipDeclaration: React.FC<StepProps> = () => {
   const userType = getUserType();
 
   // Default agent commission to 5% for Sale, Rent, JV, Shortlet when poster is Landlord or Developer
-  const hasAgentCommission = ["sell", "rent", "jv", "shortlet"].includes(propertyData.propertyType);
+  const hasAgentCommission = ["sell", "off-plan", "rent", "jv", "shortlet"].includes(
+    propertyData.propertyType,
+  );
   useEffect(() => {
     if (
       hasAgentCommission &&

@@ -503,7 +503,7 @@ export const PreferenceFormProvider: React.FC<{ children: ReactNode }> = ({
         case 1: // Property details & Budget step
           // Property Details Validation
           // Basic property fields validation
-          if (["buy", "rent"].includes(formData.preferenceType as string)) {
+          if (["buy", "rent", "off-plan"].includes(formData.preferenceType as string)) {
             if (!formData.propertyDetails?.propertySubtype) {
               errors.push({
                 field: "propertyDetails.propertySubtype",
@@ -589,9 +589,11 @@ export const PreferenceFormProvider: React.FC<{ children: ReactNode }> = ({
             }
           }
 
-          // Document types for buy/joint-venture
+          // Document types for buy / off-plan / joint-venture
           if (
-            (formData.preferenceType === "buy" || formData.preferenceType === "joint-venture") &&
+            (formData.preferenceType === "buy" ||
+              formData.preferenceType === "off-plan" ||
+              formData.preferenceType === "joint-venture") &&
             (!formData.propertyDetails?.documentTypes || formData.propertyDetails.documentTypes.length === 0)
           ) {
             errors.push({
@@ -610,6 +612,28 @@ export const PreferenceFormProvider: React.FC<{ children: ReactNode }> = ({
               field: "propertyDetails.landConditions",
               message: "Land conditions are required",
             });
+          }
+
+          // Off-plan specific validations
+          if (formData.preferenceType === "off-plan") {
+            if (!formData.propertyDetails?.expectedCompletionDate) {
+              errors.push({
+                field: "propertyDetails.expectedCompletionDate",
+                message: "Expected completion date is required",
+              });
+            }
+            if (!formData.propertyDetails?.developmentStage) {
+              errors.push({
+                field: "propertyDetails.developmentStage",
+                message: "Development stage is required",
+              });
+            }
+            if (!formData.propertyDetails?.paymentPlan) {
+              errors.push({
+                field: "propertyDetails.paymentPlan",
+                message: "Payment plan is required",
+              });
+            }
           }
 
           // Shortlet specific validations

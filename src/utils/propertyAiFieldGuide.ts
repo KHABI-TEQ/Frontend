@@ -31,7 +31,7 @@ export const PROPERTY_AI_FIELD = {
 export type PropertyAiFieldId = (typeof PROPERTY_AI_FIELD)[keyof typeof PROPERTY_AI_FIELD];
 
 const LISTING_TYPE_LABEL =
-  "property type — start with Sale, Rent, Shortlet, or JV (listing type on the form)";
+  "property type — start with Sale, Off-Plan, Rent, Shortlet, or JV (listing type on the form)";
 
 const FIELD_LABELS: Record<PropertyAiFieldId, string> = {
   [PROPERTY_AI_FIELD.LISTING_TYPE]: LISTING_TYPE_LABEL,
@@ -58,6 +58,7 @@ export function briefTypeLabelToPropertyType(label: string): string | null {
   if (t.includes("joint venture") || t === "jv") return BRIEF_TYPES.JV;
   if (t.includes("shortlet")) return BRIEF_TYPES.SHORTLET;
   if (t.includes("rent")) return BRIEF_TYPES.RENT;
+  if (t.includes("off-plan") || t.includes("off plan")) return BRIEF_TYPES.OFF_PLAN;
   if (t.includes("sale") || t.includes("sell") || t.includes("outright")) return BRIEF_TYPES.SELL;
   return null;
 }
@@ -106,7 +107,15 @@ function isMeaningful(value: unknown): boolean {
 
 function listingType(data: Record<string, unknown>): string {
   const t = String(data.propertyType || "").toLowerCase().trim();
-  if ([BRIEF_TYPES.SELL, BRIEF_TYPES.RENT, BRIEF_TYPES.SHORTLET, BRIEF_TYPES.JV].includes(t as typeof BRIEF_TYPES.SELL)) {
+  if (
+    [
+      BRIEF_TYPES.SELL,
+      BRIEF_TYPES.OFF_PLAN,
+      BRIEF_TYPES.RENT,
+      BRIEF_TYPES.SHORTLET,
+      BRIEF_TYPES.JV,
+    ].includes(t as typeof BRIEF_TYPES.SELL)
+  ) {
     return t;
   }
   return "";
