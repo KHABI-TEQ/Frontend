@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { ChevronDown, MessageCircle, Send, X } from "lucide-react";
+import Image from "next/image";
+import { ChevronDown, HelpCircle, MessageCircle, Send, Sparkles, X } from "lucide-react";
 import { WHATSAPP_CONFIG, getWhatsAppUrl, isBusinessHours } from "@/config/whatsapp-config";
 import {
   SUPPORT_FAQ_ROLE_TABS,
@@ -95,6 +96,7 @@ const WhatsAppChatWidget: React.FC<WhatsAppChatWidgetProps> = ({
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState<SupportFaqRoleTab | null>(null);
   const [roleTouched, setRoleTouched] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
 
   useEffect(() => {
     if (roleTouched || selectedRole) return;
@@ -109,12 +111,12 @@ const WhatsAppChatWidget: React.FC<WhatsAppChatWidgetProps> = ({
 
   const selectedRoleLabel =
     SUPPORT_FAQ_ROLE_TABS.find((tab) => tab.id === selectedRole)?.label ?? "";
-  const selectedRoleHeading =
-    selectedRole === "client"
-      ? "For clients & buyers"
-      : selectedRole
-        ? `For ${selectedRoleLabel}s`
-        : "";
+  const selectedRoleHeading = (() => {
+    if (!selectedRole) return "";
+    if (selectedRole === "client") return "For clients & buyers";
+    if (selectedRole === "syndicating_partner") return "For syndicating partners";
+    return `For ${selectedRoleLabel}s`;
+  })();
 
   const openWhatsAppChat = (customMessage?: string) => {
     const whatsappUrl = getWhatsAppUrl(phoneNumber, customMessage ?? message);
@@ -145,24 +147,42 @@ const WhatsAppChatWidget: React.FC<WhatsAppChatWidgetProps> = ({
           className="mb-4 flex max-h-[calc(100dvh-7.5rem)] w-[22rem] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl"
         >
           <div
-            className="flex shrink-0 items-center justify-between rounded-t-2xl p-4 text-white"
+            className="relative flex shrink-0 items-center justify-between gap-2 overflow-hidden rounded-t-2xl p-4 text-white"
             style={{ backgroundColor: WHATSAPP_CONFIG.appearance.primaryColor }}
           >
-            <div className="flex items-center space-x-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
-                <MessageCircle className="h-5 w-5" />
+            <div
+              className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/10 via-transparent to-white/5"
+              aria-hidden
+            />
+            <div className="relative flex min-w-0 flex-1 items-center gap-3">
+              <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full ring-2 ring-white/50 shadow-lg">
+                <Image
+                  src="/support-representative.webp"
+                  alt="Khabi-Teq support representative with headset"
+                  fill
+                  className="object-cover object-[center_15%]"
+                  sizes="56px"
+                  priority
+                />
+                <span
+                  className={`absolute bottom-0.5 right-0.5 h-3 w-3 rounded-full border-2 border-white ${
+                    isBusinessHours() ? "bg-green-400" : "bg-gray-300"
+                  }`}
+                  aria-hidden
+                />
               </div>
-              <div>
-                <h3 className="font-semibold text-white">{WHATSAPP_CONFIG.team.name}</h3>
+              <div className="min-w-0">
+                <h3 className="truncate font-semibold text-white">{WHATSAPP_CONFIG.team.name}</h3>
                 <p className="text-xs text-green-100">
                   {isBusinessHours() ? "Online" : "Offline"} • {WHATSAPP_CONFIG.team.responseTime}
                 </p>
+                <p className="mt-0.5 truncate text-[11px] text-white/75">We&apos;re here to help</p>
               </div>
             </div>
             <button
               type="button"
               onClick={toggleChat}
-              className="rounded-full p-1 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+              className="relative shrink-0 rounded-full p-1 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
               aria-label="Close support panel"
             >
               <X className="h-5 w-5" />
@@ -204,15 +224,28 @@ const WhatsAppChatWidget: React.FC<WhatsAppChatWidgetProps> = ({
                         role="tab"
                         aria-selected={isActive}
                         onClick={() => selectRole(tab.id)}
-                        className={`rounded-lg border px-2.5 py-2 text-left transition-colors ${
+                        className={`support-role-card rounded-xl border px-2.5 py-2.5 text-left ${
+                          tab.fullWidth ? "col-span-2" : ""
+                        } ${tab.cardHoverShadowClass} ${
                           isActive
-                            ? "border-[#128C7E] bg-[#25D366]/10 text-[#128C7E]"
-                            : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50"
+                            ? `support-role-card--active ${tab.cardActiveClass}`
+                            : tab.cardClass
                         }`}
                       >
-                        <span className="block text-sm font-medium">{tab.label}</span>
-                        <span className="mt-0.5 block text-[11px] leading-snug text-gray-500">
-                          {tab.description}
+                        <span
+                          className={`support-role-card__glow ${tab.cardGlowClass}`}
+                          aria-hidden
+                        />
+                        <span className="support-role-card__shimmer" aria-hidden />
+                        <span className="support-role-card__content">
+                          <span className={`block text-sm font-semibold ${tab.labelClass}`}>
+                            {tab.label}
+                          </span>
+                          <span
+                            className={`mt-0.5 block text-[11px] leading-snug ${tab.descriptionClass}`}
+                          >
+                            {tab.description}
+                          </span>
                         </span>
                       </button>
                     );
@@ -221,25 +254,67 @@ const WhatsAppChatWidget: React.FC<WhatsAppChatWidgetProps> = ({
               </div>
 
               <div
-                className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5"
+                className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50"
                 role="note"
                 aria-label="How to use support topics"
               >
-                <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                  How to use this guide
-                </p>
-                <ul className="mt-1.5 list-disc space-y-1 pl-4 text-sm leading-relaxed text-gray-600">
-                  <li>Select Agent, Developer, Landlord, or Client / Buyer above.</li>
-                  <li>Tap a question to expand and read the answer.</li>
-                  <li>If you need more help, use the WhatsApp button under any answer.</li>
-                </ul>
+                <button
+                  type="button"
+                  onClick={() => setGuideOpen((open) => !open)}
+                  className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left transition-colors hover:bg-gray-100/80"
+                  aria-expanded={guideOpen}
+                  aria-controls="support-how-to-use-guide"
+                >
+                  <span className="flex items-center gap-2">
+                    <HelpCircle className="h-4 w-4 shrink-0 text-[#128C7E]" aria-hidden />
+                    <span className="text-xs font-medium uppercase tracking-wide text-gray-600">
+                      How to use this guide
+                    </span>
+                  </span>
+                  <ChevronDown
+                    className={`h-4 w-4 shrink-0 text-gray-500 transition-transform duration-200 ${
+                      guideOpen ? "rotate-180" : ""
+                    }`}
+                    aria-hidden
+                  />
+                </button>
+                {guideOpen && (
+                  <ul
+                    id="support-how-to-use-guide"
+                    className="list-disc space-y-1 border-t border-gray-200/80 px-3 pb-2.5 pt-2 pl-8 text-sm leading-relaxed text-gray-600"
+                  >
+                    <li>
+                      Select your role above—Agent, Developer, Landlord, Client / Buyer, or
+                      Syndicating Partner.
+                    </li>
+                    <li>Tap a question to expand and read the answer.</li>
+                    <li>If you need more help, use the WhatsApp button under any answer.</li>
+                  </ul>
+                )}
               </div>
 
               {!selectedRole ? (
-                <div className="rounded-lg border border-dashed border-gray-200 bg-white px-3 py-4 text-center">
-                  <p className="text-sm text-gray-600">
-                    Choose your role to see support topics tailored for you.
-                  </p>
+                <div className="support-choose-role-prompt px-4 py-5 text-center">
+                  <span
+                    className="support-choose-role-prompt__orb support-choose-role-prompt__orb--left"
+                    aria-hidden
+                  />
+                  <span
+                    className="support-choose-role-prompt__orb support-choose-role-prompt__orb--right"
+                    aria-hidden
+                  />
+                  <div className="relative z-[1] flex flex-col items-center gap-2">
+                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-[#128C7E] shadow-sm ring-1 ring-[#128C7E]/20">
+                      <Sparkles className="h-4 w-4" aria-hidden />
+                    </span>
+                    <p className="text-sm font-semibold leading-snug text-teal-900">
+                      Choose your role to see support topics tailored for you
+                    </p>
+                    <p className="max-w-[16rem] text-xs leading-relaxed text-teal-800/85">
+                      Pick a card above—we&apos;ll show only the FAQs that match how you use
+                      Khabi-Teq.
+                    </p>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-4">

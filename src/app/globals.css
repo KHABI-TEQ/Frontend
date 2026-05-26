@@ -229,3 +229,155 @@ body {
   flex: 0 0 100%;
   min-width: 0;
 }
+
+/* Khabi-Teq WhatsApp support widget — role cards & prompts */
+@keyframes support-role-shimmer {
+  0% {
+    transform: translateX(-120%) skewX(-12deg);
+  }
+  100% {
+    transform: translateX(220%) skewX(-12deg);
+  }
+}
+
+@keyframes support-role-pulse-ring {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.65;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes support-prompt-glow {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+.support-role-card {
+  position: relative;
+  overflow: hidden;
+  transform: translateZ(0);
+  transition:
+    transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1),
+    box-shadow 0.35s ease,
+    border-color 0.25s ease,
+    background 0.35s ease;
+}
+
+.support-role-card:hover {
+  transform: translateY(-4px) scale(1.03);
+}
+
+.support-role-card:active {
+  transform: translateY(-1px) scale(0.99);
+  transition-duration: 0.12s;
+}
+
+.support-role-card--active {
+  transform: translateY(-2px) scale(1.02);
+}
+
+.support-role-card--active:hover {
+  transform: translateY(-4px) scale(1.03);
+}
+
+.support-role-card__shimmer {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.5) 50%,
+    transparent 65%
+  );
+  transition: opacity 0.2s ease;
+}
+
+.support-role-card:hover .support-role-card__shimmer {
+  opacity: 1;
+  animation: support-role-shimmer 0.7s ease-out;
+}
+
+.support-role-card__glow {
+  pointer-events: none;
+  position: absolute;
+  inset: -1px;
+  z-index: 0;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.support-role-card:hover .support-role-card__glow,
+.support-role-card--active .support-role-card__glow {
+  opacity: 1;
+  animation: support-role-pulse-ring 2s ease-in-out infinite;
+}
+
+.support-role-card__content {
+  position: relative;
+  z-index: 1;
+}
+
+.support-choose-role-prompt {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(18, 140, 126, 0.25);
+  background: linear-gradient(135deg, #ecfdf5 0%, #ccfbf1 45%, #e0f2fe 100%);
+  box-shadow:
+    0 4px 14px rgba(18, 140, 126, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.support-choose-role-prompt__orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(28px);
+  animation: support-prompt-glow 3s ease-in-out infinite;
+}
+
+.support-choose-role-prompt__orb--left {
+  top: -20%;
+  left: -10%;
+  width: 55%;
+  height: 70%;
+  background: rgba(52, 211, 153, 0.35);
+}
+
+.support-choose-role-prompt__orb--right {
+  bottom: -25%;
+  right: -8%;
+  width: 50%;
+  height: 65%;
+  background: rgba(56, 189, 248, 0.3);
+  animation-delay: 1.2s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .support-role-card,
+  .support-role-card:hover,
+  .support-role-card--active,
+  .support-role-card--active:hover {
+    transform: none;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+
+  .support-role-card__shimmer,
+  .support-role-card__glow,
+  .support-choose-role-prompt__orb {
+    animation: none !important;
+  }
+}
