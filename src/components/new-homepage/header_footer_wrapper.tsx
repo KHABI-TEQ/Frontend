@@ -3,7 +3,6 @@
 "use client";
 
 import React, { Fragment } from "react";
-import { usePathname } from "next/navigation";
 import HeaderLogic from "@/logic/headerLogic";
 import NewFooter from "./new-footer";
 
@@ -16,7 +15,6 @@ interface Props {
 } 
 
 export default function HeaderFooterWrapper({ children }: Props) {
-	const pathname = usePathname();
 	const { viewImage } = usePageContext();
 	return (
 		<Fragment>

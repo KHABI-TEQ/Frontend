@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { Shield, CreditCard, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import Block from "@/components/access/Block";
+import { useAgentEligibility, resolveAgentKycStatus } from "@/hooks/useAgentEligibility";
 
 /** Key used to redirect user back after subscription payment (e.g. to /post-property/outright-sales). */
 export const REDIRECT_AFTER_SUBSCRIPTION_KEY = "redirectAfterSubscription";
@@ -40,19 +41,20 @@ export const CombinedAuthGuard: React.FC<CombinedAuthGuardProps> = ({
 }) => {
   const pathname = usePathname();
   const { user, isLoading, isInitialized } = useUserContext();
+  const { eligibility, loading: eligibilityLoading } = useAgentEligibility();
 
   const isAgent = user?.userType === "Agent";
   const isDeveloper = user?.userType === "Developer";
-  const kycStatus = user && isAgent
-    ? ((user as any)?.agentData?.kycStatus as "none" | "pending" | "in_review" | "approved" | "rejected" | undefined)
-    : undefined;
+  const kycStatus = user && isAgent ? resolveAgentKycStatus(user) : undefined;
   const kycApproved = kycStatus === "approved";
   const hasActiveSubscription = !!(
     user?.activeSubscription && user.activeSubscription.status === "active"
   );
+  const hasPaidSubscription = eligibility?.hasPaidSubscription === true;
+  const canListDuringPolicy = eligibility?.canListProperties ?? (kycApproved || !requireKycApproved);
 
 
-  if (isLoading || !isInitialized) {
+  if (isLoading || !isInitialized || (isAgent && (requireKycApproved || requireActiveSubscription) && eligibilityLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#EEF1F1]">
         <Loading />
@@ -92,14 +94,16 @@ export const CombinedAuthGuard: React.FC<CombinedAuthGuardProps> = ({
     }
   }
 
-  // KYC restriction: if required, only allow Agents with approved KYC
-  if (requireKycApproved && isAgent && !kycApproved) {
+  // KYC restriction: agents in the 7-day grace may post 1 property; otherwise require approval or policy pass.
+  if (requireKycApproved && isAgent && !canListDuringPolicy) {
+    const message =
+      eligibility?.gate && !eligibility.gate.ok
+        ? eligibility.gate.message
+        : "You must complete KYC verification and obtain approval to continue (the 7-day grace period has expired).";
     return (
       <Block
         title="KYC Verification Required"
-        message={
-          "You must complete your onboarding and be approved before you can post properties."
-        }
+        message={message}
         actionHref="/agent-kyc"
         actionLabel="Submit KYC"
         icon={<CheckCircle2 size={32} className="text-[#8DDB90]" />}
@@ -107,9 +111,8 @@ export const CombinedAuthGuard: React.FC<CombinedAuthGuardProps> = ({
     );
   }
 
-  // Subscription restriction: applies to Agents and Developers (per backend)
+  // Subscription restriction: agents need paid subscription only after trial/cap (backend policy).
   if (requireActiveSubscription && (isAgent || isDeveloper)) {
-    // Agents only: KYC must be approved before subscribing
     if (isAgent && !kycApproved) {
       return (
         <Block
@@ -124,7 +127,12 @@ export const CombinedAuthGuard: React.FC<CombinedAuthGuardProps> = ({
       );
     }
 
-    if (!hasActiveSubscription) {
+    const subscriptionBlocked =
+      isAgent
+        ? eligibility?.subscriptionRequired === true && !hasPaidSubscription
+        : !hasActiveSubscription;
+
+    if (subscriptionBlocked) {
       // Remember where they wanted to go so payment-verification can redirect back (e.g. /post-property/outright-sales)
       if (pathname && typeof window !== "undefined") {
         try {
@@ -137,7 +145,9 @@ export const CombinedAuthGuard: React.FC<CombinedAuthGuardProps> = ({
           message={
             isDeveloper
               ? "Developers need an active subscription to post properties. Subscribe to a plan to continue."
-              : "This page requires an active agent subscription. Choose a plan to continue."
+              : eligibility?.gate && !eligibility.gate.ok && eligibility.gate.reason === "subscription"
+                ? eligibility.gate.message
+                : "Your trial has ended or you have reached the listing limit. Subscribe to a paid plan to continue."
           }
           actionHref="/agent-subscriptions?tab=plans"
           actionLabel="View Plans"

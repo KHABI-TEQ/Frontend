@@ -243,6 +243,7 @@ interface DealSiteContextType {
   isPaused: boolean;
   isOnHold: boolean;
   slugLocked: boolean;
+  pausedByPolicy?: "kyc" | "subscription" | null;
   dealSiteStatus: "pending" | "running" | "paused" | "on-hold" | "deleted" | null;
 
   // Loading state
@@ -307,6 +308,7 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
   const [isOnHold, setIsOnHold] = useState(false);
   const [slugLocked, setSlugLocked] = useState(false);
   const [dealSiteStatus, setDealSiteStatus] = useState<"pending" | "running" | "paused" | "on-hold" | "deleted" | null>(null);
+  const [pausedByPolicy, setPausedByPolicy] = useState<"kyc" | "subscription" | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -360,6 +362,11 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
             if (data.status === "paused") setIsPaused(true);
             if (data.status === "running") setIsPaused(false);
           }
+          setPausedByPolicy(
+            data.pausedByPolicy === "kyc" || data.pausedByPolicy === "subscription"
+              ? data.pausedByPolicy
+              : null
+          );
           setIsSetupComplete(!!data.publicSlug);
         }
       }
@@ -459,6 +466,7 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
     isPaused,
     isOnHold,
     slugLocked,
+    pausedByPolicy,
     dealSiteStatus,
     isLoading,
     isSaving,

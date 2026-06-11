@@ -3,6 +3,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useFeatureGate } from '@/hooks/useFeatureGate';
 import { useUserContext } from "@/context/user-context";
+import { useAgentEligibility } from "@/hooks/useAgentEligibility";
 import Loading from '../loading-component/loading';
  
 interface FeatureGateProps {
@@ -24,10 +25,16 @@ const DefaultFallback = () => (
 export default function FeatureGate({ featureKeys, children, fallback }: FeatureGateProps) {
   const checks = featureKeys.map(k => useFeatureGate(k));
   const { user, isLoading, isInitialized } = useUserContext();
+  const { eligibility, loading: eligibilityLoading } = useAgentEligibility();
   const isAgent = user?.userType === "Agent";
-  const allowed = checks.every(c => c.allowed);
+  const trialListingBypass =
+    isAgent &&
+    featureKeys.includes("LISTINGS") &&
+    eligibility?.canListProperties === true &&
+    !eligibility?.hasPaidSubscription;
+  const allowed = trialListingBypass || checks.every(c => c.allowed);
 
-  if (isLoading || !isInitialized) {
+  if (isLoading || !isInitialized || (isAgent && eligibilityLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#EEF1F1]">
         <Loading />

@@ -19,13 +19,24 @@ export function normalizeIsTenantedForApi(
 }
 
 /**
- * Backend returns 403 with this message when user has 2+ properties and no subscription.
- * Used to show subscription CTA and avoid overriding the message.
+ * Backend policy 403 messages for agent listing limits (grace, trial, subscription).
  */
-export function isFreeLimitPropertyError(message: string | undefined | null): boolean {
+export function isAgentListingPolicyError(message: string | undefined | null): boolean {
   if (!message || typeof message !== "string") return false;
   const m = message.toLowerCase();
-  return (m.includes("free limit") || m.includes("2 properties")) && m.includes("subscribe");
+  return (
+    m.includes("7-day signup grace period") ||
+    m.includes("7-day grace period has expired") ||
+    m.includes("trial limit of 10") ||
+    m.includes("4-week trial period has ended") ||
+    m.includes("kyc-approved before creating") ||
+    (m.includes("subscribe") && (m.includes("trial") || m.includes("property") || m.includes("plan")))
+  );
+}
+
+/** @deprecated Use isAgentListingPolicyError */
+export function isFreeLimitPropertyError(message: string | undefined | null): boolean {
+  return isAgentListingPolicyError(message);
 }
 
 /**

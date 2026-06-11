@@ -13,6 +13,8 @@ import toast from "react-hot-toast";
 import Loading from "@/components/loading-component/loading";
 import { ArrowLeft, MapPin, Tag, Handshake, CheckCircle, X, Play, Pause } from "lucide-react";
 import PropertyLocationMap from "@/components/property/PropertyLocationMap";
+import AgentEligibilityBanner from "@/components/agent/AgentEligibilityBanner";
+import { useAgentEligibility } from "@/hooks/useAgentEligibility";
 
 export default function LasreraMarketplacePage() {
   const { user } = useUserContext();
@@ -26,6 +28,8 @@ export default function LasreraMarketplacePage() {
   const [propertyForMap, setPropertyForMap] = useState<LasreraMarketplaceProperty | null>(null);
 
   const isAgent = user?.userType === "Agent";
+  const { eligibility, loading: eligibilityLoading } = useAgentEligibility();
+  const canRequestToMarket = !isAgent || eligibility?.canRequestToMarket !== false;
 
   const PropertyMediaPreview = ({ prop, title }: { prop: LasreraMarketplaceProperty; title: string }) => {
     const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -152,6 +156,10 @@ export default function LasreraMarketplacePage() {
       toast.error("Only Agents can request to market. Please log in as an Agent.");
       return;
     }
+    if (eligibility && !eligibility.canRequestToMarket && eligibility.gate && !eligibility.gate.ok) {
+      toast.error(eligibility.gate.message);
+      return;
+    }
     setRequestingId(propertyId);
     try {
       const res = await requestToMarketService.create(propertyId);
@@ -190,6 +198,15 @@ export default function LasreraMarketplacePage() {
               : " Sign in as an Agent to request to market a property."}
           </p>
         </div>
+
+        {isAgent && (
+          <div className="mb-6">
+            <AgentEligibilityBanner eligibility={eligibility} loading={eligibilityLoading} />
+            <p className="mt-2 text-xs text-[#5A5D63]">
+              Request To Market requires an eligible agent account (KYC and paid subscription rules apply after your trial).
+            </p>
+          </div>
+        )}
 
         {/* Simple filters */}
         <div className="bg-white rounded-xl p-4 mb-6 border border-gray-100 flex flex-wrap gap-4 items-end">
@@ -313,8 +330,13 @@ export default function LasreraMarketplacePage() {
                         ) : (
                           <button
                             type="button"
-                            disabled={requestingId === prop._id}
+                            disabled={requestingId === prop._id || !canRequestToMarket}
                             onClick={() => handleRequestToMarket(prop._id)}
+                            title={
+                              !canRequestToMarket && eligibility?.gate && !eligibility.gate.ok
+                                ? eligibility.gate.message
+                                : undefined
+                            }
                             className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#09391C] text-white rounded-lg text-sm font-medium hover:bg-[#0d4a24] disabled:opacity-50"
                           >
                             {requestingId === prop._id ? (
@@ -426,7 +448,7 @@ export default function LasreraMarketplacePage() {
                   !propertyForMap.currentUserHasRequested && (
                     <button
                       type="button"
-                      disabled={requestingId === propertyForMap._id}
+                      disabled={requestingId === propertyForMap._id || !canRequestToMarket}
                       onClick={() => {
                         handleRequestToMarket(propertyForMap._id);
                         setPropertyForMap(null);

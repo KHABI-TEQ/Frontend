@@ -1,24 +1,45 @@
 import './globals.css';
 import { roboto, archivo } from '@/styles/font';
-import { Toaster } from 'react-hot-toast';
-import Body from '@/components/general-components/body';
 import { lazy, Suspense } from 'react';
-import dynamic from 'next/dynamic';
-import ClientProviders from '@/components/providers/ClientProviders';
-import WebVitalsInitializer from '@/components/providers/WebVitalsInitializer';
+import nextDynamic from 'next/dynamic';
 
-// Dynamic import to keep layout chunk small and avoid ChunkLoadError timeout (webpack) / HMR issues (Turbopack)
-const HeaderFooterWrapper = dynamic(
+// Dynamic imports keep the root layout chunk small and avoid ChunkLoadError timeouts in dev.
+const ClientProviders = nextDynamic(
+  () => import('@/components/providers/ClientProviders'),
+  { ssr: true }
+);
+const Body = nextDynamic(
+  () => import('@/components/general-components/body'),
+  { ssr: true }
+);
+const WebVitalsInitializer = nextDynamic(
+  () => import('@/components/providers/WebVitalsInitializer'),
+  { ssr: true }
+);
+const HotToaster = nextDynamic(
+  () => import('react-hot-toast').then((mod) => {
+    const { Toaster } = mod;
+    return function DynamicToaster() {
+      return <Toaster />;
+    };
+  }),
+  { ssr: true }
+);
+
+const HeaderFooterWrapper = nextDynamic(
   () => import('@/components/new-homepage/header_footer_wrapper').then((m) => m.default),
   { ssr: true }
 );
 
 // Lazy load non-critical components - these are not needed on initial render
-const GlobalPropertyActionsFAB = dynamic(() => import('@/components/common/GlobalPropertyActionsFAB'), { ssr: true });
-const SubscriptionFeaturesClient = dynamic(() => import('@/components/subscription/SubscriptionFeaturesClient'), { ssr: true });
-const PromoMount = dynamic(() => import('@/components/promo/PromoMount'), { ssr: true });
-const ChunkErrorHandler = dynamic(() => import('@/components/ChunkErrorHandler'), { ssr: true });
+const GlobalPropertyActionsFAB = nextDynamic(() => import('@/components/common/GlobalPropertyActionsFAB'), { ssr: true });
+const SubscriptionFeaturesClient = nextDynamic(() => import('@/components/subscription/SubscriptionFeaturesClient'), { ssr: true });
+const PromoMount = nextDynamic(() => import('@/components/promo/PromoMount'), { ssr: true });
+const ChunkErrorHandler = nextDynamic(() => import('@/components/ChunkErrorHandler'), { ssr: true });
 const WhatsAppChatWidget = lazy(() => import('@/components/whatsapp-chat-widget'));
+
+// Skip static prerender — monorepo + mixed Windows path casing can break App Router context during build.
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'Khabiteq',
@@ -64,7 +85,7 @@ return (
             <WhatsAppChatWidget />
           </Suspense>
           <WebVitalsInitializer />
-          <Toaster />
+          <HotToaster />
           <Suspense fallback={null}>
             <ChunkErrorHandler />
           </Suspense>

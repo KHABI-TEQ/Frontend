@@ -11,6 +11,8 @@ import { useAppSelector } from "@/store/hooks";
 import { selectFeatureEntry } from "@/store/subscriptionFeaturesSlice";
 import { FEATURE_KEYS } from "@/hooks/useFeatureGate";
 import FeatureGate from "@/components/access/FeatureGate";
+import AgentEligibilityBanner from "@/components/agent/AgentEligibilityBanner";
+import { useAgentEligibility } from "@/hooks/useAgentEligibility";
 
 interface PropertyTypeCard {
   type: "sell" | "off-plan" | "rent" | "shortlet" | "jv";
@@ -67,15 +69,22 @@ const propertyTypes: PropertyTypeCard[] = [
 const PostPropertyPage = () => {
   const router = useRouter();
   const { user, isInitialized } = useUserContext();
+  const { eligibility, loading: eligibilityLoading } = useAgentEligibility();
   const isAgent = user?.userType === "Agent";
   const listingsEntry = useAppSelector(selectFeatureEntry(FEATURE_KEYS.LISTINGS));
-  const quotaText = listingsEntry
-    ? (listingsEntry.type === 'unlimited' || listingsEntry.remaining === -1)
-      ? 'Unlimited'
-      : (listingsEntry.type === 'count')
-        ? `${Math.max(0, Number(listingsEntry.remaining || 0))} remaining`
-        : (Number(listingsEntry.value) === 1 ? 'Enabled' : 'Disabled')
-    : '—';
+  const quotaText = eligibility?.unlimitedListings
+    ? "Unlimited (paid plan)"
+    : eligibility?.listingsRemaining != null
+      ? `${eligibility.listingsRemaining} of ${eligibility.listingLimit ?? "—"} remaining`
+      : listingsEntry
+        ? listingsEntry.type === "unlimited" || listingsEntry.remaining === -1
+          ? "Unlimited"
+          : listingsEntry.type === "count"
+            ? `${Math.max(0, Number(listingsEntry.remaining || 0))} remaining`
+            : Number(listingsEntry.value) === 1
+              ? "Enabled"
+              : "Disabled"
+        : "—";
 
   // Scroll to top on page load
   useEffect(() => {
@@ -133,6 +142,12 @@ const PostPropertyPage = () => {
         <div className="min-h-screen bg-[#EEF1F1] py-4 md:py-8">
         <div className="container mx-auto px-4 md:px-6">
           <Breadcrumb items={breadcrumbItems} />
+
+          {isAgent && (
+            <div className="max-w-3xl mx-auto mb-6">
+              <AgentEligibilityBanner eligibility={eligibility} loading={eligibilityLoading} />
+            </div>
+          )}
 
           <div className="text-center mb-8 md:mb-12">
             <h1 className="text-3xl md:text-4xl font-bold text-[#09391C] font-display mb-2 md:mb-4">

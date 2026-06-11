@@ -16,9 +16,9 @@ import {
   Calendar,
   Handshake,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { usePageContext } from "@/context/page-context";
 import { AgentNavData } from "@/enums";
+import { clientNavigate } from "@/utils/clientNavigate";
 
 interface UserProfileModalProps {
   closeUserProfileModal: (type: boolean) => void;
@@ -34,8 +34,6 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
   const { setSelectedNav } = usePageContext();
   type UserTypeValue = "Agent" | "Landowners" | "Developer" | "FieldAgent";
   const [position, setPosition] = useState({ top: 0, right: 0 });
-
-  const router = useRouter();
 
   useClickOutside(ref, () => closeUserProfileModal(false));
 
@@ -120,7 +118,7 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
       icon: <LayoutDashboardIcon size={18} />,
       label: "Dashboard",
       action: () => {
-        router.push("/dashboard");
+        clientNavigate("/dashboard");
         closeUserProfileModal(false);
       },
     },
@@ -132,7 +130,7 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
             icon: <Briefcase size={18} />,
             label: "Marketplace",
             action: () => {
-              router.push("/agent-marketplace");
+              clientNavigate("/agent-marketplace");
               closeUserProfileModal(false);
             },
           },
@@ -140,7 +138,7 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
             icon: <Home size={18} />,
             label: "List Property",
             action: () => {
-              router.push("/post-property");
+              clientNavigate("/post-property");
               closeUserProfileModal(false);
             },
           },
@@ -148,7 +146,7 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
             icon: <Users size={18} />,
             label: "Referral",
             action: () => {
-              router.push("/referral");
+              clientNavigate("/referral");
               closeUserProfileModal(false);
             },
           },
@@ -157,7 +155,7 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
             label: "Account Settings",
             action: () => {
               setSelectedNav(AgentNavData.SETTINGS);
-              router.push("/profile-settings");
+              clientNavigate("/profile-settings");
               closeUserProfileModal(false);
             },
           },
@@ -165,7 +163,7 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
             icon: <Briefcase size={18} />,
             label: "Subscription",
             action: () => {
-              router.push("/agent-subscriptions");
+              clientNavigate("/agent-subscriptions");
               closeUserProfileModal(false);
             },
           },
@@ -181,7 +179,7 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
                   icon: <Calendar size={18} />,
                   label: "Inspection Requests",
                   action: () => {
-                    router.push("/my-inspection-requests");
+                    clientNavigate("/my-inspection-requests");
                     closeUserProfileModal(false);
                   },
                 },
@@ -191,7 +189,7 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
             icon: <Handshake size={18} />,
             label: "Agent Requests",
             action: () => {
-              router.push("/my-request-to-market");
+              clientNavigate("/my-request-to-market");
               closeUserProfileModal(false);
             },
           },
@@ -199,7 +197,7 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
             icon: <Home size={18} />,
             label: "List Property",
             action: () => {
-              router.push("/post-property");
+              clientNavigate("/post-property");
               closeUserProfileModal(false);
             },
           },
@@ -207,7 +205,7 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
             icon: <Settings size={18} />,
             label: "Account Settings",
             action: () => {
-              router.push("/profile-settings");
+              clientNavigate("/profile-settings");
               closeUserProfileModal(false);
             },
           },
@@ -215,7 +213,7 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
             icon: <Users size={18} />,
             label: "Referral",
             action: () => {
-              router.push("/referral");
+              clientNavigate("/referral");
               closeUserProfileModal(false);
             },
           },
@@ -229,7 +227,7 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
             icon: <Briefcase size={18} />,
             label: "Assigned Inspection",
             action: () => {
-              router.push("/field-agent-inspections");
+              clientNavigate("/field-agent-inspections");
               closeUserProfileModal(false);
             },
           },
@@ -237,7 +235,7 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
             icon: <Settings size={18} />,
             label: "Account Settings",
             action: () => {
-              router.push("/profile-settings");
+              clientNavigate("/profile-settings");
               closeUserProfileModal(false);
             },
           },

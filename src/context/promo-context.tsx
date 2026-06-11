@@ -1,11 +1,9 @@
 "use client";
 
-"use client";
-
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { PROMOTIONS, Promotion } from "@/data/promotions";
-import { usePathname } from "next/navigation";
 import { fetchActivePromotions, PromotionType } from "@/services/promotionService";
+import { useClientPathname } from "@/hooks/useClientPathname";
 
 type PromoContextValue = {
   promos: Promotion[];
@@ -24,7 +22,7 @@ const SLOT_TO_TYPE: Record<string, PromotionType> = {
 
 export const PromoProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [promos, setPromos] = useState<Promotion[]>([]);
-  const pathname = usePathname();
+  const pathname = useClientPathname();
 
   useEffect(() => {
     let cancelled = false;

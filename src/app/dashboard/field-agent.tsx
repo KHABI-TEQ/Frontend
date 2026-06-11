@@ -169,6 +169,13 @@ export default function FieldAgentDashboard() {
       color: "bg-orange-600 hover:bg-orange-700",
     },
     {
+      title: "Representation requests",
+      description: "Review agent requests to represent on inspections",
+      icon: <UserIcon className="w-6 h-6" />,
+      href: "/field-agent-representation-requests",
+      color: "bg-indigo-600 hover:bg-indigo-700",
+    },
+    {
       title: "Profile Settings",
       description: "Update your profile and preferences",
       icon: <UserIcon className="w-6 h-6" />,

@@ -27,6 +27,9 @@ import { format } from 'date-fns';
 import Cookies from 'js-cookie';
 import Block from '@/components/access/Block';
 import Link from 'next/link';
+import AgentEligibilityBanner from '@/components/agent/AgentEligibilityBanner';
+import { useAgentEligibility, resolveAgentKycStatus } from '@/hooks/useAgentEligibility';
+import { formatSubscriptionBonusLabel, resolvePlanBonusDays } from '@/utils/subscription-bonus';
 
 /** Build a user-visible error from API JSON (500s often include message + details for ops). */
 function subscriptionErrorMessage(res: unknown): string {
@@ -56,6 +59,7 @@ function subscriptionErrorMessage(res: unknown): string {
 export default function AgentSubscriptionsPage() {
   const router = useRouter();
   const { user } = useUserContext();
+  const { eligibility, loading: eligibilityLoading } = useAgentEligibility();
   const [subscriptions, setSubscriptions] = useState<AgentSubscription[]>([]);
   const [subscriptionsPage, setSubscriptionsPage] = useState(1);
   const [subscriptionsTotalPages, setSubscriptionsTotalPages] = useState(1);
@@ -145,6 +149,19 @@ export default function AgentSubscriptionsPage() {
             type: f?.type || 'boolean',
             value: f?.value ?? 0,
           }));
+          const bonusDays = resolvePlanBonusDays({
+            bonusDays: p.bonusDays,
+            durationInDays: p.durationInDays,
+            name: p.name,
+          });
+          const discountedPlans = (p.discountedPlans || []).map((dp: any) => ({
+            ...dp,
+            bonusDays: resolvePlanBonusDays({
+              bonusDays: dp.bonusDays,
+              durationInDays: dp.durationInDays,
+              name: dp.name ?? p.name,
+            }),
+          }));
           return {
             id: p._id,
             code: p.code,
@@ -152,7 +169,9 @@ export default function AgentSubscriptionsPage() {
             description: features.slice(0, 2).map((x: any) => x.label).join(', '),
             features,
             prices,
-            discountedPlans: p.discountedPlans,
+            discountedPlans,
+            durationInDays: p.durationInDays,
+            bonusDays,
             basePrice: Number(p.price) || 0,
             isTrial: !!p.isTrial,
             raw: p,
@@ -364,8 +383,9 @@ export default function AgentSubscriptionsPage() {
     );
   }
 
-  const kycApproved = (user as any)?.agentData?.kycStatus === 'approved';
+  const kycApproved = resolveAgentKycStatus(user) === 'approved';
   const isDeveloper = userTypeLower === 'developer';
+  const hasPaidSubscription = eligibility?.hasPaidSubscription === true;
   const requireKycForSubscription = isAgentOrDeveloper && !isDeveloper;
 
   if (loading) {
@@ -400,6 +420,19 @@ export default function AgentSubscriptionsPage() {
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Agent Subscriptions</h1>
             <p className="text-gray-600">Manage your subscriptions, view plans, and track transactions</p>
+          </div>
+          {!isDeveloper && (
+            <AgentEligibilityBanner eligibility={eligibility} loading={eligibilityLoading} compact />
+          )}
+          <div className="rounded-lg border border-emerald-100 bg-emerald-50/60 p-4 text-sm text-emerald-950">
+            <p className="font-semibold mb-1">Practitioner plan incentives (paid tiers)</p>
+            <ul className="list-disc ml-5 space-y-0.5 text-emerald-900/90">
+              <li>Monthly — {formatSubscriptionBonusLabel(15)} validity</li>
+              <li>Quarterly — {formatSubscriptionBonusLabel(30)} validity</li>
+              <li>Half-yearly — {formatSubscriptionBonusLabel(60)} validity</li>
+              <li>Yearly — {formatSubscriptionBonusLabel(90)} validity</li>
+              <li>Unlimited property listings on every paid plan</li>
+            </ul>
           </div>
           {activeSubscriptionFromProfile && (
             <div className="rounded-lg border border-green-200 bg-green-50 p-4">
@@ -520,6 +553,14 @@ export default function AgentSubscriptionsPage() {
                                 <span className="text-gray-500">End Date:</span>
                                 <span className="font-medium">{endDateRaw ? format(new Date(endDateRaw), 'MMM d, yyyy') : '-'}</span>
                               </div>
+                              {subscription.meta?.bonusDays > 0 && (
+                                <div className="flex justify-between text-sm">
+                                  <span className="text-gray-500">Bonus validity:</span>
+                                  <span className="font-medium text-emerald-700">
+                                    {formatSubscriptionBonusLabel(subscription.meta.bonusDays)}
+                                  </span>
+                                </div>
+                              )}
                               <div className="flex justify-between text-sm">
                                 <span className="text-gray-500">Amount:</span>
                                 <span className="font-medium">₦{Number(amount || 0).toLocaleString()}</span>
@@ -562,8 +603,8 @@ export default function AgentSubscriptionsPage() {
                           <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
                           {(() => {
                             const isFreePlan = plan.basePrice === 0 || plan.isTrial || /free/i.test(plan.name || '');
-                            const kycApproved = (user as any)?.agentData?.kycStatus === 'approved';
-                            if (isFreePlan && kycApproved) {
+                            const kycApprovedCard = resolveAgentKycStatus(user) === 'approved';
+                            if (isFreePlan && kycApprovedCard) {
                               return (
                                 <span className="bg-gray-200 text-gray-700 px-2 py-1 rounded-full text-xs font-medium">Used / Exhausted</span>
                               );
@@ -572,6 +613,11 @@ export default function AgentSubscriptionsPage() {
                           })()}
                         </div>
                         <p className="text-gray-600 text-sm mb-4">{plan.description}</p>
+                        {!plan.isTrial && plan.basePrice > 0 && plan.bonusDays > 0 && (
+                          <p className="text-emerald-700 text-sm font-medium">
+                            Bonus: {formatSubscriptionBonusLabel(plan.bonusDays)} on activation
+                          </p>
+                        )}
                       </div>
 
                       <div className="mb-6">
@@ -602,14 +648,30 @@ export default function AgentSubscriptionsPage() {
                         <div className="space-y-2">
                           {Object.entries(plan.prices || {}).map(([duration, price]: any) => {
                             const isFreePlan = plan.basePrice === 0 || plan.isTrial || /free/i.test(plan.name || '');
-                            const disabledByActive = !!(activeSubscriptionFromProfile && activeSubscriptionFromProfile.status === 'active');
-                            const disabledByKyc = isFreePlan && ((user as any)?.agentData?.kycStatus === 'approved');
+                            const durationMonths = parseInt(duration, 10);
+                            const matchingDiscount = (plan.discountedPlans || []).find((dp: any) => {
+                              const m = Math.max(1, Math.round((dp.durationInDays || 30) / 30));
+                              return m === durationMonths && Number(dp.price) === Number(price);
+                            });
+                            const rowBonusDays =
+                              matchingDiscount?.bonusDays ??
+                              (durationMonths === Math.max(1, Math.round((plan.durationInDays || 30) / 30))
+                                ? plan.bonusDays
+                                : 0);
+                            const bonusLabel = formatSubscriptionBonusLabel(rowBonusDays);
+                            const disabledByActive = hasPaidSubscription;
+                            const disabledByKyc = isFreePlan && kycApproved;
                             const disabled = disabledByActive || disabledByKyc;
                             const label = disabledByKyc ? 'Expired' : (disabled ? 'Active' : 'Subscribe');
 
                             return (
-                              <div key={duration} className="flex items-center justify-between text-sm">
-                                <span className="text-gray-600">{duration} month{parseInt(duration) > 1 ? 's' : ''}:</span>
+                              <div key={duration} className="flex items-center justify-between text-sm gap-2">
+                                <span className="text-gray-600 shrink-0">
+                                  {duration} month{durationMonths > 1 ? 's' : ''}
+                                  {bonusLabel ? (
+                                    <span className="block text-xs text-emerald-700 font-medium">{bonusLabel}</span>
+                                  ) : null}
+                                </span>
                                 <div className="flex items-center gap-3">
                                   <span className="font-medium">₦{Number(price).toLocaleString()}</span>
                                   {!isFreePlan && (
@@ -799,6 +861,17 @@ export default function AgentSubscriptionsPage() {
                 {selectedPlanPrice && (
                   <div className="text-sm text-gray-600">Price: ₦{Number(selectedPlanPrice).toLocaleString()}</div>
                 )}
+                {selectedPlanForSub && selectedDuration && (() => {
+                  const dp = (selectedPlanForSub.discountedPlans || []).find((x: any) => {
+                    const m = Math.max(1, Math.round((x.durationInDays || 30) / 30));
+                    return m === selectedDuration;
+                  });
+                  const bonus = dp?.bonusDays ?? selectedPlanForSub.bonusDays ?? 0;
+                  const label = formatSubscriptionBonusLabel(bonus);
+                  return label ? (
+                    <div className="text-sm text-emerald-700 font-medium">Includes {label} validity bonus</div>
+                  ) : null;
+                })()}
               </div>
  
               <div className="flex items-center gap-2 mb-6">

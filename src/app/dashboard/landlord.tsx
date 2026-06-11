@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import Loading from "@/components/loading-component/loading";
 import { InspectionRepresentativesSection } from "@/components/dashboard/inspection-representatives-section";
+import PublisherDashboardNotice from "@/components/publisher/PublisherDashboardNotice";
 
 interface PendingBrief {
   _id: string;
@@ -275,6 +276,8 @@ export default function LandlordDashboard() {
       </div>
 
       <div className="container mx-auto px-4 sm:px-6 py-8 max-w-full">
+        <PublisherDashboardNotice userType="Landowners" />
+
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {statCards.map((card, index) => {

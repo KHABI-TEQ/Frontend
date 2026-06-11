@@ -30,6 +30,8 @@ import {
 } from "lucide-react";
 import Loading from "@/components/loading-component/loading";
 import { SyndicationIntegrationSummary } from "@/components/dashboard/DashboardIntegrationSummaries";
+import AgentEligibilityBanner from "@/components/agent/AgentEligibilityBanner";
+import { useAgentEligibility } from "@/hooks/useAgentEligibility";
 
 interface Brief {
   _id: string;
@@ -114,6 +116,7 @@ function mapPropertyToBrief(p: unknown): Brief {
 export default function AgentDashboard() {
   const router = useRouter();
   const { user, logout } = useUserContext();
+  const { eligibility, loading: eligibilityLoading } = useAgentEligibility();
   const [stats, setStats] = useState<DashboardStats>({
     totalBriefs: 0,
     totalActiveBriefs: 0,
@@ -404,8 +407,13 @@ export default function AgentDashboard() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-[#09391C]">Subscription</p>
                       <p className="mt-1 text-xs text-emerald-900/90 leading-relaxed">
-                        No active subscription on file. You can post your first property without one; a plan unlocks full
-                        features and your Practitioner page.
+                        {eligibility?.hasPaidSubscription
+                          ? "Paid practitioner subscription active — unlimited listings and full page access."
+                          : eligibility?.policyPhase === "kyc_grace"
+                            ? "KYC grace: list 1 property without a paid plan. Complete KYC to unlock the 4-week trial (up to 10 listings)."
+                            : eligibility?.policyPhase === "trial"
+                              ? `Trial active: up to ${eligibility.listingLimit ?? 10} listings without a paid subscription.`
+                              : "No paid subscription yet. After your trial, a paid plan is required for listings and your practitioner page."}
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2 shrink-0">
@@ -433,34 +441,10 @@ export default function AgentDashboard() {
           })()}
         </div>
 
-        {/* Notices */}
-        {(() => {
-          const isKycApproved = ((user as any)?.agentData?.kycStatus === 'approved') || ((user as any)?.verificationStatus?.kycCompleted) || ((user as any)?.agentVerificationData?.kycCompleted);
-          const hasActiveSub = !!((user as any)?.activeSubscription && (user as any)?.activeSubscription.status === 'active');
-          const freeDays = 7;
-          return (
-            <div className="space-y-3 mb-4">
-              <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg text-sm">
-                <strong>Property posting:</strong> You can post your first property without a subscription. A subscription is required from the 2nd property onward.
-              </div>
-
-              {!isKycApproved && (
-                <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-lg">
-                  <div>Enjoy free {freeDays} days premium by completing your agent KYC verification.</div>
-                  <Link href="/agent-kyc" className="px-3 py-1.5 bg-emerald-600 text-white rounded hover:bg-emerald-700 text-sm">Complete KYC</Link>
-                </div>
-              )}
-
-              {(isKycApproved &&!hasActiveSub) && (
-                <div className="flex items-center justify-between bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg">
-                  <div>Subscribe for a plan to enjoy full features and get your Practitioner page.</div>
-                  <Link href="/agent-subscriptions?tab=plans" className="px-3 py-1.5 bg-yellow-600 text-white rounded hover:bg-yellow-700 text-sm">View Plans</Link>
-                </div>
-              )}
-
-            </div>
-          );
-        })()}
+        {/* Agent KYC / subscription policy */}
+        <div className="mb-4">
+          <AgentEligibilityBanner eligibility={eligibility} loading={eligibilityLoading} />
+        </div>
 
         {/* Performance Overview + Referral */}
         <div className="bg-white rounded-lg p-4 sm:p-6 mb-8 shadow-sm">

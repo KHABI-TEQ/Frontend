@@ -38,6 +38,8 @@ export const URLS = {
    * Settings
    */
   accountSettingsBaseUrl: "/account",
+  /** GET — agent KYC / trial / subscription policy snapshot */
+  agentEligibility: "/account/agent/eligibility",
 
   /**
    * Preference Endpoints
@@ -70,6 +72,16 @@ export const URLS = {
   accountMyInspectionGetOne: (inspectionId: string) => `/account/my-inspections/${inspectionId}`,
   /** POST /account/my-inspections/:inspectionId/respond { action: "accept" | "reject", note?: string, inspectionFee?: number } (guide §8.3) */
   accountInspectionRespond: (inspectionId: string) => `/account/my-inspections/${inspectionId}/respond`,
+  /** Field Agent representation — no Paystack; commission settled outside app */
+  fieldAgentRepresentationTerms: "/account/field-agents/representation-terms",
+  fieldAgentsAvailable: "/account/field-agents/available",
+  requestFieldAgentForInspection: (inspectionId: string) =>
+    `/account/my-inspections/${inspectionId}/request-field-agent`,
+  cancelFieldAgentRequest: (inspectionId: string) =>
+    `/account/my-inspections/${inspectionId}/field-agent-request`,
+  fieldAgentRepresentationRequests: "/account/inspectionsFieldAgent/representation-requests",
+  fieldAgentRepresentationRespond: (inspectionId: string) =>
+    `/account/inspectionsFieldAgent/${inspectionId}/representation/respond`,
   /** Landlord / Developer: CRUD for inspection notification contacts (email + WhatsApp) */
   accountInspectionRepresentatives: "/account/inspection-representatives",
   accountInspectionRepresentative: (representativeId: string) =>

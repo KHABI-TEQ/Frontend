@@ -15,8 +15,18 @@ import React, {
 } from "react";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
-import { usePathname, useRouter } from "next/navigation";
 import type { AgentKycSubmissionPayload } from "@/types/agent-upgrade.types";
+
+function getCurrentPathWithSearch(): string {
+  if (typeof window === "undefined") return "/";
+  return window.location.pathname + (window.location.search || "");
+}
+
+function redirectToLogin(from?: string): void {
+  if (typeof window === "undefined") return;
+  const target = from ?? getCurrentPathWithSearch();
+  window.location.href = `/auth/login?from=${encodeURIComponent(target)}`;
+}
   
 export interface User {
   accountApproved: boolean;
@@ -32,6 +42,8 @@ export interface User {
   profile_picture?: string;
   referralCode?: string;
   createdAt?: string;
+  /** Canonical publisher KYC status from GET /account/profile */
+  kycStatus?: "none" | "pending" | "in_review" | "approved" | "rejected";
   isAccountVerified?: boolean;
   activeSubscription?: {
     _id: string;
@@ -129,9 +141,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [isInitialized, setIsInitialized] = useState(false);
   const initRef = useRef(false);
 
-  const pathName = usePathname();
-  const router = useRouter();
-
   // Memoize setUser to prevent unnecessary re-renders
   const setUser = useCallback((newUser: User | null) => {
     setUserState(newUser);
@@ -145,9 +154,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     if (!token) {
       setIsLoading(false);
       setIsInitialized(true);
-      if (pathName && !pathName.includes("/auth")) {
-        const from = typeof window !== 'undefined' ? (window.location.pathname + (window.location.search || '')) : (pathName || '/');
-        router.push(`/auth/login?from=${encodeURIComponent(from)}`);
+      if (!getCurrentPathWithSearch().includes("/auth")) {
+        redirectToLogin();
       }
       return;
     }
@@ -195,15 +203,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         Cookies.remove("token");
         try { localStorage.removeItem('token'); } catch {}
         toast.error("Session expired, please login again");
-        const from = typeof window !== 'undefined' ? (window.location.pathname + (window.location.search || '')) : (pathName || '/');
+        const from = getCurrentPathWithSearch();
         try { if (!sessionStorage.getItem('redirectAfterLogin')) sessionStorage.setItem('redirectAfterLogin', from); } catch {}
-        router.push(`/auth/login?from=${encodeURIComponent(from)}`);
+        redirectToLogin(from);
       }
     } catch (error) {
       console.log("Error", error);
-      if (pathName && !pathName.includes("/auth")) {
-        const from = typeof window !== 'undefined' ? (window.location.pathname + (window.location.search || '')) : (pathName || '/');
-        router.push(`/auth/login?from=${encodeURIComponent(from)}`);
+      if (!getCurrentPathWithSearch().includes("/auth")) {
+        redirectToLogin();
       }
     } finally {
       setIsLoading(false);
@@ -222,7 +229,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         localStorage.removeItem("token");
         setUserState(null);
         toast.success("Logged out successfully");
-        await router.push("/auth/login");
+        if (typeof window !== "undefined") {
+          window.location.href = "/auth/login";
+        }
         if (callback) await callback();
       } catch (error) {
         console.error("Error during logout:", error);
@@ -230,7 +239,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         throw error;
       }
     },
-    [router],
+    [],
   );
 
   useEffect(() => {
@@ -244,9 +253,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     } else {
       setIsLoading(false);
       setIsInitialized(true);
-      if (pathName && !pathName.includes("/auth")) {
-        // Optionally redirect to login
-        // router.push("/auth/login");
+      if (!getCurrentPathWithSearch().includes("/auth")) {
+        // Optionally redirect to login via redirectToLogin()
       }
     }
   }, []); // Only run on mount, not on every route change

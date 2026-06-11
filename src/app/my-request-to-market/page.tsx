@@ -8,6 +8,8 @@ import { requestToMarketService, DEFAULT_AGENT_COMMISSION_DISPLAY_NAIRA, type Re
 import { formatPriceForDisplay, formatNumberWithCommas } from "@/utils/price-helpers";
 import Loading from "@/components/loading-component/loading";
 import CombinedAuthGuard from "@/logic/combinedAuthGuard";
+import AgentEligibilityBanner from "@/components/agent/AgentEligibilityBanner";
+import { useAgentEligibility } from "@/hooks/useAgentEligibility";
 import { ArrowLeft, Handshake, MapPin, Tag, CheckCircle, XCircle, ExternalLink, FileCheck, Mail, Phone, Upload, FileText } from "lucide-react";
 import toast from "react-hot-toast";
 import Cookies from "js-cookie";
@@ -60,6 +62,7 @@ export default function MyRequestToMarketPage() {
 
   const isAgent = user?.userType === "Agent";
   const isDeveloper = user?.userType === "Developer";
+  const { eligibility, loading: eligibilityLoading } = useAgentEligibility();
   const role: "agent" | "publisher" = isAgent ? "agent" : "publisher";
 
   const fetchRequests = useCallback(async () => {
@@ -272,6 +275,12 @@ export default function MyRequestToMarketPage() {
               ? "Properties you have requested to market. The publisher can accept or reject."
               : "Agents who have requested to market your listings. Accept or reject below."}
           </p>
+
+          {isAgent && (
+            <div className="mb-6">
+              <AgentEligibilityBanner eligibility={eligibility} loading={eligibilityLoading} />
+            </div>
+          )}
 
           {!isAgent && (
             <div className="flex flex-wrap gap-2 mb-6">

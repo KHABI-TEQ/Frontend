@@ -28,6 +28,7 @@ import { getCookie } from "cookies-next";
 import Select from "react-select";
 import customStyles from "@/styles/inputStyle";
 import { useUserContext, normalizeUser } from "@/context/user-context";
+import { resolveAgentKycStatus } from "@/hooks/useAgentEligibility";
 import { getStates, getLGAsByState, getAreasByStateLGA } from "@/utils/location-utils";
 import PendingKycReview from "@/components/agent-kyc/PendingKycReview";
 import ProcessingRequest from "../loading-component/ProcessingRequest";
@@ -478,7 +479,7 @@ const AgentKycForm: React.FC = () => {
     </label>
   );
 
-  const kycStatus = (user as any)?.agentData?.kycStatus as string | undefined;
+  const kycStatus = resolveAgentKycStatus(user);
   if (kycStatus === "pending" || kycStatus === "in_review") {
     return <PendingKycReview />;
   }

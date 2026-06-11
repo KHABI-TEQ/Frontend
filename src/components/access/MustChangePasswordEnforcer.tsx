@@ -1,10 +1,14 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
 import { useUserContext, userMustChangePassword } from "@/context/user-context";
 
 const ALLOWED_PATH_PREFIXES = ["/auth/change-password"];
+
+function getCurrentPathname(): string {
+  if (typeof window === "undefined") return "";
+  return window.location.pathname;
+}
 
 function isAllowedPath(pathname: string): boolean {
   return ALLOWED_PATH_PREFIXES.some(
@@ -18,15 +22,16 @@ function isAllowedPath(pathname: string): boolean {
  */
 export default function MustChangePasswordEnforcer() {
   const { user, isInitialized, isLoading } = useUserContext();
-  const pathname = usePathname() ?? "";
-  const router = useRouter();
 
   useEffect(() => {
     if (!isInitialized || isLoading) return;
     if (!user || !userMustChangePassword(user)) return;
+
+    const pathname = getCurrentPathname();
     if (isAllowedPath(pathname)) return;
-    router.replace("/auth/change-password");
-  }, [user, isInitialized, isLoading, pathname, router]);
+
+    window.location.replace("/auth/change-password");
+  }, [user, isInitialized, isLoading]);
 
   return null;
 }

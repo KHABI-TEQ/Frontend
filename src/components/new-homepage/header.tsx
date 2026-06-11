@@ -11,7 +11,7 @@ import {
 import Link from "next/link";
 import barIcon from "@/svgs/bars.svg";
 import { usePageContext } from "@/context/page-context";
-import { usePathname, useRouter } from "next/navigation";
+import { useClientPathname } from "@/hooks/useClientPathname";
 import { ChevronDown, Home } from "lucide-react";
 import useClickOutside from "@/hooks/clickOutside";
 import { motion, AnimatePresence } from "framer-motion";
@@ -34,7 +34,7 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
     isSubmittedSuccessfully,
   } = usePageContext();
   const [navigationState, setNavigationState] = useState(mainNavigationData);
-  const pathName = usePathname();
+  const pathName = useClientPathname();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const { user, logout } = useUserContext();
   const [isScrolled, setIsScrolled] = useState(false);
@@ -82,7 +82,6 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
     email: string;
     id: string;
   } | null>(null);
-  const router = useRouter();
 
   useEffect(() => {
     // console.log(isModalOpened);
@@ -327,18 +326,18 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
               </>
             ) : (
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => router.push("/auth/login")}
+                <Link
+                  href="/auth/login"
                   className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-[#09391C] rounded-full hover:bg-gray-100/80 transition-all duration-300"
                 >
                   Log in
-                </button>
-                <button
-                  onClick={() => router.push("/auth/register")}
+                </Link>
+                <Link
+                  href="/auth/register"
                   className="px-5 py-2.5 text-sm font-semibold text-white bg-[#09391C] hover:bg-[#0B423D] rounded-full shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
                 >
                   Get Started
-                </button>
+                </Link>
               </div>
             )}
           </div>

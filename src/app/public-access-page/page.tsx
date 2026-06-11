@@ -16,6 +16,9 @@ import { useDealSite } from "@/context/deal-site-context";
 import type { DealSiteLog } from "@/types/api-responses";
 import OverlayPreloader from "@/components/general-components/OverlayPreloader";
 import ConfirmationModal from "@/components/public-access-page/ConfirmationModal";
+import AgentEligibilityBanner from "@/components/agent/AgentEligibilityBanner";
+import { useAgentEligibility } from "@/hooks/useAgentEligibility";
+import { useUserContext } from "@/context/user-context";
 
 interface DashboardStats {
   viewsByDay: Array<{ date: string; count: number }>;
@@ -25,7 +28,10 @@ interface DashboardStats {
 
 export default function OverviewPage() {
   const router = useRouter();
-  const { settings, previewUrl, isPaused, isOnHold, dealSiteStatus, pauseDealSite, resumeDealSite } = useDealSite();
+  const { user } = useUserContext();
+  const { eligibility, loading: eligibilityLoading } = useAgentEligibility();
+  const { settings, previewUrl, isPaused, isOnHold, dealSiteStatus, pausedByPolicy, pauseDealSite, resumeDealSite } = useDealSite();
+  const isAgent = user?.userType === "Agent";
 
   // Analytics state
   const [stats, setStats] = useState<DashboardStats>({ viewsByDay: [] });
@@ -175,6 +181,22 @@ export default function OverviewPage() {
         </h1>
         <p className="text-gray-600 mt-2">Monitor your Practitioner page performance and activity</p>
       </div>
+
+      {isAgent && (
+        <AgentEligibilityBanner eligibility={eligibility} loading={eligibilityLoading} />
+      )}
+
+      {/* Policy pause (KYC / subscription) */}
+      {isPaused && pausedByPolicy && eligibility && !eligibility.gate.ok && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <h3 className="font-semibold text-red-900">
+            Practitioner page paused by account policy
+          </h3>
+          <p className="text-sm text-red-800 mt-1">
+            {eligibility.gate.message} Your page is hidden from visitors until eligibility is restored.
+          </p>
+        </div>
+      )}
 
       {/* Pending Review Banner */}
       {dealSiteStatus === "pending" && (

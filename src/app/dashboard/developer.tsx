@@ -32,6 +32,7 @@ import {
   InspectionRepresentativesSummary,
   SyndicationIntegrationSummary,
 } from "@/components/dashboard/DashboardIntegrationSummaries";
+import PublisherDashboardNotice from "@/components/publisher/PublisherDashboardNotice";
 
 interface PendingBrief {
   _id: string;
@@ -300,79 +301,22 @@ export default function DeveloperDashboard() {
           </div>
         </div>
 
-        {/* Account Badges (same as Agent) */}
         <div className="mb-4 space-y-2">
-          {(() => {
-            const sub = (user as any)?.activeSubscription;
-            const isVerified = !!(user as any)?.isAccountVerified;
-            const startISO = sub?.startedAt || sub?.startDate || null;
-            const endISO = sub?.expiresAt || sub?.endDate || null;
-            const daysLeft = endISO ? Math.max(0, Math.ceil((new Date(endISO).getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : 0;
-            const planName = sub?.meta?.appliedPlanName || sub?.meta?.planType || sub?.plan || "—";
-            const planCode = sub?.meta?.planCode || "";
-            const statusLabel = sub?.status ? sub.status.charAt(0).toUpperCase() + sub.status.slice(1) : "—";
-            const autoRenew = sub?.autoRenew === true;
-            return (
-              <>
-                {sub ? (
-                  <div className="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-900">
-                    <div className="flex-1">
-                      <div className="flex flex-wrap items-center gap-2 text-sm">
-                        <span className="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-xs font-semibold">{planName}</span>
-                        {planCode && <span className="px-2 py-0.5 rounded-full bg-white text-emerald-800 border border-emerald-200 text-xs">{planCode}</span>}
-                        <span className="px-2 py-0.5 rounded-full bg-white text-emerald-800 border border-emerald-200 text-xs">{statusLabel}</span>
-                        {typeof daysLeft === "number" && endISO && (
-                          <span className="text-xs">{daysLeft} day{daysLeft === 1 ? "" : "s"} left</span>
-                        )}
-                      </div>
-                      <div className="mt-1 text-xs text-emerald-800">
-                        {startISO && <span>Started: {new Date(startISO).toLocaleDateString()} • </span>}
-                        {endISO && <span>Expires: {new Date(endISO).toLocaleDateString()}</span>}
-                        {typeof autoRenew === "boolean" && <span> • Auto-renew: {autoRenew ? "On" : "Off"}</span>}
-                      </div>
-                    </div>
-                    <Link href="/agent-subscriptions" className="px-3 py-1.5 bg-emerald-600 text-white rounded hover:bg-emerald-700 text-xs font-medium">Manage</Link>
-                  </div>
-                ) : (
-                  <div className="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 rounded-lg border border-emerald-200/80 bg-emerald-50/90 text-emerald-950">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-[#09391C]">Subscription</p>
-                      <p className="mt-1 text-xs text-emerald-900/90 leading-relaxed">
-                        No active subscription on file. You can post your first property without one; a plan is required from
-                        the 2nd property onward.
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2 shrink-0">
-                      <Link
-                        href="/agent-subscriptions?tab=plans"
-                        className="px-3 py-1.5 bg-emerald-600 text-white rounded hover:bg-emerald-700 text-xs font-medium text-center"
-                      >
-                        View plans
-                      </Link>
-                      <Link
-                        href="/agent-subscriptions"
-                        className="px-3 py-1.5 border border-emerald-700 text-emerald-900 rounded hover:bg-emerald-100/80 text-xs font-medium text-center"
-                      >
-                        Manage
-                      </Link>
-                    </div>
-                  </div>
-                )}
-                <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${isVerified ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-700"}`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${isVerified ? "bg-blue-600" : "bg-gray-400"}`} />
-                  {isVerified ? "Verified account" : "Unverified account"}
-                </div>
-              </>
-            );
-          })()}
-        </div>
-
-        {/* Notices (subscription info for Developer) */}
-        <div className="mb-4">
-          <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg text-sm">
-            <strong>Property posting:</strong> You can post your first property without a subscription. A subscription is required from the 2nd property onward.
+          <div
+            className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${
+              (user as any)?.isAccountVerified ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-700"
+            }`}
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${
+                (user as any)?.isAccountVerified ? "bg-blue-600" : "bg-gray-400"
+              }`}
+            />
+            {(user as any)?.isAccountVerified ? "Verified account" : "Unverified account"}
           </div>
         </div>
+
+        <PublisherDashboardNotice userType="Developer" />
 
         {/* Performance Overview + Referral (same as Agent) */}
         <div className="bg-white rounded-lg p-4 sm:p-6 mb-8 shadow-sm">
@@ -613,15 +557,15 @@ export default function DeveloperDashboard() {
                 </div>
               </Link>
               <Link
-                href="/agent-subscriptions"
+                href="/agent-kyc"
                 className="w-full bg-white hover:bg-gray-50 text-[#09391C] border border-gray-200 p-4 rounded-lg font-medium flex items-center gap-3 transition-colors group"
               >
                 <div className="p-2 bg-blue-500 bg-opacity-10 rounded-lg">
-                  <CreditCardIcon size={20} className="text-blue-500" />
+                  <CheckCircleIcon size={20} className="text-blue-500" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold">Manage Subscriptions</h3>
-                  <p className="text-sm text-[#5A5D63]">View plans & renewals</p>
+                  <h3 className="font-semibold">Optional KYC</h3>
+                  <p className="text-sm text-[#5A5D63]">Verify your developer profile (not required)</p>
                 </div>
               </Link>
               <Link

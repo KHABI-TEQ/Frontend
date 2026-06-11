@@ -34,6 +34,8 @@ import {
 import Loading from "@/components/loading-component/loading";
 import { CombinedAuthGuard } from "@/logic/combinedAuthGuard";
 import { buildLocationTitle } from "@/utils/helpers";
+import { RequestFieldAgentModal } from "@/components/agent/RequestFieldAgentModal";
+import { resolvePropertyLocationForFieldAgent } from "@/utils/fieldAgentLocation";
 
 interface Location {
   state?: string;
@@ -45,6 +47,7 @@ interface Location {
 interface Property {
   id?: string;
   _id?: string;
+  title?: string;
   location?: Location;
   price?: number;
   additionalFeatures?: Record<string, unknown>;
@@ -95,6 +98,8 @@ interface InspectionData {
   buyerAcceptedProposedInspectionDate?: boolean;
   scheduleNegotiationStatus?: string;
   scheduleStatus?: string;
+  assignedFieldAgent?: string;
+  fieldAgentRequestStatus?: string;
 }
 
 interface BookingData {
@@ -362,6 +367,20 @@ function shouldOfferScheduleChangeOnList(inspection: InspectionData): boolean {
   return true;
 }
 
+/** Agent may request a company Field Agent after inspection is approved. */
+function canRequestFieldAgentForInspection(inspection: InspectionData): boolean {
+  const status = String(inspection.status || inspection.inspectionStatus || "");
+  const ready = ["inspection_approved", "confirmed"].includes(status);
+  if (!ready) return false;
+  if (inspection.assignedFieldAgent) return false;
+  // Approved/confirmed are "terminal" for seller respond buttons but are exactly when FA request is allowed.
+  const blockedAfterApproval = ["completed", "cancelled", "agent_rejected", "rejected"].includes(
+    status,
+  );
+  if (blockedAfterApproval) return false;
+  return true;
+}
+
 type TabKey = "inspections" | "bookings";
 
 export default function MyInspectionRequestsPage() {
@@ -408,6 +427,17 @@ export default function MyInspectionRequestsPage() {
   const [respondNote, setRespondNote] = useState("");
   const [respondInspectionFee, setRespondInspectionFee] = useState<string>("");
   const [isSubmittingRespond, setIsSubmittingRespond] = useState(false);
+
+  const [fieldAgentModalInspection, setFieldAgentModalInspection] =
+    useState<InspectionData | null>(null);
+
+  const fieldAgentModalLocation = useMemo(
+    () =>
+      fieldAgentModalInspection
+        ? resolvePropertyLocationForFieldAgent(fieldAgentModalInspection.property)
+        : { state: undefined, lga: undefined },
+    [fieldAgentModalInspection],
+  );
 
   const INSPECTION_FEE_MIN = 1000;
   const INSPECTION_FEE_MAX = 50000;
@@ -1049,6 +1079,18 @@ export default function MyInspectionRequestsPage() {
                                   </p>
                                 </div>
                               )}
+                              {isInspectionApproved &&
+                                user?.userType === "Agent" &&
+                                (canRequestFieldAgentForInspection(inspection) ||
+                                  inspection.fieldAgentRequestStatus === "pending") && (
+                                  <div className="mb-4 p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
+                                    <p className="text-sm text-indigo-900 font-medium">
+                                      Inspection approved — use{" "}
+                                      <span className="font-semibold">Request Field Agent</span> below
+                                      to assign a company Field Agent for the visit.
+                                    </p>
+                                  </div>
+                                )}
                               <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-200">
                                 {showAcceptRejectUpdate && (
                                   <>
@@ -1068,6 +1110,20 @@ export default function MyInspectionRequestsPage() {
                                     View Property
                                   </button>
                                 )}
+                                {user?.userType === "Agent" &&
+                                  (canRequestFieldAgentForInspection(inspection) ||
+                                    inspection.fieldAgentRequestStatus === "pending") && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setFieldAgentModalInspection(inspection)}
+                                      className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+                                    >
+                                      <Users size={16} />
+                                      {inspection.fieldAgentRequestStatus === "pending"
+                                        ? "Field Agent request"
+                                        : "Request Field Agent"}
+                                    </button>
+                                  )}
                               </div>
                             </>
                           );
@@ -1482,6 +1538,22 @@ export default function MyInspectionRequestsPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {fieldAgentModalInspection && (
+        <RequestFieldAgentModal
+          inspectionId={
+            fieldAgentModalInspection.id ||
+            (fieldAgentModalInspection as { _id?: string })._id ||
+            ""
+          }
+          propertyState={fieldAgentModalLocation.state}
+          propertyLga={fieldAgentModalLocation.lga}
+          fieldAgentRequestStatus={fieldAgentModalInspection.fieldAgentRequestStatus}
+          assignedFieldAgent={fieldAgentModalInspection.assignedFieldAgent}
+          onClose={() => setFieldAgentModalInspection(null)}
+          onUpdated={() => fetchInspections(currentPage, false)}
+        />
+      )}
 
     </CombinedAuthGuard>
   );
