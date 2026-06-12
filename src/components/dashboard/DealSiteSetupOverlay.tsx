@@ -14,6 +14,11 @@ function isLandownerUser(user: User | null): boolean {
   return t === "landowners" || t === "landowner";
 }
 
+function isFieldAgentUser(user: User | null): boolean {
+  const t = (user?.userType ?? "").toLowerCase().replace(/[\s_]/g, "");
+  return t === "fieldagent";
+}
+
 type Props = {
   user: User;
 };
@@ -24,7 +29,7 @@ const cardTransition = { type: "spring" as const, damping: 26, stiffness: 320, m
 
 /**
  * Full-screen prompt when profile has no Practitioner Page yet (`dealSite` nullish).
- * Not shown for landowners. Dismissal is in-memory only: a full page refresh shows the overlay
+ * Not shown for landowners or field agents. Dismissal is in-memory only: a full page refresh shows the overlay
  * again until `dealSite` is configured.
  */
 export function DealSiteSetupOverlay({ user }: Props) {
@@ -40,7 +45,10 @@ export function DealSiteSetupOverlay({ user }: Props) {
 
   const needsPractitionerPage = user.dealSite == null;
   const shouldShow =
-    !dismissed && !isLandownerUser(user) && needsPractitionerPage;
+    !dismissed &&
+    !isLandownerUser(user) &&
+    !isFieldAgentUser(user) &&
+    needsPractitionerPage;
 
   useEffect(() => {
     if (!shouldShow) return;

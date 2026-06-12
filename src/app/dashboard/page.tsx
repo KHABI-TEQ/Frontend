@@ -70,7 +70,7 @@ export default function Dashboard() {
 
   return (
     <>
-      {!showLandlord && <DealSiteSetupOverlay user={user} />}
+      {(showAgentDashboard || showDeveloper) && <DealSiteSetupOverlay user={user} />}
       {showAgentDashboard && <Agent />}
       {showDeveloper && <Developer />}
       {showLandlord && <Landlord />}
