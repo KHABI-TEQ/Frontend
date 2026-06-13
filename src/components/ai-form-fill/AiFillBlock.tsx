@@ -10,6 +10,8 @@ import {
   normalizeNairaAmountTyping,
   stripNairaAmountToDigits,
 } from "@/utils/nairaAmountInput";
+import { useCancellableAutoSubmit } from "@/hooks/useCancellableAutoSubmit";
+import { correctTranscriptionLocationTypos } from "@/utils/preference-ai-conversation";
 
 const SKIP_AMOUNT_UTTERANCE_RE = /^\s*(please\s+)?skip\b/i;
 
@@ -62,6 +64,21 @@ function combineBaseAndUtterance(base: string, utterance: string): string {
   return b ? `${b} ${u}` : u;
 }
 
+type SpeechRecognitionInstance = SpeechRecognition & { abort?: () => void };
+
+function stopSpeechRecognition(rec: SpeechRecognitionInstance | null) {
+  if (!rec) return;
+  try {
+    rec.abort?.();
+  } catch {
+    try {
+      rec.stop();
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
 export default function AiFillBlock({
   title,
   placeholder,
@@ -76,7 +93,7 @@ export default function AiFillBlock({
   const canSend = input.trim().length > 0;
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   /** Max allowed silence (ms) before we end the listening session and commit text. */
   const SILENCE_GRACE_MS = 5_000;
   /** Textarea snapshot when current mic session started — new speech appends after this. */
@@ -95,6 +112,10 @@ export default function AiFillBlock({
   const endBeepPlayedRef = useRef(false);
   /** One finish path per mic session (onend + onerror can both fire). */
   const sessionActiveRef = useRef(false);
+  const hasSpokenInSessionRef = useRef(false);
+  const sessionStartedAtRef = useRef(0);
+  const silencePollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const scheduleAutoSubmitRef = useRef<(text: string) => void>(() => {});
 
   const playEndBeepOnce = useCallback(() => {
     if (endBeepPlayedRef.current) return;
@@ -107,63 +128,66 @@ export default function AiFillBlock({
       .filter(Boolean)
       .join(" ")
       .trim();
+    const corrected = correctTranscriptionLocationTypos(utterance);
     if (amountEntryMode) {
-      const { display } = mergeVoiceTextWithSpokenAmount(voiceBaseRef.current, utterance);
+      const { display } = mergeVoiceTextWithSpokenAmount(voiceBaseRef.current, corrected);
       setInput(display);
     } else {
-      setInput(combineBaseAndUtterance(voiceBaseRef.current, utterance));
+      setInput(correctTranscriptionLocationTypos(combineBaseAndUtterance(voiceBaseRef.current, corrected)));
     }
   }, [amountEntryMode]);
 
-  const autoSubmitFromVoice = useCallback(
-    async (text: string) => {
-      const trimmed = text.trim();
-      if (!trimmed) return;
-      let toSend = trimmed;
-      if (amountEntryMode) {
-        if (!SKIP_AMOUNT_UTTERANCE_RE.test(trimmed)) {
-          const digits = stripNairaAmountToDigits(trimmed);
-          if (!digits) {
-            toast.error("Please enter a numeric amount (or say skip).");
-            return;
-          }
-          toSend = digits;
+  const clearSilencePoll = useCallback(() => {
+    if (silencePollRef.current) {
+      clearInterval(silencePollRef.current);
+      silencePollRef.current = null;
+    }
+  }, []);
+
+  const finishRecognitionSession = useCallback(
+    (triggerAutoSubmit: boolean) => {
+      if (!sessionActiveRef.current) return;
+      clearSilencePoll();
+      sessionActiveRef.current = false;
+      stopSpeechRecognition(recognitionRef.current);
+      recognitionRef.current = null;
+      setListening(false);
+      const utterance = [finalTranscriptRef.current, runFinalTranscriptRef.current, interimTranscriptRef.current]
+        .filter(Boolean)
+        .join(" ")
+        .trim();
+      const composed = amountEntryMode
+        ? mergeVoiceTextWithSpokenAmount(voiceBaseRef.current, utterance).display
+        : combineBaseAndUtterance(voiceBaseRef.current, utterance);
+      const correctedComposed = correctTranscriptionLocationTypos(composed);
+      if (correctedComposed.trim()) {
+        setInput(correctedComposed);
+        if (triggerAutoSubmit && hasSpokenInSessionRef.current) {
+          scheduleAutoSubmitRef.current(correctedComposed);
         }
+      } else {
+        updateInputFromVoiceBuffers();
       }
-      setLoading(true);
-      try {
-        await onSuggest(toSend);
-        toast.success("Suggestions applied. Review and edit as needed.");
-        setInput("");
-      } catch (e) {
-        toast.error((e as Error)?.message || "Something went wrong.");
-      } finally {
-        setLoading(false);
-      }
+      playEndBeepOnce();
     },
-    [amountEntryMode, onSuggest],
+    [amountEntryMode, clearSilencePoll, playEndBeepOnce, updateInputFromVoiceBuffers]
   );
 
-  const finishRecognitionSession = useCallback(() => {
-    if (!sessionActiveRef.current) return;
-    sessionActiveRef.current = false;
-    recognitionRef.current = null;
-    setListening(false);
-    const utterance = [finalTranscriptRef.current, runFinalTranscriptRef.current, interimTranscriptRef.current]
-      .filter(Boolean)
-      .join(" ")
-      .trim();
-    const composed = amountEntryMode
-      ? mergeVoiceTextWithSpokenAmount(voiceBaseRef.current, utterance).display
-      : combineBaseAndUtterance(voiceBaseRef.current, utterance);
-    if (composed.trim()) {
-      setInput(composed);
-      void autoSubmitFromVoice(composed);
-    } else {
-      updateInputFromVoiceBuffers();
-    }
-    playEndBeepOnce();
-  }, [amountEntryMode, autoSubmitFromVoice, playEndBeepOnce, updateInputFromVoiceBuffers]);
+  const startSilencePoll = useCallback(() => {
+    clearSilencePoll();
+    silencePollRef.current = setInterval(() => {
+      if (!sessionActiveRef.current) {
+        clearSilencePoll();
+        return;
+      }
+      const now = Date.now();
+      const silentFor = now - lastSpeechAtRef.current;
+      const sessionAge = now - sessionStartedAtRef.current;
+      if (silentFor >= SILENCE_GRACE_MS || sessionAge >= 120_000) {
+        finishRecognitionSession(true);
+      }
+    }, 400);
+  }, [clearSilencePoll, finishRecognitionSession]);
 
   const startRecognitionRun = useCallback(() => {
     if (typeof window === "undefined" || !sessionActiveRef.current) return;
@@ -176,7 +200,7 @@ export default function AiFillBlock({
       return;
     }
 
-    const recognition = new SpeechRecognitionAPI() as SpeechRecognition;
+    const recognition = new SpeechRecognitionAPI() as SpeechRecognitionInstance;
     recognition.continuous = false;
     recognition.interimResults = true;
     recognition.lang = "en-NG";
@@ -184,7 +208,10 @@ export default function AiFillBlock({
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       const { final, interim } = getSessionTranscriptFromResults(event.results);
+      const spoken = (final || interim).trim();
+      if (!spoken) return;
       lastSpeechAtRef.current = Date.now();
+      hasSpokenInSessionRef.current = true;
       runFinalTranscriptRef.current = final.trim();
       interimTranscriptRef.current = interim.trim();
       updateInputFromVoiceBuffers();
@@ -221,12 +248,12 @@ export default function AiFillBlock({
       if (!sessionActiveRef.current) return;
       if (manualStopRequestedRef.current) {
         manualStopRequestedRef.current = false;
-        finishRecognitionSession();
+        finishRecognitionSession(hasSpokenInSessionRef.current);
         return;
       }
       const silentFor = Date.now() - lastSpeechAtRef.current;
       if (silentFor >= SILENCE_GRACE_MS) {
-        finishRecognitionSession();
+        finishRecognitionSession(true);
         return;
       }
       setTimeout(() => {
@@ -247,85 +274,92 @@ export default function AiFillBlock({
     }
   }, [finishRecognitionSession, updateInputFromVoiceBuffers]);
 
-  const handleSubmit = useCallback(async () => {
-    const trimmed = input.trim();
-    if (!trimmed) {
-      toast.error("Please enter a description first.");
-      return;
-    }
-    let toSend = trimmed;
-    if (amountEntryMode) {
-      if (SKIP_AMOUNT_UTTERANCE_RE.test(trimmed)) {
-        toSend = trimmed;
-      } else {
-        const digits = stripNairaAmountToDigits(trimmed);
-        if (!digits) {
-          toast.error("Please enter a numeric amount (or say skip).");
-          return;
+  const submitFromInput = useCallback(
+    async (rawText: string) => {
+      const trimmed = rawText.trim();
+      if (!trimmed) {
+        toast.error("Please enter a description first.");
+        return;
+      }
+      let toSend = trimmed;
+      if (amountEntryMode) {
+        if (SKIP_AMOUNT_UTTERANCE_RE.test(trimmed)) {
+          toSend = trimmed;
+        } else {
+          const digits = stripNairaAmountToDigits(trimmed);
+          if (!digits) {
+            toast.error("Please enter a numeric amount (or say skip).");
+            return;
+          }
+          toSend = digits;
         }
-        toSend = digits;
       }
-    }
-    const pageScrollY = typeof window !== "undefined" ? window.scrollY : 0;
-    setLoading(true);
-    try {
-      await onSuggest(toSend);
-      toast.success("Suggestions applied. Review and edit as needed.");
-      setInput("");
-    } catch (e) {
-      toast.error((e as Error)?.message || "Something went wrong.");
-    } finally {
-      setLoading(false);
-      if (typeof window !== "undefined") {
-        requestAnimationFrame(() => window.scrollTo({ top: pageScrollY, behavior: "auto" }));
+      const pageScrollY = typeof window !== "undefined" ? window.scrollY : 0;
+      setLoading(true);
+      try {
+        await onSuggest(toSend);
+        toast.success("Suggestions applied. Review and edit as needed.");
+        setInput("");
+      } catch (e) {
+        toast.error((e as Error)?.message || "Something went wrong.");
+      } finally {
+        setLoading(false);
+        if (typeof window !== "undefined") {
+          requestAnimationFrame(() => window.scrollTo({ top: pageScrollY, behavior: "auto" }));
+        }
       }
-    }
-  }, [amountEntryMode, input, onSuggest]);
+    },
+    [amountEntryMode, onSuggest],
+  );
+
+  const { pendingAutoSubmit, autoSubmitSecondsLeft, scheduleAutoSubmit, cancelAutoSubmit } =
+    useCancellableAutoSubmit(submitFromInput);
+
+  useEffect(() => {
+    scheduleAutoSubmitRef.current = scheduleAutoSubmit;
+  }, [scheduleAutoSubmit]);
+
+  const handleSubmit = useCallback(async () => {
+    cancelAutoSubmit();
+    await submitFromInput(input);
+  }, [cancelAutoSubmit, input, submitFromInput]);
 
   const startVoice = useCallback(() => {
     if (typeof window === "undefined") return;
+    cancelAutoSubmit();
     endBeepPlayedRef.current = false;
     sessionActiveRef.current = true;
+    hasSpokenInSessionRef.current = false;
     manualStopRequestedRef.current = false;
     finalTranscriptRef.current = "";
     runFinalTranscriptRef.current = "";
     interimTranscriptRef.current = "";
     lastSpeechAtRef.current = Date.now();
+    sessionStartedAtRef.current = Date.now();
     if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch {
-        // ignore
-      }
+      stopSpeechRecognition(recognitionRef.current);
       recognitionRef.current = null;
     }
     voiceBaseRef.current = input.trimEnd();
+    setListening(true);
+    startSilencePoll();
     startRecognitionRun();
-  }, [input, startRecognitionRun]);
+  }, [cancelAutoSubmit, input, startRecognitionRun, startSilencePoll]);
 
   const stopVoice = useCallback(() => {
     manualStopRequestedRef.current = true;
-    try {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      } else {
-        finishRecognitionSession();
-      }
-    } catch {
-      finishRecognitionSession();
-    }
+    finishRecognitionSession(hasSpokenInSessionRef.current);
   }, [finishRecognitionSession]);
 
   useEffect(() => {
     return () => {
-      try {
-        recognitionRef.current?.stop();
-      } catch {
-        /* ignore */
-      }
+      clearSilencePoll();
+      stopSpeechRecognition(recognitionRef.current);
       recognitionRef.current = null;
     };
-  }, []);
+  }, [clearSilencePoll]);
+
+  const micBusy = listening || pendingAutoSubmit;
 
   return (
     <div className="rounded-xl border border-[#8DDB90]/40 bg-[#f0fdf4]/60 p-4 md:p-5">
@@ -343,7 +377,8 @@ export default function AiFillBlock({
         Optionally describe in a few words or sentences; we&apos;ll suggest form fields. You can review and edit before
         submitting.{" "}
         <span className="text-[#09391C] font-medium">
-          Voice: speak clearly — text appears as you talk (no repeats). You can pause for up to 5 seconds before listening ends; at session end you&apos;ll hear a short beep and your entry is sent automatically.
+          Voice: speak clearly — text appears as you talk. After ~5 seconds of silence (or when you tap Stop),
+          your message auto-sends in a few seconds. Tap Cancel to fix a typo, edit the text, or re-record.
         </span>
       </p>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
@@ -351,6 +386,7 @@ export default function AiFillBlock({
           <textarea
             value={input}
             onChange={(e) => {
+              cancelAutoSubmit();
               const v = e.target.value;
               if (amountEntryMode) {
                 setInput(normalizeNairaAmountTyping(v));
@@ -385,17 +421,39 @@ export default function AiFillBlock({
             )}
             <button
               type="button"
-              onClick={listening ? stopVoice : startVoice}
-              disabled={disabled || loading}
-              className={`inline-flex items-center gap-2 rounded px-2 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${
-                listening
-                  ? "bg-red-50 text-red-600 hover:bg-red-100"
-                  : "text-gray-500 hover:bg-gray-100 hover:text-[#09391C]"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (pendingAutoSubmit) cancelAutoSubmit();
+                else if (listening) stopVoice();
+                else startVoice();
+              }}
+              disabled={!micBusy && (disabled || loading)}
+              className={`relative z-20 inline-flex items-center gap-2 rounded px-2 py-2 text-sm font-medium transition-colors disabled:opacity-50 pointer-events-auto ${
+                pendingAutoSubmit
+                  ? "bg-amber-50 text-amber-800 hover:bg-amber-100"
+                  : listening
+                    ? "bg-red-50 text-red-600 hover:bg-red-100"
+                    : "text-gray-500 hover:bg-gray-100 hover:text-[#09391C]"
               }`}
-              title={listening ? "Stop listening" : "Speak — tap again after a pause to add more text"}
-              aria-label={listening ? "Stop voice input" : "Start voice input"}
+              title={
+                pendingAutoSubmit
+                  ? "Cancel auto-send"
+                  : listening
+                    ? "Stop listening"
+                    : "Speak — tap again after a pause to add more text"
+              }
+              aria-label={
+                pendingAutoSubmit
+                  ? "Cancel auto-send"
+                  : listening
+                    ? "Stop voice input"
+                    : "Start voice input"
+              }
             >
-              {listening ? (
+              {pendingAutoSubmit ? (
+                <span>Cancel</span>
+              ) : listening ? (
                 <>
                   <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" aria-hidden />
                   <span>Stop</span>
@@ -435,6 +493,25 @@ export default function AiFillBlock({
           )}
         </div>
       </div>
+      {listening && (
+        <p className="mt-2 text-sm text-[#5A5D63] font-medium" role="status">
+          Listening… After ~5 seconds of silence or when you tap Stop, your message auto-sends in 5 seconds unless you cancel.
+        </p>
+      )}
+      {pendingAutoSubmit && !listening && (
+        <p className="mt-2 text-sm text-[#5A5D63] font-medium flex flex-wrap items-center gap-2" role="status">
+          <span>
+            Sending in {autoSubmitSecondsLeft}s… Tap Cancel to fix a typo or edit the text above.
+          </span>
+          <button
+            type="button"
+            onClick={cancelAutoSubmit}
+            className="text-xs font-semibold text-amber-800 underline underline-offset-2 hover:text-amber-900"
+          >
+            Cancel auto-send
+          </button>
+        </p>
+      )}
     </div>
   );
 }

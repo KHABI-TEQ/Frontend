@@ -8,7 +8,10 @@ import { useUserContext } from "@/context/user-context";
 import { usePostPropertyContext } from "@/context/post-property-context";
 import { POST_REQUEST } from "@/utils/requests";
 import { extractNumericValue } from "@/utils/price-helpers";
-import { normalizeHoldDurationForApi, normalizeIsTenantedForApi, isFreeLimitPropertyError } from "@/utils/post-property-payload";
+import { normalizeHoldDurationForApi, normalizeIsTenantedForApi, isFreeLimitPropertyError, isPortfolioUnlimitedRequired } from "@/utils/post-property-payload";
+import PortfolioUnlimitedModal from "@/components/publisher/PortfolioUnlimitedModal";
+import { usePublisherListingEligibility } from "@/hooks/usePublisherListingEligibility";
+import { useAgentEligibility } from "@/hooks/useAgentEligibility";
 import { URLS } from "@/utils/URLS";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
@@ -270,14 +273,27 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showFreeLimitBanner, setShowFreeLimitBanner] = useState(false);
   const [freeLimitMessage, setFreeLimitMessage] = useState<string | null>(null);
+  const [showPortfolioUnlimitedModal, setShowPortfolioUnlimitedModal] = useState(false);
+  const { eligibility: publisherListing, refresh: refreshPublisherListing } =
+    usePublisherListingEligibility();
+  const { eligibility: agentEligibility } = useAgentEligibility();
   const listingsEntry = useAppSelector(selectFeatureEntry(FEATURE_KEYS.LISTINGS));
-  const quotaText = listingsEntry
-    ? (listingsEntry.type === 'unlimited' || listingsEntry.remaining === -1)
-      ? 'Unlimited'
-      : (listingsEntry.type === 'count')
-        ? `${Math.max(0, Number(listingsEntry.remaining || 0))} remaining`
-        : (Number(listingsEntry.value) === 1 ? 'Enabled' : 'Disabled')
-    : '—';
+  const quotaText =
+    publisherListing?.unlimitedListings || agentEligibility?.unlimitedListings
+      ? "Unlimited (Portfolio Unlimited)"
+      : publisherListing?.listingsRemaining != null
+        ? `${publisherListing.listingsRemaining} of ${publisherListing.listingLimit ?? 25} remaining`
+        : agentEligibility?.listingsRemaining != null
+          ? `${agentEligibility.listingsRemaining} of ${agentEligibility.listingLimit ?? 25} remaining`
+          : listingsEntry
+            ? listingsEntry.type === "unlimited" || listingsEntry.remaining === -1
+              ? `${listingsEntry.remaining ?? 25} listings`
+              : listingsEntry.type === "count"
+                ? `${Math.max(0, Number(listingsEntry.remaining || 0))} remaining`
+                : Number(listingsEntry.value) === 1
+                  ? "Enabled"
+                  : "Disabled"
+            : "Up to 25 listings";
 
   // Set property type on component mount
   useEffect(() => {
@@ -610,8 +626,8 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
 
       if (response.success) {
         toast.success("Property created successfully!");
-        // Decrease LISTINGS usage on success
         dispatch(decrementFeature({ key: FEATURE_KEYS.LISTINGS, amount: 1 }));
+        void refreshPublisherListing();
         resetForm();
         setShowSuccessModal(true);
       } else {
@@ -619,9 +635,14 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
           (response as any)?.error ||
           (response as any)?.message ||
           "Failed to submit property";
+        const details = (response as any)?.details;
         if (typeof errorMessage === "string" && isFreeLimitPropertyError(errorMessage)) {
           setFreeLimitMessage(errorMessage);
-          setShowFreeLimitBanner(true);
+          if (isPortfolioUnlimitedRequired(details)) {
+            setShowPortfolioUnlimitedModal(true);
+          } else {
+            setShowFreeLimitBanner(true);
+          }
         } else if (typeof errorMessage === "string" && /landowner or agent/i.test(errorMessage)) {
           errorMessage =
             "Only landowner, agent, or developer accounts can post. Developers and agents need an active subscription.";
@@ -686,6 +707,11 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
               </div>
             </div>
           )}
+          <PortfolioUnlimitedModal
+            open={showPortfolioUnlimitedModal}
+            message={freeLimitMessage}
+            onClose={() => setShowPortfolioUnlimitedModal(false)}
+          />
           {/* Breadcrumb */}
           <Breadcrumb items={breadcrumbItems} />
           

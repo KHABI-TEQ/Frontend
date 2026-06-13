@@ -16,9 +16,9 @@ export default function PublisherDashboardNotice({ userType }: PublisherDashboar
     <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800">
       <p className="font-semibold text-[#09391C]">{label} listing access</p>
       <p className="mt-1 leading-relaxed text-slate-700">
-        You can list <strong>unlimited properties</strong> on Khabi-Teq.{" "}
-        <strong>KYC verification is optional</strong> and{" "}
-        <strong>no subscription is required</strong> to publish listings or use your account features.
+        You can list up to <strong>25 properties</strong> on Khabi-Teq with no subscription.{" "}
+        Need more? Upgrade to <strong>Portfolio Unlimited</strong> when you reach that cap.{" "}
+        <strong>KYC verification is optional</strong> for landlords.
       </p>
       <p className="mt-2 text-xs text-slate-600">
         Optional:{" "}

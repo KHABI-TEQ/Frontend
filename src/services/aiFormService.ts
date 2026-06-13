@@ -5,7 +5,10 @@
 
 import { POST_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
-import { wrapUserInputForAiSuggest } from "@/utils/wrapAiSuggestUserInput";
+import {
+  buildSuggestPreferenceUserInput,
+  wrapUserInputForAiSuggest,
+} from "@/utils/wrapAiSuggestUserInput";
 
 /** LLM-backed routes often exceed the default 15s client timeout. */
 const AI_SUGGEST_POST_TIMEOUT_MS = 120_000;
@@ -95,16 +98,20 @@ export async function suggestProperty(
  * Errors: 400 (missing/invalid userInput), 503 (AI service not configured).
  */
 export async function suggestPreference(
-  userInput: string
+  userInput: string,
+  options?: { focusedField?: string; allowMultiField?: boolean }
 ): Promise<SuggestPreferenceResponse> {
   const trimmed = typeof userInput === "string" ? userInput.trim() : "";
   if (!trimmed) {
     return { success: false, message: "Please enter a description." };
   }
   const url = `${URLS.BASE}${URLS.aiSuggestPreference}`;
+  const wrapped = options
+    ? buildSuggestPreferenceUserInput(trimmed, options)
+    : wrapUserInputForAiSuggest(trimmed);
   const response = await POST_REQUEST<{ success: boolean; message?: string; data?: Record<string, unknown> }>(
     url,
-    { userInput: wrapUserInputForAiSuggest(trimmed) },
+    { userInput: wrapped },
     undefined,
     undefined,
     0,

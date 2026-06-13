@@ -8,6 +8,10 @@ import {
   PROPERTY_CATEGORIES,
   shouldShowField,
 } from "@/data/comprehensive-post-property-config";
+import {
+  applySmartLocationFromNaturalText,
+  sanitizeConversationLocation,
+} from "@/utils/preference-ai-conversation";
 
 export const PROPERTY_AI_FIELD = {
   LISTING_TYPE: "listingType",
@@ -736,4 +740,60 @@ export function propertyAiFieldIdFromLabel(label: string): PropertyAiFieldId {
     return key as PropertyAiFieldId;
   }
   return PROPERTY_AI_FIELD.DESCRIPTION;
+}
+
+function propertyLocToPreferenceShape(loc: Record<string, unknown>): Record<string, unknown> {
+  const lga = String(loc.localGovernment ?? "").trim();
+  const areas = Array.isArray(loc.areas)
+    ? (loc.areas as unknown[]).map((x) => String(x).trim()).filter(Boolean)
+    : String(loc.area ?? "").trim()
+      ? [String(loc.area).trim()]
+      : [];
+  return {
+    state: loc.state,
+    localGovernmentAreas: lga ? [lga] : [],
+    areas,
+    customLocation: areas[0] ?? "",
+  };
+}
+
+function preferenceLocToPropertyShape(loc: Record<string, unknown>): Record<string, unknown> {
+  const lgas = loc.localGovernmentAreas ?? loc.lgas;
+  const lga = Array.isArray(lgas) ? String(lgas[0] ?? "").trim() : String(loc.localGovernment ?? "").trim();
+  const areas = Array.isArray(loc.areas)
+    ? (loc.areas as unknown[]).map((x) => String(x).trim()).filter(Boolean)
+    : String(loc.customLocation ?? loc.area ?? "").trim()
+      ? [String(loc.customLocation ?? loc.area).trim()]
+      : [];
+  return {
+    state: loc.state,
+    localGovernment: lga,
+    area: areas[0] ?? "",
+    areas,
+  };
+}
+
+/** Extract and sanitize property listing location from natural text (State → LGA → Area order). */
+export function applyPropertyLocationFromNaturalText(
+  data: Record<string, unknown>,
+  text: string,
+  stateOptions: string[] = [],
+): Record<string, unknown> {
+  const prefWrapped = applySmartLocationFromNaturalText(
+    { location: propertyLocToPreferenceShape((data.location || {}) as Record<string, unknown>) },
+    text,
+    stateOptions,
+  );
+  const prefLoc = (prefWrapped.location || {}) as Record<string, unknown>;
+  return { ...data, location: preferenceLocToPropertyShape(prefLoc) };
+}
+
+export function sanitizePropertyConversationLocation(
+  loc: Record<string, unknown> | undefined,
+  userMessagesCombined: string,
+  stateOptions: string[] = [],
+): Record<string, unknown> {
+  return preferenceLocToPropertyShape(
+    sanitizeConversationLocation(propertyLocToPreferenceShape(loc || {}), userMessagesCombined, stateOptions),
+  );
 }

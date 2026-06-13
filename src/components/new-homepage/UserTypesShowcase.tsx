@@ -15,7 +15,7 @@ const userTypes = [
     headline: 'Your property, your rules.',
     lead: 'List your property for sale, rent, shortlet, or joint venture. Add details easily and reach more serious buyers.',
     bullets: [
-      'Post as many properties as you want',
+      'List up to 25 properties included (Portfolio Unlimited available for larger portfolios)',
       'Let agents request to promote your listing you decide',
       'More visibility through multiple agents',
       'Support for document checks to build trust',

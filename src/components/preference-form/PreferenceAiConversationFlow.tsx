@@ -22,10 +22,18 @@ import {
   resolveVoiceLga,
   resolveVoiceState,
 } from "@/utils/voicePreferenceResolver";
+import { isLongMultiFieldUtterance } from "@/utils/wrapAiSuggestUserInput";
 import toast from "react-hot-toast";
 import { ArrowLeft, MessageSquare, Bot, Loader2, CheckCircle, Volume2, VolumeX, ChevronDown } from "lucide-react";
 import nigerianStateLgaJson from "@/data/state-lga.json";
 import { getAreasByStateLGA, getLGAsByState, getStates } from "@/utils/location-utils";
+import {
+  applyLocationFromNaturalText,
+  applyBulkExtractFromUserText,
+  correctTranscriptionLocationTypos,
+  sanitizeConversationLocation,
+  userTextMentionsPhrase,
+} from "@/utils/preference-ai-conversation";
 import {
   OFF_PLAN_DEVELOPMENT_STAGE_LABELS,
   OFF_PLAN_PAYMENT_PLAN_LABELS,
@@ -828,9 +836,7 @@ function normalizeUserMentionBlob(text: string): string {
 }
 
 function userMessagesMentionPhrase(blobNorm: string, phrase: string): boolean {
-  const p = normalizeUserMentionPhrase(phrase);
-  if (!p) return false;
-  return blobNorm.includes(p);
+  return userTextMentionsPhrase(blobNorm, phrase);
 }
 
 function normalizeUserMentionPhrase(phrase: string): string {
@@ -918,7 +924,6 @@ function getSanitizedPreferenceLocation(data: Record<string, unknown>): Record<s
   loc = syncPreferenceLocationAreaKeys(loc);
   loc = stripImplausiblePreferenceLocationState(loc);
   loc = coercePreferenceLocationFormHierarchy(loc);
-  loc = stripPreferenceAreasUntilLgaSelected(loc);
   loc = stripPreferenceAreasThatDuplicateStateOrLga(loc);
   return syncPreferenceLocationAreaKeys(loc);
 }
@@ -1973,14 +1978,13 @@ export default function PreferenceAiConversationFlow() {
       setPreferenceAiMessages((prev) => [...prev, { role: "user", content: userText }]);
 
       try {
-        const contextual =
-          (() => {
-            const lastAssist = [...preferenceAiMessages].reverse().find((m) => m.role === "assistant");
-            const focus = lastAssist?.focusedMissingField;
-            if (!focus) return accumulated || userText;
-            return `${accumulated || userText}\n\n[The user is answering this specific field: ${focus}]`;
-          })();
-        const res = await suggestPreference(contextual);
+        const lastAssist = [...preferenceAiMessages].reverse().find((m) => m.role === "assistant");
+        const focus = lastAssist?.focusedMissingField;
+        const contextual = accumulated || userText;
+        const res = await suggestPreference(contextual, {
+          focusedField: focus,
+          allowMultiField: isLongMultiFieldUtterance(contextual),
+        });
         if (!res.success) {
           const safeMsg = sanitizeAiFailureMessage(res.message);
           setPreferenceAiMessages((prev) => [
@@ -1997,6 +2001,9 @@ export default function PreferenceAiConversationFlow() {
           preferenceType: effectiveType,
           preferenceMode: preferenceModeFromType(effectiveType),
         };
+        if (isLongMultiFieldUtterance(contextual)) {
+          Object.assign(seedData, applyBulkExtractFromUserText(seedData, userText, contextual));
+        }
         let data = mergePreferenceAiCollectedData(seedData, (res.data || {}) as Record<string, unknown>);
         data.preferenceType = effectiveType;
         data.preferenceMode = preferenceModeFromType(effectiveType);
@@ -2054,13 +2061,14 @@ export default function PreferenceAiConversationFlow() {
           }
           if (isLocationTurn) {
             loc = applyPreferenceLocationFromFocusedAnswer(userText, lastFocusBeforeTurn, loc);
-            loc = applyPreferenceLocationFromNaturalText(userText, loc);
+            const withNatural = applyLocationFromNaturalText({ location: loc }, userText);
+            loc = (withNatural.location || loc) as Record<string, unknown>;
           }
-          loc = stripImplausiblePreferenceLocationState(loc);
-          // Always trust only what the user has mentioned (prevents AI-inserted area/LGA values).
-          loc = filterPreferenceLocationToUserMentionedOnly(loc, accumulated || userText);
-          loc = coercePreferenceLocationFormHierarchy(loc);
-          loc = stripPreferenceAreasUntilLgaSelected(loc);
+          loc = sanitizeConversationLocation(
+            loc,
+            correctTranscriptionLocationTypos(accumulated || userText),
+            getStates(),
+          );
           loc = keepBestPreferenceLocationProgress(previousLocation, loc, isLocationTurn);
           data = { ...data, location: loc };
         }

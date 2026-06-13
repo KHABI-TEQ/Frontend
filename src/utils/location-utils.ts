@@ -29,34 +29,42 @@ export const getAreasByStateLGA = (state: string, lga: string): string[] => {
 
 export const searchLocations = (
   query: string,
+  limit = 20,
 ): { state: string; lga?: string; area?: string }[] => {
   const results: { state: string; lga?: string; area?: string }[] = [];
   const searchTerm = query.toLowerCase().trim();
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const searchNorm = norm(searchTerm);
 
   if (!searchTerm) return results;
 
+  const matches = (candidate: string): boolean => {
+    const c = candidate.toLowerCase();
+    const cn = norm(candidate);
+    if (c.includes(searchTerm) || searchTerm.includes(c)) return true;
+    if (cn.includes(searchNorm) || searchNorm.includes(cn)) return true;
+    return false;
+  };
+
   Object.entries(nigeriaLocationData).forEach(([state, lgaData]) => {
-    // Search states
-    if (state.toLowerCase().includes(searchTerm)) {
+    if (matches(state)) {
       results.push({ state });
     }
 
-    // Search LGAs
     Object.entries(lgaData).forEach(([lga, areas]) => {
-      if (lga.toLowerCase().includes(searchTerm)) {
+      if (matches(lga)) {
         results.push({ state, lga });
       }
 
-      // Search areas
       areas.forEach((area: string) => {
-        if (area.toLowerCase().includes(searchTerm)) {
+        if (matches(area)) {
           results.push({ state, lga, area });
         }
       });
     });
   });
 
-  return results.slice(0, 20); // Limit results for performance
+  return results.slice(0, limit);
 };
 
 export const formatLocationString = (

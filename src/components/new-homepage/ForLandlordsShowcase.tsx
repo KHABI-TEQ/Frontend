@@ -8,7 +8,7 @@ import DocumentVerificationPromoSection from '@/components/new-homepage/document
 
 const ForLandlordsShowcase = () => {
   const bullets = [
-    'Post as many properties as you want',
+    'List up to 25 properties included (Portfolio Unlimited for larger portfolios)',
     'Let agents request to promote your listing — you decide',
     'More visibility through multiple agents',
     'Support for document checks to build trust',

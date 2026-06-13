@@ -12,6 +12,7 @@ import ImageSwiper from "@/components/new-marketplace/ImageSwiper";
 import Button from "@/components/general-components/button";
 import { X, Bed, Bath, SquareDashed, Car } from "lucide-react";
 import { Property, PropertyImage } from "@/types/property.types";
+import CopyPropertyIdButton from "@/components/common/CopyPropertyIdButton";
 
 interface GlobalPropertyCardProps {
   property: Property;
@@ -68,6 +69,7 @@ const GlobalPropertyCard: React.FC<GlobalPropertyCardProps> = ({
       <div className="flex flex-col gap-[5px] w-full flex-grow">
         {/* Image Section */}
         <div className="w-full h-[148px] bg-gray-200 relative">
+          <CopyPropertyIdButton property={property} variant="overlay" />
           {/* Premium Badge */}
           {isPremium && (
             <div className="w-[88px] z-10 h-[28px] py-[8px] px-[6px] text-white flex gap-x-1 items-center bg-[#FF3D00] absolute rounded-br-md">

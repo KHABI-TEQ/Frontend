@@ -40,6 +40,10 @@ export const URLS = {
   accountSettingsBaseUrl: "/account",
   /** GET — agent KYC / trial / subscription policy snapshot */
   agentEligibility: "/account/agent/eligibility",
+  /** GET — 25-listing cap snapshot for landlord, agent, developer */
+  publisherListingEligibility: "/account/publisher/listing-eligibility",
+  /** GET — Portfolio Unlimited offer (only when at standard cap) */
+  publisherUnlimitedListingPlan: "/account/publisher/unlimited-listing-plan",
 
   /**
    * Preference Endpoints

@@ -2,12 +2,9 @@ import './globals.css';
 import { roboto, archivo } from '@/styles/font';
 import { lazy, Suspense } from 'react';
 import nextDynamic from 'next/dynamic';
+import ClientProviders from '@/components/providers/ClientProviders';
 
 // Dynamic imports keep the root layout chunk small and avoid ChunkLoadError timeouts in dev.
-const ClientProviders = nextDynamic(
-  () => import('@/components/providers/ClientProviders'),
-  { ssr: true }
-);
 const Body = nextDynamic(
   () => import('@/components/general-components/body'),
   { ssr: true }

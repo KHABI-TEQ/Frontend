@@ -7,6 +7,7 @@ interface ApiResponse<T = unknown, P = unknown> {
   message?: string;
   data?: T | null;
   error?: string;
+  details?: unknown;
   pagination?: P | null;
 }
 
@@ -230,6 +231,7 @@ export const POST_REQUEST = async <T = unknown>(
         error: errMsg,
         success: false,
         message: errMsg,
+        details: (parsed as any)?.details ?? null,
         data: null,
       };
     }

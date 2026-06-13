@@ -40,23 +40,10 @@ const webpackReactResolveAlias: Record<string, string> = {
   [path.join(parentNodeModules, "next")]: frontendNext,
 };
 
-/** Turbopack: relative paths only (absolute Windows paths are not supported). */
-const turbopackReactResolveAlias: Record<string, string> = {
-  react: "./node_modules/react",
-  "react-dom": "./node_modules/react-dom",
-  "react/jsx-runtime": "./node_modules/react/jsx-runtime.js",
-  "react/jsx-dev-runtime": "./node_modules/react/jsx-dev-runtime.js",
-  "react-dom/client": "./node_modules/react-dom/client.js",
-  "react-dom/server": "./node_modules/react-dom/server.browser.js",
-  "react-dom/server.browser": "./node_modules/react-dom/server.browser.js",
-  next: "./node_modules/next",
-};
-
 const nextConfig: NextConfig = {
   outputFileTracingRoot: projectRoot,
   turbopack: {
     root: projectRoot,
-    resolveAlias: turbopackReactResolveAlias,
   },
   allowedDevOrigins: ['192.168.0.3', 'localhost', '127.0.0.1'],
   typescript: {

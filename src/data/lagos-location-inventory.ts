@@ -78,6 +78,11 @@ export const LAGOS_LGA_ALIASES: Record<string, (typeof LAGOS_LGAS)[number]> = {
 
 /** Common ASR/typing variants -> canonical Lagos area names. */
 export const LAGOS_AREA_ALIASES: Record<string, (typeof LAGOS_MAJOR_AREAS)[number]> = {
+  "leki": "Lekki",
+  "leky": "Lekki",
+  "lucky": "Lekki",
+  "lucki": "Lekki",
+  "lekky": "Lekki",
   "lekki phase one": "Lekki Phase 1",
   "lekki phase 1": "Lekki Phase 1",
   "lekki phase two": "Lekki Phase 2",

@@ -20,6 +20,8 @@ import {
   mergePropertyAiCollectedData,
   markPropertyAiUserAnswer,
   filterMissingPropertyAiFields,
+  applyPropertyLocationFromNaturalText,
+  sanitizePropertyConversationLocation,
   PROPERTY_AI_FIELD,
 } from "@/utils/propertyAiFieldGuide";
 import { assistantMessageToSpeakable } from "@/utils/ttsText";
@@ -690,6 +692,7 @@ export default function PropertyAiConversationFlow({
         return;
       }
       let data = mergePropertyAiCollectedData(localBeforeApi, res.data || {}, effectiveListing);
+      data = applyPropertyLocationFromNaturalText(data, accumulated || trimmed, getStates());
       data = applyFocusedPropertyAnswer(trimmed, focus, data);
       const lgaUser = extractLocalGovernmentFromText(trimmed);
       const lgaAccumulated = extractLocalGovernmentFromText(accumulated || trimmed);
@@ -705,6 +708,14 @@ export default function PropertyAiConversationFlow({
           location: applyPropertyLocationFromFocusedAnswer(trimmed, focus, currentLoc),
         };
       }
+      data = {
+        ...data,
+        location: sanitizePropertyConversationLocation(
+          (data.location || {}) as Record<string, unknown>,
+          accumulated || trimmed,
+          getStates(),
+        ),
+      };
       const fromUser = extractDocumentsFromText(trimmed);
       const fromAccumulated = extractDocumentsFromText(accumulated || trimmed);
       const parsedDocs = [...new Set([...fromUser, ...fromAccumulated])];

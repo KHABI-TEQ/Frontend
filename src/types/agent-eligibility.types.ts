@@ -31,6 +31,9 @@ export interface AgentEligibility {
   hasPaidSubscription: boolean;
   hasComplimentarySubscription: boolean;
   unlimitedListings: boolean;
+  requiresSpecialPlan?: boolean;
+  specialPlanCode?: string | null;
+  specialPlanName?: string | null;
   canListProperties: boolean;
   canUseDealSite: boolean;
   canRequestToMarket: boolean;

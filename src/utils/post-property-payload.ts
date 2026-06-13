@@ -27,11 +27,47 @@ export function isAgentListingPolicyError(message: string | undefined | null): b
   return (
     m.includes("7-day signup grace period") ||
     m.includes("7-day grace period has expired") ||
-    m.includes("trial limit of 10") ||
+    m.includes("trial limit of") ||
     m.includes("4-week trial period has ended") ||
     m.includes("kyc-approved before creating") ||
+    m.includes("maximum of 25 property listings") ||
+    m.includes("portfolio unlimited") ||
     (m.includes("subscribe") && (m.includes("trial") || m.includes("property") || m.includes("plan")))
   );
+}
+
+export const LISTING_LIMIT_SPECIAL_PLAN_CODE = "LISTING_LIMIT_SPECIAL_PLAN";
+
+export function parseListingLimitErrorDetails(details: unknown): {
+  code?: string;
+  ownedProperties?: number;
+  listingLimit?: number;
+  specialPlanCode?: string;
+  specialPlanName?: string;
+} | null {
+  if (!details) return null;
+  if (typeof details === "object") {
+    return details as {
+      code?: string;
+      ownedProperties?: number;
+      listingLimit?: number;
+      specialPlanCode?: string;
+      specialPlanName?: string;
+    };
+  }
+  if (typeof details === "string") {
+    try {
+      return JSON.parse(details);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+export function isPortfolioUnlimitedRequired(details: unknown): boolean {
+  const parsed = parseListingLimitErrorDetails(details);
+  return parsed?.code === LISTING_LIMIT_SPECIAL_PLAN_CODE;
 }
 
 /** @deprecated Use isAgentListingPolicyError */

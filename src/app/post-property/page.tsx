@@ -13,6 +13,7 @@ import { FEATURE_KEYS } from "@/hooks/useFeatureGate";
 import FeatureGate from "@/components/access/FeatureGate";
 import AgentEligibilityBanner from "@/components/agent/AgentEligibilityBanner";
 import { useAgentEligibility } from "@/hooks/useAgentEligibility";
+import { usePublisherListingEligibility } from "@/hooks/usePublisherListingEligibility";
 
 interface PropertyTypeCard {
   type: "sell" | "off-plan" | "rent" | "shortlet" | "jv";
@@ -70,21 +71,17 @@ const PostPropertyPage = () => {
   const router = useRouter();
   const { user, isInitialized } = useUserContext();
   const { eligibility, loading: eligibilityLoading } = useAgentEligibility();
+  const { eligibility: publisherListing } = usePublisherListingEligibility();
   const isAgent = user?.userType === "Agent";
   const listingsEntry = useAppSelector(selectFeatureEntry(FEATURE_KEYS.LISTINGS));
-  const quotaText = eligibility?.unlimitedListings
-    ? "Unlimited (paid plan)"
-    : eligibility?.listingsRemaining != null
-      ? `${eligibility.listingsRemaining} of ${eligibility.listingLimit ?? "—"} remaining`
-      : listingsEntry
-        ? listingsEntry.type === "unlimited" || listingsEntry.remaining === -1
-          ? "Unlimited"
-          : listingsEntry.type === "count"
-            ? `${Math.max(0, Number(listingsEntry.remaining || 0))} remaining`
-            : Number(listingsEntry.value) === 1
-              ? "Enabled"
-              : "Disabled"
-        : "—";
+  const quotaText =
+    publisherListing?.unlimitedListings || eligibility?.unlimitedListings
+      ? "Unlimited (Portfolio Unlimited)"
+      : publisherListing?.listingsRemaining != null
+        ? `${publisherListing.listingsRemaining} of ${publisherListing.listingLimit ?? 25} remaining`
+        : eligibility?.listingsRemaining != null
+          ? `${eligibility.listingsRemaining} of ${eligibility.listingLimit ?? 25} remaining`
+          : "Up to 25 listings";
 
   // Scroll to top on page load
   useEffect(() => {
@@ -153,15 +150,11 @@ const PostPropertyPage = () => {
             <h1 className="text-3xl md:text-4xl font-bold text-[#09391C] font-display mb-2 md:mb-4">
               Post Your Property
             </h1>
-            {
-              isAgent && (
-                <div className="mb-3">
-                  <span className="inline-flex items-center rounded-full bg-[#EEF1F1] text-[#09391C] text-xs md:text-sm px-3 py-1 font-medium">
-                    Listings quota: {quotaText}
-                  </span>
-                </div>
-              )
-            }
+            <div className="mb-3">
+              <span className="inline-flex items-center rounded-full bg-[#EEF1F1] text-[#09391C] text-xs md:text-sm px-3 py-1 font-medium">
+                Listings quota: {quotaText}
+              </span>
+            </div>
             <p className="text-[#5A5D63] text-lg md:text-xl max-w-3xl mx-auto px-4">
               Choose the type of property listing that best suits your needs
             </p>
