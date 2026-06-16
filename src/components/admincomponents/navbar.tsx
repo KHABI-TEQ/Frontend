@@ -1,6 +1,7 @@
 "use client";
 import {  useState } from "react";
 import Image from "next/image";
+import KhabiteqHeaderLogo from "@/components/branding/KhabiteqHeaderLogo";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -38,7 +39,9 @@ export default function AdminNavbar() {
         </button>
   
         <div className={`fixed z-50 h-full w-[270px] bg-white shadow-lg transition-transform duration-300 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
-          <Image src="/khabi.svg" width={169} height={40} className="md:w-[169px] md:h-[40px] w-[144px] h-[40px] m-8 cursor-pointer" alt="Khabiteq Logo" onClick={() => setIsOpen(false)} />
+          <div className="m-8 cursor-pointer" onClick={() => setIsOpen(false)}>
+            <KhabiteqHeaderLogo />
+          </div>
           <nav className="flex flex-col space-y-2 border-t-2 p-2 pt-4">
             {navItems.map(({ href, label, icon }) => {
               const isActive = pathname === href;

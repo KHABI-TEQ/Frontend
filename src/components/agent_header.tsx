@@ -8,11 +8,12 @@ import { navData } from '@/data';
 import Link from 'next/link';
 import barIcon from '@/svgs/bars.svg';
 import { usePageContext } from '@/context/page-context';
+import { useUserContext } from '@/context/user-context';
 import { reducer } from '@/hooks/reducer';
 import SideBar from './sideBar';
 import { useRouter } from 'next/navigation';
 // import Cookies from 'js-cookie';
-import { useUserContext } from '@/context/user-context';
+import KhabiteqHeaderLogo from '@/components/branding/KhabiteqHeaderLogo';
 
 const AgentHeader = () => {
   const {
@@ -65,13 +66,7 @@ const AgentHeader = () => {
           'filter brightness-[30%] transition-all duration-500 overflow-hidden'
         } ${'slide-from-top'}`}>
         <nav className='h-[50px] container flex justify-between items-center lg:px-16'>
-          <Image
-            src="/khabi.svg"
-            width={169}
-            height={25}
-            className='md:w-[169px] md:h-[25px] w-[144px] h-[30px]'
-            alt='Khabiteq'
-          />
+          <KhabiteqHeaderLogo />
           <div className='lg:flex gap-[27px] hidden'>
             {state.map(
               (

@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: "Khabiteq | Update Property - Off-Plan",
   description: "Update your off-plan property listing on Khabi-Teq.",
   icons: {
-    icon: "/khabi.svg",
+    icon: "/khabiteq_logo_nobg.png",
   },
 };
 

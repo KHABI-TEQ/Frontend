@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import SuccessModal from '@/components/modals/SuccessModal';
 import { POST_REQUEST } from '@/utils/requests';
 import { URLS } from '@/utils/URLS';
+import { KHABITEQ_LOGO_ALT, KHABITEQ_LOGO_FOOTER, KHABITEQ_LOGO_FOOTER_SRC } from '@/constants/branding';
 
 const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
   const exploreLinks = [
@@ -218,11 +219,11 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
               viewport={{ once: true }}>
               <div className="flex items-center gap-3 mb-6">
                 <Image
-                  src="/khabi.svg"
-                  width={140}
-                  height={30}
-                  alt='Khabiteq Logo'
-                  className='w-[140px] h-auto brightness-110'
+                  src={KHABITEQ_LOGO_FOOTER_SRC}
+                  width={KHABITEQ_LOGO_FOOTER.width}
+                  height={KHABITEQ_LOGO_FOOTER.height}
+                  alt={KHABITEQ_LOGO_ALT}
+                  className={KHABITEQ_LOGO_FOOTER.className}
                 />
               </div>
               <p className={`text-[#D6DDEB]/90 text-sm sm:text-base leading-relaxed mb-6 max-w-md ${footerFontClass}`}>

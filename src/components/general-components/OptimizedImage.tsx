@@ -36,7 +36,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
   const [isLoading, setIsLoading] = useState(true);
 
   // Default fallback image
-  const defaultFallback = "/khabi.svg";
+  const defaultFallback = "/placeholder-property.svg";
 
   const handleError = () => {
     setImageError(true);

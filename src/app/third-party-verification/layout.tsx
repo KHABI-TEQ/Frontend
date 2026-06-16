@@ -2,6 +2,12 @@
 import React, { useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
+import {
+  KHABITEQ_LOGO_ALT,
+  KHABITEQ_LOGO_FOOTER,
+  KHABITEQ_LOGO_FOOTER_SRC,
+} from '@/constants/branding';
+import KhabiteqHeaderLogo from "@/components/branding/KhabiteqHeaderLogo";
 import '../globals.css';
 
 // Verification Portal Header Component
@@ -19,11 +25,7 @@ const VerificationHeader = () => {
           {/* Logo Section */}
           <div className="flex items-center space-x-3 sm:space-x-4 cursor-pointer" onClick={handleLogoClick}>
             <div className="bg-white p-2 sm:p-3 rounded-xl shadow-lg">
-              <img
-                src="/khabi-teq.jpg"
-                alt="Khabi-Teq"
-                className="h-6 sm:h-8 w-auto"
-              />
+              <KhabiteqHeaderLogo />
             </div>
             <div className="text-center sm:text-left">
               <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">
@@ -66,13 +68,13 @@ const VerificationFooter = () => {
           {/* Brand Section */}
           <div className="sm:col-span-2 lg:col-span-2 space-y-4 sm:space-y-6">
             <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-3 sm:space-y-0 sm:space-x-3">
-              <div className="bg-[#8DDB90] p-2 rounded-lg">
-                <img
-                  src="/khabi-teq.jpg"
-                  alt="Khabi-Teq"
-                  className="h-6 w-auto"
-                />
-              </div>
+              <img
+                src={KHABITEQ_LOGO_FOOTER_SRC}
+                alt={KHABITEQ_LOGO_ALT}
+                width={KHABITEQ_LOGO_FOOTER.width}
+                height={KHABITEQ_LOGO_FOOTER.height}
+                className={KHABITEQ_LOGO_FOOTER.className}
+              />
               <div className="text-center sm:text-left">
                 <h3 className="text-xl sm:text-2xl font-bold text-white">Khabiteqrealty</h3>
                 <p className="text-[#8DDB90] font-medium">Document Verification Services</p>

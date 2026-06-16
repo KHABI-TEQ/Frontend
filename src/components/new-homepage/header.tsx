@@ -1,7 +1,7 @@
 /** @format */
 
 "use client";
-import React, { Fragment, useEffect, useRef, useState } from "react";
+import React, { Fragment, Suspense, useEffect, useRef, useState } from "react";
 import Button from "@/components/general-components/button";
 import Image from "next/image";
 import {
@@ -17,7 +17,7 @@ import useClickOutside from "@/hooks/clickOutside";
 import { motion, AnimatePresence } from "framer-motion";
 import { useUserContext } from "@/context/user-context";
 import dynamic from "next/dynamic";
-import { Suspense } from "react";
+import KhabiteqHeaderLogo from "@/components/branding/KhabiteqHeaderLogo";
 
 // Lazy load heavy components that are only shown on interaction
 const SideBar = dynamic(() => import("../general-components/sideBar"), { ssr: false });
@@ -164,16 +164,9 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
               ? 'bg-white/80 backdrop-blur-xl shadow-lg shadow-black/5 border border-white/50 w-full max-w-7xl' 
               : 'bg-[#EEF1F1]/90 backdrop-blur-md w-full max-w-7xl'
           }`}>
-          <Link href="/" className="flex items-center gap-2 h-full">
-          <div className="relative w-[140px] h-[28px] md:w-[180px] h-[32px]">
-            <Image
-              src="/khabi-logo.svg"
-              fill
-              className="object-contain"
-              alt="Khabiteq"
-            />
-          </div>
-        </Link>
+          <Link href="/" className="relative z-10 flex shrink-0 items-center">
+            <KhabiteqHeaderLogo priority />
+          </Link>
           
           <div className="lg:flex gap-1 hidden items-center">
             {navigationState.map((item: NavigationItem, idx: number) => {

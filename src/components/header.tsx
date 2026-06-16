@@ -12,6 +12,7 @@ import { reducer } from '@/hooks/reducer';
 // import { useRouter } from 'next/router';
 import { usePathname } from 'next/navigation';
 import SideBar from './sideBar';
+import KhabiteqHeaderLogo from '@/components/branding/KhabiteqHeaderLogo';
 
 const Header = () => {
   const {
@@ -43,13 +44,7 @@ const Header = () => {
         } ${'slide-from-top'}`}
       >
         <nav className='h-[70px] container flex justify-between items-center'>
-          <Image
-            src="/khabi-logo.svg"
-            width={169}
-            height={25}
-            className='md:w-[169px] md:h-[25px] w-[144px] h-[30px]'
-            alt='Khabiteq'
-          />
+          <KhabiteqHeaderLogo />
           <div className='lg:flex gap-[27px] hidden'>
             {state.map((item: { name: string; url: string; isClicked: boolean }, idx: number) => {
               return (

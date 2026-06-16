@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: "Khabiteq | Update Property",
   description: `Update your property listing - Simplifying real estate transactions in Lagos. Buy, sell, rent, and manage properties with ease through Khabi-Teq's trusted platform`,
   icons: {
-    icon: "/khabi.svg",
+    icon: "/khabiteq_logo_nobg.png",
   },
 };
 

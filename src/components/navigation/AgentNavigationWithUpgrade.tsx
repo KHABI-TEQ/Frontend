@@ -24,6 +24,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useUserContext } from "@/context/user-context";
 import Image from "next/image";
+import KhabiteqHeaderLogo from "@/components/branding/KhabiteqHeaderLogo";
 
 interface NavigationItem {
   id: string;
@@ -125,15 +126,8 @@ const AgentNavigationWithUpgrade: React.FC = () => {
       {/* Desktop Navigation */}
       <nav className="hidden lg:flex items-center justify-between bg-white border-b border-gray-200 px-6 py-6">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 h-full">
-          <div className="relative w-[140px] h-[28px]">
-            <Image
-              src="/khabi-logo.svg"
-              fill
-              className="object-contain"
-              alt="Khabiteq"
-            />
-          </div>
+        <Link href="/" className="relative z-10 flex shrink-0 items-center">
+          <KhabiteqHeaderLogo />
         </Link>
 
         {/* Navigation Items */}
@@ -199,15 +193,8 @@ const AgentNavigationWithUpgrade: React.FC = () => {
       <nav className="lg:hidden bg-white border-b border-gray-200">
         <div className="flex items-center justify-between px-4 py-5">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 h-full">
-          <div className="relative w-[140px] h-[28px]">
-            <Image
-              src="/khabi-logo.svg"
-              fill
-              className="object-contain"
-              alt="Khabiteq"
-            />
-          </div>
+          <Link href="/" className="relative z-10 flex shrink-0 items-center">
+          <KhabiteqHeaderLogo />
         </Link>
 
           {/* Status Badge */}

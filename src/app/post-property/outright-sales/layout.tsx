@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: "Khabiteq | Post Property - Outright Sales",
   description: `List your property for outright sales on Khabi-Teq's trusted platform. Simplifying real estate transactions in Lagos.`,
   icons: {
-    icon: "/khabi.svg",
+    icon: "/khabiteq_logo_nobg.png",
   },
 };
 

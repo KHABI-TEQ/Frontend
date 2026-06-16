@@ -44,7 +44,7 @@ const userTypes = [
     title: 'Agents',
     headline: 'Every agent is the mandate',
     description:
-      'Get your own Practitioner page, request to market landlord and developer listings, and earn commission when you close the deal.',
+      'Get your own Practitioner page, request to market landlord and developer listings, and earn commission when you close the deal. Listings on your page are auto-matched to buyer preferences, so qualified buyers discover your properties without extra effort.',
     cta: 'Activate Page',
     ctaUrl: '/agent-marketplace',
     color: 'from-[#8DDB90] to-emerald-600',

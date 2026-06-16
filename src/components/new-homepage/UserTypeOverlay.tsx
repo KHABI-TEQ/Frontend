@@ -69,7 +69,7 @@ const userTypes: UserType[] = [
     title: "Agents",
     headline: "Every agent is the mandate",
     description:
-      "Get your own Practitioner page, request to market landlord and developer listings, and earn commission when you close the deal.",
+      "Get your own Practitioner page, request to market landlord and developer listings, and earn commission when you close the deal. Listings on your page are auto-matched to buyer preferences, so qualified buyers discover your properties without extra effort.",
     cta: "Activate Page",
     ctaUrl: "/for-agents",
     gradient: "from-[#8DDB90] via-emerald-500 to-green-600",
@@ -85,7 +85,7 @@ const userTypes: UserType[] = [
     title: "Buyers & Clients",
     headline: "Find your dream property",
     description:
-      "Tell us what you want in plain words—get matched to verified listings and book inspections before you commit.",
+      "Tell us what you want in plain words—get automatically matched to verified listings and book inspections before you commit.",
     cta: "Get Started",
     ctaUrl: "/for-clients",
     gradient: "from-blue-500 via-indigo-500 to-violet-500",
@@ -257,7 +257,7 @@ export default function UserTypeOverlay({ isOpen, onClose }: UserTypeOverlayProp
           role="dialog"
           aria-modal="true"
           aria-labelledby="user-type-overlay-title"
-          className="fixed inset-0 z-[9999] flex items-start sm:items-center justify-center overflow-y-auto overscroll-contain py-4 sm:py-8"
+          className="fixed inset-0 z-[9999] flex flex-col overflow-hidden"
           variants={overlayVariants}
           initial="hidden"
           animate="visible"
@@ -329,17 +329,20 @@ export default function UserTypeOverlay({ isOpen, onClose }: UserTypeOverlayProp
           </motion.button>
 
           {/* Main Content Container — stopPropagation so outer overlay click dismisses */}
-          <motion.div
-            className="relative z-10 w-full max-w-6xl mx-4 sm:mx-6 lg:mx-8"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
+          <div
+            className="relative z-10 flex-1 overflow-y-auto overscroll-contain"
             onClick={(e) => e.stopPropagation()}
           >
+            <motion.div
+              className="relative z-10 mx-auto w-full max-w-6xl px-4 pb-8 pt-[max(4.75rem,calc(env(safe-area-inset-top)+3.25rem))] sm:px-6 sm:pb-10 lg:px-8"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+            >
             {/* Header Section */}
             <motion.div
-              className="text-center mb-8 sm:mb-12"
+              className="mb-6 text-center sm:mb-8"
               variants={headerVariants}
             >
               {/* Badge */}
@@ -380,7 +383,7 @@ export default function UserTypeOverlay({ isOpen, onClose }: UserTypeOverlayProp
               </motion.p>
 
               <motion.p
-                className="mt-5 text-sm sm:text-base text-white/55 max-w-xl mx-auto leading-relaxed"
+                className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-white/55 sm:mt-4 sm:text-base"
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.75 }}
@@ -392,7 +395,7 @@ export default function UserTypeOverlay({ isOpen, onClose }: UserTypeOverlayProp
 
             {/* User Type Cards - Horizontal scroll on mobile, grid on desktop */}
             <motion.div
-              className="flex sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 overflow-x-auto sm:overflow-visible snap-x snap-mandatory pb-4 sm:pb-0 scrollbar-hide"
+              className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4 scrollbar-hide sm:grid sm:grid-cols-2 sm:gap-5 sm:overflow-visible sm:pb-0 lg:grid-cols-4 lg:items-start"
               variants={cardContainerVariants}
               initial="hidden"
               animate="visible"
@@ -410,14 +413,14 @@ export default function UserTypeOverlay({ isOpen, onClose }: UserTypeOverlayProp
                     onMouseLeave={() => setHoveredId(null)}
                     onClick={() => handleCardClick(userType)}
                     className={`
-                      group relative cursor-pointer flex-shrink-0
+                      group relative cursor-pointer flex-shrink-0 self-start
                       w-[280px] sm:w-auto
                       snap-center
                       ${userType.bgColor}
                       rounded-2xl sm:rounded-3xl
                       border-2 ${userType.borderColor}
                       backdrop-blur-xl
-                      p-6 sm:p-8
+                      p-6 sm:p-7
                       transition-all duration-500
                       hover:shadow-2xl ${userType.shadowColor}
                       ${isSelected ? "scale-95 opacity-80" : ""}
@@ -526,14 +529,15 @@ export default function UserTypeOverlay({ isOpen, onClose }: UserTypeOverlayProp
 
             {/* Bottom Text */}
             <motion.p
-              className="text-center text-white/50 text-sm mt-8 sm:mt-12 pb-6 sm:pb-8"
+              className="mt-6 pb-2 text-center text-sm text-white/50 sm:mt-8"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 1.2 }}
             >
               Or choose a path below — each card opens tailored information for that role.
             </motion.p>
-          </motion.div>
+            </motion.div>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>

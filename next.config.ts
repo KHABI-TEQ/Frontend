@@ -189,6 +189,15 @@ const nextConfig: NextConfig = {
         ]
       },
       {
+        source: '/khabi-logo-nav.svg',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
+          },
+        ],
+      },
+      {
         source: '/:path*.svg',
         headers: [
           {

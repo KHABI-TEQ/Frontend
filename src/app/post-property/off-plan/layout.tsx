@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: "Khabiteq | Post Property - Off-Plan",
   description: `List your off-plan property on Khabi-Teq's trusted platform. Simplifying real estate transactions in Lagos.`,
   icons: {
-    icon: "/khabi.svg",
+    icon: "/khabiteq_logo_nobg.png",
   },
 };
 

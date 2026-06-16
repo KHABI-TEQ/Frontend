@@ -43,7 +43,7 @@ export const metadata = {
   description:
     "Simplifying real estate transactions in Lagos. Buy, sell, rent, and manage properties with ease through Khabi-Teq's trusted platform",
   icons: {
-    icon: '/khabi.svg',
+    icon: '/khabiteq_logo_nobg.png',
   },
   metadataBase: new URL(process.env.NEXT_PUBLIC_API_URL || 'https://www.khabiteqrealty.com'),
 };
