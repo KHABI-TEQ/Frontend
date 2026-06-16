@@ -1,6 +1,5 @@
 'use client';
 import React, { useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 // Use stable Tailwind class to avoid hydration mismatch (archivo.variable can differ server vs client)
 const footerFontClass = 'font-[var(--font-archivo)]';
@@ -10,7 +9,7 @@ import toast from 'react-hot-toast';
 import SuccessModal from '@/components/modals/SuccessModal';
 import { POST_REQUEST } from '@/utils/requests';
 import { URLS } from '@/utils/URLS';
-import { KHABITEQ_LOGO_ALT, KHABITEQ_LOGO_FOOTER, KHABITEQ_LOGO_FOOTER_SRC } from '@/constants/branding';
+import KhabiteqFooterLogo from '@/components/branding/KhabiteqFooterLogo';
 
 const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
   const exploreLinks = [
@@ -218,13 +217,7 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
               transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
               viewport={{ once: true }}>
               <div className="flex items-center gap-3 mb-6">
-                <Image
-                  src={KHABITEQ_LOGO_FOOTER_SRC}
-                  width={KHABITEQ_LOGO_FOOTER.width}
-                  height={KHABITEQ_LOGO_FOOTER.height}
-                  alt={KHABITEQ_LOGO_ALT}
-                  className={KHABITEQ_LOGO_FOOTER.className}
-                />
+                <KhabiteqFooterLogo />
               </div>
               <p className={`text-[#D6DDEB]/90 text-sm sm:text-base leading-relaxed mb-6 max-w-md ${footerFontClass}`}>
                 Simplifying real estate transactions in Nigeria. Buy, sell, rent, and manage properties with ease through our trusted platform.

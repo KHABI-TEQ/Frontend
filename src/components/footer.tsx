@@ -5,7 +5,7 @@ import React, { useReducer } from 'react';
 import { exploreData, iconsData, servicesData, supportData } from '@/data';
 import Link from 'next/link';
 import { usePageContext } from '@/context/page-context';
-import { KHABITEQ_LOGO_ALT, KHABITEQ_LOGO_FOOTER, KHABITEQ_LOGO_FOOTER_SRC } from '@/constants/branding';
+import KhabiteqFooterLogo from '@/components/branding/KhabiteqFooterLogo';
 import { reducer } from '@/hooks/reducer';
 import ContactUs from '@/components/contactus';
 //import { useVisibility } from '@/utils/useVisibility';
@@ -39,13 +39,7 @@ const Footer = () => {
           <div className='w-full flex lg:flex-row flex-col justify-between gap-[30px] md:gap-[120px]'>
             {/**Logo with some texts */}
             <div className='flex flex-col gap-[30px] lg:w-[376px] flex-wrap'>
-              <Image
-                src={KHABITEQ_LOGO_FOOTER_SRC}
-                width={KHABITEQ_LOGO_FOOTER.width}
-                height={KHABITEQ_LOGO_FOOTER.height}
-                alt={KHABITEQ_LOGO_ALT}
-                className={KHABITEQ_LOGO_FOOTER.className}
-              />
+              <KhabiteqFooterLogo />
               <p className='font-normal lg:text-base text-[14px] leading-[25px] text-[#D6DDEB]'>
                 Simplifying real estate transactions in Lagos. Buy, sell, rent, and manage properties with ease through
                 Khabi-Teq&apos;s trusted platform
