@@ -5,16 +5,21 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { Building2, Users, Search, Home, ArrowRight } from 'lucide-react';
+import { Building2, Users, Search, Home, ArrowRight, Check } from 'lucide-react';
 
 const userTypes = [
   {
     id: 'landlords',
     icon: Home,
     title: 'Landlords',
-    headline: 'Your property, your rules',
-    description:
-      'List up to 25 properties with no subscription—choose which verified agents market each one, and your contact stays private until you accept.',
+    headline: 'List for free with complete control',
+    bullets: [
+      'List one or multiple properties for free',
+      'Receive marketing requests from verified agents',
+      'Choose the agents you want to work with',
+      'Your contact details remain private until you approve an agent',
+      'Sell or rent faster with complete control',
+    ],
     cta: 'List Property',
     ctaUrl: '/for-landlords',
     color: 'from-amber-500 to-orange-600',
@@ -27,9 +32,13 @@ const userTypes = [
     id: 'developers',
     icon: Building2,
     title: 'Developers',
-    headline: 'Reach serious investors',
-    description:
-      'Publish developments with a dedicated project page and let verified agents request to promote them to qualified buyers.',
+    headline: 'Reach Serious Buyers Faster',
+    bullets: [
+      'Publish developments with a dedicated project page',
+      'Set your commission payout percentage',
+      'Let multiple verified agents request to market your project',
+      'Reach more qualified buyers and sell faster',
+    ],
     cta: 'Publish Project',
     ctaUrl: '/for-developers',
     color: 'from-emerald-600 to-teal-700',
@@ -42,9 +51,14 @@ const userTypes = [
     id: 'agents',
     icon: Users,
     title: 'Agents',
-    headline: 'Every agent is the mandate',
-    description:
-      'Get your own Practitioner page, request to market landlord and developer listings, and earn commission when you close the deal. Listings on your page are auto-matched to buyer preferences, so qualified buyers discover your properties without extra effort.',
+    headline: 'Every Agent Has the Mandate',
+    bullets: [
+      'Get your own Practitioner Page with a personalized URL',
+      'Request to market landlord and developer listings',
+      'Earn the commissions they offer when you close deals',
+      'Listings automatically matched to buyer preferences',
+      'Help qualified buyers discover your properties without extra effort',
+    ],
     cta: 'Activate Page',
     ctaUrl: '/agent-marketplace',
     color: 'from-[#8DDB90] to-emerald-600',
@@ -57,9 +71,13 @@ const userTypes = [
     id: 'buyers',
     icon: Search,
     title: 'Buyers & Clients',
-    headline: 'Find your dream property',
-    description:
-      'Tell us what you want in plain words—get matched to verified listings and book inspections before you commit.',
+    headline: 'Find Your Dream Property',
+    bullets: [
+      'Submit your preference and let our system search verified agent Practitioner Pages',
+      'Receive tailored property briefs matched to your needs',
+      'Book inspections through the platform',
+      'Rate or report agents after your experience for transparency and accountability',
+    ],
     cta: 'Submit Preference',
     ctaUrl: '/preference',
     color: 'from-blue-600 to-indigo-700',
@@ -181,14 +199,21 @@ export default function AnimatedUserTypes() {
                 </div>
 
                 {/* Headline */}
-                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 group-hover:text-[#09391C] transition-colors">
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 group-hover:text-[#09391C] transition-colors">
                   {userType.headline}
                 </h3>
 
-                {/* Description */}
-                <p className="text-gray-600 text-sm sm:text-base leading-relaxed mb-5">
-                  {userType.description}
-                </p>
+                {/* Bullets */}
+                <ul className="space-y-2.5 mb-5">
+                  {userType.bullets.map((bullet, idx) => (
+                    <li key={idx} className="flex items-start gap-2.5">
+                      <div className={`w-5 h-5 ${userType.iconBg} rounded-full flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                        <Check className={`w-3 h-3 ${userType.iconColor}`} />
+                      </div>
+                      <span className="text-gray-600 text-sm sm:text-base leading-relaxed">{bullet}</span>
+                    </li>
+                  ))}
+                </ul>
 
                 {/* CTA Link */}
                 <Link

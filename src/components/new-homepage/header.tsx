@@ -48,12 +48,12 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Show "Publisher Properties (Request to Market)" only for logged-in Agents
+  // Show "Publisher Properties (Request to Market)" for logged-in Agents under Who is it for?
   useEffect(() => {
     const base =
       user?.userType === "Agent"
         ? mainNavigationData.map((item) => {
-            if (item.name === "Agent" && item.subItems) {
+            if (item.name === "Who is it for?" && item.subItems) {
               return {
                 ...item,
                 subItems: [
@@ -159,16 +159,16 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
           initial={{ y: -100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
-          className={`mx-4 sm:mx-6 lg:mx-8 mt-4 px-4 sm:px-6 py-5 rounded-2xl flex justify-between items-center transition-all duration-500 ${
+          className={`mx-3 sm:mx-5 lg:mx-6 mt-3 sm:mt-4 px-4 sm:px-5 lg:px-6 py-3.5 sm:py-4 rounded-2xl flex justify-between items-center gap-3 transition-all duration-500 ${
             isScrolled 
-              ? 'bg-white/80 backdrop-blur-xl shadow-lg shadow-black/5 border border-white/50 w-full max-w-7xl' 
-              : 'bg-[#EEF1F1]/90 backdrop-blur-md w-full max-w-7xl'
+              ? 'bg-white/80 backdrop-blur-xl shadow-lg shadow-black/5 border border-white/50 w-[calc(100%-1.5rem)] sm:w-[calc(100%-2.5rem)] lg:w-[calc(100%-3rem)] max-w-[90rem]' 
+              : 'bg-[#EEF1F1]/90 backdrop-blur-md w-[calc(100%-1.5rem)] sm:w-[calc(100%-2.5rem)] lg:w-[calc(100%-3rem)] max-w-[90rem]'
           }`}>
-          <Link href="/" className="relative z-10 flex shrink-0 items-center">
+          <Link href="/" className="relative z-10 flex shrink-0 items-center min-w-0">
             <KhabiteqHeaderLogo priority />
           </Link>
           
-          <div className="lg:flex gap-1 hidden items-center">
+          <div className="hidden lg:flex flex-1 min-w-0 justify-center items-center gap-0.5 xl:gap-1">
             {navigationState.map((item: NavigationItem, idx: number) => {
               if (item.subItems && item.subItems.length > 0) {
                 const isOpen = openDropdown === item.name;
@@ -203,7 +203,7 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
                       <Link
                         href={item.url}
                         onClick={() => setOpenDropdown(null)}
-                        className={`relative px-3 py-2 text-sm font-medium tracking-wide transition-all duration-300 rounded-lg hover:bg-[#8DDB90]/10 ${
+                        className={`relative whitespace-nowrap px-2.5 xl:px-3 py-2 text-[13px] xl:text-sm font-medium tracking-wide transition-all duration-300 rounded-lg hover:bg-[#8DDB90]/10 ${
                           pathName?.includes(item.url)
                             ? "text-[#09391C] bg-[#8DDB90]/10"
                             : "text-gray-700 hover:text-[#09391C]"
@@ -258,7 +258,7 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
                     );
                     setNavigationState(updatedNav);
                   }}
-                  className={`relative px-3 py-2 text-sm font-medium tracking-wide transition-all duration-300 rounded-lg hover:bg-[#8DDB90]/10 group ${
+                  className={`relative whitespace-nowrap px-2.5 xl:px-3 py-2 text-[13px] xl:text-sm font-medium tracking-wide transition-all duration-300 rounded-lg hover:bg-[#8DDB90]/10 group ${
                     item.url === pathName 
                       ? "text-[#09391C] bg-[#8DDB90]/10" 
                       : "text-gray-700 hover:text-[#09391C]"
@@ -274,7 +274,7 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
           </div>
 
           {/**Buttons for desktop screens */}
-          <div className="hidden lg:flex items-center gap-4">
+          <div className="hidden lg:flex shrink-0 items-center gap-2 xl:gap-3">
             {user?._id || user?.id ? (
               <>
                 {/* User Profile */}
@@ -321,13 +321,13 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
               <div className="flex items-center gap-2">
                 <Link
                   href="/auth/login"
-                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-[#09391C] rounded-full hover:bg-gray-100/80 transition-all duration-300"
+                  className="whitespace-nowrap px-3 xl:px-4 py-2 text-[13px] xl:text-sm font-medium text-gray-700 hover:text-[#09391C] rounded-full hover:bg-gray-100/80 transition-all duration-300"
                 >
                   Log in
                 </Link>
                 <Link
                   href="/auth/register"
-                  className="px-5 py-2.5 text-sm font-semibold text-white bg-[#09391C] hover:bg-[#0B423D] rounded-full shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
+                  className="whitespace-nowrap px-4 xl:px-5 py-2 xl:py-2.5 text-[13px] xl:text-sm font-semibold text-white bg-[#09391C] hover:bg-[#0B423D] rounded-full shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
                 >
                   Get Started
                 </Link>
@@ -396,7 +396,7 @@ const DropdownOptions = ({
       exit={{ opacity: 0, y: 10, scale: 0.95 }}
       transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
       ref={ref}
-      className="w-[220px] mt-3 p-2 flex flex-col gap-1 bg-white/95 backdrop-blur-xl shadow-xl shadow-black/10 border border-gray-100/80 rounded-xl absolute left-0 z-[999]"
+      className="w-[min(100vw-2rem,260px)] mt-3 p-2 flex flex-col gap-1 bg-white/95 backdrop-blur-xl shadow-xl shadow-black/10 border border-gray-100/80 rounded-xl absolute left-0 z-[999]"
       onMouseEnter={() => setModal(true)}
       onMouseLeave={(e) => {
         const dropdownRect = e.currentTarget.getBoundingClientRect();

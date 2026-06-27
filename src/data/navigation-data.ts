@@ -5,7 +5,7 @@ export interface NavigationItem {
   url: string;
   isClicked: boolean;
   subItems?: NavigationItem[];
-} 
+}
 
 export const mainNavigationData: NavigationItem[] = [
   {
@@ -14,34 +14,32 @@ export const mainNavigationData: NavigationItem[] = [
     isClicked: true,
   },
   {
-    name: "Document Verification",
+    name: "Compliance",
     url: "/document-verification",
     isClicked: false,
+    subItems: [
+      {
+        name: "Document Verification",
+        url: "/document-verification",
+        isClicked: false,
+      },
+      {
+        name: "Transaction Registration",
+        url: "/transaction-registration",
+        isClicked: false,
+      },
+    ],
   },
   {
     name: "Who is it for?",
     url: "/user-types",
     isClicked: false,
-  },
-  {
-    name: "Agent",
-    url: "/for-agents",
-    isClicked: false,
-  },
-  {
-    name: "Developer",
-    url: "/for-developers",
-    isClicked: false,
-  },
-  {
-    name: "Landlord",
-    url: "/for-landlords",
-    isClicked: false,
-  },
-  {
-    name: "Client",
-    url: "/for-clients",
-    isClicked: false,
+    subItems: [
+      { name: "Agents", url: "/for-agents", isClicked: false },
+      { name: "Developers", url: "/for-developers", isClicked: false },
+      { name: "Landlords", url: "/for-landlords", isClicked: false },
+      { name: "Clients", url: "/for-clients", isClicked: false },
+    ],
   },
   {
     name: "About us",

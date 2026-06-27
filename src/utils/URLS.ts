@@ -235,6 +235,9 @@ export const URLS = {
   transactionRegistrationEgisValidate: "/transaction-registration/egis-validate",
   transactionRegistrationRegister: "/transaction-registration/register",
 
+  /** Public file upload (documents, images, etc.) */
+  uploadSingleFile: "/upload-single-file",
+
   /**
    * AI-assisted form filling (OpenAI) — see FRONTEND_API_GUIDE.md §10
    */
