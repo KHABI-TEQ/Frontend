@@ -383,7 +383,7 @@ const Register = () => {
               Start Your Real Estate Journey Today
             </h1>
             <p className="text-white/80 text-lg leading-relaxed max-w-sm">
-              Join thousands of Nigerians who trust Khabiteq for their property needs. List, buy, rent, or invest with confidence.
+              Create your account to list, buy, rent, or invest on a trusted Nigerian real estate platform.
             </p>
 
             {/* Features */}
@@ -412,22 +412,6 @@ const Register = () => {
                 </div>
                 <span className="text-sm font-medium">Secure transactions</span>
               </div>
-            </div>
-          </div>
-
-          {/* Stats */}
-          <div className="flex gap-8">
-            <div>
-              <div className="text-2xl font-bold text-[#8DDB90] font-display">1000+</div>
-              <div className="text-white/60 text-sm">Properties</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-[#8DDB90] font-display">500+</div>
-              <div className="text-white/60 text-sm">Happy Clients</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-[#8DDB90] font-display">50+</div>
-              <div className="text-white/60 text-sm">Agents</div>
             </div>
           </div>
         </div>

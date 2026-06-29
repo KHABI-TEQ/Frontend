@@ -124,25 +124,6 @@ const ForLandlordsShowcase = () => {
               ))}
             </motion.ul>
 
-            {/* Quick Stats */}
-            <motion.div
-              variants={itemVariants}
-              className="mt-10 grid grid-cols-3 gap-4 py-6 border-t border-gray-100"
-            >
-              <div className="text-center">
-                <div className="text-2xl sm:text-3xl font-bold text-[#09391C]">500+</div>
-                <div className="text-xs sm:text-sm text-gray-500 mt-1">Properties Listed</div>
-              </div>
-              <div className="text-center border-x border-gray-100">
-                <div className="text-2xl sm:text-3xl font-bold text-[#09391C]">200+</div>
-                <div className="text-xs sm:text-sm text-gray-500 mt-1">Verified Agents</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl sm:text-3xl font-bold text-[#09391C]">98%</div>
-                <div className="text-xs sm:text-sm text-gray-500 mt-1">Success Rate</div>
-              </div>
-            </motion.div>
-
             {/* CTA Section */}
             <motion.div
               variants={itemVariants}

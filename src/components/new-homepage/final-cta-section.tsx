@@ -73,7 +73,7 @@ const FinalCTASection = () => {
           </h2>
           
           <p className='text-xl md:text-2xl text-white/90 max-w-4xl mx-auto mb-12 leading-relaxed'>
-            Join thousands of satisfied customers who&apos;ve found their perfect properties through our verified network.
+            Create your account, submit a preference, or list a property — all in one trusted platform.
           </p>
 
           {/* Primary CTA Button */}
@@ -152,25 +152,8 @@ const FinalCTASection = () => {
                 Don't Miss Out on Your Dream Property
               </h4>
               <p className='text-white/90 text-lg mb-6'>
-                New properties are added daily. Submit your preference now to get instant notifications when your perfect match becomes available.
+                New properties are added daily. Submit your preference now to get notifications when your perfect match becomes available.
               </p>
-              
-              <div className='flex items-center justify-center gap-6 text-white/80'>
-                <div className='text-center'>
-                  <div className='text-2xl font-bold'>50+</div>
-                  <div className='text-sm'>New listings daily</div>
-                </div>
-                <div className='w-px h-12 bg-white/30'></div>
-                <div className='text-center'>
-                  <div className='text-2xl font-bold'>24hrs</div>
-                  <div className='text-sm'>Average response time</div>
-                </div>
-                <div className='w-px h-12 bg-white/30'></div>
-                <div className='text-center'>
-                  <div className='text-2xl font-bold'>95%</div>
-                  <div className='text-sm'>Match success rate</div>
-                </div>
-              </div>
             </div>
 
             {/* CTA */}

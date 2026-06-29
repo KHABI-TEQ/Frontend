@@ -55,22 +55,6 @@ const AboutUs = () => {
               <p className='mt-4 text-white/80 text-lg sm:text-xl leading-relaxed max-w-xl'>
                 We simplify real estate in Nigeria through transparency, innovation and excellent service. Our mission is to help you buy, sell, rent and invest with confidence.
               </p>
-
-              {/* Stats */}
-              <div className='flex flex-wrap gap-8 mt-8'>
-                <div>
-                  <div className='text-[#8DDB90] font-bold text-3xl sm:text-4xl font-display'>1000+</div>
-                  <div className='text-white/60 text-sm'>Properties Listed</div>
-                </div>
-                <div>
-                  <div className='text-[#8DDB90] font-bold text-3xl sm:text-4xl font-display'>500+</div>
-                  <div className='text-white/60 text-sm'>Happy Clients</div>
-                </div>
-                <div>
-                  <div className='text-[#8DDB90] font-bold text-3xl sm:text-4xl font-display'>50+</div>
-                  <div className='text-white/60 text-sm'>Verified Agents</div>
-                </div>
-              </div>
             </div>
             <div className='order-1 lg:order-2'>
               <div className='relative group'>

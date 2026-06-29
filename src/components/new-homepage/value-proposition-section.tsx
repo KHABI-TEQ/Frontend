@@ -99,7 +99,7 @@ const ValuePropositionSection = () => {
           <div className='inline-flex items-center gap-2 bg-[#8DDB90]/10 backdrop-blur-sm px-5 py-2.5 rounded-full border border-[#8DDB90]/20'>
             <span className='w-2 h-2 bg-[#8DDB90] rounded-full animate-pulse' />
             <span className='text-[#09391C] font-medium text-sm sm:text-base'>
-              Join thousands of satisfied customers
+              Built for transparent, confident property decisions
             </span>
           </div>
         </motion.div>

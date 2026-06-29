@@ -9,7 +9,6 @@ import ErrorBoundary from "@/components/general-components/ErrorBoundary";
 import EmailVerification from "@/components/EmailVerification";
 import DevelopmentNotice from "@/components/general-components/DevelopmentNotice";
 import AIAdvantageSection from "@/components/new-homepage/ai-advantage-section";
-import KeyFeaturesSection from "@/components/new-homepage/key-features-section";
 import NewHeroSection from "@/components/new-homepage/new-hero-section";
 import AnimatedUserTypes from "@/components/new-homepage/animated-user-types";
 import UserTypeOverlay from "@/components/new-homepage/UserTypeOverlay";
@@ -112,20 +111,7 @@ const NewHomepage = ({
             <AIAdvantageSection />
           </ErrorBoundary>
 
-          {/* 4. KEY FEATURES SECTION */}
-          <ErrorBoundary
-            fallback={
-              <div className="w-full py-16 bg-[#FFFEFB]">
-                <div className="container mx-auto px-4 text-center">
-                  <h2 className="text-3xl font-bold text-[#09391C] mb-4">Key Features</h2>
-                  <p className="text-gray-600">Unable to load key features section.</p>
-                </div>
-              </div>
-            }>
-            <KeyFeaturesSection />
-          </ErrorBoundary>
-
-          {/* 5. VALUE PROPOSITION SECTION */}
+          {/* 4. VALUE PROPOSITION SECTION */}
           <Suspense fallback={<div className="w-full py-16 bg-[#FFFEFB]" />}>
             <ErrorBoundary
               fallback={

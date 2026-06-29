@@ -15,10 +15,13 @@ export type TransactionPractitionerBody = {
   isOnPlatform?: boolean;
 };
 
+export type OffPlatformPartyType = "agent" | "property_owner";
+
 export type RegisterTransactionBody = {
   transactionType: string;
   propertyId?: string;
   agentId?: string;
+  offPlatformPartyType?: OffPlatformPartyType;
   practitioner?: TransactionPractitionerBody;
   inspectionId?: string;
   buyer: { email: string; fullName: string; phoneNumber: string };
@@ -37,6 +40,10 @@ export type RegisterTransactionBody = {
   paymentReceiptUrl?: string;
   buyerIdFileName?: string;
   buyerIdUrl?: string;
+  deedsOfAssignmentFileName?: string;
+  deedsOfAssignmentUrl?: string;
+  conveyanceFileName?: string;
+  conveyanceUrl?: string;
 };
 
 export interface TransactionRegistrationRegisterResponse {

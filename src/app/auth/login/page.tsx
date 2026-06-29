@@ -430,22 +430,6 @@ const Login: FC = () => {
               </div>
             </div>
           </div>
-
-          {/* Stats */}
-          <div className="flex gap-8">
-            <div>
-              <div className="text-2xl font-bold text-[#8DDB90] font-display">1000+</div>
-              <div className="text-white/60 text-sm">Properties</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-[#8DDB90] font-display">500+</div>
-              <div className="text-white/60 text-sm">Happy Clients</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-[#8DDB90] font-display">50+</div>
-              <div className="text-white/60 text-sm">Agents</div>
-            </div>
-          </div>
         </div>
       </div>
 

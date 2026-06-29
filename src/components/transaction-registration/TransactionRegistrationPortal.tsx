@@ -53,6 +53,8 @@ export default function TransactionRegistrationPortal() {
 
   const [regTransactionType, setRegTransactionType] = useState("");
   const [propertyListedOnPlatform, setPropertyListedOnPlatform] = useState(!!propertyIdFromUrl);
+  const [practitionerOnPlatform, setPractitionerOnPlatform] = useState(!!propertyIdFromUrl);
+  const [offPlatformPartyType, setOffPlatformPartyType] = useState<"agent" | "property_owner">("agent");
   const [regPropertyId, setRegPropertyId] = useState(propertyIdFromUrl);
   const [regBuyerName, setRegBuyerName] = useState("");
   const [regBuyerEmail, setRegBuyerEmail] = useState("");
@@ -73,6 +75,8 @@ export default function TransactionRegistrationPortal() {
   const [regOwnerConfirmation, setRegOwnerConfirmation] = useState(false);
   const [buyerIdFile, setBuyerIdFile] = useState<File | null>(null);
   const [paymentReceiptFile, setPaymentReceiptFile] = useState<File | null>(null);
+  const [deedsOfAssignmentFile, setDeedsOfAssignmentFile] = useState<File | null>(null);
+  const [conveyanceFile, setConveyanceFile] = useState<File | null>(null);
   const [registering, setRegistering] = useState(false);
 
   useEffect(() => {
@@ -80,6 +84,7 @@ export default function TransactionRegistrationPortal() {
       setRegPropertyId(propertyIdFromUrl);
       setSearchPropertyId(propertyIdFromUrl);
       setPropertyListedOnPlatform(true);
+      setPractitionerOnPlatform(true);
     }
   }, [propertyIdFromUrl]);
 
@@ -139,8 +144,15 @@ export default function TransactionRegistrationPortal() {
       toast.error("Property ID is required when the property is listed on KHABITEQ.");
       return;
     }
-    if (!practitionerName.trim() || !practitionerEmail.trim() || !practitionerPhone.trim()) {
-      toast.error("Practitioner (agent) name, email, and phone are required.");
+    if (!propertyListedOnPlatform && practitionerOnPlatform) {
+      toast.error(
+        'For properties not listed on KHABITEQ, uncheck "Practitioner (agent) is on KHABITEQ" and provide who you transacted with.'
+      );
+      return;
+    }
+    if (!practitionerOnPlatform && (!practitionerName.trim() || !practitionerEmail.trim() || !practitionerPhone.trim())) {
+      const partyLabel = offPlatformPartyType === "property_owner" ? "Property owner" : "Agent";
+      toast.error(`${partyLabel} name, email, and phone are required.`);
       return;
     }
     if (!buyerIdFile || !paymentReceiptFile) {
@@ -172,6 +184,23 @@ export default function TransactionRegistrationPortal() {
         return;
       }
 
+      let deedsUpload: Awaited<ReturnType<typeof uploadRegistrationDocument>> | null = null;
+      let conveyanceUpload: Awaited<ReturnType<typeof uploadRegistrationDocument>> | null = null;
+      if (deedsOfAssignmentFile) {
+        deedsUpload = await uploadRegistrationDocument(deedsOfAssignmentFile);
+        if (!deedsUpload.ok) {
+          toast.error(`Deed of assignment upload failed: ${deedsUpload.error}`);
+          return;
+        }
+      }
+      if (conveyanceFile) {
+        conveyanceUpload = await uploadRegistrationDocument(conveyanceFile);
+        if (!conveyanceUpload.ok) {
+          toast.error(`Conveyance document upload failed: ${conveyanceUpload.error}`);
+          return;
+        }
+      }
+
       const body: RegisterTransactionBody = {
         transactionType: regTransactionType,
         buyer: {
@@ -180,14 +209,6 @@ export default function TransactionRegistrationPortal() {
           phoneNumber: regBuyerPhone.trim(),
         },
         transactionValue: valueNum,
-        practitioner: {
-          fullName: practitionerName.trim(),
-          email: practitionerEmail.trim(),
-          phoneNumber: practitionerPhone.trim(),
-          companyName: practitionerCompany.trim() || undefined,
-          licenceNumber: practitionerLicence.trim() || undefined,
-          isOnPlatform: propertyListedOnPlatform && !!regPropertyId.trim(),
-        },
         propertyIdentification: {
           type: regPropType,
           exactAddress: regExactAddress.trim() || undefined,
@@ -203,6 +224,25 @@ export default function TransactionRegistrationPortal() {
         paymentReceiptFileName: paymentReceiptUpload.fileName,
         paymentReceiptUrl: paymentReceiptUpload.url,
       };
+      if (!practitionerOnPlatform) {
+        body.offPlatformPartyType = offPlatformPartyType;
+        body.practitioner = {
+          fullName: practitionerName.trim(),
+          email: practitionerEmail.trim(),
+          phoneNumber: practitionerPhone.trim(),
+          companyName: offPlatformPartyType === "agent" ? practitionerCompany.trim() || undefined : undefined,
+          licenceNumber: offPlatformPartyType === "agent" ? practitionerLicence.trim() || undefined : undefined,
+          isOnPlatform: false,
+        };
+      }
+      if (deedsUpload?.ok) {
+        body.deedsOfAssignmentFileName = deedsUpload.fileName;
+        body.deedsOfAssignmentUrl = deedsUpload.url;
+      }
+      if (conveyanceUpload?.ok) {
+        body.conveyanceFileName = conveyanceUpload.fileName;
+        body.conveyanceUrl = conveyanceUpload.url;
+      }
       if (propertyListedOnPlatform && regPropertyId.trim()) {
         body.propertyId = regPropertyId.trim();
       }
@@ -387,38 +427,15 @@ export default function TransactionRegistrationPortal() {
               </div>
 
               <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-4">
-                <p className="text-sm font-bold text-gray-900">Practitioner (agent) details *</p>
-                <p className="text-xs text-gray-600 -mt-2">The licensed agent or practitioner who handled this transaction with you.</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="sm:col-span-2">
-                    <label className={labelClass}>Full name *</label>
-                    <input type="text" value={practitionerName} onChange={(e) => setPractitionerName(e.target.value)} className={inputClass} required />
-                  </div>
-                  <div>
-                    <label className={labelClass}>Email *</label>
-                    <input type="email" value={practitionerEmail} onChange={(e) => setPractitionerEmail(e.target.value)} className={inputClass} required />
-                  </div>
-                  <div>
-                    <label className={labelClass}>Phone *</label>
-                    <input type="tel" value={practitionerPhone} onChange={(e) => setPractitionerPhone(e.target.value)} className={inputClass} required />
-                  </div>
-                  <div>
-                    <label className={labelClass}>Company / firm</label>
-                    <input type="text" value={practitionerCompany} onChange={(e) => setPractitionerCompany(e.target.value)} className={inputClass} />
-                  </div>
-                  <div>
-                    <label className={labelClass}>Licence / permit no.</label>
-                    <input type="text" value={practitionerLicence} onChange={(e) => setPractitionerLicence(e.target.value)} className={inputClass} />
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-4">
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={propertyListedOnPlatform}
-                    onChange={(e) => setPropertyListedOnPlatform(e.target.checked)}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setPropertyListedOnPlatform(checked);
+                      if (!checked) setPractitionerOnPlatform(false);
+                    }}
                     className="mt-1"
                   />
                   <span>
@@ -430,6 +447,92 @@ export default function TransactionRegistrationPortal() {
                   <div>
                     <label className={labelClass}>Property ID *</label>
                     <input type="text" value={regPropertyId} onChange={(e) => setRegPropertyId(e.target.value)} className={inputClass} />
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-4 space-y-4">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={practitionerOnPlatform}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setPractitionerOnPlatform(checked);
+                      if (checked) {
+                        setPractitionerName("");
+                        setPractitionerEmail("");
+                        setPractitionerPhone("");
+                        setPractitionerCompany("");
+                        setPractitionerLicence("");
+                      }
+                    }}
+                    className="mt-1"
+                  />
+                  <span>
+                    <span className="block text-sm font-semibold text-gray-900">Practitioner (agent) is on KHABITEQ</span>
+                    <span className="block text-xs text-gray-600">Uncheck if you transacted with an agent or property owner not registered on the platform.</span>
+                  </span>
+                </label>
+                {!practitionerOnPlatform && (
+                  <div className="space-y-4">
+                    <div>
+                      <p className={labelClass}>Who did you transact with? *</p>
+                      <div className="mt-2 flex flex-col sm:flex-row gap-3">
+                        <label className="flex items-center gap-2 cursor-pointer rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-900">
+                          <input
+                            type="radio"
+                            name="offPlatformPartyType"
+                            checked={offPlatformPartyType === "agent"}
+                            onChange={() => setOffPlatformPartyType("agent")}
+                            className="h-4 w-4"
+                          />
+                          Real estate agent (not on KHABITEQ)
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-900">
+                          <input
+                            type="radio"
+                            name="offPlatformPartyType"
+                            checked={offPlatformPartyType === "property_owner"}
+                            onChange={() => setOffPlatformPartyType("property_owner")}
+                            className="h-4 w-4"
+                          />
+                          Property owner / landlord
+                        </label>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="sm:col-span-2">
+                        <label className={labelClass}>
+                          {offPlatformPartyType === "property_owner" ? "Property owner full name *" : "Agent full name *"}
+                        </label>
+                        <input type="text" value={practitionerName} onChange={(e) => setPractitionerName(e.target.value)} className={inputClass} required={!practitionerOnPlatform} />
+                      </div>
+                      <div>
+                        <label className={labelClass}>
+                          {offPlatformPartyType === "property_owner" ? "Property owner email *" : "Agent email *"}
+                        </label>
+                        <input type="email" value={practitionerEmail} onChange={(e) => setPractitionerEmail(e.target.value)} className={inputClass} required={!practitionerOnPlatform} />
+                      </div>
+                      <div>
+                        <label className={labelClass}>
+                          {offPlatformPartyType === "property_owner" ? "Property owner phone *" : "Agent phone *"}
+                        </label>
+                        <input type="tel" value={practitionerPhone} onChange={(e) => setPractitionerPhone(e.target.value)} className={inputClass} required={!practitionerOnPlatform} />
+                      </div>
+                      {offPlatformPartyType === "agent" && (
+                        <>
+                          <div>
+                            <label className={labelClass}>Company / firm</label>
+                            <input type="text" value={practitionerCompany} onChange={(e) => setPractitionerCompany(e.target.value)} className={inputClass} />
+                          </div>
+                          <div>
+                            <label className={labelClass}>Licence / permit no.</label>
+                            <input type="text" value={practitionerLicence} onChange={(e) => setPractitionerLicence(e.target.value)} className={inputClass} />
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
@@ -478,6 +581,19 @@ export default function TransactionRegistrationPortal() {
                 <div>
                   <label className={labelClass}>Deal payment receipt *</label>
                   <input type="file" onChange={(e) => setPaymentReceiptFile(e.target.files?.[0] ?? null)} className={inputClass} required />
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-gray-200 bg-gray-50/80 p-4 space-y-4">
+                <p className="text-sm font-bold text-gray-900">Optional documents</p>
+                <p className="text-xs text-gray-600">Upload if available — PDF or image, max 25 MB each.</p>
+                <div>
+                  <label className={labelClass}>Deed of assignment</label>
+                  <input type="file" onChange={(e) => setDeedsOfAssignmentFile(e.target.files?.[0] ?? null)} className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>Conveyance</label>
+                  <input type="file" onChange={(e) => setConveyanceFile(e.target.files?.[0] ?? null)} className={inputClass} />
                 </div>
               </div>
 

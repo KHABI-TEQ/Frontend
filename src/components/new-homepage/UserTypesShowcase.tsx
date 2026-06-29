@@ -244,7 +244,7 @@ export default function UserTypesShowcase() {
               Ready to get started?
             </h2>
             <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
-              Join thousands of landlords, developers, agents, and buyers who trust Khabiteq for their real estate needs.
+              Whether you are listing, buying, or representing clients, Khabiteq gives you the tools to move with confidence.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link

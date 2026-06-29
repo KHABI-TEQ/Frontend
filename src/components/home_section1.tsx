@@ -2,7 +2,6 @@
 'use client';
 import React, { useRef } from 'react';
 import { useVisibility } from '@/hooks/useVisibility';
-import Counts from './counts';
 /**
  *
  * @returns Join our trusted network of agents and access exclusive property listings, connect with verified buyers and sellers, and grow your real estate business seamlessly
@@ -10,10 +9,8 @@ import Counts from './counts';
 
 const Section1 = () => {
   const textRef = useRef<HTMLSpanElement>(null);
-  const countsRef = useRef<HTMLDivElement>(null);
 
   const isTextVisible = useVisibility(textRef);
-  const areCountsVisible = useVisibility(countsRef);
 
   return (
     <section className='flex items-center justify-center pb-10'>
@@ -30,15 +27,6 @@ const Section1 = () => {
             and more. Let us help you find your perfect property today
           </span>
         </div>
-        {
-          <div
-            ref={countsRef}
-            className={`min-h-[49px] py-2 lg:h-[72px] w-full md:px-0 lg:w-[518px] flex gap-[24px] items-center justify-between ${
-              areCountsVisible && 'slide-from-right'
-            }`}>
-            <Counts />
-          </div>
-        }
       </div>
     </section>
   );

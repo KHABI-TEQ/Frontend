@@ -8,7 +8,7 @@ import DocumentVerificationPromoSection from '@/components/new-homepage/document
 
 const ForDevelopersShowcase = () => {
   const bullets = [
-    'Showcase your projects to thousands of potential buyers',
+    'Showcase your projects to more potential buyers through verified agents',
     'Dedicated project pages with full details and media',
     'Connect with verified agents to promote your developments',
     'Track leads and inquiries in real-time',
@@ -124,25 +124,6 @@ const ForDevelopersShowcase = () => {
               ))}
             </motion.ul>
 
-            {/* Quick Stats */}
-            <motion.div
-              variants={itemVariants}
-              className="mt-10 grid grid-cols-3 gap-4 py-6 border-t border-gray-100"
-            >
-              <div className="text-center">
-                <div className="text-2xl sm:text-3xl font-bold text-[#09391C]">1000+</div>
-                <div className="text-xs sm:text-sm text-gray-500 mt-1">Active Projects</div>
-              </div>
-              <div className="text-center border-x border-gray-100">
-                <div className="text-2xl sm:text-3xl font-bold text-[#09391C]">500+</div>
-                <div className="text-xs sm:text-sm text-gray-500 mt-1">Verified Developers</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl sm:text-3xl font-bold text-[#09391C]">95%</div>
-                <div className="text-xs sm:text-sm text-gray-500 mt-1">Sales Success</div>
-              </div>
-            </motion.div>
-
             {/* CTA Section */}
             <motion.div
               variants={itemVariants}
@@ -154,7 +135,7 @@ const ForDevelopersShowcase = () => {
                     Ready to showcase your development?
                   </h3>
                   <p className="text-sm text-gray-500">
-                    Join hundreds of developers reaching more buyers today.
+                    Showcase your development and reach more buyers on Khabiteq.
                   </p>
                 </div>
                 <Link

@@ -4,7 +4,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import CountUp from 'react-countup';
 import { GET_REQUEST } from '@/utils/requests';
 import { URLS } from '@/utils/URLS';
 
@@ -31,29 +30,6 @@ const SocialProofSection = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
-
-  const stats = [
-    {
-      number: 250,
-      label: "Verified Agents",
-      suffix: "+"
-    },
-    {
-      number: 1500,
-      label: "Properties Matched",
-      suffix: "+"
-    },
-    {
-      number: 800,
-      label: "Deals Closed",
-      suffix: "+"
-    },
-    {
-      number: 98,
-      label: "Client Satisfaction",
-      suffix: "%"
-    }
-  ];
 
   const partners = [
     {
@@ -226,44 +202,22 @@ const SocialProofSection = () => {
     <section className='w-full py-16 sm:py-20 lg:py-24 bg-[#F5F7F9]'>
       <div className='w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12'>
 
-        {/* Stats Section */}
+        {/* Testimonials Section */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
           viewport={{ once: true, margin: "-100px" }}
-          className='text-center mb-12 sm:mb-16'>
+          className='text-center mb-10 sm:mb-12'>
 
           <h2 className='text-3xl sm:text-4xl lg:text-5xl font-bold text-[#09391C] mb-4 sm:mb-5 tracking-tight'>
-            Trusted by Thousands
+            What Our Clients Say
           </h2>
-          <p className='text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto mb-10 sm:mb-12 leading-relaxed'>
-            Join the growing community of satisfied customers who have found their perfect properties through Khabiteq.
+          <p className='text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed'>
+            Real experiences from buyers, sellers, and agents using Khabiteq.
           </p>
-
-          {/* Stats Grid */}
-          <div className='grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6'>
-            {stats.map((stat, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.08, ease: [0.25, 0.1, 0.25, 1] }}
-                viewport={{ once: true }}
-                className='text-center bg-white rounded-xl sm:rounded-2xl p-5 sm:p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.12)] transition-all duration-300 hover:-translate-y-1'>
-                <div className='text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-[#8DDB90] mb-1 sm:mb-2'>
-                  <CountUp end={stat.number} duration={2.5} />
-                  {stat.suffix}
-                </div>
-                <div className='text-gray-600 font-medium text-sm sm:text-base'>
-                  {stat.label}
-                </div>
-              </motion.div>
-            ))}
-          </div>
         </motion.div>
 
-        {/* Testimonials Section */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -271,12 +225,7 @@ const SocialProofSection = () => {
           viewport={{ once: true, margin: "-50px" }}
           className='mb-12 sm:mb-16'>
           
-          <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 sm:mb-12 gap-4'>
-            <h3 className='text-xl sm:text-2xl md:text-3xl font-bold text-[#09391C] font-display'>
-              What Our Clients Say
-            </h3>
-            
-            {/* Scroll Controls - Hidden on mobile, shown on larger screens */}
+          <div className='flex flex-col sm:flex-row justify-end items-start sm:items-center mb-8 sm:mb-12 gap-4'>
             <div className='hidden sm:flex items-center gap-2'>
               <button
                 onClick={scrollLeft}
@@ -399,13 +348,6 @@ const SocialProofSection = () => {
                   ))}
                 </div>
                 
-                {testimonials.length > 3 && (
-                  <div className='text-center mt-6'>
-                    <p className='text-gray-500 text-sm'>
-                      +{testimonials.length - 3} more happy clients
-                    </p>
-                  </div>
-                )}
               </div>
             </>
           )}
