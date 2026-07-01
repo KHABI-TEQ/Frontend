@@ -13,6 +13,7 @@ import {
   X,
   Sparkles,
 } from "lucide-react";
+import { BUYER_LASRERA_CERTIFICATE_BULLET } from "@/data/user-types-content";
 
 interface UserType {
   id: string;
@@ -85,7 +86,7 @@ const userTypes: UserType[] = [
     title: "Buyers & Clients",
     headline: "Find Your Dream Property",
     description:
-      "Submit your preference and let our system search verified agent Practitioner Pages for matching properties. Receive tailored property briefs, book inspections through the platform, and rate or report agents after your experience for added transparency and accountability.",
+      `Submit your preference and let our system search verified agent Practitioner Pages for matching properties. Receive tailored property briefs, book inspections through the platform, ${BUYER_LASRERA_CERTIFICATE_BULLET}, and rate or report agents after your experience for added transparency and accountability.`,
     cta: "Get Started",
     ctaUrl: "/for-clients",
     gradient: "from-blue-500 via-indigo-500 to-violet-500",

@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Check, User, Shield, Calendar, Users, Search, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import DocumentVerificationPromoSection from '@/components/new-homepage/document-verification-promo-section';
+import { BUYER_LASRERA_CERTIFICATE_BULLET } from '@/data/user-types-content';
 
 const ForClientsShowcase = () => {
   const bullets = [
@@ -13,6 +14,7 @@ const ForClientsShowcase = () => {
     'Schedule inspections with ease',
     'Dedicated agent support',
     'Document verification for your safety',
+    BUYER_LASRERA_CERTIFICATE_BULLET,
   ];
 
   const containerVariants = {

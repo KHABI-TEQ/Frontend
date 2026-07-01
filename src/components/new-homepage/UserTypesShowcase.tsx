@@ -6,6 +6,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Building2, Users, Search, ArrowRight, Check, Home } from 'lucide-react';
+import { USER_TYPE_BULLETS, BUYER_LASRERA_CERTIFICATE_BULLET } from '@/data/user-types-content';
 
 const userTypes = [
   {
@@ -14,13 +15,7 @@ const userTypes = [
     title: 'For Landlords',
     headline: 'Your property, your rules.',
     lead: 'List your property for sale, rent, shortlet, or joint venture. Add details easily and reach more serious buyers.',
-    bullets: [
-      'List up to 25 properties included (Portfolio Unlimited available for larger portfolios)',
-      'Let agents request to promote your listing you decide',
-      'More visibility through multiple agents',
-      'Support for document checks to build trust',
-      'Set your own agent commission where needed',
-    ],
+    bullets: USER_TYPE_BULLETS.landlords,
     cta: 'List a property',
     ctaUrl: '/post-property',
     color: 'from-amber-500 to-orange-600',
@@ -34,14 +29,7 @@ const userTypes = [
     title: 'For Developers',
     headline: 'Show your project. Find the right partners.',
     lead: 'List your projects and joint ventures easily. Turn simple descriptions into full listings and reach serious investors.',
-    bullets: [
-      'First listing is free',
-      'Control who can market your project',
-      'Build trust with document verification',
-      'Get more visibility through agents',
-      'Manage different project types in one place',
-      'Connect with buyers looking for your kind of property',
-    ],
+    bullets: USER_TYPE_BULLETS.developers,
     cta: 'Publish a project',
     ctaUrl: '/post-property',
     color: 'from-emerald-600 to-teal-700',
@@ -55,16 +43,7 @@ const userTypes = [
     title: 'For Agents',
     headline: 'Grow your business your way.',
     lead: 'Manage listings, attract clients, and promote properties — all from your own Practitioner page.',
-    bullets: [
-      'First listing is free',
-      'Get your own Practitioner page with your listings',
-      'Request to promote landlord and developer properties',
-      'Confirm property locations on the map',
-      'Help clients with trusted, verified listings',
-      'Easy listing creation with AI support',
-      'Manage inspections and client requests',
-      'Match buyers with available properties',
-    ],
+    bullets: USER_TYPE_BULLETS.agents,
     cta: 'Activate your Practitioner Page',
     ctaUrl: '/agent-marketplace',
     color: 'from-[#8DDB90] to-emerald-600',
@@ -77,15 +56,8 @@ const userTypes = [
     icon: Search,
     title: 'For Clients & Buyers',
     headline: 'Tell us what you want.',
-    lead: 'Looking to buy, rent, or invest? Just tell us in simple words. We help you find matching properties faster.',
-    bullets: [
-      'Describe what you need in simple terms',
-      'Get matched with available properties',
-      'Check property location on the map',
-      'Book inspections easily',
-      'Browse from the main site or agent pages',
-      'Follow simple steps for secure transactions',
-    ],
+    lead: `Looking to buy, rent, or invest? Tell us what you want and find matching properties faster. ${BUYER_LASRERA_CERTIFICATE_BULLET}.`,
+    bullets: USER_TYPE_BULLETS.buyers,
     cta: 'Submit a preference',
     ctaUrl: '/preference',
     color: 'from-blue-600 to-indigo-700',

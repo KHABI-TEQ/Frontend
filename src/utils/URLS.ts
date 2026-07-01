@@ -234,6 +234,7 @@ export const URLS = {
   transactionRegistrationCheck: "/transaction-registration/check",
   transactionRegistrationEgisValidate: "/transaction-registration/egis-validate",
   transactionRegistrationRegister: "/transaction-registration/register",
+  transactionRegistrationCertificateDownload: "/transaction-registration/certificate/download",
 
   /** Public file upload (documents, images, etc.) */
   uploadSingleFile: "/upload-single-file",

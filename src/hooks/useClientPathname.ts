@@ -2,25 +2,43 @@
 
 import { useSyncExternalStore } from "react";
 
-function subscribe(onStoreChange: () => void) {
-  const onNavigate = () => onStoreChange();
+const listeners = new Set<() => void>();
+let historyPatched = false;
+let originalPushState: History["pushState"] | null = null;
+let originalReplaceState: History["replaceState"] | null = null;
 
-  window.addEventListener("popstate", onNavigate);
+/** Defer store notifications so pushState during commit/useInsertionEffect cannot schedule sync updates. */
+function notifyListeners() {
+  queueMicrotask(() => {
+    listeners.forEach((listener) => listener());
+  });
+}
 
-  const { pushState, replaceState } = history;
+function patchHistoryOnce() {
+  if (historyPatched || typeof window === "undefined") return;
+  historyPatched = true;
+
+  originalPushState = history.pushState.bind(history);
+  originalReplaceState = history.replaceState.bind(history);
+
   history.pushState = function (...args) {
-    pushState.apply(this, args as never);
-    onNavigate();
+    originalPushState!(...args);
+    notifyListeners();
   };
   history.replaceState = function (...args) {
-    replaceState.apply(this, args as never);
-    onNavigate();
+    originalReplaceState!(...args);
+    notifyListeners();
   };
 
+  window.addEventListener("popstate", notifyListeners);
+}
+
+function subscribe(onStoreChange: () => void) {
+  patchHistoryOnce();
+  listeners.add(onStoreChange);
+
   return () => {
-    window.removeEventListener("popstate", onNavigate);
-    history.pushState = pushState;
-    history.replaceState = replaceState;
+    listeners.delete(onStoreChange);
   };
 }
 

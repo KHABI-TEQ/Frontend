@@ -14,10 +14,10 @@ import {
   getProcessingFeeFromTransactionValue,
   parseTransactionValueInput,
 } from "@/utils/transaction-processing-fee";
-import { FileText, Search, ShieldCheck, ChevronLeft, ChevronRight } from "lucide-react";
+import { FileText, Search, ShieldCheck, ChevronLeft, ChevronRight, Award } from "lucide-react";
 
-type TabId = "guidelines" | "search" | "register";
-const TAB_ORDER: TabId[] = ["guidelines", "search", "register"];
+type TabId = "guidelines" | "search" | "register" | "certificate";
+const TAB_ORDER: TabId[] = ["guidelines", "search", "register", "certificate"];
 
 const TRANSACTION_TYPES = [
   { name: "Rental Agreement", slug: "rental" },
@@ -39,8 +39,13 @@ const labelClass = "block text-sm font-semibold text-gray-800 mb-2";
 export default function TransactionRegistrationPortal() {
   const searchParams = useSearchParams();
   const propertyIdFromUrl = searchParams.get("propertyId") ?? "";
+  const tabFromUrl = searchParams.get("tab");
+  const initialTab: TabId =
+    tabFromUrl === "certificate" || tabFromUrl === "search" || tabFromUrl === "register" || tabFromUrl === "guidelines"
+      ? tabFromUrl
+      : "guidelines";
 
-  const [tab, setTab] = useState<TabId>("guidelines");
+  const [tab, setTab] = useState<TabId>(initialTab);
 
   const [searchMode, setSearchMode] = useState<"address" | "propertyId" | "gps">("address");
   const [searchAddress, setSearchAddress] = useState("");
@@ -78,6 +83,20 @@ export default function TransactionRegistrationPortal() {
   const [deedsOfAssignmentFile, setDeedsOfAssignmentFile] = useState<File | null>(null);
   const [conveyanceFile, setConveyanceFile] = useState<File | null>(null);
   const [registering, setRegistering] = useState(false);
+
+  const [certEmail, setCertEmail] = useState("");
+  const [certRegistrationId, setCertRegistrationId] = useState("");
+  const [certDownloading, setCertDownloading] = useState(false);
+  const [certResult, setCertResult] = useState<{
+    certificateUrl: string;
+    certificateNumber?: string;
+    buyerName?: string;
+  } | null>(null);
+  const [certError, setCertError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (tabFromUrl === "certificate") setTab("certificate");
+  }, [tabFromUrl]);
 
   useEffect(() => {
     if (propertyIdFromUrl) {
@@ -130,6 +149,35 @@ export default function TransactionRegistrationPortal() {
       }
     } finally {
       setSearching(false);
+    }
+  }
+
+  async function handleCertificateDownload(e: React.FormEvent) {
+    e.preventDefault();
+    setCertError(null);
+    setCertResult(null);
+
+    const email = certEmail.trim();
+    const registrationId = certRegistrationId.trim();
+    if (!email || !registrationId) {
+      setCertError("Enter both your buyer email and registration reference.");
+      return;
+    }
+
+    setCertDownloading(true);
+    try {
+      const res = await transactionRegistrationService.downloadCertificate({ email, registrationId });
+      if (res.success && res.data?.certificateUrl) {
+        setCertResult({
+          certificateUrl: res.data.certificateUrl,
+          certificateNumber: res.data.certificateNumber,
+          buyerName: res.data.buyerName,
+        });
+      } else {
+        setCertError(res.message || "Could not verify your certificate. Check your details and try again.");
+      }
+    } finally {
+      setCertDownloading(false);
     }
   }
 
@@ -254,7 +302,16 @@ export default function TransactionRegistrationPortal() {
           window.location.href = paymentUrl;
           return;
         }
-        toast.success(res.message || "Transaction registered successfully.");
+        const registrationId = (res.data as { registrationId?: string } | null)?.registrationId;
+        toast.success(
+          registrationId
+            ? `Registration submitted. Reference: ${registrationId}`
+            : res.message || "Transaction registered successfully."
+        );
+        if (registrationId) {
+          setCertRegistrationId(registrationId);
+          setCertEmail(regBuyerEmail.trim());
+        }
         setTab("guidelines");
       } else {
         toast.error(res.message || "Registration failed.");
@@ -288,8 +345,13 @@ export default function TransactionRegistrationPortal() {
       <div className="max-w-5xl mx-auto px-4 md:px-6 py-8">
         <div className="flex flex-wrap gap-2 p-1.5 mb-8 rounded-2xl bg-white border border-gray-200 shadow-sm">
           {TAB_ORDER.map((t) => {
-            const labels = { guidelines: "Guidelines & fees", search: "Check status", register: "Register" };
-            const icons = { guidelines: FileText, search: Search, register: ShieldCheck };
+            const labels = {
+              guidelines: "Guidelines & fees",
+              search: "Check status",
+              register: "Register",
+              certificate: "Download certificate",
+            };
+            const icons = { guidelines: FileText, search: Search, register: ShieldCheck, certificate: Award };
             const Icon = icons[t];
             const active = tab === t;
             return (
@@ -653,6 +715,75 @@ export default function TransactionRegistrationPortal() {
                 {registering ? "Submitting…" : estimatedFee > 0 ? `Register & pay ${formatNaira(estimatedFee)}` : "Register transaction"}
               </button>
             </form>
+          </div>
+        )}
+
+        {tab === "certificate" && (
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 md:p-8 shadow-sm max-w-xl">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="h-10 w-10 rounded-xl bg-[#0B5D3B]/10 flex items-center justify-center">
+                <Award className="h-5 w-5 text-[#0B5D3B]" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900">Download LASRERA certificate</h2>
+            </div>
+            <p className="text-sm text-gray-600 mb-6">
+              Once LASRERA has approved your registration, download your official certificate here. For security, you must
+              enter the <strong>buyer email</strong> and <strong>registration reference</strong> from your confirmation email.
+            </p>
+            <form onSubmit={handleCertificateDownload} className="space-y-4">
+              <div>
+                <label className={labelClass}>Registration reference (transaction ID) *</label>
+                <input
+                  type="text"
+                  value={certRegistrationId}
+                  onChange={(e) => setCertRegistrationId(e.target.value)}
+                  className={inputClass}
+                  placeholder="e.g. 674a1b2c3d4e5f678901234"
+                  required
+                  autoComplete="off"
+                />
+              </div>
+              <div>
+                <label className={labelClass}>Buyer email *</label>
+                <input
+                  type="email"
+                  value={certEmail}
+                  onChange={(e) => setCertEmail(e.target.value)}
+                  className={inputClass}
+                  placeholder="Same email used when registering"
+                  required
+                  autoComplete="email"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={certDownloading}
+                className="w-full h-12 px-6 rounded-xl bg-[#0B5D3B] hover:bg-[#094a30] text-white font-bold disabled:opacity-70 transition-colors"
+              >
+                {certDownloading ? "Verifying…" : "Verify & download certificate"}
+              </button>
+            </form>
+            {certError && (
+              <p className="mt-4 text-sm text-red-700 bg-red-50 border border-red-100 rounded-lg px-4 py-3">{certError}</p>
+            )}
+            {certResult && (
+              <div className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-5 space-y-3">
+                <p className="font-semibold text-emerald-950">
+                  Certificate verified{certResult.buyerName ? ` for ${certResult.buyerName}` : ""}
+                </p>
+                {certResult.certificateNumber && (
+                  <p className="text-sm text-emerald-900">Certificate no.: {certResult.certificateNumber}</p>
+                )}
+                <a
+                  href={certResult.certificateUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-11 items-center justify-center px-6 rounded-xl bg-[#0B5D3B] text-white font-semibold text-sm hover:bg-[#094a30] transition-colors"
+                >
+                  Open certificate PDF
+                </a>
+              </div>
+            )}
           </div>
         )}
 

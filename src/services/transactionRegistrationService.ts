@@ -66,6 +66,14 @@ export type TransactionRegistrationSearchResult = {
   inspectionHistoryCount?: number;
 };
 
+export type TransactionRegistrationCertificateResponse = {
+  certificateUrl: string;
+  certificateNumber?: string;
+  issuedAt?: string;
+  buyerName?: string;
+  registrationId?: string;
+};
+
 export const transactionRegistrationService = {
   getTypes: () =>
     GET_REQUEST<{ success: boolean; data: unknown }>(
@@ -102,6 +110,12 @@ export const transactionRegistrationService = {
   register: (body: RegisterTransactionBody) =>
     POST_REQUEST<TransactionRegistrationRegisterResponse["data"]>(
       URLS.BASE + URLS.transactionRegistrationRegister,
+      body
+    ),
+
+  downloadCertificate: (body: { email: string; registrationId: string }) =>
+    POST_REQUEST<TransactionRegistrationCertificateResponse>(
+      URLS.BASE + URLS.transactionRegistrationCertificateDownload,
       body
     ),
 };

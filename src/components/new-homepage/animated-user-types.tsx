@@ -6,8 +6,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Building2, Users, Search, Home, ArrowRight, Check } from 'lucide-react';
-
-type UserTypeId = 'landlords' | 'developers' | 'agents' | 'buyers';
+import { USER_TYPE_BULLETS, type UserTypeId } from '@/data/user-types-content';
 
 const userTypes: {
   id: UserTypeId;
@@ -28,13 +27,7 @@ const userTypes: {
     icon: Home,
     title: 'Landlords',
     headline: 'List for free with complete control',
-    bullets: [
-      'List one or multiple properties for free',
-      'Receive marketing requests from verified agents',
-      'Choose the agents you want to work with',
-      'Your contact details remain private until you approve an agent',
-      'Sell or rent faster with complete control',
-    ],
+    bullets: USER_TYPE_BULLETS.landlords,
     cta: 'List Property',
     ctaUrl: '/for-landlords',
     color: 'from-amber-500 to-orange-600',
@@ -48,12 +41,7 @@ const userTypes: {
     icon: Building2,
     title: 'Developers',
     headline: 'Reach serious buyers faster',
-    bullets: [
-      'Publish developments with a dedicated project page',
-      'Set your commission payout percentage',
-      'Let multiple verified agents request to market your project',
-      'Reach more qualified buyers and sell faster',
-    ],
+    bullets: USER_TYPE_BULLETS.developers,
     cta: 'Publish Project',
     ctaUrl: '/for-developers',
     color: 'from-emerald-600 to-teal-700',
@@ -67,13 +55,7 @@ const userTypes: {
     icon: Users,
     title: 'Agents',
     headline: 'Every agent has the mandate',
-    bullets: [
-      'Get your own Practitioner Page with a personalized URL',
-      'Request to market landlord and developer listings',
-      'Earn the commissions they offer when you close deals',
-      'Listings automatically matched to buyer preferences',
-      'Help qualified buyers discover your properties without extra effort',
-    ],
+    bullets: USER_TYPE_BULLETS.agents,
     cta: 'Activate Page',
     ctaUrl: '/agent-marketplace',
     color: 'from-[#8DDB90] to-emerald-600',
@@ -87,12 +69,7 @@ const userTypes: {
     icon: Search,
     title: 'Buyers & Clients',
     headline: 'Find your dream property',
-    bullets: [
-      'Submit your preference and let our system search verified agent Practitioner Pages',
-      'Receive tailored property briefs matched to your needs',
-      'Book inspections through the platform',
-      'Rate or report agents after your experience for transparency and accountability',
-    ],
+    bullets: USER_TYPE_BULLETS.buyers,
     cta: 'Submit Preference',
     ctaUrl: '/preference',
     color: 'from-blue-600 to-indigo-700',
