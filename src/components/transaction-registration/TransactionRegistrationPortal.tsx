@@ -14,6 +14,8 @@ import {
   getProcessingFeeFromTransactionValue,
   parseTransactionValueInput,
 } from "@/utils/transaction-processing-fee";
+import { buildFullAddress, EMPTY_ADDRESS, isAddressRequiredPartsFilled } from "@/utils/address";
+import { AddressBreakdownFields } from "@/components/transaction-registration/AddressBreakdownFields";
 import { FileText, Search, ShieldCheck, ChevronLeft, ChevronRight, Award } from "lucide-react";
 
 type TabId = "guidelines" | "search" | "register" | "certificate";
@@ -71,7 +73,7 @@ export default function TransactionRegistrationPortal() {
   const [practitionerCompany, setPractitionerCompany] = useState("");
   const [practitionerLicence, setPractitionerLicence] = useState("");
   const [regPropType, setRegPropType] = useState<"land" | "residential" | "commercial">("residential");
-  const [regExactAddress, setRegExactAddress] = useState("");
+  const [regAddress, setRegAddress] = useState(EMPTY_ADDRESS);
   const [regTitleNumber, setRegTitleNumber] = useState("");
   const [regOwnerName, setRegOwnerName] = useState("");
   const [regLat, setRegLat] = useState("");
@@ -112,6 +114,7 @@ export default function TransactionRegistrationPortal() {
     () => (Number.isFinite(regTransactionValueNum) ? getProcessingFeeFromTransactionValue(regTransactionValueNum) : 0),
     [regTransactionValueNum]
   );
+  const regFullAddress = useMemo(() => buildFullAddress(regAddress), [regAddress]);
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -208,8 +211,8 @@ export default function TransactionRegistrationPortal() {
       return;
     }
     const needsAddress = regPropType === "residential" || regPropType === "commercial";
-    if (needsAddress && !regExactAddress.trim()) {
-      toast.error("Exact address is required for this property type.");
+    if (needsAddress && !isAddressRequiredPartsFilled(regAddress)) {
+      toast.error("Street, city, and state are required for this property type.");
       return;
     }
     if (regPropType === "land" && (!regLat.trim() || !regLng.trim())) {
@@ -259,7 +262,7 @@ export default function TransactionRegistrationPortal() {
         transactionValue: valueNum,
         propertyIdentification: {
           type: regPropType,
-          exactAddress: regExactAddress.trim() || undefined,
+          exactAddress: regFullAddress || undefined,
           titleNumber: regTitleNumber.trim() || undefined,
           ownerName: regOwnerName.trim() || undefined,
           lat: regLat ? Number(regLat) : undefined,
@@ -670,10 +673,13 @@ export default function TransactionRegistrationPortal() {
 
               {(regPropType === "residential" || regPropType === "commercial") && (
                 <>
-                  <div>
-                    <label className={labelClass}>Exact address *</label>
-                    <input type="text" value={regExactAddress} onChange={(e) => setRegExactAddress(e.target.value)} className={inputClass} required />
-                  </div>
+                  <AddressBreakdownFields
+                    value={regAddress}
+                    onChange={setRegAddress}
+                    labelClass={labelClass}
+                    inputClass={inputClass}
+                    required
+                  />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className={labelClass}>Title number (optional)</label>
@@ -710,13 +716,15 @@ export default function TransactionRegistrationPortal() {
                     </div>
                   </div>
                   <div>
-                    <label className={labelClass}>Exact address (optional)</label>
-                    <input type="text" value={regExactAddress} onChange={(e) => setRegExactAddress(e.target.value)} className={inputClass} />
-                  </div>
-                  <div>
                     <label className={labelClass}>Survey plan reference (optional)</label>
                     <input type="text" value={regSurveyPlan} onChange={(e) => setRegSurveyPlan(e.target.value)} className={inputClass} />
                   </div>
+                  <AddressBreakdownFields
+                    value={regAddress}
+                    onChange={setRegAddress}
+                    labelClass={labelClass}
+                    inputClass={inputClass}
+                  />
                   <label className="flex items-center gap-2 text-sm">
                     <input type="checkbox" checked={regOwnerConfirmation} onChange={(e) => setRegOwnerConfirmation(e.target.checked)} />
                     Owner confirmation (optional)
