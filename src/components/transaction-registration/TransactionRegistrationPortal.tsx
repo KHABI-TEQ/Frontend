@@ -585,11 +585,11 @@ export default function TransactionRegistrationPortal() {
                       {offPlatformPartyType === "agent" && (
                         <>
                           <div>
-                            <label className={labelClass}>Company / firm</label>
+                            <label className={labelClass}>Company / firm (optional)</label>
                             <input type="text" value={practitionerCompany} onChange={(e) => setPractitionerCompany(e.target.value)} className={inputClass} />
                           </div>
                           <div>
-                            <label className={labelClass}>Licence / permit no.</label>
+                            <label className={labelClass}>Licence / permit no. (optional)</label>
                             <input type="text" value={practitionerLicence} onChange={(e) => setPractitionerLicence(e.target.value)} className={inputClass} />
                           </div>
                         </>
@@ -650,11 +650,11 @@ export default function TransactionRegistrationPortal() {
                 <p className="text-sm font-bold text-gray-900">Optional documents</p>
                 <p className="text-xs text-gray-600">Upload if available — PDF or image, max 25 MB each.</p>
                 <div>
-                  <label className={labelClass}>Deed of assignment</label>
+                  <label className={labelClass}>Deed of assignment (optional)</label>
                   <input type="file" onChange={(e) => setDeedsOfAssignmentFile(e.target.files?.[0] ?? null)} className={inputClass} />
                 </div>
                 <div>
-                  <label className={labelClass}>Conveyance</label>
+                  <label className={labelClass}>Conveyance (optional)</label>
                   <input type="file" onChange={(e) => setConveyanceFile(e.target.files?.[0] ?? null)} className={inputClass} />
                 </div>
               </div>
@@ -669,40 +669,57 @@ export default function TransactionRegistrationPortal() {
               </div>
 
               {(regPropType === "residential" || regPropType === "commercial") && (
-                <div>
-                  <label className={labelClass}>Exact address *</label>
-                  <input type="text" value={regExactAddress} onChange={(e) => setRegExactAddress(e.target.value)} className={inputClass} required />
-                </div>
+                <>
+                  <div>
+                    <label className={labelClass}>Exact address *</label>
+                    <input type="text" value={regExactAddress} onChange={(e) => setRegExactAddress(e.target.value)} className={inputClass} required />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className={labelClass}>Title number (optional)</label>
+                      <input type="text" value={regTitleNumber} onChange={(e) => setRegTitleNumber(e.target.value)} className={inputClass} />
+                    </div>
+                    <div>
+                      <label className={labelClass}>Owner name (optional)</label>
+                      <input type="text" value={regOwnerName} onChange={(e) => setRegOwnerName(e.target.value)} className={inputClass} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className={labelClass}>Latitude (optional)</label>
+                      <input type="text" value={regLat} onChange={(e) => setRegLat(e.target.value)} className={inputClass} />
+                    </div>
+                    <div>
+                      <label className={labelClass}>Longitude (optional)</label>
+                      <input type="text" value={regLng} onChange={(e) => setRegLng(e.target.value)} className={inputClass} />
+                    </div>
+                  </div>
+                </>
               )}
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className={labelClass}>Title number</label>
-                  <input type="text" value={regTitleNumber} onChange={(e) => setRegTitleNumber(e.target.value)} className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}>Owner name</label>
-                  <input type="text" value={regOwnerName} onChange={(e) => setRegOwnerName(e.target.value)} className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}>Latitude{regPropType === "land" ? " *" : ""}</label>
-                  <input type="text" value={regLat} onChange={(e) => setRegLat(e.target.value)} className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}>Longitude{regPropType === "land" ? " *" : ""}</label>
-                  <input type="text" value={regLng} onChange={(e) => setRegLng(e.target.value)} className={inputClass} />
-                </div>
-              </div>
 
               {regPropType === "land" && (
                 <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className={labelClass}>Latitude *</label>
+                      <input type="text" value={regLat} onChange={(e) => setRegLat(e.target.value)} className={inputClass} required />
+                    </div>
+                    <div>
+                      <label className={labelClass}>Longitude *</label>
+                      <input type="text" value={regLng} onChange={(e) => setRegLng(e.target.value)} className={inputClass} required />
+                    </div>
+                  </div>
                   <div>
-                    <label className={labelClass}>Survey plan reference</label>
+                    <label className={labelClass}>Exact address (optional)</label>
+                    <input type="text" value={regExactAddress} onChange={(e) => setRegExactAddress(e.target.value)} className={inputClass} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Survey plan reference (optional)</label>
                     <input type="text" value={regSurveyPlan} onChange={(e) => setRegSurveyPlan(e.target.value)} className={inputClass} />
                   </div>
                   <label className="flex items-center gap-2 text-sm">
                     <input type="checkbox" checked={regOwnerConfirmation} onChange={(e) => setRegOwnerConfirmation(e.target.checked)} />
-                    I confirm owner details for this land transaction
+                    Owner confirmation (optional)
                   </label>
                 </>
               )}
@@ -724,7 +741,7 @@ export default function TransactionRegistrationPortal() {
               <div className="h-10 w-10 rounded-xl bg-[#0B5D3B]/10 flex items-center justify-center">
                 <Award className="h-5 w-5 text-[#0B5D3B]" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900">Download LASRERA certificate</h2>
+              <h2 className="text-xl font-bold text-gray-900">Download transaction registration certificate</h2>
             </div>
             <p className="text-sm text-gray-600 mb-6">
               Once LASRERA has approved your registration, download your official certificate here. For security, you must
