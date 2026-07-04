@@ -14,6 +14,9 @@ export default {
       colors: {
         background: 'var(--background)',
         foreground: 'var(--foreground)',
+        'general-900': '#1E1E1E',
+        'general-700': '#5A5D63',
+        'general-800': '#3A3D42',
       },
       width: {
         custom: '1200px',

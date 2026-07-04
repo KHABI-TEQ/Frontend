@@ -144,6 +144,9 @@ const PaymentVerificationPage = () => {
   };
 
   const renderVerificationStatus = () => {
+    const trxType = verificationData?.transaction?.transactionType;
+    const isTransactionRegistration = trxType === 'transaction-registration';
+
     switch (verificationStatus) {
       case 'verifying':
         return (
@@ -191,7 +194,25 @@ const PaymentVerificationPage = () => {
                 </div>
               </div>
             )}
-            {redirectAfterCountdown ? (
+            {isTransactionRegistration ? (
+              <div className="text-left space-y-4">
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50/80 p-4">
+                  <p className="text-sm font-semibold text-emerald-950 mb-2">What happens next</p>
+                  <p className="text-sm text-emerald-900 leading-relaxed">
+                    Your transaction registration has been acknowledged. It has been submitted to the real estate
+                    regulatory authority for review and investigation. Once approved, your official registration
+                    certificate will be issued within the next <strong>72 hours</strong>.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => router.push('/transaction-registration?tab=search')}
+                  className="w-full bg-[#09391C] hover:bg-[#0B423D] text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+                >
+                  Check status
+                </button>
+              </div>
+            ) : redirectAfterCountdown ? (
               <p className="text-sm text-gray-500">Redirecting in {countdown} seconds...</p>
             ) : (
               <p className="text-sm text-gray-500">You will remain on this page. You can navigate manually when ready.</p>

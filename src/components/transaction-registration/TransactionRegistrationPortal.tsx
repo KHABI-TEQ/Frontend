@@ -16,6 +16,9 @@ import {
 } from "@/utils/transaction-processing-fee";
 import { buildFullAddress, EMPTY_ADDRESS, isAddressRequiredPartsFilled } from "@/utils/address";
 import { AddressBreakdownFields } from "@/components/transaction-registration/AddressBreakdownFields";
+import { PersonNameFields } from "@/components/transaction-registration/PersonNameFields";
+import { concatFullName, isPersonNameComplete } from "@/utils/person-name";
+import { GuidelinesTabContent } from "@/components/transaction-registration/GuidelinesTabContent";
 import { FileText, Search, ShieldCheck, ChevronLeft, ChevronRight, Award } from "lucide-react";
 
 type TabId = "guidelines" | "search" | "register" | "certificate";
@@ -59,15 +62,17 @@ export default function TransactionRegistrationPortal() {
   const [searchError, setSearchError] = useState<string | null>(null);
 
   const [regTransactionType, setRegTransactionType] = useState("");
-  const [propertyListedOnPlatform, setPropertyListedOnPlatform] = useState(!!propertyIdFromUrl);
-  const [practitionerOnPlatform, setPractitionerOnPlatform] = useState(!!propertyIdFromUrl);
+  const [propertyListedOnPlatform, setPropertyListedOnPlatform] = useState(true);
+  const [practitionerOffPlatform, setPractitionerOffPlatform] = useState(false);
   const [offPlatformPartyType, setOffPlatformPartyType] = useState<"agent" | "property_owner">("agent");
   const [regPropertyId, setRegPropertyId] = useState(propertyIdFromUrl);
-  const [regBuyerName, setRegBuyerName] = useState("");
+  const [regBuyerFirstName, setRegBuyerFirstName] = useState("");
+  const [regBuyerLastName, setRegBuyerLastName] = useState("");
   const [regBuyerEmail, setRegBuyerEmail] = useState("");
   const [regBuyerPhone, setRegBuyerPhone] = useState("");
   const [regValue, setRegValue] = useState("");
-  const [practitionerName, setPractitionerName] = useState("");
+  const [practitionerFirstName, setPractitionerFirstName] = useState("");
+  const [practitionerLastName, setPractitionerLastName] = useState("");
   const [practitionerEmail, setPractitionerEmail] = useState("");
   const [practitionerPhone, setPractitionerPhone] = useState("");
   const [practitionerCompany, setPractitionerCompany] = useState("");
@@ -75,7 +80,8 @@ export default function TransactionRegistrationPortal() {
   const [regPropType, setRegPropType] = useState<"land" | "residential" | "commercial">("residential");
   const [regAddress, setRegAddress] = useState(EMPTY_ADDRESS);
   const [regTitleNumber, setRegTitleNumber] = useState("");
-  const [regOwnerName, setRegOwnerName] = useState("");
+  const [regOwnerFirstName, setRegOwnerFirstName] = useState("");
+  const [regOwnerLastName, setRegOwnerLastName] = useState("");
   const [regLat, setRegLat] = useState("");
   const [regLng, setRegLng] = useState("");
   const [regSurveyPlan, setRegSurveyPlan] = useState("");
@@ -105,7 +111,7 @@ export default function TransactionRegistrationPortal() {
       setRegPropertyId(propertyIdFromUrl);
       setSearchPropertyId(propertyIdFromUrl);
       setPropertyListedOnPlatform(true);
-      setPractitionerOnPlatform(true);
+      setPractitionerOffPlatform(false);
     }
   }, [propertyIdFromUrl]);
 
@@ -187,23 +193,34 @@ export default function TransactionRegistrationPortal() {
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
     const valueNum = Number(regValue.replace(/\D/g, ""));
-    if (!regTransactionType || !regBuyerName.trim() || !regBuyerEmail.trim() || !regBuyerPhone.trim() || !Number.isFinite(valueNum)) {
-      toast.error("Complete transaction type, buyer details, and transaction value.");
+    if (
+      !regTransactionType ||
+      !isPersonNameComplete(regBuyerFirstName, regBuyerLastName) ||
+      !regBuyerEmail.trim() ||
+      !regBuyerPhone.trim() ||
+      !Number.isFinite(valueNum)
+    ) {
+      toast.error("Complete transaction type, buyer first and last name, and transaction value.");
       return;
     }
     if (propertyListedOnPlatform && !regPropertyId.trim()) {
       toast.error("Property ID is required when the property is listed on KHABITEQ.");
       return;
     }
-    if (!propertyListedOnPlatform && practitionerOnPlatform) {
+    if (!propertyListedOnPlatform && !practitionerOffPlatform) {
       toast.error(
         'For properties not listed on KHABITEQ, uncheck "Practitioner (agent) is on KHABITEQ" and provide who you transacted with.'
       );
       return;
     }
-    if (!practitionerOnPlatform && (!practitionerName.trim() || !practitionerEmail.trim() || !practitionerPhone.trim())) {
+    if (
+      practitionerOffPlatform &&
+      (!isPersonNameComplete(practitionerFirstName, practitionerLastName) ||
+        !practitionerEmail.trim() ||
+        !practitionerPhone.trim())
+    ) {
       const partyLabel = offPlatformPartyType === "property_owner" ? "Property owner" : "Agent";
-      toast.error(`${partyLabel} name, email, and phone are required.`);
+      toast.error(`${partyLabel} first name, last name, email, and phone are required.`);
       return;
     }
     if (!buyerIdFile || !paymentReceiptFile) {
@@ -256,7 +273,7 @@ export default function TransactionRegistrationPortal() {
         transactionType: regTransactionType,
         buyer: {
           email: regBuyerEmail.trim(),
-          fullName: regBuyerName.trim(),
+          fullName: concatFullName(regBuyerFirstName, regBuyerLastName),
           phoneNumber: regBuyerPhone.trim(),
         },
         transactionValue: valueNum,
@@ -264,21 +281,21 @@ export default function TransactionRegistrationPortal() {
           type: regPropType,
           exactAddress: regFullAddress || undefined,
           titleNumber: regTitleNumber.trim() || undefined,
-          ownerName: regOwnerName.trim() || undefined,
+          ownerName: concatFullName(regOwnerFirstName, regOwnerLastName) || undefined,
           lat: regLat ? Number(regLat) : undefined,
           lng: regLng ? Number(regLng) : undefined,
           surveyPlanRef: regSurveyPlan.trim() || undefined,
-          ownerConfirmation: regPropType === "land" ? regOwnerConfirmation : undefined,
+          ownerConfirmation: regOwnerConfirmation || undefined,
         },
         buyerIdFileName: buyerIdUpload.fileName,
         buyerIdUrl: buyerIdUpload.url,
         paymentReceiptFileName: paymentReceiptUpload.fileName,
         paymentReceiptUrl: paymentReceiptUpload.url,
       };
-      if (!practitionerOnPlatform) {
+      if (practitionerOffPlatform) {
         body.offPlatformPartyType = offPlatformPartyType;
         body.practitioner = {
-          fullName: practitionerName.trim(),
+          fullName: concatFullName(practitionerFirstName, practitionerLastName),
           email: practitionerEmail.trim(),
           phoneNumber: practitionerPhone.trim(),
           companyName: offPlatformPartyType === "agent" ? practitionerCompany.trim() || undefined : undefined,
@@ -374,35 +391,25 @@ export default function TransactionRegistrationPortal() {
         </div>
 
         {tab === "guidelines" && (
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 md:p-8 shadow-sm space-y-6">
-            <div>
-              <h2 className="text-xl font-bold text-gray-900">Processing fees</h2>
-              <p className="text-sm text-gray-600 mt-1">Fees are set by regulation and confirmed at checkout.</p>
+          <div className="rounded-2xl border-2 border-white/80 shadow-lg shadow-gray-200/50 overflow-hidden bg-gradient-to-br from-emerald-50/80 via-white to-teal-50/30">
+            <div
+              className="px-5 py-5 md:px-8 md:py-6 border-b border-white/60"
+              style={{ background: "linear-gradient(135deg, #059669 0%, #10b981 45%, #14b8a6 100%)" }}
+            >
+              <div className="flex items-start gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/20 text-white backdrop-blur-sm">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-xl md:text-2xl font-bold text-white">Guidelines &amp; fees</h2>
+                  <p className="text-sm text-white/90 mt-1 max-w-2xl">
+                    For buyers and tenants: fees, covered transaction types, and what you need before you register.
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-200 text-left text-gray-600">
-                    <th className="py-2 pr-4">Transaction value</th>
-                    <th className="py-2">Processing fee</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {PROCESSING_FEE_BANDS.map((b) => (
-                    <tr key={b.label} className="border-b border-gray-100">
-                      <td className="py-3 pr-4">{b.label}</td>
-                      <td className="py-3 font-semibold">{formatNaira(b.feeNaira)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="rounded-xl bg-[#8DDB90]/10 border border-[#8DDB90]/25 p-4 text-sm text-[#09391C]">
-              <p className="font-semibold mb-2">Off-platform transactions</p>
-              <p>
-                You can register a transaction even if the property was never listed on KHABITEQ or your agent is not on the platform.
-                Provide the practitioner&apos;s contact details and full property identification when registering.
-              </p>
+            <div className="p-5 md:p-8">
+              <GuidelinesTabContent bands={PROCESSING_FEE_BANDS} formatNaira={formatNaira} />
             </div>
           </div>
         )}
@@ -499,13 +506,15 @@ export default function TransactionRegistrationPortal() {
                     onChange={(e) => {
                       const checked = e.target.checked;
                       setPropertyListedOnPlatform(checked);
-                      if (!checked) setPractitionerOnPlatform(false);
+                      if (!checked) {
+                        setPractitionerOffPlatform(true);
+                      }
                     }}
                     className="mt-1"
                   />
                   <span>
                     <span className="block text-sm font-semibold text-gray-900">Property is listed on KHABITEQ</span>
-                    <span className="block text-xs text-gray-600">Check only if you have a Property ID from our marketplace.</span>
+                    <span className="block text-xs text-gray-600">Uncheck if you transacted on a property that is not on our marketplace.</span>
                   </span>
                 </label>
                 {propertyListedOnPlatform && (
@@ -520,12 +529,13 @@ export default function TransactionRegistrationPortal() {
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={practitionerOnPlatform}
+                    checked={!practitionerOffPlatform}
                     onChange={(e) => {
-                      const checked = e.target.checked;
-                      setPractitionerOnPlatform(checked);
-                      if (checked) {
-                        setPractitionerName("");
+                      const isOnPlatform = e.target.checked;
+                      setPractitionerOffPlatform(!isOnPlatform);
+                      if (isOnPlatform) {
+                        setPractitionerFirstName("");
+                        setPractitionerLastName("");
                         setPractitionerEmail("");
                         setPractitionerPhone("");
                         setPractitionerCompany("");
@@ -539,7 +549,7 @@ export default function TransactionRegistrationPortal() {
                     <span className="block text-xs text-gray-600">Uncheck if you transacted with an agent or property owner not registered on the platform.</span>
                   </span>
                 </label>
-                {!practitionerOnPlatform && (
+                {practitionerOffPlatform && (
                   <div className="space-y-4">
                     <div>
                       <p className={labelClass}>Who did you transact with? *</p>
@@ -566,24 +576,28 @@ export default function TransactionRegistrationPortal() {
                         </label>
                       </div>
                     </div>
+                    <PersonNameFields
+                      firstName={practitionerFirstName}
+                      lastName={practitionerLastName}
+                      onFirstNameChange={setPractitionerFirstName}
+                      onLastNameChange={setPractitionerLastName}
+                      labelPrefix={offPlatformPartyType === "property_owner" ? "Property owner" : "Agent"}
+                      required={practitionerOffPlatform}
+                      labelClass={labelClass}
+                      inputClass={inputClass}
+                    />
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="sm:col-span-2">
-                        <label className={labelClass}>
-                          {offPlatformPartyType === "property_owner" ? "Property owner full name *" : "Agent full name *"}
-                        </label>
-                        <input type="text" value={practitionerName} onChange={(e) => setPractitionerName(e.target.value)} className={inputClass} required={!practitionerOnPlatform} />
-                      </div>
                       <div>
                         <label className={labelClass}>
                           {offPlatformPartyType === "property_owner" ? "Property owner email *" : "Agent email *"}
                         </label>
-                        <input type="email" value={practitionerEmail} onChange={(e) => setPractitionerEmail(e.target.value)} className={inputClass} required={!practitionerOnPlatform} />
+                        <input type="email" value={practitionerEmail} onChange={(e) => setPractitionerEmail(e.target.value)} className={inputClass} required={practitionerOffPlatform} />
                       </div>
                       <div>
                         <label className={labelClass}>
                           {offPlatformPartyType === "property_owner" ? "Property owner phone *" : "Agent phone *"}
                         </label>
-                        <input type="tel" value={practitionerPhone} onChange={(e) => setPractitionerPhone(e.target.value)} className={inputClass} required={!practitionerOnPlatform} />
+                        <input type="tel" value={practitionerPhone} onChange={(e) => setPractitionerPhone(e.target.value)} className={inputClass} required={practitionerOffPlatform} />
                       </div>
                       {offPlatformPartyType === "agent" && (
                         <>
@@ -602,11 +616,17 @@ export default function TransactionRegistrationPortal() {
                 )}
               </div>
 
+              <PersonNameFields
+                firstName={regBuyerFirstName}
+                lastName={regBuyerLastName}
+                onFirstNameChange={setRegBuyerFirstName}
+                onLastNameChange={setRegBuyerLastName}
+                labelPrefix="Buyer"
+                required
+                labelClass={labelClass}
+                inputClass={inputClass}
+              />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="sm:col-span-2">
-                  <label className={labelClass}>Buyer full name *</label>
-                  <input type="text" value={regBuyerName} onChange={(e) => setRegBuyerName(e.target.value)} className={inputClass} required />
-                </div>
                 <div>
                   <label className={labelClass}>Buyer email *</label>
                   <input type="email" value={regBuyerEmail} onChange={(e) => setRegBuyerEmail(e.target.value)} className={inputClass} required />
@@ -685,9 +705,16 @@ export default function TransactionRegistrationPortal() {
                       <label className={labelClass}>Title number (optional)</label>
                       <input type="text" value={regTitleNumber} onChange={(e) => setRegTitleNumber(e.target.value)} className={inputClass} />
                     </div>
-                    <div>
-                      <label className={labelClass}>Owner name (optional)</label>
-                      <input type="text" value={regOwnerName} onChange={(e) => setRegOwnerName(e.target.value)} className={inputClass} />
+                    <div className="sm:col-span-2">
+                      <PersonNameFields
+                        firstName={regOwnerFirstName}
+                        lastName={regOwnerLastName}
+                        onFirstNameChange={setRegOwnerFirstName}
+                        onLastNameChange={setRegOwnerLastName}
+                        labelPrefix="Property owner"
+                        labelClass={labelClass}
+                        inputClass={inputClass}
+                      />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
@@ -725,12 +752,39 @@ export default function TransactionRegistrationPortal() {
                     labelClass={labelClass}
                     inputClass={inputClass}
                   />
-                  <label className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" checked={regOwnerConfirmation} onChange={(e) => setRegOwnerConfirmation(e.target.checked)} />
-                    Owner confirmation (optional)
-                  </label>
+                  <div className="sm:col-span-2">
+                    <PersonNameFields
+                      firstName={regOwnerFirstName}
+                      lastName={regOwnerLastName}
+                      onFirstNameChange={setRegOwnerFirstName}
+                      onLastNameChange={setRegOwnerLastName}
+                      labelPrefix="Property owner"
+                      labelClass={labelClass}
+                      inputClass={inputClass}
+                    />
+                  </div>
                 </>
               )}
+
+              <div className="rounded-xl border border-amber-100 bg-amber-50/40 p-4">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={regOwnerConfirmation}
+                    onChange={(e) => setRegOwnerConfirmation(e.target.checked)}
+                    className="mt-1"
+                  />
+                  <span>
+                    <span className="block text-sm font-semibold text-gray-900">
+                      Property owner payment confirmation (optional)
+                    </span>
+                    <span className="block text-xs text-gray-600 mt-0.5">
+                      Check this if the property owner or seller has confirmed to you that they received your payment for
+                      this transaction. This helps support your registration record with KHABITEQ.
+                    </span>
+                  </span>
+                </label>
+              </div>
 
               <button
                 type="submit"
