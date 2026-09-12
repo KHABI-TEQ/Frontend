@@ -24,6 +24,8 @@ import ProcessingRequest from "@/components/loading-component/ProcessingRequest"
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import api from "@/utils/axiosConfig";
+import BrmPicker from "@/components/brm/BrmPicker";
+import { Users as UsersIcon } from "lucide-react";
 
 interface UserProfile {
   _id: string;
@@ -34,7 +36,7 @@ interface UserProfile {
   address?: string;
   accountId?: string;
   profileImage?: string;
-  userType: "Agent" | "Landowners" | "FieldAgent" | "Developer";
+  userType: "Agent" | "Landowners" | "FieldAgent" | "Developer" | "Lawyer" | "Surveyor";
   accountApproved?: boolean;
   createdAt: string;
 }
@@ -50,8 +52,10 @@ export default function ProfileSettingsPage() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<
-    "profile" | "password" | "account"
+    "profile" | "password" | "account" | "brm"
   >("profile");
+  const [brmId, setBrmId] = useState<string | null>(null);
+  const [isSavingBrm, setIsSavingBrm] = useState(false);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [isUploadingProfileImage, setIsUploadingProfileImage] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
@@ -72,13 +76,13 @@ export default function ProfileSettingsPage() {
   const [isDeletionLoading, setIsDeletionLoading] = useState(false);
 
   const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
-  const urlTab = (searchParams.get('tab') || undefined) as ("profile" | "password" | "account") | undefined;
+  const urlTab = (searchParams.get('tab') || undefined) as ("profile" | "password" | "account" | "brm") | undefined;
 
   // Apply URL tab if provided
   useEffect(() => {
     if (urlTab) {
       // Validate and set
-      const allowed = ['profile', 'password', 'account'];
+      const allowed = ['profile', 'password', 'account', 'brm'];
       if (allowed.includes(urlTab)) {
         setActiveTab(urlTab as any);
       }
@@ -113,6 +117,13 @@ export default function ProfileSettingsPage() {
       };
 
       setUserProfile(userProfile);
+      try {
+        const profileRes = await api.get("/account/profile");
+        const assigned = profileRes.data?.data?.user?.brm?.id || profileRes.data?.data?.user?.brmId;
+        if (assigned) setBrmId(String(assigned));
+      } catch {
+        // BRM is optional for accounts that do not have one yet
+      }
     } catch (error) {
       console.error("Failed to fetch user profile:", error);
       toast.error("Failed to load profile");
@@ -230,6 +241,7 @@ export default function ProfileSettingsPage() {
     try {
       const formData = new FormData();
       formData.append("file", profileImageFile);
+      formData.append("for", "profile-picture");
 
       const uploadResponse = await api.post("/upload-single-file", formData, {
         headers: {
@@ -243,14 +255,22 @@ export default function ProfileSettingsPage() {
 
       const imageUrl = uploadResponse.data.data.url;
 
-      const updateResponse = await api.patch("/accounts/updateProfilePicture", {
+      const updateResponse = await api.patch("/account/updateProfilePicture", {
         profile_picture: imageUrl,
       });
 
       if (updateResponse.data.success) {
         const updatedProfile = { ...userProfile, profileImage: imageUrl };
         setUserProfile(updatedProfile as UserProfile);
-        setUser(normalizeUser({ ...user, profile_picture: imageUrl }));
+        const nextUser = normalizeUser({ ...user, profile_picture: imageUrl });
+        setUser(nextUser);
+        try {
+          if (typeof window !== "undefined" && nextUser) {
+            sessionStorage.setItem("user", JSON.stringify(nextUser));
+          }
+        } catch {
+          // ignore storage failures
+        }
 
         setProfileImageFile(null);
         setProfileImagePreview(null);
@@ -401,6 +421,10 @@ export default function ProfileSettingsPage() {
                 ? "Field Agent Account"
                 : user.userType === "Developer"
                 ? "Developer Account"
+                : user.userType === "Lawyer"
+                ? "Lawyer Account"
+                : user.userType === "Surveyor"
+                ? "Surveyor Account"
                 : ""}
             </div>
           </div>
@@ -412,6 +436,9 @@ export default function ProfileSettingsPage() {
             {[
               { id: "profile", label: "Profile Details", icon: UserIcon },
               { id: "password", label: "Change Password", icon: LockIcon },
+              ...((user.userType === "Agent" || user.userType === "Developer")
+                ? [{ id: "brm", label: "BRM", icon: UsersIcon }]
+                : []),
               {
                 id: "account",
                 label: "Account Settings",
@@ -793,6 +820,40 @@ export default function ProfileSettingsPage() {
                     {isChangingPassword ? "Changing..." : "Change Password"}
                   </button>
                 </form>
+              </div>
+            )}
+
+            {activeTab === "brm" && (user.userType === "Agent" || user.userType === "Developer") && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-[#09391C] mb-2">
+                    Business Relation Manager
+                  </h3>
+                  <p className="text-sm text-[#5A5D63] mb-4">
+                    Assign or change the BRM who supports your practice.
+                  </p>
+                </div>
+                <BrmPicker selectedId={brmId} onChange={setBrmId} optional />
+                <button
+                  type="button"
+                  disabled={isSavingBrm}
+                  onClick={async () => {
+                    setIsSavingBrm(true);
+                    try {
+                      await api.put("/account/brm", { brmId });
+                      toast.success(brmId ? "BRM assigned" : "BRM cleared");
+                    } catch (error) {
+                      toast.error(
+                        error instanceof Error ? error.message : "Could not update BRM",
+                      );
+                    } finally {
+                      setIsSavingBrm(false);
+                    }
+                  }}
+                  className="bg-[#8DDB90] hover:bg-[#7BC87F] text-white px-6 py-2 rounded-lg font-medium disabled:opacity-50"
+                >
+                  {isSavingBrm ? "Saving..." : "Save BRM"}
+                </button>
               </div>
             )}
 

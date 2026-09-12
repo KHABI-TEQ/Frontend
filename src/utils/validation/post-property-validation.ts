@@ -441,7 +441,10 @@ export const step3ValidationSchema = () => {
   });
 };
 
-export const step4ValidationSchema = () => {
+export const step4ValidationSchema = (options?: {
+  requireOwnerDeclaration?: boolean;
+}) => {
+  const requireOwner = options?.requireOwnerDeclaration !== false;
   return Yup.object({
     contactInfo: Yup.object({
       firstName: Yup.string().required("First name is required"),
@@ -449,7 +452,13 @@ export const step4ValidationSchema = () => {
       email: Yup.string().email("Invalid email").required("Email is required"),
       phone: Yup.string().required("Phone number is required"),
     }).required(),
-    isLegalOwner: Yup.boolean().required("Please confirm ownership status"),
+    ...(requireOwner
+      ? {
+          isLegalOwner: Yup.boolean().required(
+            "Please confirm ownership status",
+          ),
+        }
+      : {}),
   });
 };
 

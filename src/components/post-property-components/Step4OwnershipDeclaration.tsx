@@ -21,8 +21,14 @@ import { selectShowCommissionFee } from "@/store/subscriptionFeaturesSlice";
 import "react-phone-number-input/style.css";
 import "@/styles/phone-input.css";
 import { StepProps } from "@/types/post-property.types";
-
-const STANDARD_AGENT_COMMISSION_PERCENT_MAX = 5;
+import { shouldHideListingOwnerDeclaration } from "@/utils/listingOwnerDeclaration";
+import { GET_REQUEST } from "@/utils/requests";
+import { URLS } from "@/utils/URLS";
+import Cookies from "js-cookie";
+import {
+  FLEXIBLE_AGENT_COMMISSION_PERCENT_MAX,
+  mandatoryAgentCommissionPercent,
+} from "@/utils/listingCommission";
 
 
 
@@ -93,20 +99,64 @@ const Step4OwnershipDeclaration: React.FC<StepProps> = () => {
 
   const showCommissionFee = useAppSelector(selectShowCommissionFee);
   const userType = getUserType();
+  const hideOwnerDeclaration = shouldHideListingOwnerDeclaration(user?.userType);
+  const [isPropertyScout, setIsPropertyScout] = useState(false);
 
-  // Default agent commission to 5% for Sale, Rent, JV, Shortlet when poster is Landlord or Developer
+  useEffect(() => {
+    const token = Cookies.get("token");
+    if (!token || !hideOwnerDeclaration) return;
+    GET_REQUEST<{ isPropertyScout?: boolean }>(
+      `${URLS.BASE}${URLS.propertyScoutStatus}`,
+      token
+    )
+      .then((res) => {
+        setIsPropertyScout(Boolean((res as any)?.data?.isPropertyScout));
+      })
+      .catch(() => setIsPropertyScout(false));
+  }, [hideOwnerDeclaration]);
+
+  useEffect(() => {
+    if (hideOwnerDeclaration && propertyData.isLegalOwner !== false) {
+      updatePropertyData("isLegalOwner", false);
+      setFieldValue("isLegalOwner", false);
+    }
+  }, [hideOwnerDeclaration, propertyData.isLegalOwner, setFieldValue, updatePropertyData]);
+
   const hasAgentCommission = ["sell", "off-plan", "rent", "jv", "shortlet"].includes(
     propertyData.propertyType,
   );
+  const mandatoryCommissionPercent = mandatoryAgentCommissionPercent(
+    propertyData.propertyType,
+  );
+  const displayCommissionPercent =
+    mandatoryCommissionPercent ??
+    propertyData.agentCommissionPercent ??
+    FLEXIBLE_AGENT_COMMISSION_PERCENT_MAX;
+
   useEffect(() => {
-    if (
-      hasAgentCommission &&
-      (userType === "landowner" || userType === "developer") &&
-      (propertyData.agentCommissionPercent === undefined || propertyData.agentCommissionPercent === null)
-    ) {
-      updatePropertyData("agentCommissionPercent", STANDARD_AGENT_COMMISSION_PERCENT_MAX);
+    if (!hasAgentCommission || (userType !== "landowner" && userType !== "developer")) {
+      return;
     }
-  }, [propertyData.propertyType, userType, propertyData.agentCommissionPercent, hasAgentCommission]);
+    const next =
+      mandatoryCommissionPercent ?? FLEXIBLE_AGENT_COMMISSION_PERCENT_MAX;
+    if (propertyData.agentCommissionPercent !== next) {
+      if (mandatoryCommissionPercent != null) {
+        updatePropertyData("agentCommissionPercent", next);
+      } else if (
+        propertyData.agentCommissionPercent === undefined ||
+        propertyData.agentCommissionPercent === null
+      ) {
+        updatePropertyData("agentCommissionPercent", next);
+      }
+    }
+  }, [
+    propertyData.propertyType,
+    userType,
+    propertyData.agentCommissionPercent,
+    hasAgentCommission,
+    mandatoryCommissionPercent,
+    updatePropertyData,
+  ]);
 
   const getCommissionRate = (): number | null => {
     const userType = getUserType();
@@ -181,7 +231,7 @@ const Step4OwnershipDeclaration: React.FC<StepProps> = () => {
 
     const commissionRate = getCommissionRate();
     const priceValue = extractNumericValue(propertyData.price);
-    const agentPercent = propertyData.agentCommissionPercent ?? STANDARD_AGENT_COMMISSION_PERCENT_MAX;
+    const agentPercent = displayCommissionPercent;
     const agentAmount = priceValue * agentPercent / 100;
     const priceLabel = getPriceLabel(briefType);
     const agentCommissionLine = `• Standard agent commission: ${agentPercent}% of ${priceLabel} (${formatPriceForDisplay(agentAmount)}) payable to the Agent.`;
@@ -274,7 +324,31 @@ const Step4OwnershipDeclaration: React.FC<StepProps> = () => {
       </div>
 
       <div className="space-y-8">
-        {/* Legal Ownership Declaration */}
+        {hideOwnerDeclaration && isPropertyScout ? (
+        <div className="border border-[#E5E7EB] rounded-lg p-6">
+          <h3 className="text-xl font-semibold text-[#09391C] mb-4">
+            Authorisation to list
+          </h3>
+          <label className="flex items-start gap-3 text-sm text-[#1E1E1E]">
+            <input
+              type="checkbox"
+              className="mt-1"
+              checked={Boolean(propertyData.scoutListingAuthorized)}
+              onChange={(e) => {
+                updatePropertyData("scoutListingAuthorized" as any, e.target.checked);
+                setFieldValue("scoutListingAuthorized", e.target.checked);
+              }}
+            />
+            <span>
+              I confirm I am authorised by the owner to list this property. I understand
+              I am posting under a mandate and remain accountable for this listing.
+            </span>
+          </label>
+        </div>
+        ) : null}
+
+        {/* Legal Ownership Declaration — landlords only */}
+        {hideOwnerDeclaration ? null : (
         <div className="border border-[#E5E7EB] rounded-lg p-6">
           <h3 className="text-xl font-semibold text-[#09391C] mb-4">
             Declaration of property
@@ -327,6 +401,7 @@ const Step4OwnershipDeclaration: React.FC<StepProps> = () => {
             </div>
           </div>
         </div>
+        )}
 
         {/* Commission Agreement */}
         {propertyData.propertyType && commissionRate !== null && (
@@ -353,40 +428,40 @@ const Step4OwnershipDeclaration: React.FC<StepProps> = () => {
               </div>
             </div>
 
-            {/* Standard agent commission (Sale, Rent, JV, Shortlet – Landlord/Developer only) */}
+            {/* Standard agent commission (Sale/off-plan 5%, rent 10%; JV/shortlet optional) */}
             {hasAgentCommission &&
               (userType === "landowner" || userType === "developer") && (
               <div className="bg-[#F8F9FA] border border-[#DEE2E6] rounded-lg p-4 mb-4">
                 <h4 className="font-semibold text-[#09391C] mb-2">
                   Standard agent commission (payable to the Agent)
                 </h4>
-                {userType === "landowner" ? (
+                {mandatoryCommissionPercent != null || userType === "landowner" ? (
                   <p className="text-sm text-[#5A5D63]">
-                    Fixed at 5% of {getPriceLabel(propertyData.propertyType)} ={" "}
+                    Fixed at {displayCommissionPercent}% of{" "}
+                    {getPriceLabel(propertyData.propertyType)} ={" "}
                     {formatPriceForDisplay(
-                      (extractNumericValue(propertyData.price) * 5) / 100
+                      (extractNumericValue(propertyData.price) *
+                        displayCommissionPercent) /
+                        100
                     )}
                   </p>
                 ) : (
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-[#5A5D63]">
-                      Agent commission % (max 5%, you may set lower)
+                      Agent commission % (max {FLEXIBLE_AGENT_COMMISSION_PERCENT_MAX}%, you may set lower)
                     </label>
                     <input
                       type="number"
                       min={0}
-                      max={STANDARD_AGENT_COMMISSION_PERCENT_MAX}
+                      max={FLEXIBLE_AGENT_COMMISSION_PERCENT_MAX}
                       step={0.5}
-                      value={
-                        propertyData.agentCommissionPercent ??
-                        STANDARD_AGENT_COMMISSION_PERCENT_MAX
-                      }
+                      value={displayCommissionPercent}
                       onChange={(e) => {
                         const raw = parseFloat(e.target.value);
                         const clamped = Number.isNaN(raw)
-                          ? STANDARD_AGENT_COMMISSION_PERCENT_MAX
+                          ? FLEXIBLE_AGENT_COMMISSION_PERCENT_MAX
                           : Math.min(
-                              STANDARD_AGENT_COMMISSION_PERCENT_MAX,
+                              FLEXIBLE_AGENT_COMMISSION_PERCENT_MAX,
                               Math.max(0, raw)
                             );
                         handleFieldChange("agentCommissionPercent", clamped);
@@ -397,8 +472,7 @@ const Step4OwnershipDeclaration: React.FC<StepProps> = () => {
                       ={" "}
                       {formatPriceForDisplay(
                         (extractNumericValue(propertyData.price) *
-                          (propertyData.agentCommissionPercent ??
-                            STANDARD_AGENT_COMMISSION_PERCENT_MAX)) /
+                          displayCommissionPercent) /
                           100
                       )}{" "}
                       payable to the Agent
@@ -461,17 +535,10 @@ const Step4OwnershipDeclaration: React.FC<StepProps> = () => {
               (userType === "landowner" || userType === "developer") && (
               <p>
                 <span className="font-medium">Standard agent commission:</span>{" "}
-                {userType === "landowner"
-                  ? "5"
-                  : propertyData.agentCommissionPercent ??
-                    STANDARD_AGENT_COMMISSION_PERCENT_MAX}
-                % (
+                {displayCommissionPercent}% (
                 {formatPriceForDisplay(
                   (extractNumericValue(propertyData.price) *
-                    (userType === "landowner"
-                      ? 5
-                      : propertyData.agentCommissionPercent ??
-                        STANDARD_AGENT_COMMISSION_PERCENT_MAX)) /
+                    displayCommissionPercent) /
                     100
                 )}{" "}
                 to Agent)

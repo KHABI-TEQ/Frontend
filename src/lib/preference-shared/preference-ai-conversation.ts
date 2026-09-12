@@ -1712,8 +1712,8 @@ function getConversationFieldDisplayLines(
       };
     case "area":
       return {
-        screen: `Which area or neighbourhood within that LGA? (format: Lekki Phase 1)${suf}`,
-        speech: "Which area or neighbourhood?",
+        screen: `Which area or neighbourhood within that LGA? You can also name an estate (format: Lekki Phase 1 or Banana Island)${suf}`,
+        speech: "Which area, neighbourhood, or estate?",
       };
     case "property_subtype":
       if (pt === "rent") {

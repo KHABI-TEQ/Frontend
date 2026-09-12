@@ -33,9 +33,12 @@ import {
   step4ValidationSchema,
 } from "@/utils/validation/post-property-validation";
 import CombinedAuthGuard from "@/logic/combinedAuthGuard";
-import { PATCH_REQUEST } from "@/utils/requests";
+import { GET_REQUEST, PATCH_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import Breadcrumb from "@/components/extrals/Breadcrumb";
+import { shouldHideListingOwnerDeclaration } from "@/utils/listingOwnerDeclaration";
+import { listingAgentCommissionFields } from "@/utils/listingCommission";
+import { listingInspectionFeeNaira } from "@/utils/scoutListingAuth";
 
 interface SharedUpdatePropertyFormProps {
   propertyType: "sell" | "off-plan" | "rent" | "jv" | "shortlet";
@@ -44,7 +47,11 @@ interface SharedUpdatePropertyFormProps {
 }
 
 // Simplified validation schemas for each step - only validate basic fields to avoid cross-step validation
-const getValidationSchema = (currentStep: number, propertyData: any) => {
+const getValidationSchema = (
+  currentStep: number,
+  propertyData: any,
+  hideOwnerDeclaration = false,
+) => {
   switch (currentStep) {
     case 0:
       // Only validate basic step 1 fields to avoid validating other steps
@@ -74,7 +81,9 @@ const getValidationSchema = (currentStep: number, propertyData: any) => {
 
     case 3:
       // Only validate step 4 fields
-      return step4ValidationSchema();
+      return step4ValidationSchema({
+        requireOwnerDeclaration: !hideOwnerDeclaration,
+      });
 
     default:
       return Yup.object({});
@@ -88,6 +97,7 @@ const isStepValid = (
   areImagesValid: () => boolean,
   formikErrors: any,
   formikTouched: any,
+  hideOwnerDeclaration = false,
 ) => {
   switch (step) {
     case 0:
@@ -101,7 +111,7 @@ const isStepValid = (
       return areImagesValid();
     case 3:
       // Step 3: Check step 4 requirements
-      return checkStep4RequiredFields(propertyData);
+      return checkStep4RequiredFields(propertyData, hideOwnerDeclaration);
     default:
       return true;
   }
@@ -213,16 +223,19 @@ const checkStep2RequiredFields = (propertyData: any) => {
 };
 
 // Helper function to check step 4 required fields
-const checkStep4RequiredFields = (propertyData: any) => {
+const checkStep4RequiredFields = (
+  propertyData: any,
+  hideOwnerDeclaration = false,
+) => {
   const contactInfo = propertyData.contactInfo;
-  return (
-    !!(
-      contactInfo.firstName &&
-      contactInfo.lastName &&
-      contactInfo.email &&
-      contactInfo.phone
-    ) && propertyData.isLegalOwner !== undefined
+  const hasContact = !!(
+    contactInfo.firstName &&
+    contactInfo.lastName &&
+    contactInfo.email &&
+    contactInfo.phone
   );
+  if (hideOwnerDeclaration) return hasContact;
+  return hasContact && propertyData.isLegalOwner !== undefined;
 };
 
 const SharedUpdatePropertyForm: React.FC<SharedUpdatePropertyFormProps> = ({
@@ -234,6 +247,7 @@ const SharedUpdatePropertyForm: React.FC<SharedUpdatePropertyFormProps> = ({
   const params = useParams();
   const propertyId = params?.propertyId as string;
   const { user } = useUserContext();
+  const hideOwnerDeclaration = shouldHideListingOwnerDeclaration(user?.userType);
   const {
     currentStep,
     setCurrentStep,
@@ -311,10 +325,14 @@ const SharedUpdatePropertyForm: React.FC<SharedUpdatePropertyFormProps> = ({
               label: property.location.localGovernment 
             } : null,
             area: property.location?.area || "",
+            estate: property.location?.estate || "",
             streetAddress: property.location?.streetAddress || "",
             landSize: property.landSize?.size || "",
             measurementType: property.landSize?.measurementType || "",
             price: property.price?.toString() || "",
+            inspectionFee: Number(property.inspectionFee) || 5000,
+            priceChangeBlocked: Boolean(property.priceChangeBlocked),
+            priceChangeBlockedMessage: property.priceChangeBlockedMessage || "",
             bedrooms: parseInt(property.additionalFeatures?.noOfBedroom) || 0,
             bathrooms: parseInt(property.additionalFeatures?.noOfBathroom) || 0,
             toilets: parseInt(property.additionalFeatures?.noOfToilet) || 0,
@@ -475,7 +493,10 @@ const SharedUpdatePropertyForm: React.FC<SharedUpdatePropertyFormProps> = ({
         isCurrentStepValid = areImagesValid();
         break;
       case 3:
-        isCurrentStepValid = checkStep4RequiredFields(propertyData);
+        isCurrentStepValid = checkStep4RequiredFields(
+          propertyData,
+          hideOwnerDeclaration,
+        );
         break;
       default:
         isCurrentStepValid = true;
@@ -554,6 +575,28 @@ const SharedUpdatePropertyForm: React.FC<SharedUpdatePropertyFormProps> = ({
     try {
       setIsSubmitting(true);
 
+      if (hideOwnerDeclaration) {
+        const token = Cookies.get("token");
+        let scout = false;
+        if (token) {
+          try {
+            const scoutRes = await GET_REQUEST(
+              `${URLS.BASE}${URLS.propertyScoutStatus}`,
+              token
+            );
+            scout = Boolean((scoutRes as any)?.data?.isPropertyScout);
+          } catch {
+            scout = false;
+          }
+        }
+        if (scout && !propertyData.scoutListingAuthorized) {
+          toast.error("Confirm you are authorised by the owner to list this property.");
+          setCurrentStep(3);
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       // 1. Collect uploaded image URLs (images are auto-uploaded)
       const uploadedImageUrls: string[] = images
         .filter((img) => img.url)
@@ -577,6 +620,15 @@ const SharedUpdatePropertyForm: React.FC<SharedUpdatePropertyFormProps> = ({
       else if (propertyData.propertyType === "jv") briefType = "Joint Venture";
 
       const isOffPlan = propertyData.propertyType === "off-plan";
+      const commissionFields = ["sell", "off-plan", "rent", "jv", "shortlet"].includes(
+        propertyData.propertyType
+      )
+        ? listingAgentCommissionFields(
+            propertyData.propertyType,
+            extractNumericValue(propertyData.price),
+            propertyData.agentCommissionPercent,
+          )
+        : {};
 
       // 4. Prepare property payload
       const payload = {
@@ -594,6 +646,7 @@ const SharedUpdatePropertyForm: React.FC<SharedUpdatePropertyFormProps> = ({
           state: propertyData.state?.value || "",
           localGovernment: propertyData.lga?.value || "",
           area: propertyData.area,
+          estate: propertyData.estate || "",
           streetAddress: propertyData.streetAddress,
         },
         price: extractNumericValue(propertyData.price),
@@ -604,7 +657,9 @@ const SharedUpdatePropertyForm: React.FC<SharedUpdatePropertyFormProps> = ({
           phoneNumber: propertyData.contactInfo.phone,
           email: propertyData.contactInfo.email,
         },
-        areYouTheOwner: propertyData.isLegalOwner,
+        areYouTheOwner: hideOwnerDeclaration
+          ? false
+          : Boolean(propertyData.isLegalOwner),
         ownershipDocuments: propertyData.ownershipDocuments || [],
         landSize: {
           measurementType: propertyData.propertyType === "shortlet" ? "" : propertyData.measurementType,
@@ -633,6 +688,8 @@ const SharedUpdatePropertyForm: React.FC<SharedUpdatePropertyFormProps> = ({
         videos: uploadedVideoUrls,
         isTenanted: normalizeIsTenantedForApi(propertyData.isTenanted),
         holdDuration: normalizeHoldDurationForApi(propertyData.holdDuration),
+        inspectionFee: listingInspectionFeeNaira(propertyData.inspectionFee),
+        ...commissionFields,
         // Shortlet specific fields
         availability: propertyData.availability
           ? {
@@ -672,7 +729,10 @@ const SharedUpdatePropertyForm: React.FC<SharedUpdatePropertyFormProps> = ({
         router.push("/my-listings");
       } else {
         const errorMessage =
-          (response as any)?.data?.message || "Failed to update property";
+          (response as any)?.message ||
+          (response as any)?.error ||
+          (response as any)?.data?.message ||
+          "Failed to update property";
         toast.error(errorMessage);
       }
     } catch (error) {
@@ -770,7 +830,11 @@ const SharedUpdatePropertyForm: React.FC<SharedUpdatePropertyFormProps> = ({
           {/* Main Content with Formik */}
           <Formik
             initialValues={propertyData}
-            validationSchema={getValidationSchema(currentStep, propertyData)}
+            validationSchema={getValidationSchema(
+              currentStep,
+              propertyData,
+              hideOwnerDeclaration,
+            )}
             onSubmit={() => {}}
             enableReinitialize
           >
@@ -848,6 +912,7 @@ const SharedUpdatePropertyForm: React.FC<SharedUpdatePropertyFormProps> = ({
                               areImagesValid,
                               errors,
                               touched,
+                              hideOwnerDeclaration,
                             )
                           }
                         />

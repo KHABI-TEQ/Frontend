@@ -35,6 +35,11 @@ import {
 import CombinedAuthGuard from "@/logic/combinedAuthGuard";
 import { PUT_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
+import { shouldHideListingOwnerDeclaration } from "@/utils/listingOwnerDeclaration";
+import {
+  listingInspectionFeeNaira,
+  scoutMustConfirmListingAuthorization,
+} from "@/utils/scoutListingAuth";
 import Breadcrumb from "@/components/extrals/Breadcrumb";
 
 interface UpdateRentPropertyFormProps {
@@ -76,6 +81,7 @@ const isStepValid = (
   step: number,
   propertyData: any,
   areImagesValid: () => boolean,
+  hideOwnerDeclaration = false,
 ) => {
   switch (step) {
     case 0:
@@ -85,7 +91,7 @@ const isStepValid = (
     case 2:
       return areImagesValid();
     case 3:
-      return checkStep4RequiredFields(propertyData);
+      return checkStep4RequiredFields(propertyData, hideOwnerDeclaration);
     default:
       return true;
   }
@@ -126,7 +132,11 @@ const checkRentStep2RequiredFields = (propertyData: any) => {
 };
 
 // Helper function to check step 4 required fields
-const checkStep4RequiredFields = (propertyData: any) => {
+const checkStep4RequiredFields = (
+  propertyData: any,
+  hideOwnerDeclaration = false,
+) => {
+  if (hideOwnerDeclaration) return true;
   return propertyData.isLegalOwner !== undefined;
 };
 
@@ -138,6 +148,7 @@ const UpdateRentPropertyForm: React.FC<UpdateRentPropertyFormProps> = ({
   const params = useParams();
   const propertyId = params?.propertyId as string;
   const { user } = useUserContext();
+  const hideOwnerDeclaration = shouldHideListingOwnerDeclaration(user?.userType);
   const {
     currentStep,
     setCurrentStep,
@@ -269,7 +280,10 @@ const UpdateRentPropertyForm: React.FC<UpdateRentPropertyFormProps> = ({
         isCurrentStepValid = areImagesValid();
         break;
       case 3:
-        isCurrentStepValid = checkStep4RequiredFields(propertyData);
+        isCurrentStepValid = checkStep4RequiredFields(
+          propertyData,
+          hideOwnerDeclaration,
+        );
         break;
       default:
         isCurrentStepValid = true;
@@ -318,6 +332,18 @@ const UpdateRentPropertyForm: React.FC<UpdateRentPropertyFormProps> = ({
     try {
       setIsSubmitting(true);
 
+      if (
+        await scoutMustConfirmListingAuthorization(
+          user?.userType,
+          propertyData.scoutListingAuthorized,
+        )
+      ) {
+        toast.error("Confirm you are authorised by the owner to list this property.");
+        setCurrentStep(3);
+        setIsSubmitting(false);
+        return;
+      }
+
       const uploadedImageUrls: string[] = images
         .filter((img) => img.url)
         .map((img) => img.url!);
@@ -342,11 +368,15 @@ const UpdateRentPropertyForm: React.FC<UpdateRentPropertyFormProps> = ({
           state: propertyData.state?.value || "",
           localGovernment: propertyData.lga?.value || "",
           area: propertyData.area,
+          estate: propertyData.estate || "",
           streetAddress: propertyData.streetAddress,
         },
         price: extractNumericValue(propertyData.price),
+        inspectionFee: listingInspectionFeeNaira(propertyData.inspectionFee),
         leaseHold: propertyData.leaseHold,
-        areYouTheOwner: propertyData.isLegalOwner,
+        areYouTheOwner: hideOwnerDeclaration
+          ? false
+          : Boolean(propertyData.isLegalOwner),
         ownershipDocuments: propertyData.ownershipDocuments || [],
         briefType: "Rent",
         additionalFeatures: {
@@ -379,7 +409,9 @@ const UpdateRentPropertyForm: React.FC<UpdateRentPropertyFormProps> = ({
         setShowSuccessModal(true);
       } else {
         const errorMessage =
-          (response as any)?.error || "Failed to update property";
+          (response as any)?.message ||
+          (response as any)?.error ||
+          "Failed to update property";
         toast.error(errorMessage);
       }
     } catch (error) {
@@ -518,6 +550,7 @@ const UpdateRentPropertyForm: React.FC<UpdateRentPropertyFormProps> = ({
                               currentStep,
                               propertyData,
                               areImagesValid,
+                              hideOwnerDeclaration,
                             )
                           }
                         />

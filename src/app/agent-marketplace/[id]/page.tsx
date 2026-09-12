@@ -5,12 +5,12 @@ import { useParams, useRouter } from 'next/navigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faMapMarkerAlt, faFileAlt, faBed, faTag, faUser, faEnvelope, faPhone, faCalendarAlt, faClock, faUsers, faHome } from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
-import { useUserContext } from '@/context/user-context';
-import { GET_REQUEST, POST_REQUEST } from '@/utils/requests';
+import { GET_REQUEST } from '@/utils/requests';
 import { URLS } from '@/utils/URLS';
 import toast from 'react-hot-toast';
 import Loading from '@/components/loading-component/loading';
 import Cookies from 'js-cookie';
+import MarketplacePreferenceReview from '@/components/agent-marketplace/MarketplacePreferenceReview';
 
 interface Buyer {
   _id: string;
@@ -99,26 +99,6 @@ interface Preference {
   receiverMode?: ReceiverMode;
 }
 
-interface MatchPreferenceResponseData {
-  matchedCount: number;
-  matchEmailBaseUrl?: string;
-}
-
-const DEAL_SITE_GENERAL_MARKETPLACE_COPY =
-  "This preference was submitted on an agent DealSite; matching is not available through the general marketplace action.";
-
-const isDealSiteReceiverModePref = (p: Pick<Preference, "receiverMode"> | null) =>
-  p ? String(p.receiverMode?.type ?? "").toLowerCase() === "dealsite" : false;
-
-const isDealSiteGeneralMarketplaceApiMessage = (msg: string) => {
-  const m = (msg || "").toLowerCase();
-  return (
-    /submitted\s+on\s+an\s+agent\s+dealsite/.test(m) ||
-    /matching\s+is\s+not\s+available\s+through\s+the\s+general\s+marketplace/.test(m) ||
-    /general\s+marketplace\s+action/.test(m)
-  );
-};
-
 interface ApiResponse {
   success: boolean;
   message: string;
@@ -128,33 +108,11 @@ interface ApiResponse {
 const PreferenceDetailPage = () => {
   const params = useParams();
   const router = useRouter();
-  const { user } = useUserContext();
   const [preference, setPreference] = useState<Preference | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [matchLoading, setMatchLoading] = useState(false);
-  const [matchLockedAfterSuccess, setMatchLockedAfterSuccess] = useState(false);
-  const [practitionerPageCta, setPractitionerPageCta] = useState(false);
-  const [dealSiteGeneralMatchDenied, setDealSiteGeneralMatchDenied] = useState(false);
-  const [dealSiteGeneralMatchMessage, setDealSiteGeneralMatchMessage] = useState<string | null>(null);
 
   const preferenceId = params?.id as string;
-
-  const isUnauthorizedMessage = (msg: string) =>
-    /unauthorized|jwt|expired|session|log\s*in|authentication/i.test(msg || "");
-
-  const isDealSiteSubmissionRejection = (msg: string) =>
-    /submitted\s+on\s+an\s+agent|receiver\s*mode|not\s+a\s+general|deal\s*site\s+submission|general\s+marketplace\s+action/i.test(
-      (msg || "").toLowerCase(),
-    );
-
-  const suggestsActivatePractitionerPage = (msg: string) => {
-    const m = (msg || "").toLowerCase();
-    if (isDealSiteSubmissionRejection(msg)) return false;
-    return /public\s*access|public\s*page|active.*public|must\s+activate|running|resume|paused|on\s*hold/.test(
-      m,
-    );
-  };
 
   useEffect(() => {
     const fetchPreferenceDetails = async () => {
@@ -171,15 +129,7 @@ const PreferenceDetailPage = () => {
         const response = await GET_REQUEST(url, token);
 
         if (response?.success && response?.data) {
-          const data = response.data as Preference;
-          setPreference(data);
-          if (isDealSiteReceiverModePref(data)) {
-            setDealSiteGeneralMatchDenied(true);
-            setDealSiteGeneralMatchMessage(DEAL_SITE_GENERAL_MARKETPLACE_COPY);
-          } else {
-            setDealSiteGeneralMatchDenied(false);
-            setDealSiteGeneralMatchMessage(null);
-          }
+          setPreference(response.data as Preference);
         } else {
           toast.error("Failed to load preference details")
           setError(response?.message || 'Failed to load preference details');
@@ -194,82 +144,6 @@ const PreferenceDetailPage = () => {
 
     fetchPreferenceDetails();
   }, [preferenceId]);
-
-  const handleMatchPreference = async () => {
-    if (!preferenceId) return;
-
-    const token = Cookies.get("token");
-    if (!user || !token) {
-      try {
-        sessionStorage.setItem(
-          "redirectAfterLogin",
-          `/agent-marketplace/${preferenceId}`,
-        );
-      } catch {
-        /* ignore */
-      }
-      router.push("/auth/login");
-      return;
-    }
-
-    setMatchLoading(true);
-    setPractitionerPageCta(false);
-
-    try {
-      const url = `${URLS.BASE}${URLS.accountMarketplaceMatchPreference(preferenceId)}`;
-      const response = await POST_REQUEST(url, {}, token);
-
-      if (response?.success && response.data) {
-        const data = response.data as MatchPreferenceResponseData;
-        const count = typeof data.matchedCount === "number" ? data.matchedCount : 0;
-        toast.success(
-          response.message ||
-            (count > 0
-              ? `Matched ${count} listing(s). The buyer will be notified by email.`
-              : "Request completed. The buyer will be notified by email."),
-        );
-        if (count > 0) {
-          setMatchLockedAfterSuccess(true);
-        }
-        return;
-      }
-
-      const errText = String(
-        response?.message || response?.error || "Could not match preference",
-      );
-
-      if (isUnauthorizedMessage(errText)) {
-        toast.error("Please log in again to continue.");
-        try {
-          sessionStorage.setItem(
-            "redirectAfterLogin",
-            `/agent-marketplace/${preferenceId}`,
-          );
-        } catch {
-          /* ignore */
-        }
-        router.push("/auth/login");
-        return;
-      }
-
-      if (isDealSiteGeneralMarketplaceApiMessage(errText)) {
-        setDealSiteGeneralMatchDenied(true);
-        setDealSiteGeneralMatchMessage(errText.trim() || DEAL_SITE_GENERAL_MARKETPLACE_COPY);
-        return;
-      }
-
-      if (suggestsActivatePractitionerPage(errText)) {
-        setPractitionerPageCta(true);
-      }
-
-      toast.error(errText);
-    } catch (e) {
-      console.error("Match preference error:", e);
-      toast.error("Something went wrong. Please try again.");
-    } finally {
-      setMatchLoading(false);
-    }
-  };
 
   const formatPrice = (price: number | string | null | undefined, currency?: string) => {
     const normalizedCurrency = (currency || 'NGN').toUpperCase();
@@ -726,83 +600,23 @@ const PreferenceDetailPage = () => {
               )}
 
 
-            {/* Match preference (auto-pair with agent listings) */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <h2 className="text-xl font-semibold text-[#09391C] mb-4">Match this preference</h2>
-
-              {!isDealSiteReceiverModePref(preference) && !dealSiteGeneralMatchDenied ? (
-              <div className="bg-[#8DDB90]/5 rounded-lg p-4 mb-4 border border-[#8DDB90]/20">
-                <div className="flex items-start gap-3">
-                  <div className="w-5 h-5 bg-[#8DDB90] rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-medium text-[#09391C] text-sm mb-1">Auto-pair your listings</h3>
-                    <p className="text-gray-600 text-xs">
-                      We&apos;ll compare this buyer&apos;s preference with properties on your Practitioner page and email them when there are matches (or if there are none).
-                    </p>
-                  </div>
-                </div>
-              </div>
-              ) : null}
-
-              {isDealSiteReceiverModePref(preference) || dealSiteGeneralMatchDenied ? (
-                <p className="text-sm text-gray-600 text-center py-2">
-                  {dealSiteGeneralMatchMessage || DEAL_SITE_GENERAL_MARKETPLACE_COPY}
+            {String(preference.receiverMode?.type || "").toLowerCase() === "dealsite" ? (
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <p className="text-sm text-gray-600">
+                  This preference was submitted on an agent DealSite and is not reviewed on the general marketplace.
                 </p>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    onClick={handleMatchPreference}
-                    disabled={
-                      matchLoading ||
-                      matchLockedAfterSuccess ||
-                      !["approved", "matched"].includes(
-                        (preference.status || "").toLowerCase(),
-                      )
-                    }
-                    className="w-full bg-[#8DDB90] hover:bg-[#7BC97F] disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-                  >
-                    {matchLoading ? (
-                      <span>Matching…</span>
-                    ) : (
-                      <>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                        Match preference
-                      </>
-                    )}
-                  </button>
-
-                  {!["approved", "matched"].includes((preference.status || "").toLowerCase()) && (
-                    <p className="text-xs text-amber-700 mt-2 text-center">
-                      Matching is only available when this preference is approved or already matched.
-                    </p>
-                  )}
-
-                  {matchLockedAfterSuccess && (
-                    <p className="text-xs text-gray-600 mt-2 text-center">
-                      Matches were sent. Avoid running match again unless you intend to refresh pairing.
-                    </p>
-                  )}
-
-                  <p className="text-sm text-gray-600 mt-3 text-center">
-                    {!user ? (
-                      <>
-                        You must{" "}
-                        <span className="font-medium text-[#8DDB90]">log in</span> as an agent to match.
-                      </>
-                    ) : (
-                      <>Requires an active practitioner page with running status.</>
-                    )}
-                  </p>
-                </>
-              )}
-            </div>
+              </div>
+            ) : (
+              <MarketplacePreferenceReview
+                preferenceId={preferenceId}
+                defaultMin={preference.budget?.minPrice}
+                defaultMax={preference.budget?.maxPrice}
+                defaultBedrooms={
+                  preference.propertyDetails?.minBedrooms ||
+                  preference.bookingDetails?.minBedrooms
+                }
+              />
+            )}
           </div>
         </div>
       </div>

@@ -6,6 +6,7 @@ import ReactSelect from "react-select";
 import CreatableSelect from "react-select/creatable";
 import RadioCheck from "@/components/general-components/radioCheck";
 import EnhancedPriceInput from "@/components/general-components/EnhancedPriceInput";
+import InspectionFeeField from "@/components/post-property-components/InspectionFeeField";
 import { useFormikContext } from "formik";
 import { usePostPropertyContext } from "@/context/post-property-context";
 import customStyles from "@/styles/inputStyle";
@@ -302,8 +303,17 @@ const RentStep1BasicDetails: React.FC = () => {
                 }
                 touched={!!touched?.price}
                 required
-                description="Enter the total annual rent amount"
+                disabled={!!propertyData.priceChangeBlocked}
+                description={
+                  propertyData.priceChangeBlocked
+                    ? propertyData.priceChangeBlockedMessage ||
+                      "Price cannot be changed while this property has an active or upcoming inspection."
+                    : "Enter the total annual rent amount"
+                }
               />
+            </div>
+            <div>
+              <InspectionFeeField />
             </div>
 
             {/* Lease Hold for Lease type */}

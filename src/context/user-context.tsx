@@ -37,7 +37,7 @@ export interface User {
   lastName?: string;
   phoneNumber?: string;
   selectedRegion?: string[];
-  userType?: "Agent" | "Landowners" | "FieldAgent" | "Developer";
+  userType?: "Agent" | "Landowners" | "FieldAgent" | "Developer" | "Lawyer" | "Surveyor";
   accountId?: string;
   profile_picture?: string;
   referralCode?: string;
@@ -85,7 +85,7 @@ export interface User {
   dealSite?: Record<string, unknown> | null;
 }
 
-const CANONICAL_USER_TYPES = ["Agent", "Landowners", "FieldAgent", "Developer"] as const;
+const CANONICAL_USER_TYPES = ["Agent", "Landowners", "FieldAgent", "Developer", "Lawyer", "Surveyor"] as const;
 type CanonicalUserType = (typeof CANONICAL_USER_TYPES)[number];
 
 function toCanonicalUserType(value: unknown): User["userType"] | undefined {
@@ -97,6 +97,8 @@ function toCanonicalUserType(value: unknown): User["userType"] | undefined {
   if (lower === "agent") return "Agent";
   if (lower === "landowners" || lower === "landowner") return "Landowners";
   if (lower === "fieldagent" || lower === "field_agent") return "FieldAgent";
+  if (lower === "lawyer") return "Lawyer";
+  if (lower === "surveyor") return "Surveyor";
   return CANONICAL_USER_TYPES.includes(s as CanonicalUserType) ? (s as CanonicalUserType) : undefined;
 }
 

@@ -152,10 +152,8 @@ export default function MyRequestToMarketPage() {
 
   /** Parsed sale price from formatted input (for validation and commission calc). */
   const registerSalePriceNum = Number(registerSalePrice.replace(/\D/g, "")) || 0;
-  /** Commission %: Landlord always 5; Developer from input (1–5). */
-  const registerSaleCommissionPct = isDeveloper
-    ? (Number(registerSaleCommissionPercent) || 0)
-    : 5;
+  /** Commission %: fixed 5% for landlords and developers. */
+  const registerSaleCommissionPct = 5;
   /** Calculated agent commission to show as publisher types (when price > 0 and valid %). */
   const calculatedAgentCommission =
     registerSalePriceNum > 0 && registerSaleCommissionPct >= 1 && registerSaleCommissionPct <= 5
@@ -197,13 +195,6 @@ export default function MyRequestToMarketPage() {
       toast.error("Enter a valid actual sale price (Naira).");
       return;
     }
-    if (isDeveloper) {
-      const pct = Number(registerSaleCommissionPercent);
-      if (!Number.isFinite(pct) || pct < 1 || pct > 5) {
-        toast.error("Commission must be between 1 and 5% for Developers.");
-        return;
-      }
-    }
     setRegisterSalePaymentConfirmOpen(true);
   };
 
@@ -216,18 +207,13 @@ export default function MyRequestToMarketPage() {
       setRegisterSalePaymentConfirmOpen(false);
       return;
     }
-    if (isDeveloper) {
-      const pct = Number(registerSaleCommissionPercent);
-      if (!Number.isFinite(pct) || pct < 1 || pct > 5) {
-        setRegisterSalePaymentConfirmOpen(false);
-        return;
-      }
-    }
     setRegisterSalePaymentConfirmOpen(false);
     setRegisterSaleSubmitting(true);
     try {
-      const body: { actualSalePriceNaira: number; commissionPercent?: number; commissionReceiptUrl?: string } = { actualSalePriceNaira: priceNum };
-      if (isDeveloper) body.commissionPercent = Number(registerSaleCommissionPercent);
+      const body: { actualSalePriceNaira: number; commissionPercent?: number; commissionReceiptUrl?: string } = {
+        actualSalePriceNaira: priceNum,
+        commissionPercent: 5,
+      };
       if (registerSaleReceiptUrl) body.commissionReceiptUrl = registerSaleReceiptUrl;
       const res = await requestToMarketService.registerSale(item._id, body);
       const data = (res as any)?.data;
@@ -272,7 +258,7 @@ export default function MyRequestToMarketPage() {
           </h1>
           <p className="text-[#5A5D63] mb-6">
             {isAgent
-              ? "Properties you have requested to market. The publisher can accept or reject."
+              ? "Properties you have requested to market. The listing owner can accept or reject."
               : "Agents who have requested to market your listings. Accept or reject below."}
           </p>
 
@@ -342,7 +328,7 @@ export default function MyRequestToMarketPage() {
                             )}
                             {isAgent && item.publisherId && typeof item.publisherId === "object" && "fullName" in item.publisherId && (
                               <p className="text-sm text-[#09391C] mt-1">
-                                Publisher: {(item.publisherId as { fullName?: string }).fullName ?? "—"}
+                                Listing owner: {(item.publisherId as { fullName?: string }).fullName ?? "—"}
                               </p>
                             )}
                             {!isAgent && (
@@ -538,29 +524,14 @@ export default function MyRequestToMarketPage() {
                   placeholder="e.g. 80,000,000"
                   className="w-full border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#8DDB90] focus:border-[#8DDB90] mb-4"
                 />
-                {isDeveloper && (
-                  <>
-                    <label className="block text-sm font-medium text-[#09391C] mb-1">Commission % (1–5) *</label>
-                    <input
-                      type="number"
-                      min={1}
-                      max={5}
-                      value={registerSaleCommissionPercent}
-                      onChange={(e) => setRegisterSaleCommissionPercent(e.target.value)}
-                      className="w-full border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#8DDB90] focus:border-[#8DDB90] mb-4"
-                    />
-                  </>
-                )}
-                {/* Show calculated commission as publisher types (when sale price entered; Developer needs valid % 1–5). */}
-                {showCommissionPreview && (
+                <p className="text-sm text-[#5A5D63] mb-4">
+                  Agent commission is fixed at 5% of the actual sale price.
+                </p>
+                {showCommissionPreview && calculatedAgentCommission > 0 && (
                   <div className="mb-4 p-3 bg-[#EEF1F1] rounded-lg border border-[#E5E7EB]">
-                    {calculatedAgentCommission > 0 ? (
-                      <p className="text-sm font-medium text-[#09391C]">
-                        Agent commission ({isDeveloper ? `${registerSaleCommissionPct}%` : "5%"}): {formatPriceForDisplay(Math.round(calculatedAgentCommission))}
-                      </p>
-                    ) : isDeveloper ? (
-                      <p className="text-sm text-[#5A5D63]">Enter commission % (1–5) above to see agent commission.</p>
-                    ) : null}
+                    <p className="text-sm font-medium text-[#09391C]">
+                      Agent commission (5%): {formatPriceForDisplay(Math.round(calculatedAgentCommission))}
+                    </p>
                   </div>
                 )}
                 {/* §4.4: Receipt (proof of payment) — optional; after upload use URL as commissionReceiptUrl. */}

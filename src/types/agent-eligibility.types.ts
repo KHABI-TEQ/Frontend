@@ -38,6 +38,11 @@ export interface AgentEligibility {
   canUseDealSite: boolean;
   canRequestToMarket: boolean;
   canSubscribe: boolean;
+  isPropertyScout?: boolean;
+  isLicensedPublisher?: boolean;
+  displayRoleLabel?: string;
+  hasLicense?: boolean;
+  canAcceptInspectionRequests?: boolean;
   gate: { ok: true } | { ok: false; reason: "kyc" | "subscription"; message: string };
   policyPhase: AgentPolicyPhase;
   constants: {

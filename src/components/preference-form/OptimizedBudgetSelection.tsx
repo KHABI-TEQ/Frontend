@@ -11,6 +11,7 @@ import React, {
 } from "react";
 import { motion } from "framer-motion";
 import { usePreferenceForm } from "@/context/preference-form-context";
+import MatchingOutlookBanner from "@/components/preference-form/MatchingOutlookBanner";
 
 interface BudgetSelectionProps {
   preferenceType: "buy" | "rent" | "joint-venture" | "shortlet" | "off-plan";
@@ -263,6 +264,25 @@ const OptimizedBudgetSelection: React.FC<BudgetSelectionProps> = memo(
               </div>
             </div>
           )}
+
+          <MatchingOutlookBanner
+            preferenceType={preferenceType}
+            propertyType={
+              state.formData.propertyDetails?.propertyType ||
+              state.formData.bookingDetails?.propertyType
+            }
+            location={state.formData.location as Record<string, unknown> | undefined}
+            enhancedLocation={
+              (state.formData as { enhancedLocation?: Record<string, unknown> })
+                .enhancedLocation
+            }
+            budget={{ minPrice, maxPrice, currency: "NGN" }}
+            minBedrooms={String(
+              state.formData.propertyDetails?.minBedrooms ||
+                state.formData.bookingDetails?.minBedrooms ||
+                ""
+            )}
+          />
         </div>
 
         {/* Budget Summary */}

@@ -8,6 +8,12 @@ import { useUserContext } from "@/context/user-context";
 import { usePostPropertyContext } from "@/context/post-property-context";
 import { POST_REQUEST } from "@/utils/requests";
 import { extractNumericValue } from "@/utils/price-helpers";
+import { listingAgentCommissionFields } from "@/utils/listingCommission";
+import { shouldHideListingOwnerDeclaration } from "@/utils/listingOwnerDeclaration";
+import {
+  listingInspectionFeeNaira,
+  scoutMustConfirmListingAuthorization,
+} from "@/utils/scoutListingAuth";
 import { normalizeHoldDurationForApi, normalizeIsTenantedForApi, isFreeLimitPropertyError } from "@/utils/post-property-payload";
 import { URLS } from "@/utils/URLS";
 import Cookies from "js-cookie";
@@ -84,6 +90,7 @@ const isStepValid = (
   step: number,
   propertyData: any,
   areImagesValid: () => boolean,
+  hideOwnerDeclaration = false,
 ) => {
   switch (step) {
     case 0:
@@ -93,7 +100,7 @@ const isStepValid = (
     case 2:
       return areImagesValid();
     case 3:
-      return checkStep4RequiredFields(propertyData);
+      return checkStep4RequiredFields(propertyData, hideOwnerDeclaration);
     default:
       return true;
   }
@@ -140,7 +147,11 @@ const checkShortletStep2RequiredFields = (propertyData: any) => {
 };
 
 // Helper function to check step 4 required fields
-const checkStep4RequiredFields = (propertyData: any) => {
+const checkStep4RequiredFields = (
+  propertyData: any,
+  hideOwnerDeclaration = false,
+) => {
+  if (hideOwnerDeclaration) return true;
   return propertyData.isLegalOwner !== undefined;
 };
 
@@ -151,6 +162,7 @@ const ShortletPropertyForm: React.FC<ShortletPropertyFormProps> = ({
 }) => {
   const router = useRouter();
   const { user } = useUserContext();
+  const hideOwnerDeclaration = shouldHideListingOwnerDeclaration(user?.userType);
   const {
     currentStep,
     setCurrentStep,
@@ -261,7 +273,10 @@ const ShortletPropertyForm: React.FC<ShortletPropertyFormProps> = ({
         isCurrentStepValid = areImagesValid();
         break;
       case 3:
-        isCurrentStepValid = checkStep4RequiredFields(propertyData);
+        isCurrentStepValid = checkStep4RequiredFields(
+          propertyData,
+          hideOwnerDeclaration,
+        );
         break;
       default:
         isCurrentStepValid = true;
@@ -332,6 +347,18 @@ const ShortletPropertyForm: React.FC<ShortletPropertyFormProps> = ({
     try {
       setIsSubmitting(true);
 
+      if (
+        await scoutMustConfirmListingAuthorization(
+          user?.userType,
+          propertyData.scoutListingAuthorized,
+        )
+      ) {
+        toast.error("Confirm you are authorised by the owner to list this property.");
+        setCurrentStep(3);
+        setIsSubmitting(false);
+        return;
+      }
+
       const uploadedImageUrls: string[] = images
         .filter((img) => img.url)
         .map((img) => img.url!);
@@ -358,10 +385,14 @@ const ShortletPropertyForm: React.FC<ShortletPropertyFormProps> = ({
           state: propertyData.state?.value || "",
           localGovernment: propertyData.lga?.value || "",
           area: propertyData.area,
+          estate: propertyData.estate || "",
           streetAddress: propertyData.streetAddress,
         },
         price: extractNumericValue(propertyData.price),
-        areYouTheOwner: propertyData.isLegalOwner,
+        inspectionFee: listingInspectionFeeNaira(propertyData.inspectionFee),
+        areYouTheOwner: hideOwnerDeclaration
+          ? false
+          : Boolean(propertyData.isLegalOwner),
         ownershipDocuments: propertyData.ownershipDocuments || [],
         landSize: {
           measurementType: "",
@@ -381,9 +412,10 @@ const ShortletPropertyForm: React.FC<ShortletPropertyFormProps> = ({
         videos: uploadedVideoUrls,
         isTenanted: normalizeIsTenantedForApi(propertyData.isTenanted),
         holdDuration: normalizeHoldDurationForApi(propertyData.holdDuration),
-        agentCommissionPercent: Math.min(5, Math.max(0, propertyData.agentCommissionPercent ?? 5)),
-        agentCommissionAmount: Math.round(
-          (extractNumericValue(propertyData.price) * Math.min(5, Math.max(0, propertyData.agentCommissionPercent ?? 5))) / 100
+        ...listingAgentCommissionFields(
+          "shortlet",
+          extractNumericValue(propertyData.price),
+          propertyData.agentCommissionPercent,
         ),
         // Shortlet specific fields
         availability: propertyData.availability
@@ -599,6 +631,7 @@ const ShortletPropertyForm: React.FC<ShortletPropertyFormProps> = ({
                               currentStep,
                               propertyData,
                               areImagesValid,
+                              hideOwnerDeclaration,
                             )
                           }
                         />

@@ -6,6 +6,7 @@ import Agent from "./agent";
 import Landlord from "./landlord";
 import FieldAgent from "./field-agent";
 import Developer from "./developer";
+import ProfessionalDashboard from "./professional";
 import { DealSiteSetupOverlay } from "@/components/dashboard/DealSiteSetupOverlay";
 
 function getEffectiveUserType(user: Record<string, unknown> | null): string | undefined {
@@ -54,9 +55,16 @@ export default function Dashboard() {
   const showDeveloperDashboard = typeLower === "developer";
   const showLandlord = typeLower === "landowners" || typeLower === "landowner";
   const showFieldAgent = typeLower === "fieldagent" || typeLower === "field_agent";
+  const showLawyer = typeLower === "lawyer";
+  const showSurveyor = typeLower === "surveyor";
 
   const noTypeMatched =
-    !showAgentDashboard && !showDeveloperDashboard && !showLandlord && !showFieldAgent;
+    !showAgentDashboard &&
+    !showDeveloperDashboard &&
+    !showLandlord &&
+    !showFieldAgent &&
+    !showLawyer &&
+    !showSurveyor;
 
   const fallbackDeveloper =
     noTypeMatched &&
@@ -75,6 +83,8 @@ export default function Dashboard() {
       {showDeveloper && <Developer />}
       {showLandlord && <Landlord />}
       {showFieldAgent && <FieldAgent />}
+      {showLawyer && <ProfessionalDashboard role="Lawyer" />}
+      {showSurveyor && <ProfessionalDashboard role="Surveyor" />}
     </>
   );
 }

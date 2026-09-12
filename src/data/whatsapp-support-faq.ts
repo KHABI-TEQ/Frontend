@@ -179,7 +179,7 @@ export const WHATSAPP_SUPPORT_FAQ: SupportFaqItem[] = [
     id: "agent-marketplace",
     question: "What is the Agent Marketplace?",
     answer:
-      "The Agent Marketplace shows what buyers and renters are looking for. You can respond to those requests or list a property that matches a specific buyer need. This is different from the Publisher Properties, where you ask permission to market someone else’s property.",
+      "The Agent Marketplace shows what buyers and renters are looking for. You can respond to those requests or list a property that matches a specific buyer need. This is different from Listing owner properties, where you ask permission to market someone else’s property.",
     audiences: ["agent"],
     whatsappMessage: "Hi, I am an Agent and need help using the Agent Marketplace or matching a brief.",
   },
@@ -187,7 +187,7 @@ export const WHATSAPP_SUPPORT_FAQ: SupportFaqItem[] = [
     id: "agent-lasrera-request",
     question: "Where will i see properties listed by Developers and Landlords to request-to-market?",
     answer:
-      "You will get them from the Publishers Properties tab on your dashboard. You can request permission to market a listing on their behalf. Track your outgoing requests under My Request to Market. The property owner approves or declines from their Agent Requests area.",
+      "You will get them from the Listing owner properties tab on your dashboard. You can request permission to market a listing on their behalf. Track your outgoing requests under My Request to Market. The listing owner approves or declines from their Agent Requests area.",
     audiences: ["agent"],
     whatsappMessage: "Hi, I am an Agent and need help with Lasrera or request-to-market.",
   },

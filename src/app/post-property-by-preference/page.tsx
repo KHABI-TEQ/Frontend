@@ -9,6 +9,7 @@ import { usePostPropertyContext } from "@/context/post-property-context";
 import type { PropertyData } from "@/context/post-property-context";
 import { POST_REQUEST, GET_REQUEST } from "@/utils/requests";
 import { extractNumericValue } from "@/utils/price-helpers";
+import { listingAgentCommissionFields } from "@/utils/listingCommission";
 import { normalizeHoldDurationForApi, normalizeIsTenantedForApi, isFreeLimitPropertyError } from "@/utils/post-property-payload";
 import { URLS } from "@/utils/URLS";
 import Cookies from "js-cookie";
@@ -719,21 +720,15 @@ const PostPropertyByPreference = () => {
       else if (propertyData.propertyType === "shortlet") briefType = "Shortlet";
       else if (propertyData.propertyType === "jv") briefType = "Joint Venture";
  
-      // 4. Standard agent commission fields (Sale, Rent, JV, Shortlet)
-      const commissionFields = ["sell", "rent", "jv", "shortlet"].includes(
+      // 4. Standard agent commission (sale/off-plan 5%, rent 10%; JV/shortlet 0–5)
+      const commissionFields = ["sell", "off-plan", "rent", "jv", "shortlet"].includes(
         propertyData.propertyType
       )
-        ? {
-            agentCommissionPercent: Math.min(
-              5,
-              Math.max(0, propertyData.agentCommissionPercent ?? 5)
-            ),
-            agentCommissionAmount: Math.round(
-              (extractNumericValue(propertyData.price) *
-                Math.min(5, Math.max(0, propertyData.agentCommissionPercent ?? 5))) /
-                100
-            ),
-          }
+        ? listingAgentCommissionFields(
+            propertyData.propertyType,
+            extractNumericValue(propertyData.price),
+            propertyData.agentCommissionPercent,
+          )
         : {};
 
       // 5. Prepare property payload
@@ -752,6 +747,7 @@ const PostPropertyByPreference = () => {
           state: propertyData.state?.value || "",
           localGovernment: propertyData.lga?.value || "",
           area: propertyData.area,
+          estate: propertyData.estate || "",
           streetAddress: propertyData.streetAddress,
         },
         price: extractNumericValue(propertyData.price),
@@ -762,7 +758,7 @@ const PostPropertyByPreference = () => {
           phoneNumber: propertyData.contactInfo.phone,
           email: propertyData.contactInfo.email,
         },
-        areYouTheOwner: propertyData.isLegalOwner,
+        areYouTheOwner: Boolean(propertyData.isLegalOwner),
         ownershipDocuments: propertyData.ownershipDocuments || [],
         landSize: {
           measurementType: propertyData.measurementType,

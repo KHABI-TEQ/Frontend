@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction } from "react";
 import { briefTypeConfig } from "@/data/comprehensive-post-property-config";
+import { mandatoryAgentCommissionPercent } from "@/utils/listingCommission";
 
 interface PropertyImage {
   file: File | null;
@@ -41,12 +42,16 @@ export interface PropertyData {
   state: { value: string; label: string } | null;
   lga: { value: string; label: string } | null;
   area: string;
+  /** Estate / gated community within the selected area. */
+  estate?: string;
   streetAddress?: string; // For shortlet
 
   // Step 4: Size and Pricing
   landSize: string;
   measurementType: string;
   price: string;
+  /** Buyer pays this after the owner/agent accepts the inspection (₦1,000–₦50,000). */
+  inspectionFee?: number;
 
   // Step 5: Room Details (for Residential/Commercial)
   bedrooms: number;
@@ -69,10 +74,16 @@ export interface PropertyData {
 
   // Step 8: Ownership Declaration
   isLegalOwner: boolean | undefined;
+  /** Property Scouts must confirm they are authorised to list. */
+  scoutListingAuthorized?: boolean;
   ownershipDocuments: string[];
   isTenanted: string;
-  /** Standard agent commission % (0–5). Default 5. For Sale: Landlord fixed 5%; Developer can set 0–5%. */
+  /** Standard agent commission %. Sale/off-plan 5, rent 10; JV/shortlet 0–5. */
   agentCommissionPercent?: number;
+
+  /** Server: listing price cannot change while inspections are active/upcoming. */
+  priceChangeBlocked?: boolean;
+  priceChangeBlockedMessage?: string;
 
   /** Off-plan listing fields (same form as outright sale). */
   expectedCompletionDate?: string;
@@ -192,9 +203,11 @@ const initialPropertyData: PropertyData = {
   state: null,
   lga: null,
   area: "",
+  estate: "",
   streetAddress: "",
   landSize: "",
   measurementType: "",
+  inspectionFee: 5000,
   bedrooms: 0,
   sittingRooms: 0,
   bathrooms: 0,
@@ -215,9 +228,12 @@ const initialPropertyData: PropertyData = {
     phone: "",
   },
   isLegalOwner: undefined,
+  scoutListingAuthorized: false,
   ownershipDocuments: [],
   isTenanted: "",
   agentCommissionPercent: undefined,
+  priceChangeBlocked: false,
+  priceChangeBlockedMessage: "",
   expectedCompletionDate: "",
   developmentStage: "",
   paymentPlan: "",
@@ -376,12 +392,15 @@ export function PostPropertyProvider({ children }: { children: ReactNode }) {
       typeOfBuilding: property.typeOfBuilding || "",
       rentalType: property.rentalType || "",
       price: property.price?.toString() || "",
+      priceChangeBlocked: Boolean(property.priceChangeBlocked),
+      priceChangeBlockedMessage: property.priceChangeBlockedMessage || "",
       leaseHold: property.leaseHold || "",
       holdDuration: property.holdDuration || "",
       shortletDuration: property.shortletDuration || "",
       state: property.location?.state ? { value: property.location.state, label: property.location.state } : null,
       lga: property.location?.localGovernment ? { value: property.location.localGovernment, label: property.location.localGovernment } : null,
       area: property.location?.area || "",
+      estate: property.location?.estate || "",
       streetAddress: property.location?.streetAddress || "",
       landSize: property.landSize?.size || "",
       measurementType: property.landSize?.measurementType || "",
@@ -406,7 +425,10 @@ export function PostPropertyProvider({ children }: { children: ReactNode }) {
       isLegalOwner: property.areYouTheOwner ?? undefined,
       ownershipDocuments: property.ownershipDocuments || [],
       isTenanted: property.isTenanted || "",
-      agentCommissionPercent: property.agentCommissionPercent ?? 5,
+      agentCommissionPercent:
+        mandatoryAgentCommissionPercent(property.propertyType) ??
+        property.agentCommissionPercent ??
+        5,
       expectedCompletionDate: property.expectedCompletionDate || "",
       developmentStage: property.developmentStage || "",
       paymentPlan: property.paymentPlan || "",

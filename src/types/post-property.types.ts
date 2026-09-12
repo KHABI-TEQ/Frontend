@@ -13,6 +13,7 @@ export interface PropertyFormData {
   state: string;
   lga: string;
   area: string;
+  estate?: string;
   detailedAddress?: string;
   
   // Price

@@ -1,4 +1,5 @@
 import nigeriaLocationData from "@/data/nigeria-locations.json";
+import nigeriaEstatesData from "@/data/nigeria-estates.json";
 
 export interface LocationData {
   [state: string]: {
@@ -25,6 +26,38 @@ export const getAreasByStateLGA = (state: string, lga: string): string[] => {
   if (!stateData) return [];
   const areas = stateData[lga as keyof typeof stateData] || [];
   return (areas as string[]).sort();
+};
+
+const estatesRoot = nigeriaEstatesData as Record<string, unknown>;
+
+export const getEstatesByStateLgaArea = (
+  state: string,
+  lga: string,
+  area: string,
+): string[] => {
+  if (!state || !lga || !area) return [];
+  const stateBucket =
+    (estatesRoot[state] as Record<string, Record<string, string[]>> | undefined) ||
+    (Object.keys(estatesRoot)
+      .filter((k) => k !== "_meta")
+      .find((k) => k.toLowerCase() === state.toLowerCase())
+      ? (estatesRoot[
+          Object.keys(estatesRoot).find(
+            (k) => k !== "_meta" && k.toLowerCase() === state.toLowerCase(),
+          ) as string
+        ] as Record<string, Record<string, string[]>>)
+      : null);
+  if (!stateBucket) return [];
+  const lgaKey = Object.keys(stateBucket).find(
+    (k) => k.toLowerCase() === lga.toLowerCase(),
+  );
+  if (!lgaKey) return [];
+  const areaMap = stateBucket[lgaKey] || {};
+  const areaKey = Object.keys(areaMap).find(
+    (k) => k.toLowerCase() === area.toLowerCase(),
+  );
+  if (!areaKey) return [];
+  return [...(areaMap[areaKey] || [])].sort();
 };
 
 export const searchLocations = (

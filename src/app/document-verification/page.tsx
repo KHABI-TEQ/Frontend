@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { DELETE_REQUEST, POST_REQUEST, POST_REQUEST_FILE_UPLOAD } from '@/utils/requests';
 import DocumentIframePreview from '@/components/document-verification/DocumentIframePreview';
 import { useDocumentVerificationSettings, useDocumentVerificationPrices } from '@/hooks/useSystemSettings';
+import ProfessionalPicker, { type MarketplaceProfessional } from '@/components/professionals/ProfessionalPicker';
 
 // Define the document types as a union type
 const documentOptions = [
@@ -82,6 +83,7 @@ const DocumentVerificationPage: React.FC = () => {
     receiptUrl: '',
     receiptUploadStatus: 'idle',
   });
+  const [selectedLawyer, setSelectedLawyer] = useState<MarketplaceProfessional | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRedirectingToPayment, setIsRedirectingToPayment] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -134,15 +136,12 @@ const DocumentVerificationPage: React.FC = () => {
   };
 
   const calculateFee = (): number => {
+    if (selectedLawyer?.verificationFee) return Number(selectedLawyer.verificationFee);
     if (selectedDocuments.length === 0) return 0;
-
-    // Calculate total fee based on individual document pricing from system settings
-    const totalFee = selectedDocuments.reduce((total, documentType) => {
-      const price = documentPrices[documentType] || 20000; // fallback to 20000 if price not found
+    return selectedDocuments.reduce((total, documentType) => {
+      const price = documentPrices[documentType] || 20000;
       return total + price;
     }, 0);
-
-    return totalFee;
   };
 
   const validateFileType = (file: File): boolean => {
@@ -289,6 +288,10 @@ const DocumentVerificationPage: React.FC = () => {
       toast.error('Please select at least one document');
       return false;
     }
+    if (!selectedLawyer) {
+      toast.error('Select a lawyer from the marketplace');
+      return false;
+    }
 
     for (const doc of selectedDocuments) {
       const hasFile = !!uploadedFiles[doc] && uploadedFiles[doc]?.uploadStatus === 'success';
@@ -336,7 +339,7 @@ const DocumentVerificationPage: React.FC = () => {
 
 
   const handleFinalSubmit = async () => {
-    if (!validateStep2()) return;
+    if (!validateStep1() || !validateStep2() || !selectedLawyer) return;
 
     setIsSubmitting(true);
     try {
@@ -358,6 +361,7 @@ const DocumentVerificationPage: React.FC = () => {
         paymentInfo: {
           amountPaid: paymentDetails.amountPaid,
         },
+        lawyerId: selectedLawyer.id,
         documentsMetadata: docsMeta,
       };
 
@@ -622,6 +626,15 @@ const DocumentVerificationPage: React.FC = () => {
                 </div>
               </div>
             ))}
+          </div>
+
+          <div className="border-t pt-8">
+            <ProfessionalPicker
+              kind="lawyer"
+              selectedId={selectedLawyer?.id || null}
+              onChange={setSelectedLawyer}
+              title="Choose a licensed lawyer"
+            />
           </div>
 
           {/* Fee Information Card */}

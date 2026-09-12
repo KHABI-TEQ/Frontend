@@ -33,6 +33,8 @@ import {
   SyndicationIntegrationSummary,
 } from "@/components/dashboard/DashboardIntegrationSummaries";
 import PublisherDashboardNotice from "@/components/publisher/PublisherDashboardNotice";
+import PublisherListingAllowanceCard from "@/components/publisher/PublisherListingAllowanceCard";
+import { usePublisherListingEligibility } from "@/hooks/usePublisherListingEligibility";
 
 interface PendingBrief {
   _id: string;
@@ -69,6 +71,10 @@ interface RecentProperty {
 export default function DeveloperDashboard() {
   const router = useRouter();
   const { user } = useUserContext();
+  const {
+    eligibility: listingEligibility,
+    loading: listingEligibilityLoading,
+  } = usePublisherListingEligibility();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [recentProperties, setRecentProperties] = useState<RecentProperty[]>([]);
   /** Total property count from /account/properties/fetchAll (used when dashboard stats are 0) */
@@ -240,7 +246,10 @@ export default function DeveloperDashboard() {
         <div className="flex flex-col gap-4 mb-8">
           <div className="w-full">
             <h1 className="text-2xl sm:text-3xl font-bold text-[#09391C] font-display">
-              Welcome back, Developer {user.firstName ?? "Developer"}!
+              Welcome back,{" "}
+              {listingEligibility?.displayRoleLabel ||
+                (listingEligibility?.isPropertyScout ? "Property Scout" : "Developer")}{" "}
+              {user.firstName ?? ""}!
             </h1>
             <p className="text-[#5A5D63] mt-2">
               Manage your developments, properties, and real estate activity
@@ -317,6 +326,11 @@ export default function DeveloperDashboard() {
         </div>
 
         <PublisherDashboardNotice userType="Developer" />
+
+        <PublisherListingAllowanceCard
+          eligibility={listingEligibility}
+          loading={listingEligibilityLoading}
+        />
 
         {/* Performance Overview + Referral (same as Agent) */}
         <div className="bg-white rounded-lg p-4 sm:p-6 mb-8 shadow-sm">

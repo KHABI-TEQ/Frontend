@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import ReactSelect from "react-select";
 import CreatableSelect from "react-select/creatable";
 import EnhancedPriceInput from "@/components/general-components/EnhancedPriceInput";
+import InspectionFeeField from "@/components/post-property-components/InspectionFeeField";
 import { useFormikContext } from "formik";
 import { usePostPropertyContext } from "@/context/post-property-context";
 import customStyles from "@/styles/inputStyle";
@@ -238,8 +239,17 @@ const JVStep1BasicDetails: React.FC = () => {
                 }
                 touched={!!touched?.price}
                 required
-                description="Enter the estimated property value for joint venture"
+                disabled={!!propertyData.priceChangeBlocked}
+                description={
+                  propertyData.priceChangeBlocked
+                    ? propertyData.priceChangeBlockedMessage ||
+                      "Price cannot be changed while this property has an active or upcoming inspection."
+                    : "Enter the estimated property value for joint venture"
+                }
               />
+            </div>
+            <div>
+              <InspectionFeeField />
             </div>
           </div>
         </div>

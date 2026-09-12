@@ -16,6 +16,8 @@ if (process.argv.includes("--clean")) {
   }
 }
 
+console.log(`Next cwd: ${frontendRoot}`);
+
 const result = spawnSync("next", nextArgs, {
   cwd: frontendRoot,
   stdio: "inherit",

@@ -34,7 +34,7 @@ import {
 import Loading from "@/components/loading-component/loading";
 import { CombinedAuthGuard } from "@/logic/combinedAuthGuard";
 import { buildLocationTitle } from "@/utils/helpers";
-import { RequestFieldAgentModal } from "@/components/agent/RequestFieldAgentModal";
+import { RequestLicensedAgentModal } from "@/components/agent/RequestLicensedAgentModal";
 import { resolvePropertyLocationForFieldAgent } from "@/utils/fieldAgentLocation";
 
 interface Location {
@@ -367,18 +367,24 @@ function shouldOfferScheduleChangeOnList(inspection: InspectionData): boolean {
   return true;
 }
 
-/** Agent may request a company Field Agent after inspection is approved. */
-function canRequestFieldAgentForInspection(inspection: InspectionData): boolean {
-  const status = String(inspection.status || inspection.inspectionStatus || "");
-  const ready = ["inspection_approved", "confirmed"].includes(status);
-  if (!ready) return false;
+/** Property Scouts may request a licensed Agent instead of accepting. Licensed Agents may request after approval (legacy timing). */
+function canRequestLicensedAgentForInspection(
+  inspection: InspectionData,
+  isPropertyScout: boolean,
+): boolean {
   if (inspection.assignedFieldAgent) return false;
-  // Approved/confirmed are "terminal" for seller respond buttons but are exactly when FA request is allowed.
-  const blockedAfterApproval = ["completed", "cancelled", "agent_rejected", "rejected"].includes(
-    status,
-  );
-  if (blockedAfterApproval) return false;
-  return true;
+  const status = String(inspection.status || inspection.inspectionStatus || "");
+  const blocked = ["completed", "cancelled", "agent_rejected", "rejected"].includes(status);
+  if (blocked) return false;
+  if (isPropertyScout) {
+    return [
+      "pending_approval",
+      "pending",
+      "inspection_approved",
+      "confirmed",
+    ].includes(status);
+  }
+  return ["inspection_approved", "confirmed"].includes(status);
 }
 
 type TabKey = "inspections" | "bookings";
@@ -430,6 +436,7 @@ export default function MyInspectionRequestsPage() {
 
   const [fieldAgentModalInspection, setFieldAgentModalInspection] =
     useState<InspectionData | null>(null);
+  const [isPropertyScout, setIsPropertyScout] = useState(false);
 
   const fieldAgentModalLocation = useMemo(
     () =>
@@ -438,6 +445,24 @@ export default function MyInspectionRequestsPage() {
         : { state: undefined, lga: undefined },
     [fieldAgentModalInspection],
   );
+
+  useEffect(() => {
+    if (!token) return;
+    if (user?.userType !== "Agent" && user?.userType !== "Developer") return;
+    void (async () => {
+      try {
+        const res = await GET_REQUEST<{ isPropertyScout?: boolean }>(
+          `${URLS.BASE}${URLS.propertyScoutStatus}`,
+          token,
+        );
+        if (res?.success && res.data) {
+          setIsPropertyScout(Boolean((res.data as { isPropertyScout?: boolean }).isPropertyScout));
+        }
+      } catch {
+        setIsPropertyScout(false);
+      }
+    })();
+  }, [token, user?.userType]);
 
   const INSPECTION_FEE_MIN = 1000;
   const INSPECTION_FEE_MAX = 50000;
@@ -925,7 +950,13 @@ export default function MyInspectionRequestsPage() {
                   const altTitle = buildLocationTitle(inspection.property?.location)
 
                   return (
-                    <motion.div key={inspection.id || (inspection as any)._id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }} className={`bg-white border border-gray-100 rounded-xl overflow-visible hover:border-gray-300 transition-all duration-200 ${viewMode === "list" ? "flex" : ""}`}>
+                    <motion.div key={inspection.id || (inspection as any)._id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }} className={`bg-white rounded-xl overflow-visible transition-all duration-200 ${viewMode === "list" ? "flex" : ""} ${
+                      String(inspection.status || "") === "pending_approval" || String(inspection.inspectionStatus || "") === "pending_approval"
+                        ? "border-2 border-amber-300 bg-amber-50/40"
+                        : String(inspection.status || "") === "inspection_approved" || String(inspection.inspectionStatus || "") === "inspection_approved"
+                          ? "border-2 border-green-300 bg-green-50/40"
+                          : "border border-gray-100 hover:border-gray-300"
+                    }`}>
                       {viewMode === "grid" && inspection.property?.image && (
                         <div className="h-48 relative overflow-hidden">
                           <img src={inspection.property.image} alt={altTitle || "Property"} className="w-full h-full object-cover" />
@@ -1080,21 +1111,40 @@ export default function MyInspectionRequestsPage() {
                                 </div>
                               )}
                               {isInspectionApproved &&
-                                user?.userType === "Agent" &&
-                                (canRequestFieldAgentForInspection(inspection) ||
+                                (user?.userType === "Agent" || user?.userType === "Developer") &&
+                                (canRequestLicensedAgentForInspection(
+                                  inspection,
+                                  isPropertyScout,
+                                ) ||
                                   inspection.fieldAgentRequestStatus === "pending") && (
                                   <div className="mb-4 p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
                                     <p className="text-sm text-indigo-900 font-medium">
-                                      Inspection approved — use{" "}
-                                      <span className="font-semibold">Request Field Agent</span> below
-                                      to assign a company Field Agent for the visit.
+                                      {isPropertyScout
+                                        ? "As a Property Scout, request a licensed Agent to handle this inspection."
+                                        : "Inspection approved — request a licensed Agent below if you need representation."}
+                                    </p>
+                                  </div>
+                                )}
+                              {isPropertyScout &&
+                                !isInspectionApproved &&
+                                (canRequestLicensedAgentForInspection(
+                                  inspection,
+                                  true,
+                                ) ||
+                                  inspection.fieldAgentRequestStatus === "pending") && (
+                                  <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                    <p className="text-sm text-amber-950 font-medium">
+                                      Property Scouts cannot accept inspections. Request a licensed
+                                      Agent to represent you.
                                     </p>
                                   </div>
                                 )}
                               <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-200">
                                 {showAcceptRejectUpdate && (
                                   <>
-                                    <button onClick={() => { setRespondInspection(inspection); setRespondAction("accept"); setRespondNote(""); setRespondInspectionFee(""); }} className="inline-flex items-center gap-2 px-4 py-2 bg-[#8DDB90] text-white rounded-lg hover:bg-[#7BC87F] transition-colors text-sm font-medium">Accept</button>
+                                    {!isPropertyScout ? (
+                                      <button onClick={() => { setRespondInspection(inspection); setRespondAction("accept"); setRespondNote(""); setRespondInspectionFee(""); }} className="inline-flex items-center gap-2 px-4 py-2 bg-[#8DDB90] text-white rounded-lg hover:bg-[#7BC87F] transition-colors text-sm font-medium">Accept</button>
+                                    ) : null}
                                     <button onClick={() => { setRespondInspection(inspection); setRespondAction("reject"); setRespondNote(""); setRespondInspectionFee(""); }} className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium">Reject</button>
                                     {showUpdateSchedule && (
                                       <button onClick={() => router.push(`/secure-seller-response/${inspection.owner}/${inspection.id || (inspection as any)._id}`)} className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">Update schedule</button>
@@ -1110,8 +1160,11 @@ export default function MyInspectionRequestsPage() {
                                     View Property
                                   </button>
                                 )}
-                                {user?.userType === "Agent" &&
-                                  (canRequestFieldAgentForInspection(inspection) ||
+                                {(user?.userType === "Agent" || user?.userType === "Developer") &&
+                                  (canRequestLicensedAgentForInspection(
+                                    inspection,
+                                    isPropertyScout,
+                                  ) ||
                                     inspection.fieldAgentRequestStatus === "pending") && (
                                     <button
                                       type="button"
@@ -1120,8 +1173,8 @@ export default function MyInspectionRequestsPage() {
                                     >
                                       <Users size={16} />
                                       {inspection.fieldAgentRequestStatus === "pending"
-                                        ? "Field Agent request"
-                                        : "Request Field Agent"}
+                                        ? "Licensed Agent request"
+                                        : "Request licensed Agent"}
                                     </button>
                                   )}
                               </div>
@@ -1488,7 +1541,7 @@ export default function MyInspectionRequestsPage() {
               </div>
               <p className="text-sm text-[#5A5D63] mb-4">
                 {respondAction === "accept"
-                  ? "You can add an optional note. Optionally set an inspection fee (₦1,000–₦50,000); if set, the buyer will receive a payment link."
+                  ? "You can add an optional note. The buyer pays the inspection fee (₦1,000–₦50,000) after you accept."
                   : "The buyer will be notified. You can add an optional reason."}
               </p>
               {respondAction === "accept" && (respondInspection.receiverMode?.type === "dealSite" || (respondInspection as any).receiverMode?.type === "dealSite") && (
@@ -1498,7 +1551,7 @@ export default function MyInspectionRequestsPage() {
               )}
               {respondAction === "accept" && (
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Inspection fee (₦) — optional</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Inspection fee (₦) — buyer pays after accept</label>
                   <input
                     type="number"
                     min={INSPECTION_FEE_MIN}
@@ -1509,7 +1562,7 @@ export default function MyInspectionRequestsPage() {
                     onChange={(e) => setRespondInspectionFee(e.target.value.replace(/\D/g, "").slice(0, 6))}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#8DDB90] focus:border-transparent"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Leave empty for no fee. Valid range: ₦1,000 – ₦50,000.</p>
+                  <p className="text-xs text-gray-500 mt-1">Required on the main marketplace. Range: ₦1,000 – ₦50,000. Leave empty to use the listing fee (default ₦5,000).</p>
                 </div>
               )}
               <div className="mb-6">
@@ -1540,7 +1593,7 @@ export default function MyInspectionRequestsPage() {
       </AnimatePresence>
 
       {fieldAgentModalInspection && (
-        <RequestFieldAgentModal
+        <RequestLicensedAgentModal
           inspectionId={
             fieldAgentModalInspection.id ||
             (fieldAgentModalInspection as { _id?: string })._id ||

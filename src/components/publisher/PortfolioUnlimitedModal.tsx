@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { GET_REQUEST, POST_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import { formatSubscriptionBonusLabel, resolvePlanBonusDays } from "@/utils/subscription-bonus";
+import { STANDARD_LISTING_CAP, FREE_TRIAL_LISTING_CAP } from "@/utils/subscription-plan-features";
 
 interface DiscountedPlanOption {
   name: string;
@@ -24,6 +25,13 @@ interface UnlimitedPlanOffer {
   durationInDays: number;
   bonusDays?: number;
   discountedPlans?: DiscountedPlanOption[];
+  required?: boolean;
+  listingSnapshot?: {
+    ownedProperties?: number;
+    listingLimit?: number | null;
+    listingsRemaining?: number | null;
+    requiresSpecialPlan?: boolean;
+  };
 }
 
 interface PortfolioUnlimitedModalProps {
@@ -32,7 +40,17 @@ interface PortfolioUnlimitedModalProps {
   message?: string | null;
 }
 
-const currencySymbol = (cur?: string) => (cur && /usd|\$|dollar/i.test(cur) ? "$" : "₦");
+const currencySymbol = (cur?: string) =>
+  cur && /usd|\$|dollar/i.test(cur) ? "$" : "₦";
+
+function periodLabel(days: number): string {
+  const months = Math.max(1, Math.round((days || 30) / 30));
+  if (months === 1) return "Monthly";
+  if (months === 3) return "Quarterly";
+  if (months === 6) return "Half-yearly";
+  if (months === 12) return "Yearly";
+  return `${months} months`;
+}
 
 export default function PortfolioUnlimitedModal({
   open,
@@ -59,7 +77,9 @@ export default function PortfolioUnlimitedModal({
           setPlan(res.data);
           setSelectedCode(res.data.code);
         } else {
-          toast.error(res.message || "Portfolio Unlimited plan is not available yet.");
+          toast.error(
+            res.message || "Portfolio Unlimited plan is not available yet."
+          );
         }
       })
       .catch(() => toast.error("Could not load Portfolio Unlimited plan"))
@@ -69,7 +89,7 @@ export default function PortfolioUnlimitedModal({
   const options = useMemo(() => {
     if (!plan) return [];
     const base = {
-      name: plan.name,
+      name: `${plan.name} — ${periodLabel(plan.durationInDays)}`,
       code: plan.code,
       price: plan.price,
       durationInDays: plan.durationInDays,
@@ -77,12 +97,26 @@ export default function PortfolioUnlimitedModal({
     };
     const discounted = (plan.discountedPlans || []).map((dp) => ({
       ...dp,
+      name: dp.name || `${plan.name} — ${periodLabel(dp.durationInDays)}`,
       bonusDays: dp.bonusDays ?? resolvePlanBonusDays(dp),
     }));
     return [base, ...discounted];
   }, [plan]);
 
   const selected = options.find((o) => o.code === selectedCode) ?? options[0];
+  const required =
+    plan?.required === true ||
+    plan?.listingSnapshot?.requiresSpecialPlan === true;
+  const owned = plan?.listingSnapshot?.ownedProperties;
+  const remaining = plan?.listingSnapshot?.listingsRemaining;
+
+  const defaultMessage = required
+    ? `You have reached the Premium limit of ${STANDARD_LISTING_CAP} property listings. Upgrade for unlimited listings across your portfolio.`
+    : `Free plans are capped at ${FREE_TRIAL_LISTING_CAP} listings; Premium at ${STANDARD_LISTING_CAP}. Portfolio Unlimited is the only plan that removes those caps${
+        remaining != null
+          ? ` (${remaining} of ${STANDARD_LISTING_CAP} Premium slots remaining)`
+          : ""
+      }.`;
 
   const handleSubscribe = async () => {
     if (!selected?.code) return;
@@ -94,16 +128,19 @@ export default function PortfolioUnlimitedModal({
 
     setSubmitting(true);
     try {
-      const res = await POST_REQUEST<{ authorizationUrl?: string }>(
+      const res = await POST_REQUEST<any>(
         `${URLS.BASE}/account/subscriptions/makeSub`,
         { planCode: selected.code, autoRenewal: false },
         token
       );
 
       const paymentUrl =
-        (res as any)?.data?.authorizationUrl ||
-        (res as any)?.data?.paymentDetails?.authorization_url ||
-        (res as any)?.authorizationUrl;
+        res?.data?.paymentUrl ||
+        res?.data?.authorizationUrl ||
+        res?.data?.authorization_url ||
+        res?.data?.paymentDetails?.authorization_url ||
+        res?.data?.transaction?.authorization_url ||
+        (res as { authorizationUrl?: string })?.authorizationUrl;
 
       if (paymentUrl) {
         window.location.href = paymentUrl;
@@ -131,11 +168,18 @@ export default function PortfolioUnlimitedModal({
       <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-xl font-bold text-[#09391C]">Portfolio Unlimited</h2>
+            <h2 className="text-xl font-bold text-[#09391C]">
+              Portfolio Unlimited
+            </h2>
             <p className="mt-1 text-sm text-[#5A5D63]">
-              {message ||
-                "You have reached the standard limit of 25 property listings. Upgrade for unlimited listings across your portfolio."}
+              {message || defaultMessage}
             </p>
+            {typeof owned === "number" ? (
+              <p className="mt-2 text-xs text-emerald-800 font-medium">
+                Current portfolio: {owned} listing{owned === 1 ? "" : "s"}
+                {required ? " · Cap reached" : ""}
+              </p>
+            ) : null}
           </div>
           <button
             type="button"
@@ -169,7 +213,9 @@ export default function PortfolioUnlimitedModal({
                       onChange={() => setSelectedCode(option.code)}
                     />
                     <div>
-                      <p className="font-semibold text-[#09391C]">{option.name}</p>
+                      <p className="font-semibold text-[#09391C]">
+                        {option.name}
+                      </p>
                       {option.bonusDays ? (
                         <p className="text-xs text-[#16a34a]">
                           {formatSubscriptionBonusLabel(option.bonusDays)}
@@ -187,8 +233,9 @@ export default function PortfolioUnlimitedModal({
 
             <ul className="mt-4 space-y-1 text-sm text-[#5A5D63]">
               <li>Unlimited property listings</li>
-              <li>For landlords, agents, and developers with large portfolios</li>
-              <li>Only available after you reach the 25-listing standard cap</li>
+              <li>Free plans stay within {FREE_TRIAL_LISTING_CAP} listings</li>
+              <li>Premium catalog plans stay within the {STANDARD_LISTING_CAP}-listing cap</li>
+              <li>For agents, developers, and landlords with growing portfolios</li>
             </ul>
 
             <div className="mt-6 flex gap-3">

@@ -140,7 +140,7 @@ export default function LasreraMarketplacePage() {
       }
     } catch (e) {
       console.error(e);
-      toast.error("Failed to load publisher properties.");
+      toast.error("Failed to load listing owner properties.");
       setProperties([]);
     } finally {
       setLoading(false);
@@ -164,7 +164,7 @@ export default function LasreraMarketplacePage() {
     try {
       const res = await requestToMarketService.create(propertyId);
       if (res?.success) {
-        toast.success("Request to market submitted. The publisher will be notified.");
+        toast.success("Request to market submitted. The listing owner will be notified.");
         fetchProperties();
       } else {
         toast.error((res as any)?.message || (res as any)?.error || "Request failed.");
@@ -192,9 +192,9 @@ export default function LasreraMarketplacePage() {
             KHABITEQ Market Place
           </h1>
           <p className="text-[#5A5D63] max-w-2xl">
-            Properties published by Landlords and Developers. Contact details are not shown.
+            Properties listed by Landlords and Developers. Contact details are not shown.
             {isAgent
-              ? " As an Agent, you can request to market any listing below; the publisher will accept or reject."
+              ? " As an Agent, you can request to market any listing below; the listing owner will accept or reject."
               : " Sign in as an Agent to request to market a property."}
           </p>
         </div>
@@ -270,7 +270,7 @@ export default function LasreraMarketplacePage() {
         ) : properties.length === 0 ? (
           <div className="bg-white rounded-xl border border-gray-100 p-12 text-center text-[#5A5D63]">
             <Tag className="mx-auto mb-4 text-gray-400" size={48} />
-            <p className="text-lg font-medium text-[#09391C]">No publisher properties found</p>
+            <p className="text-lg font-medium text-[#09391C]">No listing owner properties found</p>
             <p className="mt-2">Try adjusting filters or check back later.</p>
           </div>
         ) : (
@@ -316,11 +316,6 @@ export default function LasreraMarketplacePage() {
                       <p className="text-sm font-medium text-[#09391C] mb-2">
                         Agent commission: ₦{typeof prop.agentCommissionAmount === "number" ? prop.agentCommissionAmount.toLocaleString() : "0"}
                       </p>
-                      {typeof prop.requestToMarketCount === "number" && prop.requestToMarketCount > 0 && (
-                        <p className="text-xs text-[#5A5D63] mb-3">
-                          {prop.requestToMarketCount} agent{prop.requestToMarketCount !== 1 ? "s have" : " has"} requested to market
-                        </p>
-                      )}
                       {isAgent ? (
                         prop.currentUserHasRequested ? (
                           <div className="w-full flex items-center justify-center gap-2 py-2.5 bg-emerald-50 text-emerald-800 rounded-lg text-sm font-medium border border-emerald-200">

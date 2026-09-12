@@ -28,6 +28,7 @@ import CustomToast from "@/components/general-components/CustomToast";
 import OverlayPreloader from "@/components/general-components/OverlayPreloader";
 // The InputField component from common/ should be used, not a local one
 import InputField from "@/components/common/InputField"; // Ensure this import path is correct
+import BrmPicker from "@/components/brm/BrmPicker";
 
 declare global {
   interface Window {
@@ -161,6 +162,9 @@ const Register = () => {
       .required("Phone number is required"),
     userType: Yup.string().required("Please select account type"),
     referralCode: Yup.string().optional(),
+    brmId: Yup.string().optional(),
+    firmName: Yup.string().optional(),
+    licenseNumber: Yup.string().optional(),
   });
 
   const formik = useFormik({
@@ -173,6 +177,9 @@ const Register = () => {
     confirmPassword: "",
     userType: "",
     referralCode: referralFromUrl,
+    brmId: "",
+    firmName: "",
+    licenseNumber: "",
   },
   enableReinitialize: true,
   validationSchema,
@@ -193,6 +200,17 @@ const Register = () => {
             phoneNumber: String(values.phone),
             address: { state: "", city: "", street: "" },
             ...(values.referralCode ? { referralCode: values.referralCode } : {}),
+            ...((values.userType === "Agent" || values.userType === "Developer") &&
+            values.brmId
+              ? { brmId: values.brmId }
+              : {}),
+            ...((values.userType === "Lawyer" || values.userType === "Surveyor") &&
+            values.firmName
+              ? { firmName: values.firmName }
+              : {}),
+            ...(values.userType === "Surveyor" && values.licenseNumber
+              ? { licenseNumber: values.licenseNumber }
+              : {}),
           });
 
           if (response.success) {
@@ -439,7 +457,7 @@ const Register = () => {
               I want to join as a...
             </label>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:items-stretch">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:items-stretch">
               {/* Landlord Radio Button */}
               <label className="relative flex h-full min-h-0 cursor-pointer flex-col group">
                 <input
@@ -528,6 +546,56 @@ const Register = () => {
                       <svg className="w-3 h-3 text-white opacity-0 peer-checked:opacity-100" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
                       </svg>
+                    </div>
+                  </div>
+                </div>
+              </label>
+
+              <label className="relative flex h-full min-h-0 cursor-pointer flex-col group">
+                <input
+                  type="radio"
+                  name="userType"
+                  value="Lawyer"
+                  checked={formik.values.userType === "Lawyer"}
+                  onChange={formik.handleChange}
+                  disabled={isDisabled}
+                  className="sr-only peer"
+                />
+                <div className="flex h-full min-h-0 flex-1 flex-col bg-white border-2 border-gray-100 rounded-xl p-4 transition-all duration-300 hover:border-[#8DDB90]/50 hover:shadow-md peer-checked:border-[#8DDB90] peer-checked:bg-[#8DDB90]/5 peer-checked:shadow-md peer-disabled:opacity-50">
+                  <div className="flex flex-1 items-center gap-3">
+                    <div className="w-10 h-10 bg-[#8DDB90]/10 rounded-lg flex items-center justify-center shrink-0">
+                      <svg className="w-5 h-5 text-[#09391C]" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 2a1 1 0 01.894.553l7 14A1 1 0 0117 18H3a1 1 0 01-.894-1.447l7-14A1 1 0 0110 2zm0 4a1 1 0 00-1 1v4a1 1 0 102 0V7a1 1 0 00-1-1zm0 10a1.25 1.25 0 100-2.5A1.25 1.25 0 0010 16z" clipRule="evenodd"/>
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="block text-base font-semibold text-[#09391C]">Lawyer</span>
+                      <span className="block text-xs text-[#5A5D63]">Document verification</span>
+                    </div>
+                  </div>
+                </div>
+              </label>
+
+              <label className="relative flex h-full min-h-0 cursor-pointer flex-col group">
+                <input
+                  type="radio"
+                  name="userType"
+                  value="Surveyor"
+                  checked={formik.values.userType === "Surveyor"}
+                  onChange={formik.handleChange}
+                  disabled={isDisabled}
+                  className="sr-only peer"
+                />
+                <div className="flex h-full min-h-0 flex-1 flex-col bg-white border-2 border-gray-100 rounded-xl p-4 transition-all duration-300 hover:border-[#8DDB90]/50 hover:shadow-md peer-checked:border-[#8DDB90] peer-checked:bg-[#8DDB90]/5 peer-checked:shadow-md peer-disabled:opacity-50">
+                  <div className="flex flex-1 items-center gap-3">
+                    <div className="w-10 h-10 bg-[#8DDB90]/10 rounded-lg flex items-center justify-center shrink-0">
+                      <svg className="w-5 h-5 text-[#09391C]" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M4 3a1 1 0 000 2h1v11a1 1 0 102 0V5h2.382l.724 1.447A1 1 0 0011 7h5a1 1 0 100-2h-4.382l-.724-1.447A1 1 0 0010 3H4z"/>
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="block text-base font-semibold text-[#09391C]">Surveyor</span>
+                      <span className="block text-xs text-[#5A5D63]">Plan & site verification</span>
                     </div>
                   </div>
                 </div>
@@ -631,6 +699,34 @@ const Register = () => {
               type="email"
               placeholder="Enter your email"
             />
+            {(formik.values.userType === "Lawyer" ||
+              formik.values.userType === "Surveyor") && (
+              <>
+                <InputField
+                  formik={formik}
+                  label="Firm name (optional)"
+                  name="firmName"
+                  type="text"
+                  placeholder="Enter your firm name"
+                />
+                {formik.values.userType === "Surveyor" && (
+                  <InputField
+                    formik={formik}
+                    label="License number (optional)"
+                    name="licenseNumber"
+                    type="text"
+                    placeholder="Enter your license number"
+                  />
+                )}
+              </>
+            )}
+            {(formik.values.userType === "Agent" ||
+              formik.values.userType === "Developer") && (
+              <BrmPicker
+                selectedId={formik.values.brmId || null}
+                onChange={(id) => formik.setFieldValue("brmId", id || "")}
+              />
+            )}
             <InputField
               formik={formik}
               label="Referral code (optional)"

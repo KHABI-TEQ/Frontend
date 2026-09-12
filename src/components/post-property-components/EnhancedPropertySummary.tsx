@@ -77,7 +77,14 @@ const EnhancedPropertySummary: React.FC = () => {
         { label: "Price", value: formatPrice(propertyData.price) },
         {
           label: "Location",
-          value: `${propertyData.area}, ${propertyData.lga?.label}, ${propertyData.state?.label}`,
+          value: [
+            propertyData.estate,
+            propertyData.area,
+            propertyData.lga?.label,
+            propertyData.state?.label,
+          ]
+            .filter(Boolean)
+            .join(", "),
         },
       ],
     });

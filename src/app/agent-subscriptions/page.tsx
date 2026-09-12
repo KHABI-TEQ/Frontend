@@ -30,6 +30,9 @@ import Link from 'next/link';
 import AgentEligibilityBanner from '@/components/agent/AgentEligibilityBanner';
 import { useAgentEligibility, resolveAgentKycStatus } from '@/hooks/useAgentEligibility';
 import { formatSubscriptionBonusLabel, resolvePlanBonusDays } from '@/utils/subscription-bonus';
+import { formatCatalogFeatureRow, STANDARD_LISTING_CAP, FREE_TRIAL_LISTING_CAP } from '@/utils/subscription-plan-features';
+import PortfolioUnlimitedModal from '@/components/publisher/PortfolioUnlimitedModal';
+import { usePublisherListingEligibility } from '@/hooks/usePublisherListingEligibility';
 
 /** Build a user-visible error from API JSON (500s often include message + details for ops). */
 function subscriptionErrorMessage(res: unknown): string {
@@ -60,6 +63,12 @@ export default function AgentSubscriptionsPage() {
   const router = useRouter();
   const { user } = useUserContext();
   const { eligibility, loading: eligibilityLoading } = useAgentEligibility();
+  const { eligibility: listingEligibility } = usePublisherListingEligibility();
+  const [showPortfolioUnlimited, setShowPortfolioUnlimited] = useState(false);
+  const [openPlanCategory, setOpenPlanCategory] = useState<
+    null | "standard" | "domain" | "portfolio"
+  >(null);
+  const [accountRoleLabel, setAccountRoleLabel] = useState<string | null>(null);
   const [subscriptions, setSubscriptions] = useState<AgentSubscription[]>([]);
   const [subscriptionsPage, setSubscriptionsPage] = useState(1);
   const [subscriptionsTotalPages, setSubscriptionsTotalPages] = useState(1);
@@ -113,6 +122,18 @@ export default function AgentSubscriptionsPage() {
     }
   }, [user, router]);
 
+  useEffect(() => {
+    if (!token) return;
+    GET_REQUEST(`${URLS.BASE}${URLS.propertyScoutStatus}`, token)
+      .then((res) => {
+        const scout = Boolean((res as any)?.data?.isPropertyScout);
+        setAccountRoleLabel(
+          scout ? "Property Scout" : "Licensed Agent / Developer"
+        );
+      })
+      .catch(() => setAccountRoleLabel(null));
+  }, [token]);
+
   const fetchSubscriptions = async (page = 1) => {
     try {
       setTabLoading(true);
@@ -133,7 +154,7 @@ export default function AgentSubscriptionsPage() {
   const fetchPlans = async () => {
     try {
       setTabLoading(true);
-      const response = await GET_REQUEST(`${URLS.BASE}${URLS.getSubscriptionPlans}`, token);
+      const response = await GET_REQUEST(`${URLS.BASE}${URLS.getStandardSubscriptionPlans}`, token);
       if (response.success) {
         const apiPlans = (response.data || []) as any[];
         let normalized = apiPlans.map((p: any) => {
@@ -162,12 +183,18 @@ export default function AgentSubscriptionsPage() {
               name: dp.name ?? p.name,
             }),
           }));
+          const benefits = Array.isArray(p.benefits)
+            ? p.benefits.map((b: any) => String(b || '').trim()).filter(Boolean)
+            : [];
           return {
             id: p._id,
             code: p.code,
             name: p.name,
-            description: features.slice(0, 2).map((x: any) => x.label).join(', '),
+            description: benefits.slice(0, 2).join(', ') || features.slice(0, 2).map((x: any) => x.label).join(', '),
             features,
+            benefits,
+            category: p.category || 'standard',
+            categoryLabel: p.categoryLabel || 'Standard',
             prices,
             discountedPlans,
             durationInDays: p.durationInDays,
@@ -419,20 +446,47 @@ export default function AgentSubscriptionsPage() {
         <div className="mb-8 space-y-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Agent Subscriptions</h1>
-            <p className="text-gray-600">Manage your subscriptions, view plans, and track transactions</p>
+            <p className="text-gray-600">Standard plans cover practitioner listing eligibility. Add a custom domain with White Labeling.</p>
+            <p className="mt-3 inline-flex items-center rounded-full bg-slate-100 border border-slate-200 px-3 py-1 text-sm font-medium text-slate-800">
+              Account:{" "}
+              {eligibility?.isPropertyScout || accountRoleLabel === "Property Scout"
+                ? "Property Scout"
+                : eligibility?.displayRoleLabel ||
+                  accountRoleLabel ||
+                  (isDeveloper ? "Licensed Agent / Developer" : "Licensed Agent / Developer")}
+            </p>
           </div>
           {!isDeveloper && (
             <AgentEligibilityBanner eligibility={eligibility} loading={eligibilityLoading} compact />
           )}
           <div className="rounded-lg border border-emerald-100 bg-emerald-50/60 p-4 text-sm text-emerald-950">
-            <p className="font-semibold mb-1">Practitioner plan incentives (paid tiers)</p>
+            <p className="font-semibold mb-1">Practitioner plan notes</p>
             <ul className="list-disc ml-5 space-y-0.5 text-emerald-900/90">
-              <li>Monthly — {formatSubscriptionBonusLabel(15)} validity</li>
+              <li>Standard catalog: practitioner listing eligibility only</li>
+              <li>Custom Domain / White Labeling: listing eligibility plus your own branded domain</li>
+              <li>Free / trial: up to 10 listings (1 in KYC grace) for 28 days from signup</li>
+              <li>After the 4-week trial, a paid plan is required even if you are under the Free listing cap</li>
+              <li>Premium paid tiers: listings still capped at 25</li>
+              <li>Only <strong>Portfolio Unlimited</strong> removes the 25-listing cap</li>
+              <li>Monthly — {formatSubscriptionBonusLabel(15)} validity on paid tiers</li>
               <li>Quarterly — {formatSubscriptionBonusLabel(30)} validity</li>
               <li>Half-yearly — {formatSubscriptionBonusLabel(60)} validity</li>
               <li>Yearly — {formatSubscriptionBonusLabel(90)} validity</li>
-              <li>Unlimited property listings on every paid plan</li>
             </ul>
+          </div>
+          <div className="rounded-lg border border-emerald-200 bg-white p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <p className="font-semibold text-[#09391C]">Want listing access and a custom domain?</p>
+              <p className="text-sm text-gray-600 mt-1">
+                White-labeling is a quarterly or yearly subscription. It counts as your practitioner listing plan and adds branded hosting.
+              </p>
+            </div>
+            <Link
+              href="/public-access-page/custom-domain"
+              className="shrink-0 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 text-center"
+            >
+              View Custom Domain plans
+            </Link>
           </div>
           {activeSubscriptionFromProfile && (
             <div className="rounded-lg border border-green-200 bg-green-50 p-4">
@@ -532,6 +586,15 @@ export default function AgentSubscriptionsPage() {
                           /free|trial/i.test(String(planName)) ||
                           Number(amount || 0) === 0);
 
+                        const category =
+                          subscription.meta?.category ||
+                          planObj?.category ||
+                          "standard";
+                        const categoryLabel =
+                          category === "white-labeling"
+                            ? "Custom Domain / White Labeling"
+                            : "Standard";
+
                         return (
                           <div key={subscription._id || subscription.id} className="bg-white rounded-lg border border-gray-200 p-6">
                             <div className="flex items-center justify-between mb-4">
@@ -543,6 +606,7 @@ export default function AgentSubscriptionsPage() {
                                 </span>
                               </div>
                             </div>
+                            <p className="text-xs font-semibold text-emerald-700 mb-3">{categoryLabel}</p>
 
                             <div className="space-y-3 mb-6">
                               <div className="flex justify-between text-sm">
@@ -589,8 +653,69 @@ export default function AgentSubscriptionsPage() {
               )}
 
               {activeTab === 'plans' && (
+                <>
+                  {!listingEligibility?.unlimitedListings ? (
+                    <div className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-[#09391C]">Need more than {STANDARD_LISTING_CAP} listings?</p>
+                        <p className="text-sm text-emerald-900/90 mt-1">
+                          Free and Premium catalog plans stay within the {STANDARD_LISTING_CAP}-listing cap.
+                          Portfolio Unlimited is the only plan that removes it
+                          {listingEligibility?.requiresSpecialPlan
+                            ? " — and your account has already reached that cap."
+                            : listingEligibility?.listingsRemaining != null
+                              ? ` (${listingEligibility.listingsRemaining} remaining).`
+                              : "."}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowPortfolioUnlimited(true)}
+                        className="shrink-0 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700"
+                      >
+                        View Portfolio Unlimited
+                      </button>
+                    </div>
+                  ) : null}
+                <div className="space-y-3 mb-6">
+                  {([
+                    ["standard", "Standard plans"],
+                    ["domain", "Custom Domain / White Labeling"],
+                    ["portfolio", "Portfolio Unlimited"],
+                  ] as const).map(([key, label]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() =>
+                        setOpenPlanCategory((cur) => (cur === key ? null : key))
+                      }
+                      className={`w-full flex items-center justify-between rounded-lg border px-4 py-3 text-left text-sm font-semibold ${
+                        openPlanCategory === key
+                          ? "border-emerald-400 bg-emerald-50 text-emerald-950"
+                          : "border-gray-200 bg-white text-gray-800"
+                      }`}
+                    >
+                      <span>{label}</span>
+                      <span>{openPlanCategory === key ? "▼" : "▶"}</span>
+                    </button>
+                  ))}
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {plans.map((plan: any) => (
+                  {plans.filter((plan: any) => {
+                    if (!openPlanCategory) return false;
+                    const name = String(plan.name || "");
+                    const code = String(plan.code || "");
+                    const isPortfolio =
+                      plan.unlimitedListings ||
+                      /portfolio/i.test(name) ||
+                      /PORTFOLIO_UNLIMITED/i.test(code);
+                    const isDomain =
+                      plan.category === "white-labeling" ||
+                      /white.?label|custom domain/i.test(name);
+                    if (openPlanCategory === "portfolio") return isPortfolio;
+                    if (openPlanCategory === "domain") return isDomain && !isPortfolio;
+                    return !isPortfolio && !isDomain;
+                  }).map((plan: any) => (
                     <div key={plan.id || plan.name} className={`bg-white rounded-lg border-2 p-6 relative ${plan.popular ? 'border-green-500' : 'border-gray-200'}`}>
                       {plan.popular && (
                         <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
@@ -612,6 +737,9 @@ export default function AgentSubscriptionsPage() {
                             return null;
                           })()}
                         </div>
+                        <p className="text-xs font-semibold text-emerald-700 mb-2">
+                          {plan.categoryLabel || 'Standard'} · listing eligibility only
+                        </p>
                         <p className="text-gray-600 text-sm mb-4">{plan.description}</p>
                         {!plan.isTrial && plan.basePrice > 0 && plan.bonusDays > 0 && (
                           <p className="text-emerald-700 text-sm font-medium">
@@ -621,26 +749,42 @@ export default function AgentSubscriptionsPage() {
                       </div>
 
                       <div className="mb-6">
-                        <h4 className="text-sm font-medium text-gray-700 mb-3">Features:</h4>
+                        <h4 className="text-sm font-medium text-gray-700 mb-3">Benefits:</h4>
                         <ul className="space-y-2">
-                          {(plan.features || []).map((f: any, index: number) => {
-                            const type = String(f.type);
-                            const isOn = type === 'boolean' ? Number(f.value) === 1 : true;
-                            let valueText = '';
-                            if (type === 'count') valueText = `: ${f.value}`;
-                            if (type === 'unlimited') valueText = ': Unlimited';
+                          {(plan.benefits || []).length
+                            ? (plan.benefits as string[]).map((benefit: string) => (
+                                <li key={benefit} className="flex items-center gap-2 text-sm text-gray-700">
+                                  <CheckCircle size={14} className="text-green-500 flex-shrink-0" />
+                                  <span>{benefit}</span>
+                                </li>
+                              ))
+                            : (plan.features || []).map((f: any, index: number) => {
+                            const row = formatCatalogFeatureRow(plan, f);
+                            if (!row.label) return null;
                             return (
-                              <li key={index} className={`flex items-center gap-2 text-sm ${isOn ? 'text-gray-700' : 'text-gray-400 line-through'}`}>
-                                {isOn ? (
+                              <li key={index} className={`flex items-center gap-2 text-sm ${row.isOn ? 'text-gray-700' : 'text-gray-400 line-through'}`}>
+                                {row.isOn ? (
                                   <CheckCircle size={14} className="text-green-500 flex-shrink-0" />
                                 ) : (
                                   <XCircle size={14} className="text-gray-400 flex-shrink-0" />
                                 )}
-                                <span>{f.label}{valueText}</span>
+                                <span>{row.label}{row.valueText}</span>
                               </li>
                             );
                           })}
                         </ul>
+                        {(plan.basePrice === 0 || plan.isTrial || /free/i.test(plan.name || '')) && (
+                          <p className="mt-3 text-xs text-amber-800 bg-amber-50 border border-amber-100 rounded-md p-2">
+                            Free access follows account policy: 1 listing in KYC grace, up to {FREE_TRIAL_LISTING_CAP} during the 4-week trial.
+                            When the trial ends, a paid plan is required even if you have unused Free slots.
+                          </p>
+                        )}
+                        {plan.basePrice > 0 && !plan.isTrial && (
+                          <p className="mt-3 text-xs text-slate-600 bg-slate-50 border border-slate-100 rounded-md p-2">
+                            Premium stays within the {STANDARD_LISTING_CAP}-listing standard cap.
+                            Need more? Open Portfolio Unlimited below.
+                          </p>
+                        )}
                       </div>
 
                       <div className="mb-6">
@@ -692,6 +836,7 @@ export default function AgentSubscriptionsPage() {
                     </div>
                   ))}
                 </div>
+                </>
               )}
             </>
         )}
@@ -917,6 +1062,11 @@ export default function AgentSubscriptionsPage() {
             </div>
           </div>
         )}
+
+        <PortfolioUnlimitedModal
+          open={showPortfolioUnlimited}
+          onClose={() => setShowPortfolioUnlimited(false)}
+        />
       </div>
     </div>
   );

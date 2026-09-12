@@ -76,24 +76,35 @@ export const GET_REQUEST = async <T = unknown, P = unknown>(
 
     clearTimeout(timeoutId);
 
-    // Check if request was successful
+    const text = await request.text();
+    const parsed = text
+      ? (() => {
+          try {
+            return JSON.parse(text);
+          } catch {
+            return null;
+          }
+        })()
+      : null;
+
     if (!request.ok) {
-      const errorMessage = `HTTP ${request.status}: ${request.statusText}`;
       if (request.status === 401) {
         handleAuthExpirySideEffects();
       }
+      const errMsg =
+        (parsed as any)?.error ||
+        (parsed as any)?.message ||
+        `HTTP ${request.status}: ${request.statusText}`;
       return {
-        error: errorMessage,
+        error: errMsg,
         success: false,
-        message: "Failed to fetch data from server.",
+        message: errMsg,
+        details: (parsed as any)?.details ?? null,
         data: null,
       };
     }
 
-    // Check if response has content before parsing JSON
-    const text = await request.text();
     if (!text) {
-      // Empty response received
       return {
         error: "Empty response",
         success: false,
@@ -102,14 +113,7 @@ export const GET_REQUEST = async <T = unknown, P = unknown>(
       };
     }
 
-    try {
-      const response = JSON.parse(text);
-      if (!response?.success && isAuthExpiredMessage(response?.message || response?.error)) {
-        handleAuthExpirySideEffects();
-      }
-      return response;
-    } catch (parseError) {
-      // JSON parse error for response
+    if (!parsed) {
       return {
         error: "Invalid JSON response",
         success: false,
@@ -117,6 +121,11 @@ export const GET_REQUEST = async <T = unknown, P = unknown>(
         data: null,
       };
     }
+
+    if (!parsed?.success && isAuthExpiredMessage(parsed?.message || parsed?.error)) {
+      handleAuthExpirySideEffects();
+    }
+    return parsed;
   } catch (error: unknown) {
     const err = error as Error & { name?: string };
     const isAbort = err.name === "AbortError";

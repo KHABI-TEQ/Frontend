@@ -2,10 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  Home,
   Building2,
   Users,
   Search,
@@ -13,7 +11,6 @@ import {
   X,
   Sparkles,
 } from "lucide-react";
-import { BUYER_LASRERA_CERTIFICATE_BULLET } from "@/data/user-types-content";
 
 interface UserType {
   id: string;
@@ -33,29 +30,29 @@ interface UserType {
 
 const userTypes: UserType[] = [
   {
-    id: "landlords",
-    icon: Home,
-    title: "Landlords",
-    headline: "List for free with complete control",
+    id: "seekers",
+    icon: Search,
+    title: "Property Seekers",
+    headline: "Find Property. Navigate Safely.",
     description:
-      "List one or multiple properties for free and receive marketing requests from verified agents. Choose the agents you want to work with, while your contact details remain private until you approve an agent—helping you sell or rent faster with complete control.",
-    cta: "List Property",
-    ctaUrl: "/for-landlords",
-    gradient: "from-amber-500 via-orange-500 to-red-500",
-    bgColor: "bg-gradient-to-br from-amber-50/90 to-orange-50/90",
-    iconBg: "bg-gradient-to-br from-amber-100 to-orange-100",
-    iconColor: "text-amber-600",
-    borderColor: "border-amber-200/50",
-    shadowColor: "shadow-amber-500/20",
+      "Tell Khabiteq what you’re looking for, discover suitable properties, and schedule inspections all in one structured journey.\n\nWhen you’re ready, access transaction registration, legal support and regulatory escalation.",
+    cta: "Start Your Journey",
+    ctaUrl: "/for-clients",
+    gradient: "from-blue-500 via-indigo-500 to-violet-500",
+    bgColor: "bg-gradient-to-br from-blue-50/90 to-indigo-50/90",
+    iconBg: "bg-gradient-to-br from-blue-100 to-indigo-100",
+    iconColor: "text-blue-600",
+    borderColor: "border-blue-200/50",
+    shadowColor: "shadow-blue-500/20",
   },
   {
-    id: "developers",
+    id: "owners-developers",
     icon: Building2,
-    title: "Developers",
-    headline: "Reach Serious Buyers Faster",
+    title: "Owners & Developers",
+    headline: "Bring Your Property Opportunities Into Africa's Digital Real Estate Ecosystem.",
     description:
-      "Publish developments with a dedicated project page, set your commission payout percentage, and let multiple verified agents request to market your project—helping you reach more qualified buyers and sell faster.",
-    cta: "Publish Project",
+      "Present your property opportunities within an infrastructure designed to connect them with relevant property seekers and real estate professionals.",
+    cta: "Explore as an Owner or Developer",
     ctaUrl: "/for-developers",
     gradient: "from-emerald-500 via-teal-500 to-cyan-500",
     bgColor: "bg-gradient-to-br from-emerald-50/90 to-teal-50/90",
@@ -65,13 +62,13 @@ const userTypes: UserType[] = [
     shadowColor: "shadow-emerald-500/20",
   },
   {
-    id: "agents",
+    id: "professionals",
     icon: Users,
-    title: "Agents",
-    headline: "Every Agent Has the Mandate",
+    title: "Real Estate Professionals",
+    headline: "Build and Grow Your Digital Practice",
     description:
-      "Get your own Practitioner Page with a personalized URL, request to market landlord and developer listings, and earn the commissions they offer when you close deals. Listings on your page are automatically matched to buyer preferences, helping qualified buyers discover your properties without extra effort.",
-    cta: "Activate Page",
+      "Access digital tools designed to help you build your professional presence, present your property portfolio and work with structured property demand.",
+    cta: "Explore Your Tools",
     ctaUrl: "/for-agents",
     gradient: "from-[#8DDB90] via-emerald-500 to-green-600",
     bgColor: "bg-gradient-to-br from-[#f0fdf4]/90 to-emerald-50/90",
@@ -79,22 +76,6 @@ const userTypes: UserType[] = [
     iconColor: "text-[#16a34a]",
     borderColor: "border-emerald-200/50",
     shadowColor: "shadow-emerald-500/20",
-  },
-  {
-    id: "buyers",
-    icon: Search,
-    title: "Buyers & Clients",
-    headline: "Find Your Dream Property",
-    description:
-      `Submit your preference and let our system search verified agent Practitioner Pages for matching properties. Receive tailored property briefs, book inspections through the platform, ${BUYER_LASRERA_CERTIFICATE_BULLET}, and rate or report agents after your experience for added transparency and accountability.`,
-    cta: "Get Started",
-    ctaUrl: "/for-clients",
-    gradient: "from-blue-500 via-indigo-500 to-violet-500",
-    bgColor: "bg-gradient-to-br from-blue-50/90 to-indigo-50/90",
-    iconBg: "bg-gradient-to-br from-blue-100 to-indigo-100",
-    iconColor: "text-blue-600",
-    borderColor: "border-blue-200/50",
-    shadowColor: "shadow-blue-500/20",
   },
 ];
 
@@ -380,7 +361,7 @@ export default function UserTypeOverlay({ isOpen, onClose }: UserTypeOverlayProp
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
               >
-                Select your role to get started with AI-powered real estate
+                Choose your path and discover how Khabiteq can support your real estate journey.
               </motion.p>
 
               <motion.p
@@ -396,7 +377,7 @@ export default function UserTypeOverlay({ isOpen, onClose }: UserTypeOverlayProp
 
             {/* User Type Cards - Horizontal scroll on mobile, grid on desktop */}
             <motion.div
-              className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4 scrollbar-hide sm:grid sm:grid-cols-2 sm:gap-5 sm:overflow-visible sm:pb-0 lg:grid-cols-4 lg:items-start"
+              className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4 scrollbar-hide sm:grid sm:grid-cols-2 sm:gap-5 sm:overflow-visible sm:pb-0 lg:grid-cols-3 lg:items-start"
               variants={cardContainerVariants}
               initial="hidden"
               animate="visible"
@@ -478,7 +459,7 @@ export default function UserTypeOverlay({ isOpen, onClose }: UserTypeOverlayProp
                     </h3>
 
                     {/* Description */}
-                    <p className="text-gray-600 text-sm sm:text-base leading-relaxed mb-6">
+                    <p className="text-gray-600 text-sm sm:text-base leading-relaxed mb-6 whitespace-pre-line">
                       {userType.description}
                     </p>
 

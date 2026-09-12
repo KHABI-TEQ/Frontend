@@ -90,10 +90,10 @@ const LoadingOverlay = memo(({ isSubmitting }: { isSubmitting: boolean }) => (
             {/* Loading text */}
             <div className="space-y-2">
               <h3 className="text-lg font-semibold text-gray-900">
-                Updating Your Preference
+                Submitting Your Preference
               </h3>
               <p className="text-sm text-gray-600">
-                Please wait while we process your update...
+                Your edits will be sent as a new preference. Please wait...
               </p>
             </div>
 
@@ -181,11 +181,11 @@ const SuccessModal = memo(
                   </svg>
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                  Preference Updated Successfully!
+                  New Preference Submitted!
                 </h3>
                 <p className="text-gray-600 mb-6">
-                  Your property preference has been updated successfully. We&apos;ll
-                  continue matching you with suitable properties based on your updated criteria.
+                  Your edits have been submitted as a new preference. We&apos;ll
+                  start matching you with suitable properties based on these criteria.
                 </p>
               </div>
 
@@ -758,7 +758,7 @@ const UpdatePreferenceFormContent: React.FC = () => {
 
       if (response.status === 200 || response.status === 201) {
         console.log("Preference updated successfully:", response);
-        toast.success("Preference updated successfully!");
+        toast.success("Preference submitted as a new preference!");
         // Show success modal
         setShowSuccessModal(true);
       } else {
@@ -911,7 +911,7 @@ const UpdatePreferenceFormContent: React.FC = () => {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
             >
-              Revise your preferences to get better matches
+              Revise your details and submit them as a new preference. Your earlier preference is kept as-is.
             </motion.p>
           </motion.div>
         </motion.div>
@@ -1002,7 +1002,7 @@ const UpdatePreferenceFormContent: React.FC = () => {
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            <SubmitButton onSubmit={handleSubmit} buttonText="Update Preference" />
+            <SubmitButton onSubmit={handleSubmit} buttonText="Submit as new preference" />
           </motion.div>
         </motion.div>
       </div>

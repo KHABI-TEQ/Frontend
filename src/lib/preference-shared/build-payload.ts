@@ -40,16 +40,36 @@ function minBedroomsStr(pd: Record<string, unknown> | undefined): string {
  * `lgasWithAreas` is required (may be []). Prefer `enhancedLocation.lgasWithAreas`;
  * else derive from `location.lgas` / `localGovernmentAreas` + `location.areas`.
  */
-function buildLgasWithAreas(formData: FormData): { lgaName: string; areas: string[] }[] {
+function buildLgasWithAreas(formData: FormData): {
+  lgaName: string;
+  areas: string[];
+  areasWithEstates?: { areaName: string; estates: string[] }[];
+}[] {
   const enhanced = (formData as { enhancedLocation?: { lgasWithAreas?: unknown } }).enhancedLocation
     ?.lgasWithAreas;
   if (Array.isArray(enhanced) && enhanced.length > 0) {
-    return (enhanced as { lgaName?: string; areas?: unknown }[])
+    return (enhanced as {
+      lgaName?: string;
+      areas?: unknown;
+      areasWithEstates?: { areaName?: string; estates?: unknown }[];
+    }[])
       .filter((item) => toStr(item?.lgaName))
-      .map((item) => ({
-        lgaName: toStr(item.lgaName),
-        areas: filterStringArray(item.areas),
-      }));
+      .map((item) => {
+        const areas = filterStringArray(item.areas);
+        const areasWithEstates = Array.isArray(item.areasWithEstates)
+          ? item.areasWithEstates
+              .filter((row) => toStr(row?.areaName) && filterStringArray(row.estates).length)
+              .map((row) => ({
+                areaName: toStr(row.areaName),
+                estates: filterStringArray(row.estates),
+              }))
+          : [];
+        return {
+          lgaName: toStr(item.lgaName),
+          areas,
+          ...(areasWithEstates.length ? { areasWithEstates } : {}),
+        };
+      });
   }
 
   const loc = (formData.location || {}) as Record<string, unknown>;

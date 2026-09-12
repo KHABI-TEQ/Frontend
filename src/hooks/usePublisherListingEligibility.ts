@@ -15,6 +15,11 @@ export interface PublisherListingEligibility {
   requiresSpecialPlan: boolean;
   specialPlanCode: string;
   specialPlanName: string;
+  isPropertyScout?: boolean;
+  isLicensedPublisher?: boolean;
+  displayRoleLabel?: string;
+  hasLicense?: boolean;
+  canAcceptInspectionRequests?: boolean;
 }
 
 const PUBLISHER_TYPES = new Set(["Agent", "Developer", "Landowners"]);

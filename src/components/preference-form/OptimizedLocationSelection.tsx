@@ -19,6 +19,7 @@ import {
   getStates,
   getLGAsByState,
   getAreasByStateLGA,
+  getEstatesByStateLgaArea,
 } from "@/utils/location-utils";
 
 // Types
@@ -29,9 +30,15 @@ interface Option {
   __lgaScope__?: string;
 }
 
+interface AreaWithEstates {
+  areaName: string;
+  estates: string[];
+}
+
 interface LGAAreaMapping {
   lgaName: string;
   areas: string[];
+  areasWithEstates?: AreaWithEstates[];
 }
 
 interface EnhancedLocationData {
@@ -460,10 +467,43 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
                     }
                     return area.value; // Use value for new areas
                   }),
+                  areasWithEstates: (item.areasWithEstates || []).filter((row) =>
+                    areaArray.some((a) => {
+                      const name = a.value.includes("__") ? a.label : a.value;
+                      return name === row.areaName;
+                    }),
+                  ),
                 }
               : item,
           );
         });
+      },
+      [],
+    );
+
+    const handleEstateChangeForArea = useCallback(
+      (lgaName: string, areaName: string, newEstates: MultiValue<Option>) => {
+        const estateArray = Array.from(newEstates);
+        if (estateArray.length > 3) {
+          toast.error("Maximum 3 estates can be selected per area");
+          return;
+        }
+        setLgasWithAreas((prev) =>
+          prev.map((item) => {
+            if (item.lgaName !== lgaName) return item;
+            const others = (item.areasWithEstates || []).filter(
+              (r) => r.areaName !== areaName,
+            );
+            const estates = estateArray.map((e) => e.value);
+            return {
+              ...item,
+              areasWithEstates:
+                estates.length > 0
+                  ? [...others, { areaName, estates }]
+                  : others,
+            };
+          }),
+        );
       },
       [],
     );
@@ -707,6 +747,53 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
                           lgaName={lgaValue}
                           areas={lgaData?.areas || []}
                         />
+
+                        {(lgaData?.areas || []).map((areaName) => {
+                          const estateOpts = getEstatesByStateLgaArea(
+                            selectedState?.value || "",
+                            lgaValue,
+                            areaName,
+                          ).map((e) => ({ value: e, label: e }));
+                          if (estateOpts.length === 0) return null;
+                          const selectedEstates = (
+                            lgaData?.areasWithEstates || []
+                          )
+                            .find((r) => r.areaName === areaName)
+                            ?.estates.map((e) => ({ value: e, label: e })) || [];
+                          return (
+                            <div key={`${lgaValue}-${areaName}-estates`} className="pt-2">
+                              <label className="block text-xs font-medium text-gray-600 mb-1">
+                                Estates in {areaName} (optional, max 3)
+                              </label>
+                              <Select
+                                isMulti
+                                value={selectedEstates}
+                                onChange={(v) =>
+                                  handleEstateChangeForArea(
+                                    lgaValue,
+                                    areaName,
+                                    v,
+                                  )
+                                }
+                                options={estateOpts}
+                                styles={compactSelectStylesRef.current}
+                                placeholder={`Estates in ${areaName}…`}
+                                isSearchable
+                                isClearable
+                                isOptionDisabled={() => selectedEstates.length >= 3}
+                                menuPortalTarget={
+                                  typeof document !== "undefined"
+                                    ? document.body
+                                    : null
+                                }
+                                menuPosition="fixed"
+                                instanceId={`estate-select-${lgaValue}-${areaName}`}
+                                maxMenuHeight={140}
+                                closeMenuOnSelect={false}
+                              />
+                            </div>
+                          );
+                        })}
 
                         {isAtLimit && (
                           <p className="text-xs text-amber-600">

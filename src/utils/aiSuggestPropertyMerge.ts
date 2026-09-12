@@ -27,7 +27,15 @@ export function mergeSuggestPropertyIntoForm(
   apiData: Record<string, unknown>
 ): Partial<PropertyData> {
   const out: Partial<PropertyData> = {};
-  const loc = apiData.location as { state?: string; localGovernment?: string; area?: string } | undefined;
+  const loc = apiData.location as
+    | {
+        state?: string;
+        localGovernment?: string;
+        area?: string;
+        estate?: string;
+        streetAddress?: string;
+      }
+    | undefined;
   const add = apiData.additionalFeatures as Record<string, unknown> | undefined;
 
   if (!empty(apiData.propertyType)) {
@@ -71,6 +79,10 @@ export function mergeSuggestPropertyIntoForm(
       out.lga = { value: toStr(loc.localGovernment), label: toStr(loc.localGovernment) };
     }
     if (!empty(loc.area) && empty(current.area)) out.area = toStr(loc.area);
+    if (!empty(loc.estate) && empty(current.estate)) out.estate = toStr(loc.estate);
+    if (!empty(loc.streetAddress) && empty(current.streetAddress)) {
+      out.streetAddress = toStr(loc.streetAddress);
+    }
   }
 
   if (add) {

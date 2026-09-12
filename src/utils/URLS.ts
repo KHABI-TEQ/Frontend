@@ -76,7 +76,7 @@ export const URLS = {
   accountMyInspectionGetOne: (inspectionId: string) => `/account/my-inspections/${inspectionId}`,
   /** POST /account/my-inspections/:inspectionId/respond { action: "accept" | "reject", note?: string, inspectionFee?: number } (guide §8.3) */
   accountInspectionRespond: (inspectionId: string) => `/account/my-inspections/${inspectionId}/respond`,
-  /** Field Agent representation — no Paystack; commission settled outside app */
+  /** Field Agent representation — legacy; prefer licensed Agents */
   fieldAgentRepresentationTerms: "/account/field-agents/representation-terms",
   fieldAgentsAvailable: "/account/field-agents/available",
   requestFieldAgentForInspection: (inspectionId: string) =>
@@ -86,6 +86,46 @@ export const URLS = {
   fieldAgentRepresentationRequests: "/account/inspectionsFieldAgent/representation-requests",
   fieldAgentRepresentationRespond: (inspectionId: string) =>
     `/account/inspectionsFieldAgent/${inspectionId}/representation/respond`,
+  /** Property Scout → licensed Agent representation (replaces Field Agent request) */
+  propertyScoutStatus: "/account/property-scout/status",
+  licensedAgentRepresentationTerms: "/account/licensed-agents/representation-terms",
+  licensedAgentsAvailable: "/account/licensed-agents/available",
+  licensedAgentRepresentationRequests:
+    "/account/licensed-agents/representation-requests",
+  requestLicensedAgentForInspection: (inspectionId: string) =>
+    `/account/my-inspections/${inspectionId}/request-licensed-agent`,
+  licensedAgentRepresentationRespond: (inspectionId: string) =>
+    `/account/licensed-agents/${inspectionId}/representation/respond`,
+  /** Public buyer directory */
+  publicLicensedAgents: "/licensed-agents",
+  publicBrms: "/brms",
+  brmPicture: (id: string) => `/brms/${id}/picture`,
+  accountBrm: "/account/brm",
+  accountProfile: "/account/profile",
+  lawyersMarketplace: "/lawyers/marketplace",
+  surveyorsMarketplace: "/surveyors/marketplace",
+  surveyRequests: "/survey-requests",
+  lawyerMe: "/account/lawyer/me",
+  lawyerProfile: "/account/lawyer/profile",
+  lawyerKyc: "/account/lawyer/kyc",
+  lawyerBank: "/account/lawyer/bank",
+  lawyerJobs: "/account/lawyer/verification-jobs",
+  lawyerJob: (id: string) => `/account/lawyer/verification-jobs/${id}`,
+  lawyerJobRespond: (id: string) => `/account/lawyer/verification-jobs/${id}/respond`,
+  lawyerJobReport: (id: string) => `/account/lawyer/verification-jobs/${id}/report`,
+  lawyerPublicPage: "/account/lawyer/public-page",
+  lawyerSlugAvailability: "/account/lawyer/public-page/slug-availability",
+  surveyorMe: "/account/surveyor/me",
+  surveyorProfile: "/account/surveyor/profile",
+  surveyorKyc: "/account/surveyor/kyc",
+  surveyorBank: "/account/surveyor/bank",
+  surveyorJobs: "/account/surveyor/jobs",
+  surveyorJob: (id: string) => `/account/surveyor/jobs/${id}`,
+  surveyorJobRespond: (id: string) => `/account/surveyor/jobs/${id}/respond`,
+  surveyorJobReport: (id: string) => `/account/surveyor/jobs/${id}/report`,
+  surveyorPublicPage: "/account/surveyor/public-page",
+  surveyorSlugAvailability: "/account/surveyor/public-page/slug-availability",
+  dealSiteBankList: "/account/dealSite/bankList",
   /** Landlord / Developer: CRUD for inspection notification contacts (email + WhatsApp) */
   accountInspectionRepresentatives: "/account/inspection-representatives",
   accountInspectionRepresentative: (representativeId: string) =>
@@ -108,9 +148,13 @@ export const URLS = {
 
   /** GET /account/marketplace/general-preferences — agent marketplace (main-site preferences, auth) */
   accountMarketplaceGeneralPreferences: "/account/marketplace/general-preferences",
-  /** POST /account/marketplace/preferences/:preferenceId/match — auto-pair agent listings with preference */
-  accountMarketplaceMatchPreference: (preferenceId: string) =>
-    `/account/marketplace/preferences/${preferenceId}/match`,
+  accountMarketplacePreferenceReview: (preferenceId: string) =>
+    `/account/marketplace/preferences/${preferenceId}/review`,
+  preferenceMatchingOutlook: "/preferences/matching-outlook",
+  matchedProperties: (matchedId: string, preferenceId: string) =>
+    `/properties/${matchedId}/${preferenceId}/matches`,
+  matchedPropertiesNextBatch: (matchedId: string, preferenceId: string) =>
+    `/properties/${matchedId}/${preferenceId}/matches/next-batch`,
 
   /**
    * Auth Endpoints (see docs/FRONTEND_API_GUIDE.md)
@@ -171,7 +215,19 @@ export const URLS = {
   renewSubscription: "/subscriptions/renew",
   cancelSubscription: "/subscriptions/cancel",
   getSubscriptionPlans: "/subscriptions/plans",
+  getStandardSubscriptionPlans: "/subscriptions/plans?category=standard",
+  getWhiteLabelingPlans: "/subscriptions/plans?category=white-labeling",
   getSubscriptionTransactions: "/account/transactions/fetchAll",
+  accountSubscriptionsMake: "/account/subscriptions/makeSub",
+  accountSubscriptionsFetchAll: "/account/subscriptions/fetchAll",
+  accountSubscriptionsFetchAllPlans: "/account/subscriptions/fetchAllPlans",
+
+  /**
+   * Custom domain / white-labeling
+   */
+  customDomain: "/account/custom-domain",
+  customDomainPay: "/account/custom-domain/pay",
+  customDomainRenew: "/account/custom-domain/renew",
 
   /**
    * Agent Verification & Upgrade Endpoints

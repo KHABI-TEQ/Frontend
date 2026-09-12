@@ -2,7 +2,6 @@
 import type { NextConfig } from "next";
 import bundleAnalyzer from "@next/bundle-analyzer";
 import fs from "fs";
-import path from "path";
 
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === "true",
@@ -13,32 +12,13 @@ const withBundleAnalyzer = bundleAnalyzer({
 // realpathSync.native normalizes Windows casing (Frontend vs frontend) so webpack does not
 // load two copies of react/next and break App Router context ("layout router to be mounted").
 const projectRoot = fs.realpathSync.native(__dirname);
-const frontendNodeModules = path.join(projectRoot, "node_modules");
-const parentNodeModules = path.join(projectRoot, "..", "node_modules");
-const frontendReact = fs.realpathSync.native(
-  path.join(frontendNodeModules, "react"),
-);
-const frontendReactDom = fs.realpathSync.native(
-  path.join(frontendNodeModules, "react-dom"),
-);
-const frontendNext = fs.realpathSync.native(
-  path.join(frontendNodeModules, "next"),
-);
 
-/** Webpack: absolute realpaths so Windows `frontend` vs `Frontend` cwd does not load duplicate React. */
-const webpackReactResolveAlias: Record<string, string> = {
-  react: frontendReact,
-  "react-dom": frontendReactDom,
-  "react/jsx-runtime": path.join(frontendReact, "jsx-runtime.js"),
-  "react/jsx-dev-runtime": path.join(frontendReact, "jsx-dev-runtime.js"),
-  "react-dom/client": path.join(frontendReactDom, "client.js"),
-  "react-dom/server": path.join(frontendReactDom, "server.browser.js"),
-  "react-dom/server.browser": path.join(frontendReactDom, "server.browser.js"),
-  next: frontendNext,
-  [path.join(parentNodeModules, "react")]: frontendReact,
-  [path.join(parentNodeModules, "react-dom")]: frontendReactDom,
-  [path.join(parentNodeModules, "next")]: frontendNext,
-};
+function rewriteReactServerFile(request: string) {
+  return request
+    .replace(/jsx-runtime\.react-server\.js$/, "jsx-runtime.js")
+    .replace(/jsx-dev-runtime\.react-server\.js$/, "jsx-dev-runtime.js")
+    .replace(/react\.react-server\.js$/, "index.js");
+}
 
 const nextConfig: NextConfig = {
   outputFileTracingRoot: projectRoot,
@@ -49,54 +29,37 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
-  experimental: {
-    esmExternals: true,
-  },
   serverExternalPackages: ["axios"],
-  webpack: (config, { dev }) => {
-    // Parent monorepo installs a second React copy; pin all bundles to this app's React/Next
-    // so App Router context (layout router, useRouter, usePathname) stays consistent.
-    // Do not walk up to the backend monorepo's node_modules (second React/Next copy).
-    config.resolve.modules = [frontendNodeModules];
-
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      ...webpackReactResolveAlias,
-    };
-
-    // Belt-and-suspenders: rewrite any lowercase "frontend" segment in resolved paths.
-    if (process.platform === "win32") {
-      const normalizeCasing = (resourcePath: string) =>
-        resourcePath.replace(
-          /khabiteq_backend[\\/]frontend(?=[\\/]|$)/gi,
-          `khabiteq_backend${path.sep}Frontend`,
-        );
-
-      config.plugins.push({
-        apply(compiler) {
-          compiler.hooks.normalModuleFactory.tap(
-            "NormalizeFrontendPathCasing",
-            (nmf) => {
-              nmf.hooks.afterResolve.tap(
-                "NormalizeFrontendPathCasing",
-                (result) => {
-                  if (result?.resource) {
-                    result.resource = normalizeCasing(result.resource);
-                  }
-                  if (result?.userRequest) {
-                    result.userRequest = normalizeCasing(result.userRequest);
-                  }
-                },
-              );
-            },
-          );
-        },
-      });
+  webpack: (config, { dev, isServer, webpack }) => {
+    // Webpack-only safety net. Next 16 webpack can put react.react-server.js
+    // in the browser bundle (no createContext). Fast Refresh then full-reloads
+    // GET / on every later HMR "BUILT". Prefer Turbopack for daily `next dev`.
+    if (!isServer && webpack?.NormalModuleReplacementPlugin) {
+      config.plugins.push(
+        new webpack.NormalModuleReplacementPlugin(
+          /react(?:\.react-server|\/jsx(?:-dev)?-runtime\.react-server)\.js$/,
+          (resource: { request?: string }) => {
+            if (resource.request) {
+              resource.request = rewriteReactServerFile(resource.request);
+            }
+          },
+        ),
+      );
     }
 
-    // Dev compiles can be slow on first load; avoid false ChunkLoadError timeouts.
-    if (dev && config.output) {
-      config.output.chunkLoadTimeout = 120000;
+    if (dev) {
+      config.watchOptions = {
+        ...(config.watchOptions || {}),
+        aggregateTimeout: 500,
+        ignored: [
+          "**/.git/**",
+          "**/node_modules/**",
+          "**/.next/**",
+        ],
+      };
+      if (config.output) {
+        config.output.chunkLoadTimeout = 120000;
+      }
     }
     return config;
   },

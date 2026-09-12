@@ -24,6 +24,16 @@ export const mainNavigationData: NavigationItem[] = [
         isClicked: false,
       },
       {
+        name: "Survey Services",
+        url: "/survey-services",
+        isClicked: false,
+      },
+      {
+        name: "Licensed Professionals",
+        url: "/licensed-agents",
+        isClicked: false,
+      },
+      {
         name: "Transaction Registration",
         url: "/transaction-registration",
         isClicked: false,

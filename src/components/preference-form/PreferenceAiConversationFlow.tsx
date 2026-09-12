@@ -34,6 +34,9 @@ import {
   sanitizeConversationLocation,
   userTextMentionsPhrase,
 } from "@/utils/preference-ai-conversation";
+import MatchingOutlookBanner, {
+  outlookDraftFromCollected,
+} from "@/components/preference-form/MatchingOutlookBanner";
 import {
   OFF_PLAN_DEVELOPMENT_STAGE_LABELS,
   OFF_PLAN_PAYMENT_PLAN_LABELS,
@@ -2342,6 +2345,9 @@ export default function PreferenceAiConversationFlow() {
           <p className="text-sm text-[#5A5D63] mb-6">
             Review the details below. When you&apos;re ready, submit your preference to get matched with properties.
           </p>
+          <div className="mb-6">
+            <MatchingOutlookBanner {...outlookDraftFromCollected(data)} />
+          </div>
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden mb-6">
             <table className="w-full text-sm">
               <thead>
@@ -2478,6 +2484,8 @@ export default function PreferenceAiConversationFlow() {
           <span>Reading your description and preparing suggestions…</span>
         </div>
       )}
+
+      <MatchingOutlookBanner {...outlookDraftFromCollected(preferenceAiCollectedData)} />
 
       <div
         ref={conversationScrollRef}

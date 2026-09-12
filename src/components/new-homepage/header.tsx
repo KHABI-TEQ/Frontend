@@ -48,7 +48,7 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Show "Publisher Properties (Request to Market)" for logged-in Agents under Who is it for?
+  // Show "Listing owner properties (Request to Market)" for logged-in Agents under Who is it for?
   useEffect(() => {
     const base =
       user?.userType === "Agent"
@@ -59,7 +59,7 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
                 subItems: [
                   ...item.subItems,
                   {
-                    name: "Publisher Properties (Request to Market)",
+                    name: "Listing owner properties (Request to Market)",
                     url: "/lasrera-marketplace",
                     isClicked: false,
                   },

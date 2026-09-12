@@ -6,7 +6,7 @@ import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { useUserContext } from "@/context/user-context";
 import { usePostPropertyContext } from "@/context/post-property-context";
-import { POST_REQUEST } from "@/utils/requests";
+import { GET_REQUEST, POST_REQUEST } from "@/utils/requests";
 import { extractNumericValue } from "@/utils/price-helpers";
 import { normalizeHoldDurationForApi, normalizeIsTenantedForApi, isFreeLimitPropertyError, isPortfolioUnlimitedRequired } from "@/utils/post-property-payload";
 import PortfolioUnlimitedModal from "@/components/publisher/PortfolioUnlimitedModal";
@@ -39,6 +39,9 @@ import {
 import CombinedAuthGuard from "@/logic/combinedAuthGuard";
 import AgreementModal from "@/components/post-property-components/AgreementModal";
 import Breadcrumb from "@/components/extrals/Breadcrumb";
+import { shouldHideListingOwnerDeclaration } from "@/utils/listingOwnerDeclaration";
+import { listingAgentCommissionFields } from "@/utils/listingCommission";
+import { listingInspectionFeeNaira } from "@/utils/scoutListingAuth";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { decrementFeature, selectShowCommissionFee, selectFeatureEntry } from "@/store/subscriptionFeaturesSlice";
 import { FEATURE_KEYS } from "@/hooks/useFeatureGate";
@@ -52,7 +55,11 @@ interface SharedPostPropertyFormProps {
 }
 
 // Simplified validation schemas for each step - only validate basic fields to avoid cross-step validation
-const getValidationSchema = (currentStep: number, propertyData: Record<string, unknown>) => {
+const getValidationSchema = (
+  currentStep: number,
+  propertyData: Record<string, unknown>,
+  hideOwnerDeclaration = false,
+) => {
   switch (currentStep) {
     case 0:
       // Step 0 is handled differently now - property type is pre-set
@@ -86,7 +93,9 @@ const getValidationSchema = (currentStep: number, propertyData: Record<string, u
 
     case 4:
       // Only validate step 4 fields
-      return step4ValidationSchema();
+      return step4ValidationSchema({
+        requireOwnerDeclaration: !hideOwnerDeclaration,
+      });
 
     default:
       return Yup.object({});
@@ -100,6 +109,7 @@ const isStepValid = (
   areImagesValid: () => boolean,
   formikErrors: any,
   formikTouched: any,
+  hideOwnerDeclaration = false,
 ) => {
   switch (step) {
     case 0:
@@ -115,7 +125,7 @@ const isStepValid = (
       return areImagesValid();
     case 4:
       // Step 4: Check step 4 requirements
-      return checkStep4RequiredFields(propertyData);
+      return checkStep4RequiredFields(propertyData, hideOwnerDeclaration);
     default:
       return true;
   }
@@ -228,16 +238,19 @@ const checkStep2RequiredFields = (propertyData: any) => {
 };
 
 // Helper function to check step 4 required fields
-const checkStep4RequiredFields = (propertyData: any) => {
+const checkStep4RequiredFields = (
+  propertyData: any,
+  hideOwnerDeclaration = false,
+) => {
   const contactInfo = propertyData.contactInfo;
-  return (
-    !!(
-      contactInfo.firstName &&
-      contactInfo.lastName &&
-      contactInfo.email &&
-      contactInfo.phone
-    ) && propertyData.isLegalOwner !== undefined
+  const hasContact = !!(
+    contactInfo.firstName &&
+    contactInfo.lastName &&
+    contactInfo.email &&
+    contactInfo.phone
   );
+  if (hideOwnerDeclaration) return hasContact;
+  return hasContact && propertyData.isLegalOwner !== undefined;
 };
 
 const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
@@ -249,6 +262,7 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
   const dispatch = useAppDispatch();
   const showCommissionFee = useAppSelector(selectShowCommissionFee);
   const { user } = useUserContext();
+  const hideOwnerDeclaration = shouldHideListingOwnerDeclaration(user?.userType);
   const {
     currentStep,
     setCurrentStep,
@@ -299,6 +313,12 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
   useEffect(() => {
     updatePropertyData("initializePropertyType", propertyType);
   }, [propertyType, updatePropertyData]);
+
+  useEffect(() => {
+    if (hideOwnerDeclaration && propertyData.isLegalOwner !== false) {
+      updatePropertyData("isLegalOwner", false);
+    }
+  }, [hideOwnerDeclaration, propertyData.isLegalOwner, updatePropertyData]);
 
   // Bridge Redux flag to summary component via window variable
   useEffect(() => {
@@ -410,7 +430,10 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
         isCurrentStepValid = areImagesValid();
         break;
       case 3:
-        isCurrentStepValid = checkStep4RequiredFields(propertyData);
+        isCurrentStepValid = checkStep4RequiredFields(
+          propertyData,
+          hideOwnerDeclaration,
+        );
         break;
       default:
         isCurrentStepValid = true;
@@ -489,10 +512,31 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
     try {
       setIsSubmitting(true);
 
-      if (propertyData.isLegalOwner === undefined) {
+      if (!hideOwnerDeclaration && propertyData.isLegalOwner === undefined) {
         toast.error("Please confirm whether you are the legal owner or posting with a mandate.");
         setCurrentStep(3);
         return;
+      }
+      if (hideOwnerDeclaration) {
+        const token = Cookies.get("token");
+        let scout = false;
+        if (token) {
+          try {
+            const scoutRes = await GET_REQUEST(
+              `${URLS.BASE}${URLS.propertyScoutStatus}`,
+              token
+            );
+            scout = Boolean((scoutRes as any)?.data?.isPropertyScout);
+          } catch {
+            scout = false;
+          }
+        }
+        if (scout && !propertyData.scoutListingAuthorized) {
+          toast.error("Confirm you are authorised by the owner to list this property.");
+          setCurrentStep(3);
+          setIsSubmitting(false);
+          return;
+        }
       }
 
       // 1. Collect uploaded image URLs (images are auto-uploaded)
@@ -516,21 +560,15 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
       else if (propertyData.propertyType === "shortlet") briefType = "Shortlet";
       else if (propertyData.propertyType === "jv") briefType = "Joint Venture";
 
-      // 4. Standard agent commission (Sale, Rent, JV, Shortlet)
-      const commissionFields = ["sell", "rent", "jv", "shortlet"].includes(
+      // 4. Standard agent commission (sale/off-plan 5%, rent 10%; JV/shortlet 0–5)
+      const commissionFields = ["sell", "off-plan", "rent", "jv", "shortlet"].includes(
         propertyData.propertyType
       )
-        ? {
-            agentCommissionPercent: Math.min(
-              5,
-              Math.max(0, propertyData.agentCommissionPercent ?? 5)
-            ),
-            agentCommissionAmount: Math.round(
-              (extractNumericValue(propertyData.price) *
-                Math.min(5, Math.max(0, propertyData.agentCommissionPercent ?? 5))) /
-                100
-            ),
-          }
+        ? listingAgentCommissionFields(
+            propertyData.propertyType,
+            extractNumericValue(propertyData.price),
+            propertyData.agentCommissionPercent,
+          )
         : {};
 
       // 5. Prepare property payload (backend: POST /account/properties/create)
@@ -554,6 +592,7 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
           state: propertyData.state?.value || "",
           localGovernment: propertyData.lga?.value || "",
           area: propertyData.area,
+          estate: propertyData.estate || "",
           streetAddress: propertyData.streetAddress,
         },
         price: extractNumericValue(propertyData.price),
@@ -564,7 +603,9 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
           phoneNumber: propertyData.contactInfo.phone,
           email: propertyData.contactInfo.email,
         },
-        areYouTheOwner: Boolean(propertyData.isLegalOwner),
+        areYouTheOwner: hideOwnerDeclaration
+          ? false
+          : Boolean(propertyData.isLegalOwner),
         ownershipDocuments: propertyData.ownershipDocuments || [],
         landSize: {
           measurementType: propertyData.propertyType === "shortlet" ? "" : propertyData.measurementType,
@@ -586,6 +627,7 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
         videos: uploadedVideoUrls,
         isTenanted: normalizeIsTenantedForApi(propertyData.isTenanted),
         holdDuration: normalizeHoldDurationForApi(propertyData.holdDuration),
+        inspectionFee: listingInspectionFeeNaira(propertyData.inspectionFee),
         ...commissionFields,
         // Shortlet specific fields
         availability: propertyData.availability
@@ -756,7 +798,11 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
           {!showPropertySummary && !showCommissionModal && (postingMode === "manual" || (postingMode === "ai" && currentStep > 0)) && (
           <Formik
             initialValues={propertyData}
-            validationSchema={getValidationSchema(currentStep, propertyData as unknown as Record<string, unknown>)}
+            validationSchema={getValidationSchema(
+              currentStep,
+              propertyData as unknown as Record<string, unknown>,
+              hideOwnerDeclaration,
+            )}
             onSubmit={() => {}}
             enableReinitialize
           >
@@ -834,6 +880,7 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
                               areImagesValid,
                               errors,
                               touched,
+                              hideOwnerDeclaration,
                             )
                           }
                         />

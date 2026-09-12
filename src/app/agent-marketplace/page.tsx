@@ -96,6 +96,11 @@ interface Preference {
   nearbyLandmark?: string;
   additionalNotes?: string;
   receiverMode?: ReceiverMode;
+  reviewSummary?: {
+    reviewCount: number;
+    budgetFit?: { too_low: number; moderate: number; too_high: number };
+  };
+  myReview?: { budgetFit?: string } | null;
 }
 
 interface ApiResponse {
@@ -118,6 +123,7 @@ const AgentMarketplace = () => {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [preferenceMode, setPreferenceMode] = useState('');
+  const [preferenceType, setPreferenceType] = useState('');
   const [documentType, setDocumentType] = useState('');
   const [propertyCondition, setPropertyCondition] = useState('');
   const [preferences, setPreferences] = useState<Preference[]>([]);
@@ -178,6 +184,7 @@ const AgentMarketplace = () => {
         params.append("limit", String(limit));
         if (searchTerm) params.append("keyword", searchTerm);
         if (preferenceMode) params.append("preferenceMode", preferenceMode);
+        if (preferenceType) params.append("preferenceType", preferenceType);
         if (documentType) params.append("documentType", documentType);
         if (propertyCondition) params.append("propertyCondition", propertyCondition);
 
@@ -243,7 +250,7 @@ const AgentMarketplace = () => {
     if (typeof window !== "undefined") {
       fetchApprovedPreferences();
     }
-  }, [currentPage, searchTerm, documentType, propertyCondition, preferenceMode]);
+  }, [currentPage, searchTerm, documentType, propertyCondition, preferenceMode, preferenceType]);
 
   const handleSearch = () => {
     setCurrentPage(1);
@@ -253,20 +260,6 @@ const AgentMarketplace = () => {
       propertyCondition,
       preferenceMode
     });
-  };
-
-  const handleIHaveIt = (preferenceId: string) => {
-    const href = `/agent-marketplace/${preferenceId}`;
-    if (typeof window !== 'undefined') {
-      try {
-        // Force full navigation to avoid fetchServerResponse issues in some environments
-        window.location.href = href;
-      } catch {
-        router.push(href);
-      }
-    } else {
-      router.push(href);
-    }
   };
 
   const formatPrice = (price: number | string | null | undefined, currency?: string) => {
@@ -379,8 +372,19 @@ const AgentMarketplace = () => {
             Contact details are private
           </p>
           <p className="text-xs text-gray-600 mt-1">
-            Submit a match to connect with the preference owner.
+            Open details to review this brief for the market.
           </p>
+          {preference.myReview?.budgetFit ? (
+            <p className="text-xs font-medium text-emerald-700 mt-1">You reviewed this</p>
+          ) : preference.reviewSummary?.reviewCount ? (
+            <p className="text-xs text-gray-500 mt-1">
+              {preference.reviewSummary.reviewCount} agent review
+              {preference.reviewSummary.reviewCount === 1 ? "" : "s"}
+              {preference.reviewSummary.budgetFit?.too_low
+                ? ` · ${preference.reviewSummary.budgetFit.too_low} say budget too low`
+                : ""}
+            </p>
+          ) : null}
         </div>
         {/* Key Details Grid */}
         <div className="space-y-3">
@@ -472,16 +476,12 @@ const AgentMarketplace = () => {
             {preference.status?.toLowerCase() === "matched" ? "Matched" : "Closed"}
           </div>
         ) : (
-          <button
-            onClick={() => handleIHaveIt(rowId)}
-            disabled={!rowId}
-            className="relative w-full bg-gray-900 hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-900 text-white py-3 text-sm font-medium rounded transition-all duration-300 overflow-hidden group/action"
+          <a
+            href={`/agent-marketplace/${rowId}`}
+            className="relative block w-full bg-gray-900 hover:bg-black text-white py-3 text-sm font-medium rounded text-center transition-all duration-300"
           >
-            <span className="relative z-10 flex items-center justify-center gap-2">
-              <span>I Have This Property</span>
-            </span>
-            <div className="absolute inset-0 bg-[#8DDB90] transform scale-x-0 group-hover/action:scale-x-100 transition-transform duration-300 origin-left"></div>
-          </button>
+            Review this preference
+          </a>
         )}
       </div>
     </div>
@@ -551,7 +551,7 @@ const AgentMarketplace = () => {
         {/* Title Section */}
         <div className="text-center mb-6 md:mb-8 px-4">
           <h1 className="font-display text-2xl md:text-4xl font-extrabold text-[#09391C] mb-2">Agent Marketplace</h1>
-          <p className="text-gray-600 text-sm md:text-base">Connect with Serious Buyers—Submit Now.</p>
+          <p className="text-gray-600 text-sm md:text-base">Review buyer briefs for this market.</p>
         </div>
 
         {/* Featured Matched Buyers Section */}
@@ -571,11 +571,11 @@ const AgentMarketplace = () => {
                 Hot Opportunities
               </div>
               <h2 className="font-display text-xl md:text-2xl lg:text-3xl font-bold text-[#09391C] mb-2 md:mb-3">
-                🎯 Buyers Just Got Matched!
+                Buyer briefs waiting for review
               </h2>
               <p className="text-gray-600 text-sm md:text-lg max-w-2xl mx-auto px-2">
-                Fresh opportunities waiting for the right properties.
-                <span className="text-[#8DDB90] font-semibold"> Submit now to get featured</span> and connect with serious buyers.
+                Tell the system if a brief is priced and specified realistically for this market.
+                <span className="text-[#8DDB90] font-semibold"> Matching happens when the buyer submits.</span>
               </p>
             </div>
 
@@ -600,6 +600,19 @@ const AgentMarketplace = () => {
 
             {/* Filter selects - 2 columns on mobile */}
             <div className="grid grid-cols-2 gap-3">
+              <div className="relative col-span-2">
+                <select
+                  value={preferenceType}
+                  onChange={(e) => setPreferenceType(e.target.value)}
+                  className="w-full appearance-none px-3 py-3 pr-8 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                >
+                  <option value="">All listing types</option>
+                  <option value="buy">Outright purchase</option>
+                  <option value="rent">Rental</option>
+                  <option value="joint-venture">Joint venture</option>
+                </select>
+                <FontAwesomeIcon icon={faChevronDown} className="absolute right-2 top-3.5 w-4 h-4 text-gray-400 pointer-events-none" />
+              </div>
               <div className="relative">
                 <select
                   value={preferenceMode}
@@ -668,6 +681,20 @@ const AgentMarketplace = () => {
                 className="pl-4 pr-10 py-3 border border-gray-300 rounded-lg w-64 focus:outline-none focus:ring-2 focus:ring-green-500"
               />
               <FontAwesomeIcon icon={faMagnifyingGlass} className="absolute right-3 top-3.5 w-5 h-5 text-gray-400" />
+            </div>
+
+            <div className="relative">
+              <select
+                value={preferenceType}
+                onChange={(e) => setPreferenceType(e.target.value)}
+                className="appearance-none px-4 py-3 pr-10 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <option value="">All listing types</option>
+                <option value="buy">Outright purchase</option>
+                <option value="rent">Rental</option>
+                <option value="joint-venture">Joint venture</option>
+              </select>
+              <FontAwesomeIcon icon={faChevronDown} className="absolute right-3 top-3.5 w-5 h-5 text-gray-400 pointer-events-none" />
             </div>
 
             <div className="relative">

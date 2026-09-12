@@ -251,8 +251,20 @@ const EnhancedEditBriefModal: React.FC<EnhancedEditBriefModalProps> = ({
   const handleSubmit = async (values: any) => {
     setIsSubmitting(true);
     try {
+      const tenancy = String(values.isTenanted || "")
+        .trim()
+        .toLowerCase()
+        .replace(/[_\s]+/g, "-");
+      const isTenanted =
+        tenancy === "yes"
+          ? "Yes"
+          : tenancy === "i-live-in-it" || tenancy === "iliveinit"
+            ? "i-live-in-it"
+            : "No";
+
       const payload = {
         ...values,
+        isTenanted,
         features: selectedFeatures,
         tenantCriteria: selectedTenantCriteria,
         documents: selectedDocuments,
@@ -891,7 +903,7 @@ const EnhancedEditBriefModal: React.FC<EnhancedEditBriefModalProps> = ({
                           <Field
                             type="radio"
                             name="isTenanted"
-                            value="I live in it"
+                            value="i-live-in-it"
                             className="mr-2"
                           />
                           I live in it

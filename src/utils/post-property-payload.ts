@@ -1,20 +1,21 @@
 /**
  * Normalizes form values for the property create/update API.
- * Backend expects isTenanted as "Yes" | "No" and holdDuration as non-empty.
+ * Backend accepts "Yes"/"No"/"yes"/"no"/"i-live-in-it" and stores lowercase enum.
+ * holdDuration must be non-empty.
  */
 
 /**
- * API expects isTenanted to be exactly "Yes" or "No".
- * Form may store "yes", "no", "i-live-in-it", or empty.
+ * Map form tenancy values to the API Title Case contract ("Yes" | "No").
+ * "I live in it" / i-live-in-it is sent as "No" for the Yes/No API shape used by create;
+ * edit also accepts "i-live-in-it" if the form stores that enum value.
  */
 export function normalizeIsTenantedForApi(
   value: string | undefined | null
-): "Yes" | "No" {
+): "Yes" | "No" | "i-live-in-it" {
   if (!value || typeof value !== "string") return "No";
-  const v = value.trim().toLowerCase();
+  const v = value.trim().toLowerCase().replace(/[_\s]+/g, "-");
   if (v === "yes") return "Yes";
-  if (v === "no") return "No";
-  if (v === "i-live-in-it") return "No";
+  if (v === "i-live-in-it" || v === "iliveinit") return "i-live-in-it";
   return "No";
 }
 

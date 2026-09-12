@@ -32,7 +32,7 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
   const ref = React.useRef<HTMLDivElement | null>(null);
   const { logout, user: contextUser } = useUserContext();
   const { setSelectedNav } = usePageContext();
-  type UserTypeValue = "Agent" | "Landowners" | "Developer" | "FieldAgent";
+  type UserTypeValue = "Agent" | "Landowners" | "Developer" | "FieldAgent" | "Lawyer" | "Surveyor";
   const [position, setPosition] = useState({ top: 0, right: 0 });
 
   useClickOutside(ref, () => closeUserProfileModal(false));
@@ -47,7 +47,9 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
     if (lower === "landowners" || lower === "landowner") return "Landowners";
     if (lower === "fieldagent" || lower === "field_agent") return "FieldAgent";
     if (lower === "agent") return "Agent";
-    if (["Agent", "Landowners", "Developer", "FieldAgent"].includes(s)) return s as UserTypeValue;
+    if (lower === "lawyer") return "Lawyer";
+    if (lower === "surveyor") return "Surveyor";
+    if (["Agent", "Landowners", "Developer", "FieldAgent", "Lawyer", "Surveyor"].includes(s)) return s as UserTypeValue;
     return null;
   };
 
@@ -88,7 +90,11 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
           ? "Developer"
           : effectiveUserType === "FieldAgent"
             ? "Field Agent"
-            : effectiveUserType;
+            : effectiveUserType === "Lawyer"
+              ? "Lawyer"
+              : effectiveUserType === "Surveyor"
+                ? "Surveyor"
+                : effectiveUserType;
 
   // Calculate position based on screen size
   useEffect(() => {
@@ -214,6 +220,27 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
             label: "Referral",
             action: () => {
               clientNavigate("/referral");
+              closeUserProfileModal(false);
+            },
+          },
+        ]
+      : []),
+
+    ...(effectiveUserType === "Lawyer" || effectiveUserType === "Surveyor"
+      ? [
+          {
+            icon: <Briefcase size={18} />,
+            label: "Jobs",
+            action: () => {
+              clientNavigate("/dashboard");
+              closeUserProfileModal(false);
+            },
+          },
+          {
+            icon: <Settings size={18} />,
+            label: "Account Settings",
+            action: () => {
+              clientNavigate("/profile-settings");
               closeUserProfileModal(false);
             },
           },

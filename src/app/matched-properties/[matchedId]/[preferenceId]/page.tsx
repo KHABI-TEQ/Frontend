@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import { GET_REQUEST } from "@/utils/requests";
+import React, { useEffect, useRef, useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
+import { GET_REQUEST, POST_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import toast from "react-hot-toast";
 import Loading from "@/components/loading-component/loading";
@@ -120,45 +120,87 @@ interface MatchedPropertiesData {
   matchDetails: MatchDetails;
   preference: Preference;
   matchedProperties: MatchedProperty[];
+  batch?: {
+    revealedCount: number;
+    total: number;
+    remaining: number;
+    hasMore: boolean;
+    nextBatchSize: number;
+  };
 }
 
 const MatchedPropertiesPage = () => {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const { matchedId, preferenceId } = params;
   const { toggleInspectionSelection } = useGlobalPropertyActions();
+  const pulledFromQuery = useRef(false);
 
   const [data, setData] = useState<MatchedPropertiesData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [pullingNext, setPullingNext] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [propertiesPerPage] = useState(8); // 2 rows of 4 properties each
 
-  useEffect(() => {
-    const fetchMatchedProperties = async () => {
-      try {
-        setLoading(true);
-        const response = await GET_REQUEST(`${URLS.BASE}/properties/${matchedId}/${preferenceId}/matches`);
+  const fetchMatchedProperties = async (opts?: { silent?: boolean }) => {
+    try {
+      if (!opts?.silent) setLoading(true);
+      const response = await GET_REQUEST(
+        `${URLS.BASE}${URLS.matchedProperties(String(matchedId), String(preferenceId))}?page=1&limit=50`
+      );
 
-        if (response?.success) {
-          setData(response.data as any);
-        } else {
-          setError(response?.error || "Failed to fetch matched properties");
-          toast.error("Failed to load matched properties");
-        }
-      } catch (error) {
-        console.error("Error fetching matched properties:", error);
-        setError("An error occurred while fetching data");
-        toast.error("An error occurred while fetching data");
-      } finally {
-        setLoading(false);
+      if (response?.success) {
+        setData(response.data as any);
+        setError(null);
+      } else {
+        setError(response?.error || "Failed to fetch matched properties");
+        toast.error("Failed to load matched properties");
       }
-    };
+    } catch (error) {
+      console.error("Error fetching matched properties:", error);
+      setError("An error occurred while fetching data");
+      toast.error("An error occurred while fetching data");
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     if (matchedId && preferenceId) {
       fetchMatchedProperties();
     }
   }, [matchedId, preferenceId]);
+
+  const handleNextBatch = async (token?: string) => {
+    if (!matchedId || !preferenceId) return;
+    setPullingNext(true);
+    try {
+      const res = await POST_REQUEST(
+        `${URLS.BASE}${URLS.matchedPropertiesNextBatch(String(matchedId), String(preferenceId))}`,
+        token ? { token } : {}
+      );
+      if (res?.success) {
+        toast.success((res as any).message || "Next matches are ready");
+        await fetchMatchedProperties({ silent: true });
+      } else {
+        toast.error((res as any)?.message || "Could not load the next batch");
+      }
+    } catch {
+      toast.error("Could not load the next batch");
+    } finally {
+      setPullingNext(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!matchedId || !preferenceId || pulledFromQuery.current) return;
+    if (searchParams.get("pullNext") !== "1") return;
+    pulledFromQuery.current = true;
+    const token = searchParams.get("token") || undefined;
+    void handleNextBatch(token || undefined);
+  }, [matchedId, preferenceId, searchParams]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-NG', {
@@ -218,7 +260,10 @@ const MatchedPropertiesPage = () => {
               Matched Properties
             </h1>
             <p className="text-[#5A5D63] text-lg">
-              Properties matching your preferences • {matchedProperties.length} match{matchedProperties.length !== 1 ? 'es' : ''} found
+              Properties matching your preferences • {matchedProperties.length} shown
+              {data.batch?.total
+                ? ` of ${data.batch.total} match${data.batch.total !== 1 ? "es" : ""}`
+                : ` match${matchedProperties.length !== 1 ? "es" : ""} found`}
             </p>
           </div>
         </div>
@@ -517,6 +562,24 @@ const MatchedPropertiesPage = () => {
               )}
             </>
           )}
+
+          {data.batch?.hasMore ? (
+            <div className="mt-8 text-center">
+              <p className="text-sm text-[#5A5D63] mb-3">
+                {data.batch.remaining} more match{data.batch.remaining === 1 ? "" : "es"} available.
+              </p>
+              <button
+                type="button"
+                onClick={() => void handleNextBatch()}
+                disabled={pullingNext}
+                className="bg-[#09391C] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#0d4d28] disabled:opacity-60 transition-colors"
+              >
+                {pullingNext
+                  ? "Loading…"
+                  : `Show next ${data.batch.nextBatchSize || 5} matches`}
+              </button>
+            </div>
+          ) : null}
         </motion.div>
       </div>
     </div>

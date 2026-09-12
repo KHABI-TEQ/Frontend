@@ -27,6 +27,7 @@ import {
   Activity,
   ChevronDown,
   FileText,
+  Globe,
 } from "lucide-react";
 import { useDealSite } from "@/context/deal-site-context";
 
@@ -44,6 +45,7 @@ const NAV_ITEMS: NavItem[] = [
 
   // Content & Design
   { id: "branding", label: "Branding & SEO", path: "/public-access-page/branding", icon: <Settings size={18} />, group: "content" },
+  { id: "custom-domain", label: "Custom Domain", path: "/public-access-page/custom-domain", icon: <Globe size={18} />, group: "content" },
   { id: "theme", label: "Theme", path: "/public-access-page/theme", icon: <Palette size={18} />, group: "content" },
   { id: "home-page", label: "Home Page", path: "/public-access-page/home-page", icon: <Home size={18} />, group: "content" },
   { id: "featured", label: "Featured Listings", path: "/public-access-page/featured", icon: <Star size={18} />, group: "content" },

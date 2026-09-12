@@ -32,6 +32,8 @@ import Loading from "@/components/loading-component/loading";
 import { SyndicationIntegrationSummary } from "@/components/dashboard/DashboardIntegrationSummaries";
 import AgentEligibilityBanner from "@/components/agent/AgentEligibilityBanner";
 import { useAgentEligibility } from "@/hooks/useAgentEligibility";
+import PublisherListingAllowanceCard from "@/components/publisher/PublisherListingAllowanceCard";
+import { usePublisherListingEligibility } from "@/hooks/usePublisherListingEligibility";
 
 interface Brief {
   _id: string;
@@ -117,6 +119,10 @@ export default function AgentDashboard() {
   const router = useRouter();
   const { user, logout } = useUserContext();
   const { eligibility, loading: eligibilityLoading } = useAgentEligibility();
+  const {
+    eligibility: listingEligibility,
+    loading: listingEligibilityLoading,
+  } = usePublisherListingEligibility();
   const [stats, setStats] = useState<DashboardStats>({
     totalBriefs: 0,
     totalActiveBriefs: 0,
@@ -315,7 +321,10 @@ export default function AgentDashboard() {
         <div className="flex flex-col gap-4 mb-8">
           <div className="w-full">
             <h1 className="text-2xl sm:text-3xl font-bold text-[#09391C] font-display">
-              Welcome back, Agent {user.firstName}!
+              Welcome back,{" "}
+              {eligibility?.displayRoleLabel ||
+                (eligibility?.isPropertyScout ? "Property Scout" : "Agent")}{" "}
+              {user.firstName}!
             </h1>
             <p className="text-[#5A5D63] mt-2">
               Manage your briefs and track your real estate performance
@@ -336,6 +345,15 @@ export default function AgentDashboard() {
               <CalendarIcon size={20} />
               <span className="hidden sm:inline">Inspection</span>Requests
             </Link>
+            {eligibility?.isLicensedPublisher ? (
+              <Link
+                href="/licensed-agent-representation-requests"
+                className="bg-white hover:bg-gray-50 text-[#09391C] border border-gray-300 px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
+              >
+                <UsersIcon size={20} />
+                Scout requests
+              </Link>
+            ) : null}
             <Link
               href="/agent-marketplace"
               className="bg-white hover:bg-gray-50 text-[#09391C] border border-gray-300 px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
@@ -348,7 +366,7 @@ export default function AgentDashboard() {
               className="bg-white hover:bg-gray-50 text-[#09391C] border border-[#8DDB90] px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
             >
               <PlusIcon size={20} />
-              <span className="hidden sm:inline">Publisher</span> Properties
+              <span className="hidden sm:inline">Listing owner</span> properties
             </Link>
             <Link
               href="/agent-broadcast"
@@ -408,12 +426,12 @@ export default function AgentDashboard() {
                       <p className="text-sm font-semibold text-[#09391C]">Subscription</p>
                       <p className="mt-1 text-xs text-emerald-900/90 leading-relaxed">
                         {eligibility?.hasPaidSubscription
-                          ? "Paid practitioner subscription active — unlimited listings and full page access."
+                          ? "Paid practitioner subscription active — full page access and matching tools. Listings stay capped at 25 unless you upgrade to Portfolio Unlimited."
                           : eligibility?.policyPhase === "kyc_grace"
-                            ? "KYC grace: list 1 property without a paid plan. Complete KYC to unlock the 4-week trial (up to 10 listings)."
+                            ? "KYC grace: list 1 property without a paid plan. Complete KYC to unlock the 4-week Free trial (up to 10 listings)."
                             : eligibility?.policyPhase === "trial"
-                              ? `Trial active: up to ${eligibility.listingLimit ?? 10} listings without a paid subscription.`
-                              : "No paid subscription yet. After your trial, a paid plan is required for listings and your practitioner page."}
+                              ? `Free trial active: up to ${eligibility.listingLimit ?? 10} listings without a paid subscription. When the 4-week trial ends, a paid plan is required even if you have not used all Free slots.`
+                              : "No paid subscription yet. After your 4-week Free trial, a paid plan is required for listings and your practitioner page — regardless of how many Free listings you used. Listing volume above 25 needs Portfolio Unlimited."}
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2 shrink-0">
@@ -445,6 +463,11 @@ export default function AgentDashboard() {
         <div className="mb-4">
           <AgentEligibilityBanner eligibility={eligibility} loading={eligibilityLoading} />
         </div>
+
+        <PublisherListingAllowanceCard
+          eligibility={listingEligibility}
+          loading={listingEligibilityLoading}
+        />
 
         {/* Performance Overview + Referral */}
         <div className="bg-white rounded-lg p-4 sm:p-6 mb-8 shadow-sm">
@@ -670,7 +693,7 @@ export default function AgentDashboard() {
                   <BriefcaseIcon size={20} className="text-[#8DDB90]" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold">Publisher Properties</h3>
+                  <h3 className="font-semibold">Listing owner properties</h3>
                   <p className="text-sm text-[#5A5D63]">
                     Request to market Landlord & Developer listings
                   </p>

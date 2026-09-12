@@ -6,6 +6,7 @@ import ReactSelect from "react-select";
 import CreatableSelect from "react-select/creatable";
 import RadioCheck from "@/components/general-components/radioCheck";
 import EnhancedPriceInput from "@/components/general-components/EnhancedPriceInput";
+import InspectionFeeField from "@/components/post-property-components/InspectionFeeField";
 import { useFormikContext } from "formik";
 import { usePostPropertyContext } from "@/context/post-property-context";
 import customStyles from "@/styles/inputStyle";
@@ -13,6 +14,7 @@ import {
   getStates,
   getLGAsByState,
   getAreasByStateLGA,
+  getEstatesByStateLgaArea,
 } from "@/utils/location-utils";
 import {
   briefTypeConfig,
@@ -43,11 +45,13 @@ const Step1BasicDetails: React.FC<StepProps> = () => {
   const [stateOptions, setStateOptions] = useState<Option[]>([]);
   const [lgaOptions, setLgaOptions] = useState<Option[]>([]);
   const [areaOptions, setAreaOptions] = useState<Option[]>([]);
+  const [estateOptions, setEstateOptions] = useState<Option[]>([]);
 
   // Track initial mount and state/lga changes to prevent unwanted resets during auto-population
   const isInitialMount = useRef(true);
   const previousState = useRef(propertyData.state);
   const previousLga = useRef(propertyData.lga);
+  const previousArea = useRef(propertyData.area);
 
   const handleFieldChange = async <K extends keyof PropertyFormData>(
     fieldName: K,
@@ -148,15 +152,18 @@ const Step1BasicDetails: React.FC<StepProps> = () => {
       if (stateChanged && !isInitialMount.current) {
         updatePropertyData("lga", null);
         updatePropertyData("area", "");
+        updatePropertyData("estate", "");
       }
 
       previousState.current = propertyData.state;
     } else {
       setLgaOptions([]);
       setAreaOptions([]);
+      setEstateOptions([]);
       if (!isInitialMount.current) {
         updatePropertyData("lga", null);
         updatePropertyData("area", "");
+        updatePropertyData("estate", "");
       }
       previousState.current = null;
     }
@@ -180,17 +187,47 @@ const Step1BasicDetails: React.FC<StepProps> = () => {
 
       if (lgaChanged && !isInitialMount.current) {
         updatePropertyData("area", "");
+        updatePropertyData("estate", "");
       }
 
       previousLga.current = propertyData.lga;
     } else {
       setAreaOptions([]);
+      setEstateOptions([]);
       if (!isInitialMount.current) {
         updatePropertyData("area", "");
+        updatePropertyData("estate", "");
       }
       previousLga.current = null;
     }
   }, [propertyData.state, propertyData.lga]);
+
+  useEffect(() => {
+    if (propertyData.state && propertyData.lga && propertyData.area) {
+      const estates = getEstatesByStateLgaArea(
+        propertyData.state.value,
+        propertyData.lga.value,
+        propertyData.area,
+      ).map((estate: string) => ({
+        value: estate,
+        label: estate,
+      }));
+      setEstateOptions(estates);
+
+      const areaChanged =
+        previousArea.current && previousArea.current !== propertyData.area;
+      if (areaChanged && !isInitialMount.current) {
+        updatePropertyData("estate", "");
+      }
+      previousArea.current = propertyData.area;
+    } else {
+      setEstateOptions([]);
+      if (!isInitialMount.current) {
+        updatePropertyData("estate", "");
+      }
+      previousArea.current = "";
+    }
+  }, [propertyData.state, propertyData.lga, propertyData.area]);
 
     // Mark required fields as touched on component mount to show validation borders
   useEffect(() => {
@@ -466,17 +503,23 @@ const Step1BasicDetails: React.FC<StepProps> = () => {
                 }
                 touched={!!touched?.price}
                 required
+                disabled={!!propertyData.priceChangeBlocked}
                 description={
-                  propertyData.propertyType === "rent"
-                    ? "Enter the total annual rent amount"
-                    : propertyData.propertyType === "sell"
-                      ? "Enter your desired selling price"
-                      : "Enter the estimated property value"
+                  propertyData.priceChangeBlocked
+                    ? propertyData.priceChangeBlockedMessage ||
+                      "Price cannot be changed while this property has an active or upcoming inspection."
+                    : propertyData.propertyType === "rent"
+                      ? "Enter the total annual rent amount"
+                      : propertyData.propertyType === "sell"
+                        ? "Enter your desired selling price"
+                        : "Enter the estimated property value"
                 }
               />
             </div>
 
-            
+            <div>
+              <InspectionFeeField />
+            </div>
 
             {/* Lease Hold for Rent (when Lease is selected) */}
             {shouldShowField(
@@ -693,12 +736,16 @@ const Step1BasicDetails: React.FC<StepProps> = () => {
                   const value = option?.value || "";
                   setFieldTouched("area", true);
                   updatePropertyData("area", value);
+                  updatePropertyData("estate", "");
                   setFieldValue("area", value);
+                  setFieldValue("estate", "");
                 }}
                 onCreateOption={(inputValue) => {
                   setFieldTouched("area", true);
                   updatePropertyData("area", inputValue);
+                  updatePropertyData("estate", "");
                   setFieldValue("area", inputValue);
+                  setFieldValue("estate", "");
                 }}
                 placeholder={
                   propertyData.lga
@@ -725,9 +772,48 @@ const Step1BasicDetails: React.FC<StepProps> = () => {
                 }
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-[#707281] mb-2">
+                Estate
+              </label>
+              <ReactSelect
+                options={estateOptions}
+                value={
+                  propertyData.estate
+                    ? { value: propertyData.estate, label: propertyData.estate }
+                    : null
+                }
+                onChange={(option) => {
+                  const value = option?.value || "";
+                  setFieldTouched("estate", true);
+                  updatePropertyData("estate", value);
+                  setFieldValue("estate", value);
+                }}
+                placeholder={
+                  propertyData.area
+                    ? estateOptions.length > 0
+                      ? "Search and select estate"
+                      : "No estates listed for this area"
+                    : "Select area first"
+                }
+                styles={{
+                  ...customStyles,
+                  control: (provided, state) => ({
+                    ...customStyles.control?.(provided, state),
+                    borderColor: getSelectBorderClass("estate"),
+                    minHeight: "44px",
+                  }),
+                }}
+                isSearchable
+                isClearable
+                isDisabled={!propertyData.area || estateOptions.length === 0}
+                noOptionsMessage={() => "No estates listed for this area"}
+                filterOption={(option, searchText) =>
+                  option.label.toLowerCase().includes(searchText.toLowerCase())
+                }
+              />
+            </div>
           </div>
-
-          {/* Street Address - Available for all property types */}
           <div className="mt-4">
             <label className="block text-sm font-medium text-[#707281] mb-2">
               Street Address (Optional)
