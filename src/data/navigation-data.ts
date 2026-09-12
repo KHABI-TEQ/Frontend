@@ -45,10 +45,11 @@ export const mainNavigationData: NavigationItem[] = [
     url: "/user-types",
     isClicked: false,
     subItems: [
-      { name: "Agents", url: "/for-agents", isClicked: false },
-      { name: "Developers", url: "/for-developers", isClicked: false },
-      { name: "Landlords", url: "/for-landlords", isClicked: false },
-      { name: "Clients", url: "/for-clients", isClicked: false },
+      { name: "Property Seekers", url: "/for-clients", isClicked: false },
+      { name: "Owners & Developers", url: "/for-owners-developers", isClicked: false },
+      { name: "Real Estate Professionals", url: "/for-agents", isClicked: false },
+      { name: "Lawyers", url: "/user-types#lawyers", isClicked: false },
+      { name: "Surveyors", url: "/user-types#surveyors", isClicked: false },
     ],
   },
   {
@@ -75,23 +76,28 @@ export const agentNavigationData: NavigationItem[] = [
     isClicked: false,
   },
   {
-    name: "Client",
+    name: "Property Seekers",
     url: "/for-clients",
     isClicked: false,
   },
   {
-    name: "Landlord",
-    url: "/for-landlords",
+    name: "Owners & Developers",
+    url: "/for-owners-developers",
     isClicked: false,
   },
   {
-    name: "Agent",
+    name: "Real Estate Professionals",
     url: "/for-agents",
     isClicked: false,
   },
   {
-    name: "Developer",
-    url: "/for-developers",
+    name: "Lawyers",
+    url: "/user-types#lawyers",
+    isClicked: false,
+  },
+  {
+    name: "Surveyors",
+    url: "/user-types#surveyors",
     isClicked: false,
   },
   {

@@ -5,12 +5,12 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { Building2, Users, Search, Home, ArrowRight, Check } from 'lucide-react';
+import { Building2, Users, Search, Scale, Ruler, ArrowRight, Check, type LucideIcon } from 'lucide-react';
 import { USER_TYPE_BULLETS, type UserTypeId } from '@/data/user-types-content';
 
 const userTypes: {
   id: UserTypeId;
-  icon: typeof Home;
+  icon: LucideIcon;
   title: string;
   headline: string;
   bullets: string[];
@@ -23,32 +23,18 @@ const userTypes: {
   imageAlt: string;
 }[] = [
   {
-    id: 'landlords',
-    icon: Home,
-    title: 'Landlords',
-    headline: 'List for free with complete control',
-    bullets: USER_TYPE_BULLETS.landlords,
-    cta: 'List Property',
-    ctaUrl: '/for-landlords',
-    color: 'from-amber-500 to-orange-600',
-    iconBg: 'bg-amber-100',
-    iconColor: 'text-amber-600',
-    imageSrc: '/images/user-types/landlords.webp',
-    imageAlt: 'Nigerian property owner standing in front of a well-maintained home',
-  },
-  {
-    id: 'developers',
+    id: 'ownersDevelopers',
     icon: Building2,
-    title: 'Developers',
-    headline: 'Reach serious buyers faster',
-    bullets: USER_TYPE_BULLETS.developers,
-    cta: 'Publish Project',
-    ctaUrl: '/for-developers',
+    title: 'Owners & Developers',
+    headline: 'Present your opportunities',
+    bullets: USER_TYPE_BULLETS.ownersDevelopers,
+    cta: 'Explore as Owner or Developer',
+    ctaUrl: '/for-owners-developers',
     color: 'from-emerald-600 to-teal-700',
     iconBg: 'bg-emerald-100',
     iconColor: 'text-emerald-600',
     imageSrc: '/images/user-types/developers.webp',
-    imageAlt: 'Nigerian real estate developer reviewing plans at a construction site',
+    imageAlt: 'Property owner and developer presenting a real estate opportunity',
   },
   {
     id: 'agents',
@@ -77,6 +63,34 @@ const userTypes: {
     iconColor: 'text-blue-600',
     imageSrc: '/images/user-types/buyers.webp',
     imageAlt: 'Nigerian couple celebrating their new home',
+  },
+  {
+    id: 'lawyers',
+    icon: Scale,
+    title: 'Lawyers',
+    headline: 'Verify documents with confidence',
+    bullets: USER_TYPE_BULLETS.lawyers,
+    cta: 'Register as a Lawyer',
+    ctaUrl: '/user-types#lawyers',
+    color: 'from-violet-600 to-indigo-700',
+    iconBg: 'bg-violet-100',
+    iconColor: 'text-violet-600',
+    imageSrc: '/images/user-types/agents.webp',
+    imageAlt: 'Legal professional reviewing property documents',
+  },
+  {
+    id: 'surveyors',
+    icon: Ruler,
+    title: 'Surveyors',
+    headline: 'Plan and site verification',
+    bullets: USER_TYPE_BULLETS.surveyors,
+    cta: 'Register as a Surveyor',
+    ctaUrl: '/user-types#surveyors',
+    color: 'from-cyan-600 to-teal-700',
+    iconBg: 'bg-cyan-100',
+    iconColor: 'text-cyan-600',
+    imageSrc: '/images/user-types/developers.webp',
+    imageAlt: 'Surveyor reviewing a site plan',
   },
 ];
 

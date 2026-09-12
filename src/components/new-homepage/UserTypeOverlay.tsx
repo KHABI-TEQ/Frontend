@@ -53,7 +53,7 @@ const userTypes: UserType[] = [
     description:
       "Present your property opportunities within an infrastructure designed to connect them with relevant property seekers and real estate professionals.",
     cta: "Explore as an Owner or Developer",
-    ctaUrl: "/for-developers",
+    ctaUrl: "/for-owners-developers",
     gradient: "from-emerald-500 via-teal-500 to-cyan-500",
     bgColor: "bg-gradient-to-br from-emerald-50/90 to-teal-50/90",
     iconBg: "bg-gradient-to-br from-emerald-100 to-teal-100",
@@ -377,7 +377,7 @@ export default function UserTypeOverlay({ isOpen, onClose }: UserTypeOverlayProp
 
             {/* User Type Cards - Horizontal scroll on mobile, grid on desktop */}
             <motion.div
-              className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4 scrollbar-hide sm:grid sm:grid-cols-2 sm:gap-5 sm:overflow-visible sm:pb-0 lg:grid-cols-3 lg:items-start"
+              className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4 scrollbar-hide sm:grid sm:grid-cols-2 sm:gap-5 sm:overflow-visible sm:pb-0 lg:grid-cols-3 lg:items-stretch"
               variants={cardContainerVariants}
               initial="hidden"
               animate="visible"
@@ -395,7 +395,7 @@ export default function UserTypeOverlay({ isOpen, onClose }: UserTypeOverlayProp
                     onMouseLeave={() => setHoveredId(null)}
                     onClick={() => handleCardClick(userType)}
                     className={`
-                      group relative cursor-pointer flex-shrink-0 self-start
+                      group relative cursor-pointer flex h-full flex-col flex-shrink-0
                       w-[280px] sm:w-auto
                       snap-center
                       ${userType.bgColor}
@@ -459,14 +459,14 @@ export default function UserTypeOverlay({ isOpen, onClose }: UserTypeOverlayProp
                     </h3>
 
                     {/* Description */}
-                    <p className="text-gray-600 text-sm sm:text-base leading-relaxed mb-6 whitespace-pre-line">
+                    <p className="text-gray-600 text-sm sm:text-base leading-relaxed mb-6 whitespace-pre-line flex-1">
                       {userType.description}
                     </p>
 
                     {/* CTA Button */}
                     <motion.div
                       className={`
-                        inline-flex items-center gap-2
+                        mt-auto inline-flex items-center gap-2
                         px-5 py-2.5 rounded-xl
                         bg-gradient-to-r ${userType.gradient}
                         text-white font-semibold text-sm

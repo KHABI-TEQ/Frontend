@@ -4,8 +4,9 @@ import UserTypesShowcase from '@/components/new-homepage/UserTypesShowcase';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'For Developers, Agents & Buyers | Khabiteq',
-  description: 'Discover how Khabiteq helps developers, agents, and buyers connect in the real estate market.',
+  title: 'Who Khabiteq Is For | Khabiteq',
+  description:
+    'Discover how Khabiteq supports property seekers, owners and developers, real estate professionals, lawyers, and surveyors.',
 };
 
 export default function UserTypesPage() {

@@ -1,6 +1,13 @@
 /** @format */
 
-export type UserTypeId = 'landlords' | 'developers' | 'agents' | 'buyers';
+export type UserTypeId =
+  | 'landlords'
+  | 'developers'
+  | 'ownersDevelopers'
+  | 'agents'
+  | 'buyers'
+  | 'lawyers'
+  | 'surveyors';
 
 /** Shared buyer value prop — LASRERA certificate after transaction registration. */
 export const BUYER_LASRERA_CERTIFICATE_BULLET =
@@ -33,5 +40,26 @@ export const USER_TYPE_BULLETS: Record<UserTypeId, string[]> = {
     'Book inspections through the platform',
     BUYER_LASRERA_CERTIFICATE_BULLET,
     'Rate or report agents after your experience for transparency and accountability',
+  ],
+  ownersDevelopers: [
+    'List properties or developments for sale, rent, shortlet or joint venture',
+    'Let verified agents request to market your opportunity — you decide',
+    'Keep contact details private until you approve a professional',
+    'Set commission and track inquiries from one place',
+    'Reach structured buyer demand already submitted on Khabiteq',
+  ],
+  lawyers: [
+    'Join the document verification marketplace after KYC approval',
+    'Set a clear verification fee within platform bounds',
+    'Accept or decline incoming title-review jobs',
+    'Submit reports and receive payouts through your settlement account',
+    'Publish a professional page so clients can find and hire you',
+  ],
+  surveyors: [
+    'Offer plan verification and site survey services',
+    'Appear on the surveyor marketplace after KYC approval',
+    'Accept requests, complete reports and get paid through Khabiteq',
+    'Connect a payout account before going live',
+    'Build a public professional page for your practice',
   ],
 };

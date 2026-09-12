@@ -5,33 +5,19 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { Building2, Users, Search, ArrowRight, Check, Home } from 'lucide-react';
+import { Building2, Users, Search, ArrowRight, Check, Scale, Ruler } from 'lucide-react';
 import { USER_TYPE_BULLETS, BUYER_LASRERA_CERTIFICATE_BULLET } from '@/data/user-types-content';
 
 const userTypes = [
   {
-    id: 'landlords',
-    icon: Home,
-    title: 'For Landlords',
-    headline: 'Your property, your rules.',
-    lead: 'List your property for sale, rent, shortlet, or joint venture. Add details easily and reach more serious buyers.',
-    bullets: USER_TYPE_BULLETS.landlords,
-    cta: 'List a property',
-    ctaUrl: '/post-property',
-    color: 'from-amber-500 to-orange-600',
-    bgColor: 'bg-amber-50',
-    iconBg: 'bg-amber-100',
-    iconColor: 'text-amber-600',
-  },
-  {
-    id: 'developers',
+    id: 'owners-developers',
     icon: Building2,
-    title: 'For Developers',
-    headline: 'Show your project. Find the right partners.',
-    lead: 'List your projects and joint ventures easily. Turn simple descriptions into full listings and reach serious investors.',
-    bullets: USER_TYPE_BULLETS.developers,
-    cta: 'Publish a project',
-    ctaUrl: '/post-property',
+    title: 'For Owners & Developers',
+    headline: 'Present your property opportunities.',
+    lead: 'List a property or development for sale, rent, shortlet or joint venture. Connect with seekers and verified professionals.',
+    bullets: USER_TYPE_BULLETS.ownersDevelopers,
+    cta: 'Explore as an owner or developer',
+    ctaUrl: '/for-owners-developers',
     color: 'from-emerald-600 to-teal-700',
     bgColor: 'bg-emerald-50',
     iconBg: 'bg-emerald-100',
@@ -40,12 +26,12 @@ const userTypes = [
   {
     id: 'agents',
     icon: Users,
-    title: 'For Agents',
-    headline: 'Grow your business your way.',
+    title: 'For Real Estate Professionals',
+    headline: 'Build and grow your digital practice.',
     lead: 'Manage listings, attract clients, and promote properties — all from your own Practitioner page.',
     bullets: USER_TYPE_BULLETS.agents,
-    cta: 'Activate your Practitioner Page',
-    ctaUrl: '/agent-marketplace',
+    cta: 'Explore your tools',
+    ctaUrl: '/for-agents',
     color: 'from-[#8DDB90] to-emerald-600',
     bgColor: 'bg-[#f0fdf4]',
     iconBg: 'bg-[#dcfce7]',
@@ -54,16 +40,44 @@ const userTypes = [
   {
     id: 'buyers',
     icon: Search,
-    title: 'For Clients & Buyers',
-    headline: 'Tell us what you want.',
+    title: 'For Property Seekers',
+    headline: 'Find property. Navigate safely.',
     lead: `Looking to buy, rent, or invest? Tell us what you want and find matching properties faster. ${BUYER_LASRERA_CERTIFICATE_BULLET}.`,
     bullets: USER_TYPE_BULLETS.buyers,
-    cta: 'Submit a preference',
-    ctaUrl: '/preference',
+    cta: 'Start your journey',
+    ctaUrl: '/for-clients',
     color: 'from-blue-600 to-indigo-700',
     bgColor: 'bg-blue-50',
     iconBg: 'bg-blue-100',
     iconColor: 'text-blue-600',
+  },
+  {
+    id: 'lawyers',
+    icon: Scale,
+    title: 'For Lawyers',
+    headline: 'Verify documents with confidence.',
+    lead: 'Join the licensed document-verification marketplace. Clients hire you through Khabiteq after reviewing your credentials and fee.',
+    bullets: USER_TYPE_BULLETS.lawyers,
+    cta: 'Register as a lawyer',
+    ctaUrl: '/auth/register',
+    color: 'from-violet-600 to-indigo-700',
+    bgColor: 'bg-violet-50',
+    iconBg: 'bg-violet-100',
+    iconColor: 'text-violet-600',
+  },
+  {
+    id: 'surveyors',
+    icon: Ruler,
+    title: 'For Surveyors',
+    headline: 'Deliver plan and site verification.',
+    lead: 'Offer plan verification and site surveys. Appear on the marketplace once KYC is approved and your payout account is connected.',
+    bullets: USER_TYPE_BULLETS.surveyors,
+    cta: 'Register as a surveyor',
+    ctaUrl: '/auth/register',
+    color: 'from-cyan-600 to-teal-700',
+    bgColor: 'bg-cyan-50',
+    iconBg: 'bg-cyan-100',
+    iconColor: 'text-cyan-600',
   },
 ];
 
@@ -138,15 +152,16 @@ export default function UserTypesShowcase() {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
-            className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8"
           >
             {userTypes.map((userType) => {
               const Icon = userType.icon;
               return (
                 <motion.div
                   key={userType.id}
+                  id={userType.id}
                   variants={itemVariants}
-                  className={`group relative bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 overflow-hidden border border-gray-100`}
+                  className={`group relative scroll-mt-28 bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 overflow-hidden border border-gray-100`}
                 >
                   {/* Top gradient bar */}
                   <div className={`h-2 w-full bg-gradient-to-r ${userType.color}`} />
