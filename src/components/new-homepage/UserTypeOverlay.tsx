@@ -67,9 +67,9 @@ const userTypes: UserType[] = [
     title: "Real Estate Professionals",
     headline: "Build and Grow Your Digital Practice",
     description:
-      "Access digital tools designed to help you build your professional presence, present your property portfolio and work with structured property demand.",
-    cta: "Explore Your Tools",
-    ctaUrl: "/for-agents",
+      "Create a professional presence where property seekers can discover your profile, understand your services, view your credentials and engage you when your expertise is needed.\n\nIncrease your visibility, access relevant client and service opportunities, and build a more accessible practice through Khabiteq.",
+    cta: "Read more..",
+    ctaUrl: "/for-professionals",
     gradient: "from-[#8DDB90] via-emerald-500 to-green-600",
     bgColor: "bg-gradient-to-br from-[#f0fdf4]/90 to-emerald-50/90",
     iconBg: "bg-gradient-to-br from-[#dcfce7] to-emerald-100",

@@ -5,7 +5,7 @@ import ForOwnersDevelopersShowcase from '@/components/new-homepage/ForOwnersDeve
 export const metadata: Metadata = {
   title: 'For Owners & Developers | Khabiteq',
   description:
-    'Present your property or development on Khabiteq. List for sale, rent, shortlet or joint venture, connect with verified professionals, and reach serious seekers.',
+    'Showcase your property and control how it is represented. List for sale, rent or joint venture and connect with buyers, investors and real estate professionals through Khabiteq.',
 };
 
 export default function ForOwnersDevelopersPage() {

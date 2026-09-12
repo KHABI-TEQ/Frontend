@@ -2,81 +2,73 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import {
-  Check,
-  Building2,
-  Home,
-  Shield,
-  TrendingUp,
-  HardHat,
-  Users,
-  FileCheck,
-  Percent,
-  ArrowRight,
-} from 'lucide-react';
+import { Check, Building2, Scale, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import DocumentVerificationPromoSection from '@/components/new-homepage/document-verification-promo-section';
 
-const ownerBullets = [
-  'List your property for sale, rent, shortlet, or joint venture',
-  'List up to 25 properties included (Portfolio Unlimited for larger portfolios)',
-  'Let agents request to promote your listing — you decide',
-  'Your contact details remain private until you approve an agent',
-  'Set your own agent commission where needed',
+const listingBenefits = [
+  {
+    title: 'Present Your Property Professionally',
+    body: 'Create a dedicated property or project page with key details, images and information clearly presented.',
+  },
+  {
+    title: 'Receive Marketing Requests From Professionals',
+    body: 'Licensed real estate professionals and marketers can request to market your property or development.',
+  },
+  {
+    title: 'Review Professional Profiles Before Accepting',
+    body: 'View professional profiles, credentials, services and relevant information before deciding who to engage.',
+  },
+  {
+    title: 'Define Your Commission Terms',
+    body: 'Set the commission or payout terms you are prepared to offer for successful transactions.',
+  },
+  {
+    title: 'Access Multiple Professionals',
+    body: 'Receive requests from multiple professionals and choose who you want to engage for marketing or other property-related services.',
+  },
+  {
+    title: 'Access Property Management & Professional Services',
+    body: 'Connect with relevant professionals for property management, due diligence and other services your property may require.',
+  },
+  {
+    title: 'Mutual Accountability & Reporting',
+    body: 'Property owners and professionals can raise concerns through structured reporting pathways, supporting greater transparency and accountability throughout the engagement.',
+  },
 ];
 
-const developerBullets = [
-  'Showcase developments with dedicated project pages and media',
-  'Connect with verified agents to promote your projects',
-  'Track leads and inquiries in real time',
-  'Reach serious buyers and investors through structured demand',
-  'Support document checks to build trust on every transaction',
+const licensedServices = [
+  'Legal & Title Review',
+  'Property Valuation',
+  'Survey & Property Verification',
+  'Property Due Diligence',
+  'Professional Consultation',
+  'Other Relevant Property Services',
 ];
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.2,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.5,
-      ease: [0.25, 0.1, 0.25, 1],
-    },
-  },
-};
-
-function FeatureList({ items }: { items: string[] }) {
-  return (
-    <ul className="grid gap-3">
-      {items.map((bullet) => (
-        <li
-          key={bullet}
-          className="flex items-start gap-3 p-3 rounded-xl bg-[#F8FAF8]"
-        >
-          <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#8DDB90]/20 flex items-center justify-center mt-0.5">
-            <Check className="w-4 h-4 text-[#09391C]" />
-          </div>
-          <span className="text-gray-700 text-sm sm:text-base leading-relaxed">
-            {bullet}
-          </span>
-        </li>
-      ))}
-    </ul>
-  );
-}
 
 const ForOwnersDevelopersShowcase = () => {
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: [0.25, 0.1, 0.25, 1],
+      },
+    },
+  };
+
   return (
     <section className="min-h-screen bg-gradient-to-br from-[#F8FAF8] via-white to-[#EEF1F1] pt-24 sm:pt-28 pb-16 sm:pb-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
@@ -121,131 +113,129 @@ const ForOwnersDevelopersShowcase = () => {
 
             <motion.div variants={itemVariants} className="relative z-10">
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
-                Bring your property opportunities into Africa&apos;s digital real estate ecosystem.
+                Showcase your property.
+                <br />
+                Control how it is represented.
               </h1>
               <p className="text-lg sm:text-xl text-[#D6DDEB] max-w-3xl leading-relaxed">
-                Present your property or development within an infrastructure designed to connect
-                it with relevant property seekers and real estate professionals.
+                List your property or development for sale, rent or joint venture and connect with
+                relevant buyers, investors and real estate professionals through Khabiteq.
               </p>
             </motion.div>
           </div>
 
           <div className="px-6 sm:px-10 lg:px-16 py-10 sm:py-12">
             <motion.div variants={itemVariants} className="mb-8">
-              <h2 className="text-lg sm:text-xl font-semibold text-[#09391C] mb-2 flex items-center gap-2">
-                <Shield className="w-5 h-5 text-[#8DDB90]" />
-                How Khabiteq supports owners and developers
+              <h2 className="text-lg sm:text-xl font-semibold text-[#09391C] mb-6">
+                Why list with Khabiteq?
               </h2>
-              <p className="text-sm text-gray-500">
-                Whether you hold a single property or a full development pipeline, the same
-                listing, matching and inspection tools help you present opportunities with more
-                structure.
-              </p>
             </motion.div>
 
-            <div className="grid lg:grid-cols-2 gap-8">
-              <motion.div variants={itemVariants}>
-                <div className="flex items-center gap-2 mb-4">
-                  <Home className="w-5 h-5 text-[#09391C]" />
-                  <h3 className="text-lg font-semibold text-[#09391C]">For property owners</h3>
-                </div>
-                <p className="text-sm text-gray-600 mb-4">
-                  List for sale, rent, shortlet or joint venture. Keep control of who markets
-                  your property and how buyers reach you.
-                </p>
-                <FeatureList items={ownerBullets} />
-              </motion.div>
-
-              <motion.div variants={itemVariants}>
-                <div className="flex items-center gap-2 mb-4">
-                  <Building2 className="w-5 h-5 text-[#09391C]" />
-                  <h3 className="text-lg font-semibold text-[#09391C]">For developers</h3>
-                </div>
-                <p className="text-sm text-gray-600 mb-4">
-                  Showcase projects to verified agents and serious buyers. Manage inquiries and
-                  grow visibility across your pipeline.
-                </p>
-                <FeatureList items={developerBullets} />
-              </motion.div>
-            </div>
+            <motion.ul
+              variants={containerVariants}
+              className="grid sm:grid-cols-2 gap-4 sm:gap-5"
+            >
+              {listingBenefits.map((item) => (
+                <motion.li
+                  key={item.title}
+                  variants={itemVariants}
+                  className="flex items-start gap-3 p-4 rounded-xl bg-[#F8FAF8] hover:bg-[#EEF1F1] transition-colors duration-300 group"
+                >
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#8DDB90]/20 flex items-center justify-center mt-0.5 group-hover:bg-[#8DDB90]/30 transition-colors">
+                    <Check className="w-4 h-4 text-[#09391C]" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-[#09391C] text-sm sm:text-base mb-1">
+                      {item.title}
+                    </p>
+                    <p className="text-gray-700 text-sm sm:text-base leading-relaxed">
+                      {item.body}
+                    </p>
+                  </div>
+                </motion.li>
+              ))}
+            </motion.ul>
 
             <motion.div
               variants={itemVariants}
               className="mt-10 pt-8 border-t border-gray-100"
             >
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-[#09391C] mb-1">
-                    Ready to present your opportunity?
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    Create an owner or developer account and start listing.
-                  </p>
-                </div>
-                <Link
-                  href="/auth/register"
-                  className="group inline-flex items-center gap-2 bg-[#09391C] hover:bg-[#0B423D] text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold text-sm sm:text-base transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
-                >
-                  Get started
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </div>
+              <Link
+                href="/auth/register"
+                className="group inline-flex items-center gap-2 bg-[#09391C] hover:bg-[#0B423D] text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold text-sm sm:text-base transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
+              >
+                Get started
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
             </motion.div>
           </div>
         </motion.div>
-
-        <DocumentVerificationPromoSection />
 
         <motion.div
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-4"
+          className="mt-8 bg-white rounded-3xl shadow-xl shadow-[#09391C]/5 border border-gray-100 overflow-hidden"
         >
-          {[
-            {
-              icon: Users,
-              title: 'Agent requests',
-              body: 'Let verified agents request to market your listing or project. You decide who represents you.',
-            },
-            {
-              icon: FileCheck,
-              title: 'Verified documents',
-              body: 'Build trust with seekers through document verification and structured due diligence.',
-            },
-            {
-              icon: Percent,
-              title: 'Flexible commission',
-              body: 'Set your own commission so the right professionals want to work your opportunity.',
-            },
-            {
-              icon: TrendingUp,
-              title: 'Lead management',
-              body: 'Track inquiries and convert interest without losing control of the conversation.',
-            },
-            {
-              icon: HardHat,
-              title: 'Project showcase',
-              body: 'Publish developments with photos, details and a dedicated project presence.',
-            },
-            {
-              icon: Building2,
-              title: 'Structured demand',
-              body: 'Connect your supply with buyer preferences already submitted on Khabiteq.',
-            },
-          ].map((card) => (
-            <motion.div
-              key={card.title}
-              variants={itemVariants}
-              className="bg-white rounded-2xl p-6 shadow-md shadow-gray-200/50 border border-gray-100 hover:shadow-lg transition-shadow"
-            >
-              <div className="w-10 h-10 rounded-xl bg-[#8DDB90]/20 flex items-center justify-center mb-4">
-                <card.icon className="w-5 h-5 text-[#09391C]" />
+          <div className="px-6 sm:px-10 lg:px-16 py-10 sm:py-12">
+            <motion.div variants={itemVariants} className="mb-6">
+              <h2 className="text-lg sm:text-xl font-semibold text-[#09391C] mb-3 flex items-center gap-2">
+                <Scale className="w-5 h-5 text-[#8DDB90]" />
+                Licensed professional services
+              </h2>
+              <h3 className="text-2xl sm:text-3xl font-bold text-[#09391C] mb-4">
+                Conduct Due Diligence With Confidence.
+              </h3>
+              <div className="space-y-3 text-gray-600 text-sm sm:text-base leading-relaxed max-w-3xl">
+                <p>Already found a property you want to proceed with?</p>
+                <p>
+                  Connect with relevant licensed professionals for the legal, valuation, survey and other due-diligence services your property transaction may require.
+                </p>
+                <p>
+                  View professional profiles, credentials, clearly stated services and subsidized pricing before hiring through Khabiteq.
+                </p>
               </div>
-              <h3 className="font-semibold text-[#09391C] mb-2">{card.title}</h3>
-              <p className="text-sm text-gray-500">{card.body}</p>
             </motion.div>
-          ))}
+
+            <motion.div variants={itemVariants} className="mb-6 mt-8">
+              <h3 className="text-lg sm:text-xl font-semibold text-[#09391C] mb-5">
+                Services available through licensed professionals
+              </h3>
+            </motion.div>
+
+            <motion.ul
+              variants={containerVariants}
+              className="grid sm:grid-cols-2 gap-4 sm:gap-5"
+            >
+              {licensedServices.map((service) => (
+                <motion.li
+                  key={service}
+                  variants={itemVariants}
+                  className="flex items-start gap-3 p-4 rounded-xl bg-[#F8FAF8] hover:bg-[#EEF1F1] transition-colors duration-300 group"
+                >
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#8DDB90]/20 flex items-center justify-center mt-0.5 group-hover:bg-[#8DDB90]/30 transition-colors">
+                    <Check className="w-4 h-4 text-[#09391C]" />
+                  </div>
+                  <span className="text-gray-700 text-sm sm:text-base leading-relaxed">
+                    {service}
+                  </span>
+                </motion.li>
+              ))}
+            </motion.ul>
+
+            <motion.div
+              variants={itemVariants}
+              className="mt-10 pt-8 border-t border-gray-100"
+            >
+              <Link
+                href="/document-verification"
+                className="group inline-flex items-center gap-2 bg-[#09391C] hover:bg-[#0B423D] text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold text-sm sm:text-base transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
+              >
+                Explore professional services
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </motion.div>
+          </div>
         </motion.div>
       </div>
     </section>

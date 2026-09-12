@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useUserContext } from "@/context/user-context";
 import Agent from "./agent";
 import Landlord from "./landlord";
@@ -8,6 +8,7 @@ import FieldAgent from "./field-agent";
 import Developer from "./developer";
 import ProfessionalDashboard from "./professional";
 import { DealSiteSetupOverlay } from "@/components/dashboard/DealSiteSetupOverlay";
+import { PractitionerWelcomeOverlay } from "@/components/dashboard/PractitionerWelcomeOverlay";
 
 function getEffectiveUserType(user: Record<string, unknown> | null): string | undefined {
   if (!user) return undefined;
@@ -34,6 +35,7 @@ function getEffectiveUserType(user: Record<string, unknown> | null): string | un
 
 export default function Dashboard() {
   const { user } = useUserContext();
+  const [welcomeOpen, setWelcomeOpen] = useState(true);
 
   if (!user) return null;
 
@@ -76,9 +78,17 @@ export default function Dashboard() {
     fallbackDeveloper ||
     (noTypeMatched && typeof window !== "undefined");
 
+  const showProfessionalWelcome =
+    showAgentDashboard || showDeveloper || showLawyer || showSurveyor;
+
   return (
     <>
-      {(showAgentDashboard || showDeveloper) && <DealSiteSetupOverlay user={user} />}
+      {showProfessionalWelcome && (
+        <PractitionerWelcomeOverlay user={user} onOpenChange={setWelcomeOpen} />
+      )}
+      {(showAgentDashboard || showDeveloper) && !welcomeOpen && (
+        <DealSiteSetupOverlay user={user} />
+      )}
       {showAgentDashboard && <Agent />}
       {showDeveloper && <Developer />}
       {showLandlord && <Landlord />}

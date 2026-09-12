@@ -1,12 +1,6 @@
 /** @format */
-import { Metadata } from 'next';
-import ForAgentsShowcase from '@/components/new-homepage/ForAgentsShowcase';
-
-export const metadata: Metadata = {
-  title: 'For Agents | Khabi-Teq',
-  description: 'Register and verify your account. Access properties to market and earn commission when you close deals.',
-};
+import { redirect } from 'next/navigation';
 
 export default function ForAgentsPage() {
-  return <ForAgentsShowcase />;
+  redirect('/for-professionals');
 }

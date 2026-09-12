@@ -47,7 +47,7 @@ export const mainNavigationData: NavigationItem[] = [
     subItems: [
       { name: "Property Seekers", url: "/for-clients", isClicked: false },
       { name: "Owners & Developers", url: "/for-owners-developers", isClicked: false },
-      { name: "Real Estate Professionals", url: "/for-agents", isClicked: false },
+      { name: "Real Estate Professionals", url: "/for-professionals", isClicked: false },
       { name: "Lawyers", url: "/user-types#lawyers", isClicked: false },
       { name: "Surveyors", url: "/user-types#surveyors", isClicked: false },
     ],
@@ -87,7 +87,7 @@ export const agentNavigationData: NavigationItem[] = [
   },
   {
     name: "Real Estate Professionals",
-    url: "/for-agents",
+    url: "/for-professionals",
     isClicked: false,
   },
   {
