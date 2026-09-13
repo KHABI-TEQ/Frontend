@@ -175,20 +175,97 @@ const SideBar = ({
                           >
                             <div className="flex flex-col gap-[10px] pl-[20px] py-[10px]">
                               {item.subItems?.map(
-                                (content, contentIDX: number) => (
-                                  <Link
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setIsModalOpened(false);
-                                      setOpenedMenus({});
-                                    }}
-                                    className="text-sm text-[#1E1E1E] hover:text-[#8DDB90] transition-colors py-1"
-                                    key={contentIDX}
-                                    href={content.url}
-                                  >
-                                    {content.name}
-                                  </Link>
-                                ),
+                                (content, contentIDX: number) => {
+                                  const hasNested = Boolean(content.subItems?.length);
+                                  const nestedKey = `${item.name}:${content.name}`;
+                                  const isNestedOpen = openedMenus[nestedKey] || false;
+
+                                  if (hasNested) {
+                                    return (
+                                      <div key={contentIDX} className="flex flex-col gap-1">
+                                        <div className="flex items-center justify-between gap-2">
+                                          <Link
+                                            href={content.url}
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setIsModalOpened(false);
+                                              setOpenedMenus({});
+                                            }}
+                                            className="text-sm text-[#1E1E1E] hover:text-[#8DDB90] transition-colors py-1"
+                                          >
+                                            {content.name}
+                                          </Link>
+                                          <button
+                                            type="button"
+                                            aria-expanded={isNestedOpen}
+                                            aria-label={`${isNestedOpen ? "Collapse" : "Expand"} ${content.name}`}
+                                            onClick={(e) => {
+                                              e.preventDefault();
+                                              e.stopPropagation();
+                                              setOpenedMenus((prev) => ({
+                                                ...prev,
+                                                [nestedKey]: !prev[nestedKey],
+                                              }));
+                                            }}
+                                            className="p-1"
+                                          >
+                                            <FontAwesomeIcon
+                                              size="sm"
+                                              color="#09391C"
+                                              className={`h-3 w-3 transform transition-all duration-300 ${
+                                                isNestedOpen && "rotate-180"
+                                              }`}
+                                              icon={faCaretDown}
+                                            />
+                                          </button>
+                                        </div>
+                                        <AnimatePresence>
+                                          {isNestedOpen && (
+                                            <motion.div
+                                              initial={{ height: 0, opacity: 0 }}
+                                              animate={{ height: "auto", opacity: 1 }}
+                                              exit={{ height: 0, opacity: 0 }}
+                                              transition={{ duration: 0.2 }}
+                                              className="overflow-hidden"
+                                            >
+                                              <div className="flex flex-col gap-1 border-l border-[#09391C]/20 pl-3">
+                                                {content.subItems?.map((nested, nestedIdx) => (
+                                                  <Link
+                                                    key={`${nestedKey}-${nestedIdx}`}
+                                                    href={nested.url}
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      setIsModalOpened(false);
+                                                      setOpenedMenus({});
+                                                    }}
+                                                    className="py-1 text-sm text-[#5A5D63] hover:text-[#8DDB90]"
+                                                  >
+                                                    {nested.name}
+                                                  </Link>
+                                                ))}
+                                              </div>
+                                            </motion.div>
+                                          )}
+                                        </AnimatePresence>
+                                      </div>
+                                    );
+                                  }
+
+                                  return (
+                                    <Link
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsModalOpened(false);
+                                        setOpenedMenus({});
+                                      }}
+                                      className="text-sm text-[#1E1E1E] hover:text-[#8DDB90] transition-colors py-1"
+                                      key={contentIDX}
+                                      href={content.url}
+                                    >
+                                      {content.name}
+                                    </Link>
+                                  );
+                                },
                               )}
                             </div>
                           </motion.div>

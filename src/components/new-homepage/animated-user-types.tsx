@@ -33,7 +33,7 @@ const userTypes: {
     color: 'from-emerald-600 to-teal-700',
     iconBg: 'bg-emerald-100',
     iconColor: 'text-emerald-600',
-    imageSrc: '/images/user-types/developers.webp',
+    imageSrc: '/property-listings.jpg',
     imageAlt: 'Property owner and developer presenting a real estate opportunity',
   },
   {
@@ -47,7 +47,7 @@ const userTypes: {
     color: 'from-[#8DDB90] to-emerald-600',
     iconBg: 'bg-[#dcfce7]',
     iconColor: 'text-[#16a34a]',
-    imageSrc: '/images/user-types/agents.webp',
+    imageSrc: '/client-opportunities.jpg',
     imageAlt: 'Nigerian real estate agent showing a property to clients',
   },
   {
@@ -61,8 +61,8 @@ const userTypes: {
     color: 'from-blue-600 to-indigo-700',
     iconBg: 'bg-blue-100',
     iconColor: 'text-blue-600',
-    imageSrc: '/images/user-types/buyers.webp',
-    imageAlt: 'Nigerian couple celebrating their new home',
+    imageSrc: '/property-preference-matching.jpg',
+    imageAlt: 'Couple reviewing property matches together',
   },
   {
     id: 'lawyers',
@@ -75,7 +75,7 @@ const userTypes: {
     color: 'from-violet-600 to-indigo-700',
     iconBg: 'bg-violet-100',
     iconColor: 'text-violet-600',
-    imageSrc: '/images/user-types/agents.webp',
+    imageSrc: '/title-document-verification.jpg',
     imageAlt: 'Legal professional reviewing property documents',
   },
   {
@@ -89,8 +89,8 @@ const userTypes: {
     color: 'from-cyan-600 to-teal-700',
     iconBg: 'bg-cyan-100',
     iconColor: 'text-cyan-600',
-    imageSrc: '/images/user-types/developers.webp',
-    imageAlt: 'Surveyor reviewing a site plan',
+    imageSrc: '/professionals-network.jpg',
+    imageAlt: 'Surveyor and legal professional reviewing a site brief',
   },
 ];
 
@@ -106,24 +106,24 @@ function UserTypeCardMedia({
   const [loaded, setLoaded] = useState(false);
 
   return (
-    <div className="relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
+    <div className="relative aspect-[3/4] overflow-hidden bg-gradient-to-b from-[#E8EEE9] to-[#F5F7F9]">
       {!loaded && <div className="absolute inset-0 animate-pulse bg-gray-200" />}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={imageSrc}
         alt={imageAlt}
         width={960}
-        height={600}
+        height={1280}
         loading="lazy"
         decoding="async"
-        className={`h-full w-full object-cover transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+        className={`h-full w-full object-contain object-center transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}
         onLoad={() => setLoaded(true)}
         onError={(e) => {
           (e.target as HTMLImageElement).src = '/placeholder-property.svg';
           setLoaded(true);
         }}
       />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/30 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/25 to-transparent" />
       <span className="pointer-events-none absolute bottom-3 left-3 rounded-full bg-black/45 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">
         {title}
       </span>

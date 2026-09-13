@@ -145,6 +145,14 @@ const FinalCTASection = () => {
           className='bg-white/20 backdrop-blur-sm rounded-3xl p-8 border border-white/30 text-center'>
           
           <div className='flex flex-col md:flex-row items-center justify-center gap-8'>
+            <div className="hidden md:block w-40 h-40 overflow-hidden rounded-2xl flex-shrink-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/more-deals.jpg"
+                alt="Closing more property deals"
+                className="h-full w-full object-cover object-top"
+              />
+            </div>
             
             {/* Urgency content */}
             <div className='flex-1'>

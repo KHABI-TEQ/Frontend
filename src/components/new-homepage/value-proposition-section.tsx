@@ -13,7 +13,9 @@ const ValuePropositionSection = () => {
         </svg>
       ),
       title: "Verified Agents & Listings",
-      description: "Every property is vetted and every agent is verified for your peace of mind."
+      description: "Every property is vetted and every agent is verified for your peace of mind.",
+      image: "/digital-identity.jpg",
+      imageAlt: "Verified real estate professional",
     },
     {
       icon: (
@@ -22,7 +24,9 @@ const ValuePropositionSection = () => {
         </svg>
       ),
       title: "Instant Notifications",
-      description: "Get matched the moment a property fits your needs with our smart alert system."
+      description: "Get matched the moment a property fits your needs with our smart alert system.",
+      image: "/property-matching-map.jpg",
+      imageAlt: "Property matches on a map and listing grid",
     },
     {
       icon: (
@@ -31,7 +35,9 @@ const ValuePropositionSection = () => {
         </svg>
       ),
       title: "Flexible Inspections",
-      description: "Book physical or virtual inspections at your convenience, with professional guidance."
+      description: "Book physical or virtual inspections at your convenience, with professional guidance.",
+      image: "/property-inspection.jpg",
+      imageAlt: "Agent conducting a property inspection",
     },
     {
       icon: (
@@ -40,8 +46,10 @@ const ValuePropositionSection = () => {
         </svg>
       ),
       title: "Secure Transactions",
-      description: "Document verification and safe payments ensure every deal is protected and transparent."
-    }
+      description: "Document verification and safe payments ensure every deal is protected and transparent.",
+      image: "/transaction-key-handover.jpg",
+      imageAlt: "Completed property transaction and key handover",
+    },
   ];
 
   return (
@@ -69,22 +77,28 @@ const ValuePropositionSection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.08, ease: [0.25, 0.1, 0.25, 1] }}
               viewport={{ once: true, margin: "-50px" }}
-              className='text-center group'>
+              className='group overflow-hidden rounded-2xl border border-gray-100 bg-white text-left shadow-[0_4px_24px_-6px_rgba(9,57,28,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_40px_-8px_rgba(9,57,28,0.14)]'>
 
-              {/* Icon */}
-              <div className='w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-5 bg-gradient-to-br from-[#8DDB90] to-[#6BC76F] rounded-2xl flex items-center justify-center text-white shadow-lg shadow-[#8DDB90]/20 group-hover:shadow-xl group-hover:shadow-[#8DDB90]/30 group-hover:scale-105 group-hover:rotate-3 transition-all duration-300'>
-                <span className="w-7 h-7 sm:w-8 sm:h-8">{point.icon}</span>
+              <div className='relative aspect-[16/10] overflow-hidden'>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={point.image}
+                  alt={point.imageAlt}
+                  className='h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-105'
+                />
+                <div className='absolute left-4 top-4 flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#8DDB90] to-[#6BC76F] text-white shadow-lg'>
+                  <span className="h-5 w-5">{point.icon}</span>
+                </div>
               </div>
 
-              {/* Title */}
-              <h3 className='text-lg sm:text-xl font-bold text-[#09391C] mb-3 tracking-tight'>
-                {point.title}
-              </h3>
-
-              {/* Description */}
-              <p className='text-gray-600 text-sm sm:text-base leading-relaxed'>
-                {point.description}
-              </p>
+              <div className='p-5 sm:p-6'>
+                <h3 className='mb-2 text-lg font-bold tracking-tight text-[#09391C] sm:text-xl'>
+                  {point.title}
+                </h3>
+                <p className='text-sm leading-relaxed text-gray-600 sm:text-base'>
+                  {point.description}
+                </p>
+              </div>
             </motion.div>
           ))}
         </div>

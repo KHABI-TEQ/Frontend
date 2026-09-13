@@ -152,6 +152,14 @@ const SecurityTransparencySection = () => {
 
             {/* Document Types */}
             <div>
+              <div className="relative mb-6 overflow-hidden rounded-2xl aspect-[16/10]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/title-document-verification.jpg"
+                  alt="Professional reviewing property title documents"
+                  className="h-full w-full object-cover object-top"
+                />
+              </div>
               <h4 className='text-xl font-bold text-white mb-6'>Documents We Verify:</h4>
               <div className='grid grid-cols-1 gap-4'>
                 {documentTypes.map((doc, index) => (

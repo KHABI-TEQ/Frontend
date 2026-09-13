@@ -37,6 +37,72 @@ declare global {
   }
 }
 
+const REGISTER_USER_TYPES = [
+  "Landowners",
+  "Agent",
+  "Developer",
+  "Lawyer",
+  "Surveyor",
+  "Valuer",
+] as const;
+
+function resolveRegisterUserType(raw: string | null): string {
+  const value = (raw || "").trim();
+  if (!value) return "";
+  if ((REGISTER_USER_TYPES as readonly string[]).includes(value)) return value;
+
+  const aliases: Record<string, string> = {
+    landowners: "Landowners",
+    landlord: "Landowners",
+    owner: "Landowners",
+    agent: "Agent",
+    developer: "Developer",
+    lawyer: "Lawyer",
+    surveyor: "Surveyor",
+    valuer: "Valuer",
+  };
+  return aliases[value.toLowerCase()] || "";
+}
+
+const DEFAULT_REGISTER_HIGHLIGHTS = [
+  "Free to get started",
+  "Verified properties & professionals",
+  "Secure transactions",
+];
+
+const REGISTER_ROLE_HIGHLIGHTS: Record<string, string[]> = {
+  Landowners: [
+    "List properties for sale, rent or joint venture",
+    "Review marketing requests before you accept",
+    "Set commission on your terms",
+  ],
+  Agent: [
+    "Build a verified professional presence",
+    "Access unmatched buyer and tenant demand",
+    "Get matched to clients looking for your listings",
+  ],
+  Developer: [
+    "Showcase developments on a dedicated project page",
+    "Let licensed professionals request to market your project",
+    "Reach structured buyer demand already on Khabiteq",
+  ],
+  Lawyer: [
+    "Join the document verification marketplace",
+    "Accept or decline incoming title-review jobs",
+    "Submit reports and receive payouts",
+  ],
+  Surveyor: [
+    "Offer plan and site verification services",
+    "Appear on the marketplace after KYC approval",
+    "Complete reports and get paid through Khabiteq",
+  ],
+  Valuer: [
+    "Offer property valuation on your professional page",
+    "Accept valuation requests from seekers and owners",
+    "Deliver reports and receive payouts",
+  ],
+};
+
 /** Only rendered when Google OAuth is configured; uses useGoogleLogin so must be inside GoogleOAuthProvider. */
 function GoogleRegisterButton({
   userType,
@@ -113,6 +179,7 @@ const Register = () => {
   const searchParams = useSearchParams();
   const referralFromUrl = (searchParams.get("ref") || searchParams.get("referral") || "").trim();
   const fromParam = searchParams.get('from');
+  const userTypeFromUrl = resolveRegisterUserType(searchParams.get("userType") || searchParams.get("role"));
   const [agreed, setAgreed] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [overlayVisible, setOverlayVisible] = useState(false);
@@ -175,7 +242,7 @@ const Register = () => {
     lastName: "",
     phone: "",
     confirmPassword: "",
-    userType: "",
+    userType: userTypeFromUrl,
     referralCode: referralFromUrl,
     brmId: "",
     firmName: "",
@@ -204,7 +271,9 @@ const Register = () => {
             values.brmId
               ? { brmId: values.brmId }
               : {}),
-            ...((values.userType === "Lawyer" || values.userType === "Surveyor") &&
+            ...((values.userType === "Lawyer" ||
+              values.userType === "Surveyor" ||
+              values.userType === "Valuer") &&
             values.firmName
               ? { firmName: values.firmName }
               : {}),
@@ -371,8 +440,8 @@ const Register = () => {
         isContactUsClicked && "filter brightness-[30%]"
       } transition-all duration-500`}
     >
-      {/* Left Side - Branding Panel */}
-      <div className="hidden lg:flex lg:w-1/2 xl:w-5/12 bg-gradient-to-br from-[#09391C] via-[#0B423D] to-[#0A3E72] relative overflow-hidden">
+      {/* Left Side - Branding Panel (viewport-locked so copy stays on first screen) */}
+      <div className="relative hidden overflow-hidden bg-gradient-to-br from-[#09391C] via-[#0B423D] to-[#0A3E72] lg:sticky lg:top-[100px] lg:flex lg:h-[calc(100dvh-100px)] lg:w-1/2 lg:min-h-0 xl:w-5/12">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0" style={{backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.2) 1px, transparent 0)', backgroundSize: '32px 32px'}}></div>
@@ -382,7 +451,7 @@ const Register = () => {
         <div className="absolute top-20 right-20 w-64 h-64 bg-[#8DDB90]/20 rounded-full blur-3xl"></div>
         <div className="absolute bottom-20 left-10 w-48 h-48 bg-white/10 rounded-full blur-2xl"></div>
 
-        <div className="relative z-10 flex flex-col justify-between p-12 xl:p-16 w-full">
+        <div className="relative z-10 flex h-full w-full flex-col justify-center gap-10 p-12 xl:p-16">
           {/* Logo */}
           <div>
             <Link href="/" className="inline-flex items-center gap-2">
@@ -401,35 +470,20 @@ const Register = () => {
               Start Your Real Estate Journey Today
             </h1>
             <p className="text-white/80 text-lg leading-relaxed max-w-sm">
-              Create your account to list, buy, rent, or invest on a trusted Nigerian real estate platform.
+              Create your account to list, buy, rent, or invest on a trusted Africans real estate platform.
             </p>
 
-            {/* Features */}
             <div className="space-y-4 pt-4">
-              <div className="flex items-center gap-3 text-white/90">
-                <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center">
-                  <svg className="w-4 h-4 text-[#8DDB90]" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
-                  </svg>
+              {(REGISTER_ROLE_HIGHLIGHTS[formik.values.userType] ?? DEFAULT_REGISTER_HIGHLIGHTS).map((item) => (
+                <div key={item} className="flex items-center gap-3 text-white/90">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10">
+                    <svg className="h-4 w-4 text-[#8DDB90]" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                    </svg>
+                  </div>
+                  <span className="text-sm font-medium">{item}</span>
                 </div>
-                <span className="text-sm font-medium">Free to get started</span>
-              </div>
-              <div className="flex items-center gap-3 text-white/90">
-                <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center">
-                  <svg className="w-4 h-4 text-[#8DDB90]" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
-                  </svg>
-                </div>
-                <span className="text-sm font-medium">Verified properties & agents</span>
-              </div>
-              <div className="flex items-center gap-3 text-white/90">
-                <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center">
-                  <svg className="w-4 h-4 text-[#8DDB90]" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
-                  </svg>
-                </div>
-                <span className="text-sm font-medium">Secure transactions</span>
-              </div>
+              ))}
             </div>
           </div>
         </div>
@@ -480,11 +534,6 @@ const Register = () => {
                       <span className="block text-base font-semibold text-[#09391C]">Landlord</span>
                       <span className="block text-xs text-[#5A5D63]">List & sell properties</span>
                     </div>
-                    <div className="w-5 h-5 rounded-full border-2 border-gray-300 peer-checked:border-[#8DDB90] peer-checked:bg-[#8DDB90] flex items-center justify-center shrink-0">
-                      <svg className="w-3 h-3 text-white opacity-0 peer-checked:opacity-100" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
-                      </svg>
-                    </div>
                   </div>
                 </div>
               </label>
@@ -511,11 +560,6 @@ const Register = () => {
                       <span className="block text-base font-semibold text-[#09391C]">Agent</span>
                       <span className="block text-xs text-[#5A5D63]">Help clients buy/sell</span>
                     </div>
-                    <div className="w-5 h-5 rounded-full border-2 border-gray-300 peer-checked:border-[#8DDB90] peer-checked:bg-[#8DDB90] flex items-center justify-center shrink-0">
-                      <svg className="w-3 h-3 text-white opacity-0 peer-checked:opacity-100" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
-                      </svg>
-                    </div>
                   </div>
                 </div>
               </label>
@@ -541,11 +585,6 @@ const Register = () => {
                     <div className="flex-1 min-w-0">
                       <span className="block text-base font-semibold text-[#09391C]">Developer</span>
                       <span className="block text-xs text-[#5A5D63]">Showcase projects</span>
-                    </div>
-                    <div className="w-5 h-5 rounded-full border-2 border-gray-300 peer-checked:border-[#8DDB90] peer-checked:bg-[#8DDB90] flex items-center justify-center shrink-0">
-                      <svg className="w-3 h-3 text-white opacity-0 peer-checked:opacity-100" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
-                      </svg>
                     </div>
                   </div>
                 </div>
@@ -596,6 +635,31 @@ const Register = () => {
                     <div className="flex-1 min-w-0">
                       <span className="block text-base font-semibold text-[#09391C]">Surveyor</span>
                       <span className="block text-xs text-[#5A5D63]">Plan & site verification</span>
+                    </div>
+                  </div>
+                </div>
+              </label>
+
+              <label className="relative flex h-full min-h-0 cursor-pointer flex-col group">
+                <input
+                  type="radio"
+                  name="userType"
+                  value="Valuer"
+                  checked={formik.values.userType === "Valuer"}
+                  onChange={formik.handleChange}
+                  disabled={isDisabled}
+                  className="sr-only peer"
+                />
+                <div className="flex h-full min-h-0 flex-1 flex-col bg-white border-2 border-gray-100 rounded-xl p-4 transition-all duration-300 hover:border-[#8DDB90]/50 hover:shadow-md peer-checked:border-[#8DDB90] peer-checked:bg-[#8DDB90]/5 peer-checked:shadow-md peer-disabled:opacity-50">
+                  <div className="flex flex-1 items-center gap-3">
+                    <div className="w-10 h-10 bg-[#8DDB90]/10 rounded-lg flex items-center justify-center shrink-0">
+                      <svg className="w-5 h-5 text-[#09391C]" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M4 4a2 2 0 012-2h8a2 2 0 012 2v1h1a1 1 0 011 1v2a3 3 0 01-3 3h-1.382l.724 1.447A1 1 0 0113 14H7a1 1 0 01-.894-1.447L6.83 11H5.5A3.5 3.5 0 012 7.5V6a1 1 0 011-1h1V4zm2 1h8V4H6v1z"/>
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="block text-base font-semibold text-[#09391C]">Property Valuer</span>
+                      <span className="block text-xs text-[#5A5D63]">Value properties</span>
                     </div>
                   </div>
                 </div>
@@ -700,7 +764,8 @@ const Register = () => {
               placeholder="Enter your email"
             />
             {(formik.values.userType === "Lawyer" ||
-              formik.values.userType === "Surveyor") && (
+              formik.values.userType === "Surveyor" ||
+              formik.values.userType === "Valuer") && (
               <>
                 <InputField
                   formik={formik}

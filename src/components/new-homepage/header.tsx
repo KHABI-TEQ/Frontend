@@ -386,8 +386,28 @@ const DropdownOptions = ({
 }) => {
   const ref = useRef<HTMLDivElement | null>(null);
   const { setSelectedType } = usePageContext();
+  const nestedParent = items.find((item) => item.subItems && item.subItems.length > 0);
+  const [expandedName, setExpandedName] = useState<string | null>(nestedParent?.name ?? null);
 
   useClickOutside(ref, () => setModal(false));
+
+  const goTo = (item: NavigationItem) => {
+    if (parentName === "Marketplace") {
+      if (item.name === "Buy") {
+        setSelectedType("Buy a property");
+      } else if (item.name === "Rent") {
+        setSelectedType("Rent/Lease a property");
+      } else if (item.name === "Shortlet") {
+        setSelectedType("Shortlet");
+      } else if (item.name === "Joint Venture") {
+        setSelectedType("Find property for joint venture");
+      }
+    }
+    setModal(false);
+    setTimeout(() => {
+      window.location.href = item.url;
+    }, 100);
+  };
 
   return (
       <motion.div
@@ -396,7 +416,7 @@ const DropdownOptions = ({
       exit={{ opacity: 0, y: 10, scale: 0.95 }}
       transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
       ref={ref}
-      className="w-[min(100vw-2rem,260px)] mt-3 p-2 flex flex-col gap-1 bg-white/95 backdrop-blur-xl shadow-xl shadow-black/10 border border-gray-100/80 rounded-xl absolute left-0 z-[999]"
+      className="w-[min(100vw-2rem,280px)] mt-3 p-2 flex flex-col gap-1 bg-white/95 backdrop-blur-xl shadow-xl shadow-black/10 border border-gray-100/80 rounded-xl absolute left-0 z-[999]"
       onMouseEnter={() => setModal(true)}
       onMouseLeave={(e) => {
         const dropdownRect = e.currentTarget.getBoundingClientRect();
@@ -421,33 +441,76 @@ const DropdownOptions = ({
         transform: "translateX(-50%)",
       }}
     >
-      {items.map((item: NavigationItem, idx: number) => (
-        <Link
-          onClick={(e) => {
-            e.preventDefault();
-            if (parentName === "Marketplace") {
-              if (item.name === "Buy") {
-                setSelectedType("Buy a property");
-              } else if (item.name === "Rent") {
-                setSelectedType("Rent/Lease a property");
-              } else if (item.name === "Shortlet") {
-                setSelectedType("Shortlet");
-              } else if (item.name === "Joint Venture") {
-                setSelectedType("Find property for joint venture");
-              }
-            }
-            setModal(false);
-            setTimeout(() => {
-              window.location.href = item.url;
-            }, 100);
-          }}
-          className="text-sm font-medium text-gray-700 hover:text-[#09391C] transition-all duration-200 py-2.5 px-4 rounded-lg hover:bg-[#8DDB90]/10"
-          href={item.url}
-          key={idx}
-        >
-          {item.name}
-        </Link>
-      ))}
+      {items.map((item: NavigationItem, idx: number) => {
+        const hasNested = Boolean(item.subItems?.length);
+        const isExpanded = expandedName === item.name;
+
+        if (hasNested) {
+          return (
+            <div key={idx} className="flex flex-col">
+              <div className="flex items-center rounded-lg hover:bg-[#8DDB90]/10">
+                <Link
+                  href={item.url}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    goTo(item);
+                  }}
+                  className="min-w-0 flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 hover:text-[#09391C]"
+                >
+                  {item.name}
+                </Link>
+                <button
+                  type="button"
+                  className="px-2 py-2 text-gray-500 hover:text-[#09391C]"
+                  aria-expanded={isExpanded}
+                  aria-label={`${isExpanded ? "Collapse" : "Expand"} ${item.name}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setExpandedName(isExpanded ? null : item.name);
+                  }}
+                >
+                  <ChevronDown
+                    size={14}
+                    className={`transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
+                  />
+                </button>
+              </div>
+              {isExpanded && (
+                <div className="mb-1 ml-2 flex flex-col border-l border-gray-100 pl-2">
+                  {item.subItems?.map((nested, nestedIdx) => (
+                    <Link
+                      key={`${item.name}-${nestedIdx}`}
+                      href={nested.url}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        goTo(nested);
+                      }}
+                      className="rounded-lg px-3 py-2 text-sm font-medium text-gray-600 hover:bg-[#8DDB90]/10 hover:text-[#09391C]"
+                    >
+                      {nested.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        return (
+          <Link
+            onClick={(e) => {
+              e.preventDefault();
+              goTo(item);
+            }}
+            className="text-sm font-medium text-gray-700 hover:text-[#09391C] transition-all duration-200 py-2.5 px-4 rounded-lg hover:bg-[#8DDB90]/10"
+            href={item.url}
+            key={idx}
+          >
+            {item.name}
+          </Link>
+        );
+      })}
     </motion.div>
   );
 };

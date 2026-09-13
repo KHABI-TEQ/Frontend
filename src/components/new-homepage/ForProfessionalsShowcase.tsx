@@ -1,160 +1,395 @@
 'use client';
 
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Briefcase, ArrowRight } from 'lucide-react';
+import { Suspense, useCallback } from 'react';
+import { ArrowRight, Briefcase, LayoutDashboard, Users } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import {
+  AudienceCheckList,
+  AudienceDetailList,
+  AudienceJourneyPage,
+  AudienceReadMoreSection,
+  type AudienceSlide,
+} from '@/components/new-homepage/AudienceJourneyShowcase';
 
-const howItWorks = [
+const professionalRoles = ['agent', 'lawyer', 'surveyor', 'valuer'] as const;
+type ProfessionalRole = (typeof professionalRoles)[number];
+
+const roleLabels: Record<ProfessionalRole, string> = {
+  agent: 'Agent',
+  lawyer: 'Lawyer',
+  surveyor: 'Surveyor',
+  valuer: 'Property Valuer',
+};
+
+const roleRegisterTypes: Record<ProfessionalRole, string> = {
+  agent: 'Agent',
+  lawyer: 'Lawyer',
+  surveyor: 'Surveyor',
+  valuer: 'Valuer',
+};
+
+const headroomCrop = 'object-[center_28%]';
+
+const presenceSlide: AudienceSlide = {
+  key: 'identity',
+  step: '01',
+  title: 'Create your professional presence',
+  caption: 'Build a structured profile where clients can view your credentials, services and expertise.',
+  image: '/digital-identity.jpg',
+  imageAlt: 'Licensed real estate professional standing outside a modern office',
+  imagePosition: headroomCrop,
+};
+
+const roleContent: Record<
+  ProfessionalRole,
   {
-    step: '01',
-    title: 'Create Your Professional Presence',
-    body: 'Build a structured profile where clients, property seekers and property owners can view your professional information, credentials, services and areas of expertise.',
+    slides: AudienceSlide[];
+    howItWorks: { title: string; body: string }[];
+  }
+> = {
+  agent: {
+    slides: [
+      presenceSlide,
+      {
+        key: 'opportunities',
+        step: '02',
+        title: 'Access demand and opportunities',
+        caption: 'Review unmatched property requests and discover where your expertise is needed.',
+        image: '/client-opportunities.jpg',
+        imageAlt: 'Professional meeting qualified property seekers',
+        imagePosition: headroomCrop,
+      },
+      {
+        key: 'matching',
+        step: '03',
+        title: 'Get matched to qualified buyers',
+        caption: 'Your listings are automatically matched with buyers and tenants looking for properties like yours.',
+        image: '/property-matching-map.jpg',
+        imageAlt: 'Property matches shown on a map and listing gallery',
+      },
+      {
+        key: 'deals',
+        step: '04',
+        title: 'Close more deals, grow your practice',
+        caption: 'Request to market listings, offer hireable services, and collaborate on transactions in one place.',
+        image: '/more-deals.jpg',
+        imageAlt: 'Agent handing over keys after a successful property deal',
+        imagePosition: headroomCrop,
+      },
+    ],
+    howItWorks: [
+      {
+        title: 'Create Your Professional Presence',
+        body: 'Build a structured profile where clients, property seekers and property owners can view your professional information, credentials, services and areas of expertise.',
+      },
+      {
+        title: 'Access Demand & Opportunities',
+        body: 'Discover where your expertise may be needed, access relevant client and service opportunities, and review unmatched property requests through tools such as the Agent Marketplace.',
+      },
+      {
+        title: 'Participate in Property Transactions',
+        body: 'Provide professional services, request to market properties and participate in relevant property transactions and collaborations through Khabiteq.',
+      },
+      {
+        title: 'Grow With Dedicated Support',
+        body: 'Use dashboard tools for marketing requests, professional services and collaboration — with support from Khabiteq to follow up and close more deals.',
+      },
+    ],
+  },
+  lawyer: {
+    slides: [
+      { ...presenceSlide, key: 'lawyer-identity' },
+      {
+        key: 'marketplace',
+        step: '02',
+        title: 'Join the document verification marketplace',
+        caption: 'After KYC approval, clients can hire you for title review at a fee you set within platform bounds.',
+        image: '/title-document-verification.jpg',
+        imageAlt: 'Lawyer reviewing property title documents',
+        imagePosition: headroomCrop,
+      },
+      {
+        key: 'jobs',
+        step: '03',
+        title: 'Accept or decline title-review jobs',
+        caption: 'Review incoming requests, take the work that fits your practice, and keep your pipeline clear.',
+        image: '/professionals-network.jpg',
+        imageAlt: 'Legal professional reviewing documents while a surveyor works on site',
+      },
+      {
+        key: 'payouts',
+        step: '04',
+        title: 'Submit reports and get paid',
+        caption: 'Deliver your verification report and receive payouts through your settlement account.',
+        image: '/practice-dashboard.jpg',
+        imageAlt: 'Professionals coordinating transaction work from one dashboard',
+      },
+    ],
+    howItWorks: [
+      {
+        title: 'Publish a Professional Page',
+        body: 'Create a structured profile so property seekers, owners and developers can find you, review credentials and hire you.',
+      },
+      {
+        title: 'Join the Document Verification Marketplace',
+        body: 'After KYC approval, appear on the marketplace and set a clear verification fee within platform bounds.',
+      },
+      {
+        title: 'Accept Title-Review Jobs',
+        body: 'Receive incoming title-review requests, accept or decline them, and complete the work through Khabiteq.',
+      },
+      {
+        title: 'Submit Reports and Receive Payouts',
+        body: 'File your report and get paid through your connected settlement account.',
+      },
+    ],
+  },
+  surveyor: {
+    slides: [
+      { ...presenceSlide, key: 'surveyor-identity' },
+      {
+        key: 'services',
+        step: '02',
+        title: 'Offer plan and site verification',
+        caption: 'Present plan verification and site survey services so clients can hire you with clear pricing.',
+        image: '/professionals-network.jpg',
+        imageAlt: 'Surveyor on site with a lawyer reviewing related documents',
+        imagePosition: headroomCrop,
+      },
+      {
+        key: 'marketplace',
+        step: '03',
+        title: 'Appear on the marketplace after KYC',
+        caption: 'Once KYC is approved and your payout account is connected, clients can find and request you.',
+        image: '/property-inspection.jpg',
+        imageAlt: 'On-site property inspection and verification',
+      },
+      {
+        key: 'reports',
+        step: '04',
+        title: 'Complete reports and get paid',
+        caption: 'Accept requests, deliver survey reports, and receive payouts through Khabiteq.',
+        image: '/practice-dashboard.jpg',
+        imageAlt: 'Professionals tracking completed survey and transaction work',
+      },
+    ],
+    howItWorks: [
+      {
+        title: 'Build a Public Professional Page',
+        body: 'Publish your practice details, services and credentials so clients can find and hire you.',
+      },
+      {
+        title: 'Offer Plan and Site Verification',
+        body: 'List plan verification and site survey services with clear scope and pricing.',
+      },
+      {
+        title: 'Go Live After KYC',
+        body: 'Appear on the surveyor marketplace after KYC approval and connect a payout account before taking jobs.',
+      },
+      {
+        title: 'Accept Requests and Get Paid',
+        body: 'Accept incoming survey requests, complete reports and receive payouts through Khabiteq.',
+      },
+    ],
+  },
+  valuer: {
+    slides: [
+      { ...presenceSlide, key: 'valuer-identity' },
+      {
+        key: 'services',
+        step: '02',
+        title: 'Offer valuation services',
+        caption: 'Present property valuation on your profile so seekers, owners and developers can hire you.',
+        image: '/title-document-verification.jpg',
+        imageAlt: 'Valuer reviewing property documents and figures',
+        imagePosition: headroomCrop,
+      },
+      {
+        key: 'requests',
+        step: '03',
+        title: 'Accept valuation requests',
+        caption: 'Review incoming valuation jobs, take the assignments that fit, and schedule inspections.',
+        image: '/property-listings.jpg',
+        imageAlt: 'Professional assessing a property with the owner',
+      },
+      {
+        key: 'reports',
+        step: '04',
+        title: 'Deliver reports and get paid',
+        caption: 'Submit your valuation report and receive payouts through your settlement account.',
+        image: '/practice-dashboard.jpg',
+        imageAlt: 'Professionals reviewing completed valuation and transaction work',
+      },
+    ],
+    howItWorks: [
+      {
+        title: 'Create Your Professional Presence',
+        body: 'Build a structured profile where clients can view your valuation credentials, services and pricing.',
+      },
+      {
+        title: 'Offer Valuation Services',
+        body: 'Present what clients can hire you for and display applicable pricing on your professional page.',
+      },
+      {
+        title: 'Accept Valuation Requests',
+        body: 'Receive incoming valuation jobs from property seekers, owners and developers, and accept the work that fits.',
+      },
+      {
+        title: 'Deliver Reports and Receive Payouts',
+        body: 'Complete the assignment, submit your report and get paid through Khabiteq.',
+      },
+    ],
+  },
+};
+
+const dashboardTools = [
+  {
+    title: 'Agent Marketplace',
+    body: 'Review unmatched property requests and understand what people are actively looking for.',
   },
   {
-    step: '02',
-    title: 'Access Demand & Opportunities',
-    body: 'Discover where your expertise may be needed, access relevant client and service opportunities, and review unmatched property requests through tools such as the Agent Marketplace.',
+    title: 'Property marketing opportunities',
+    body: 'Explore properties and developments and request permission to market them. Owners review your profile and set commission terms.',
   },
   {
-    step: '03',
-    title: 'Participate in Property Transactions',
-    body: 'Provide professional services, request to market properties and participate in relevant property transactions and collaborations through Khabiteq.',
+    title: 'Professional services',
+    body: 'Present your services, display pricing, and be engaged by property seekers, owners and developers.',
+  },
+  {
+    title: 'Transaction partners',
+    body: 'Collaborate with other professionals and Property Scouts through defined roles.',
   },
 ];
 
-const ForProfessionalsShowcase = () => {
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2,
-      },
-    },
-  };
+const supportedRoles = [
+  'Licensed agents',
+  'Lawyers',
+  'Valuers',
+  'Surveyors',
+  'Property managers',
+  'Other relevant professionals',
+  'Property Scouts within their appropriate role',
+];
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.5,
-        ease: [0.25, 0.1, 0.25, 1],
-      },
+function parseRole(value: string | null): ProfessionalRole {
+  return professionalRoles.includes(value as ProfessionalRole) ? (value as ProfessionalRole) : 'agent';
+}
+
+function RoleSwitcher({
+  role,
+  onSelect,
+}: {
+  role: ProfessionalRole;
+  onSelect: (next: ProfessionalRole) => void;
+}) {
+  return (
+    <div
+      className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      role="tablist"
+      aria-label="Professional role"
+    >
+      {professionalRoles.map((item) => {
+        const selected = item === role;
+        return (
+          <button
+            key={item}
+            type="button"
+            role="tab"
+            aria-selected={selected}
+            onClick={() => onSelect(item)}
+            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors sm:text-sm ${
+              selected
+                ? 'bg-[#09391C] text-white'
+                : 'bg-white text-[#09391C] ring-1 ring-[#09391C]/15 hover:bg-[#09391C]/5'
+            }`}
+          >
+            {roleLabels[item]}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function ForProfessionalsShowcaseInner() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const role = parseRole(searchParams.get('role'));
+  const content = roleContent[role];
+
+  const selectRole = useCallback(
+    (next: ProfessionalRole) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('role', next);
+      router.replace(`/for-professionals?${params.toString()}`, { scroll: false });
     },
-  };
+    [router, searchParams],
+  );
 
   return (
-    <section className="min-h-screen bg-gradient-to-br from-[#F8FAF8] via-white to-[#EEF1F1] pt-24 sm:pt-28 pb-16 sm:pb-20 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-5xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-8"
+    <AudienceJourneyPage
+      title="Build your digital practice."
+      titleIcon={Briefcase}
+      headerCta={{ href: '/for-professionals/tools', label: 'Explore your tools' }}
+      slides={content.slides}
+      lastCta={{ href: `/auth/register?userType=${roleRegisterTypes[role]}`, label: 'Get started' }}
+      carouselKey={role}
+      toolbar={<RoleSwitcher role={role} onSelect={selectRole} />}
+    >
+      <AudienceReadMoreSection title="How the full journey works" icon={LayoutDashboard}>
+        <AudienceDetailList items={content.howItWorks} />
+        <div className="mt-6">
+          <Link
+            href="/for-professionals/tools"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#09391C] px-5 py-3 text-sm font-semibold text-white"
+          >
+            Explore your tools
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </AudienceReadMoreSection>
+
+      <AudienceReadMoreSection title="Tools and professional roles" icon={Users}>
+        <h3 className="mb-2 text-xl font-bold text-[#09391C]">Practice tools in one dashboard.</h3>
+        <p className="mb-5 max-w-3xl text-sm leading-relaxed text-gray-600 sm:text-base">
+          Create your professional profile and access the tools and opportunities available within
+          the Khabiteq ecosystem.
+        </p>
+        <AudienceDetailList items={dashboardTools} />
+        <h3 className="mb-3 mt-8 text-lg font-bold text-[#09391C]">Supported professional roles</h3>
+        <AudienceCheckList items={supportedRoles} />
+        <div className="mt-6">
+          <Link
+            href={`/auth/register?userType=${roleRegisterTypes[role]}`}
+            className="inline-flex items-center gap-2 rounded-xl bg-[#09391C] px-5 py-3 text-sm font-semibold text-white"
+          >
+            Create your profile
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </AudienceReadMoreSection>
+    </AudienceJourneyPage>
+  );
+}
+
+const ForProfessionalsShowcase = () => {
+  return (
+    <Suspense
+      fallback={
+        <AudienceJourneyPage
+          title="Build your digital practice."
+          titleIcon={Briefcase}
+          headerCta={{ href: '/for-professionals/tools', label: 'Explore your tools' }}
+          slides={roleContent.agent.slides}
+          lastCta={{ href: '/auth/register?userType=Agent', label: 'Get started' }}
         >
-          <nav className="flex items-center gap-2 text-sm text-gray-500">
-            <Link href="/" className="hover:text-[#09391C] transition-colors">
-              Home
-            </Link>
-            <span>/</span>
-            <span className="text-[#09391C] font-medium">Real Estate Professionals</span>
-          </nav>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="mb-8"
-        >
-          <span className="inline-flex items-center gap-2 px-4 py-2 bg-[#09391C]/10 text-[#09391C] rounded-full text-sm font-medium">
-            <Briefcase className="w-4 h-4" />
-            For Real Estate Professionals
-          </span>
-        </motion.div>
-
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="bg-white rounded-3xl shadow-xl shadow-[#09391C]/5 border border-gray-100 overflow-hidden"
-        >
-          <div className="relative bg-gradient-to-br from-[#09391C] via-[#0B423D] to-[#0A4A3C] px-6 sm:px-10 lg:px-16 py-12 sm:py-16">
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-[#8DDB90] rounded-full blur-3xl" />
-              <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#8DDB90] rounded-full blur-3xl" />
-            </div>
-            <motion.div variants={itemVariants} className="relative z-10">
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
-                Build your digital practice.
-                <br />
-                Access real opportunities.
-              </h1>
-              <p className="text-lg sm:text-xl text-[#D6DDEB] max-w-3xl leading-relaxed">
-                Create your professional presence and access tools designed to help you
-                showcase your expertise, discover property demand and participate in
-                opportunities across the Khabiteq ecosystem.
-              </p>
-            </motion.div>
-          </div>
-
-          <div className="px-6 sm:px-10 lg:px-16 py-10 sm:py-12">
-            <motion.h2
-              variants={itemVariants}
-              className="text-lg sm:text-xl font-semibold text-[#09391C] mb-8"
-            >
-              How it works
-            </motion.h2>
-
-            <div className="space-y-5">
-              {howItWorks.map((item) => (
-                <motion.div
-                  key={item.step}
-                  variants={itemVariants}
-                  className="flex gap-4 sm:gap-5 p-5 rounded-2xl bg-[#F8FAF8] hover:bg-[#EEF1F1] transition-colors"
-                >
-                  <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-[#09391C] text-white font-bold text-sm flex items-center justify-center">
-                    {item.step}
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-[#09391C] text-base sm:text-lg mb-1">
-                      {item.title}
-                    </h3>
-                    <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
-                      {item.body}
-                    </p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-
-            <motion.div
-              variants={itemVariants}
-              className="mt-10 pt-8 border-t border-gray-100"
-            >
-              <h3 className="text-lg font-semibold text-[#09391C] mb-2">
-                Ready to build your practice?
-              </h3>
-              <p className="text-sm sm:text-base text-gray-600 mb-6 max-w-2xl">
-                Create your professional profile and access the tools and opportunities
-                available within the Khabiteq ecosystem.
-              </p>
-              <Link
-                href="/for-professionals/tools"
-                className="group inline-flex items-center gap-2 bg-[#09391C] hover:bg-[#0B423D] text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold text-sm sm:text-base transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
-              >
-                Explore your tools
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </motion.div>
-          </div>
-        </motion.div>
-      </div>
-    </section>
+          <div className="h-24" />
+        </AudienceJourneyPage>
+      }
+    >
+      <ForProfessionalsShowcaseInner />
+    </Suspense>
   );
 };
 

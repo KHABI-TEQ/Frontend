@@ -52,7 +52,7 @@ export function PractitionerWelcomeOverlay({ user, onOpenChange }: Props) {
   const [open, setOpen] = useState(false);
   const slug = useMemo(() => suggestedSlug(user), [user]);
   const fullName = `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Your practice";
-  const previewUrl = `https://${slug}.khabiteqrealty.com`;
+  const previewUrl = `https://${slug}.khabiteq.com`;
 
   useEffect(() => {
     if (hasActiveSubscription(user)) {
@@ -132,7 +132,7 @@ export function PractitionerWelcomeOverlay({ user, onOpenChange }: Props) {
           </h2>
           <p className="mt-3 text-white/80 text-sm sm:text-base max-w-xl">
             Your professional account is ready. Below is a preview of your Practitioner
-            Page. It is not live for public access yet — activate it with a subscription.
+            Page. It is not live for public access yet. Activate it with a subscription.
           </p>
         </div>
 
@@ -143,6 +143,15 @@ export function PractitionerWelcomeOverlay({ user, onOpenChange }: Props) {
           <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-[#F8FAF8]">
             <div className="absolute right-3 top-3 z-10 rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-800">
               Inactive
+            </div>
+            <div className="relative h-28 overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/practitioner-page.jpg"
+                alt=""
+                className="h-full w-full object-cover object-top"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#09391C] to-transparent" />
             </div>
             <div className="bg-gradient-to-br from-[#09391C] to-[#0B423D] px-5 py-6 text-white">
               <div className="flex items-center gap-3">

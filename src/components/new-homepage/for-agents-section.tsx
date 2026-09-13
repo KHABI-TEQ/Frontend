@@ -214,12 +214,22 @@ const ForAgentsSection = () => {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="mb-16 grid items-center gap-10 lg:grid-cols-2"
         >
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-[#09391C] mb-6 font-display">For Real Estate Agents</h2>
-          <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
-            Join our verified network of professional agents and grow your business with powerful tools and qualified leads.
-          </p>
+          <div>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-[#09391C] mb-6 font-display">For Real Estate Agents</h2>
+            <p className="text-lg md:text-xl text-gray-600 max-w-3xl">
+              Join our verified network of professional agents and grow your business with powerful tools and qualified leads.
+            </p>
+          </div>
+          <div className="relative overflow-hidden rounded-3xl aspect-[16/10] shadow-[0_16px_40px_-16px_rgba(9,57,28,0.28)]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/practice-dashboard.jpg"
+              alt="Agents collaborating on the Khabiteq practice dashboard"
+              className="h-full w-full object-cover object-top"
+            />
+          </div>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">

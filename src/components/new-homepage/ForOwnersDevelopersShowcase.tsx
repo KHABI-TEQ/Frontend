@@ -1,9 +1,54 @@
 'use client';
 
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Check, Building2, Scale, ArrowRight } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowRight, Building2, Scale, Shield } from 'lucide-react';
 import Link from 'next/link';
+import {
+  AudienceCheckList,
+  AudienceDetailList,
+  AudienceJourneyPage,
+  AudienceReadMoreSection,
+  type AudienceSlide,
+} from '@/components/new-homepage/AudienceJourneyShowcase';
+
+const journeySlides: AudienceSlide[] = [
+  {
+    key: 'list',
+    step: '01',
+    title: 'Present your property professionally',
+    caption: 'Create a dedicated property or project page with key details, images and information clearly presented.',
+    image: '/property-listings.jpg',
+    imageAlt: 'Owner reviewing a property listing with a professional outside a development',
+    imagePosition: 'object-[center_28%]',
+  },
+  {
+    key: 'requests',
+    step: '02',
+    title: 'Review marketing requests before you accept',
+    caption: 'Licensed professionals can request to market your property. View profiles and credentials first.',
+    image: '/owner-review-professionals.jpg',
+    imageAlt: 'Property owner reviewing professional profiles on a tablet',
+    imagePosition: 'object-[center_28%]',
+  },
+  {
+    key: 'commission',
+    step: '03',
+    title: 'Define commission on your terms',
+    caption: 'Set the commission or payout you offer for a successful sale, rent or joint venture.',
+    image: '/owner-commission-terms.jpg',
+    imageAlt: 'Developer agreeing commission terms for a residential project',
+    imagePosition: 'object-[center_28%]',
+  },
+  {
+    key: 'services',
+    step: '04',
+    title: 'Connect with licensed professionals',
+    caption: 'Reach buyers on Khabiteq and hire legal, valuation, survey and management support when you need it.',
+    image: '/professionals-network.jpg',
+    imageAlt: 'Lawyer and surveyor supporting a property transaction',
+    imagePosition: 'object-[center_28%]',
+  },
+];
 
 const listingBenefits = [
   {
@@ -45,200 +90,93 @@ const licensedServices = [
   'Other Relevant Property Services',
 ];
 
-const ForOwnersDevelopersShowcase = () => {
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2,
-      },
-    },
-  };
+const ownerRoles = [
+  { id: 'Landowners', label: 'Landlord' },
+  { id: 'Developer', label: 'Developer' },
+] as const;
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.5,
-        ease: [0.25, 0.1, 0.25, 1],
-      },
-    },
-  };
+const ForOwnersDevelopersShowcase = () => {
+  const [ownerType, setOwnerType] = useState<(typeof ownerRoles)[number]['id']>('Landowners');
+  const registerHref = `/auth/register?userType=${ownerType}`;
 
   return (
-    <section className="min-h-screen bg-gradient-to-br from-[#F8FAF8] via-white to-[#EEF1F1] pt-24 sm:pt-28 pb-16 sm:pb-20 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-5xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-8"
+    <AudienceJourneyPage
+      title="Showcase your property. Stay in control."
+      titleIcon={Building2}
+      headerCta={{ href: registerHref, label: 'List a property' }}
+      slides={journeySlides}
+      lastCta={{ href: registerHref, label: 'Get started' }}
+      toolbar={
+        <div
+          className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          role="tablist"
+          aria-label="Owner or developer"
         >
-          <nav className="flex items-center gap-2 text-sm text-gray-500">
-            <Link href="/" className="hover:text-[#09391C] transition-colors">
-              Home
-            </Link>
-            <span>/</span>
-            <span className="text-[#09391C] font-medium">Owners & Developers</span>
-          </nav>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="mb-8"
-        >
-          <span className="inline-flex items-center gap-2 px-4 py-2 bg-[#09391C]/10 text-[#09391C] rounded-full text-sm font-medium">
-            <Building2 className="w-4 h-4" />
-            For Owners & Developers
-          </span>
-        </motion.div>
-
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="bg-white rounded-3xl shadow-xl shadow-[#09391C]/5 border border-gray-100 overflow-hidden"
-        >
-          <div className="relative bg-gradient-to-br from-[#09391C] via-[#0B423D] to-[#0A4A3C] px-6 sm:px-10 lg:px-16 py-12 sm:py-16">
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-[#8DDB90] rounded-full blur-3xl" />
-              <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#8DDB90] rounded-full blur-3xl" />
-            </div>
-
-            <motion.div variants={itemVariants} className="relative z-10">
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
-                Showcase your property.
-                <br />
-                Control how it is represented.
-              </h1>
-              <p className="text-lg sm:text-xl text-[#D6DDEB] max-w-3xl leading-relaxed">
-                List your property or development for sale, rent or joint venture and connect with
-                relevant buyers, investors and real estate professionals through Khabiteq.
-              </p>
-            </motion.div>
-          </div>
-
-          <div className="px-6 sm:px-10 lg:px-16 py-10 sm:py-12">
-            <motion.div variants={itemVariants} className="mb-8">
-              <h2 className="text-lg sm:text-xl font-semibold text-[#09391C] mb-6">
-                Why list with Khabiteq?
-              </h2>
-            </motion.div>
-
-            <motion.ul
-              variants={containerVariants}
-              className="grid sm:grid-cols-2 gap-4 sm:gap-5"
-            >
-              {listingBenefits.map((item) => (
-                <motion.li
-                  key={item.title}
-                  variants={itemVariants}
-                  className="flex items-start gap-3 p-4 rounded-xl bg-[#F8FAF8] hover:bg-[#EEF1F1] transition-colors duration-300 group"
-                >
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#8DDB90]/20 flex items-center justify-center mt-0.5 group-hover:bg-[#8DDB90]/30 transition-colors">
-                    <Check className="w-4 h-4 text-[#09391C]" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-[#09391C] text-sm sm:text-base mb-1">
-                      {item.title}
-                    </p>
-                    <p className="text-gray-700 text-sm sm:text-base leading-relaxed">
-                      {item.body}
-                    </p>
-                  </div>
-                </motion.li>
-              ))}
-            </motion.ul>
-
-            <motion.div
-              variants={itemVariants}
-              className="mt-10 pt-8 border-t border-gray-100"
-            >
-              <Link
-                href="/auth/register"
-                className="group inline-flex items-center gap-2 bg-[#09391C] hover:bg-[#0B423D] text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold text-sm sm:text-base transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
+          {ownerRoles.map((item) => {
+            const selected = item.id === ownerType;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                role="tab"
+                aria-selected={selected}
+                onClick={() => setOwnerType(item.id)}
+                className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors sm:text-sm ${
+                  selected
+                    ? 'bg-[#09391C] text-white'
+                    : 'bg-white text-[#09391C] ring-1 ring-[#09391C]/15 hover:bg-[#09391C]/5'
+                }`}
               >
-                Get started
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </motion.div>
-          </div>
-        </motion.div>
+                {item.label}
+              </button>
+            );
+          })}
+        </div>
+      }
+    >
+      <AudienceReadMoreSection title="Why list with Khabiteq?" icon={Shield}>
+        <AudienceDetailList items={listingBenefits} />
+        <div className="mt-6">
+          <Link
+            href={registerHref}
+            className="inline-flex items-center gap-2 rounded-xl bg-[#09391C] px-5 py-3 text-sm font-semibold text-white"
+          >
+            Get started
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </AudienceReadMoreSection>
 
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="mt-8 bg-white rounded-3xl shadow-xl shadow-[#09391C]/5 border border-gray-100 overflow-hidden"
-        >
-          <div className="px-6 sm:px-10 lg:px-16 py-10 sm:py-12">
-            <motion.div variants={itemVariants} className="mb-6">
-              <h2 className="text-lg sm:text-xl font-semibold text-[#09391C] mb-3 flex items-center gap-2">
-                <Scale className="w-5 h-5 text-[#8DDB90]" />
-                Licensed professional services
-              </h2>
-              <h3 className="text-2xl sm:text-3xl font-bold text-[#09391C] mb-4">
-                Conduct Due Diligence With Confidence.
-              </h3>
-              <div className="space-y-3 text-gray-600 text-sm sm:text-base leading-relaxed max-w-3xl">
-                <p>Already found a property you want to proceed with?</p>
-                <p>
-                  Connect with relevant licensed professionals for the legal, valuation, survey and other due-diligence services your property transaction may require.
-                </p>
-                <p>
-                  View professional profiles, credentials, clearly stated services and subsidized pricing before hiring through Khabiteq.
-                </p>
-              </div>
-            </motion.div>
-
-            <motion.div variants={itemVariants} className="mb-6 mt-8">
-              <h3 className="text-lg sm:text-xl font-semibold text-[#09391C] mb-5">
-                Services available through licensed professionals
-              </h3>
-            </motion.div>
-
-            <motion.ul
-              variants={containerVariants}
-              className="grid sm:grid-cols-2 gap-4 sm:gap-5"
-            >
-              {licensedServices.map((service) => (
-                <motion.li
-                  key={service}
-                  variants={itemVariants}
-                  className="flex items-start gap-3 p-4 rounded-xl bg-[#F8FAF8] hover:bg-[#EEF1F1] transition-colors duration-300 group"
-                >
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#8DDB90]/20 flex items-center justify-center mt-0.5 group-hover:bg-[#8DDB90]/30 transition-colors">
-                    <Check className="w-4 h-4 text-[#09391C]" />
-                  </div>
-                  <span className="text-gray-700 text-sm sm:text-base leading-relaxed">
-                    {service}
-                  </span>
-                </motion.li>
-              ))}
-            </motion.ul>
-
-            <motion.div
-              variants={itemVariants}
-              className="mt-10 pt-8 border-t border-gray-100"
-            >
-              <Link
-                href="/document-verification"
-                className="group inline-flex items-center gap-2 bg-[#09391C] hover:bg-[#0B423D] text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold text-sm sm:text-base transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
-              >
-                Explore professional services
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </motion.div>
-          </div>
-        </motion.div>
-      </div>
-    </section>
+      <AudienceReadMoreSection title="Licensed professional services" icon={Scale}>
+        <h3 className="mb-2 text-xl font-bold text-[#09391C]">Conduct due diligence with confidence.</h3>
+        <p className="mb-5 max-w-3xl text-sm leading-relaxed text-gray-600 sm:text-base">
+          Already proceeding with a sale, rent or joint venture? Connect with licensed professionals for
+          legal, valuation, survey and other checks. View credentials and pricing before you hire.
+        </p>
+        <AudienceCheckList items={licensedServices} />
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Link
+            href="/document-verification"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#09391C] px-5 py-3 text-sm font-semibold text-white"
+          >
+            Explore professional services
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+          <Link
+            href="/survey-services"
+            className="inline-flex items-center gap-2 rounded-xl border border-[#09391C] px-5 py-3 text-sm font-semibold text-[#09391C]"
+          >
+            Survey services
+          </Link>
+          <Link
+            href="/licensed-agents"
+            className="inline-flex items-center gap-2 rounded-xl border border-[#09391C] px-5 py-3 text-sm font-semibold text-[#09391C]"
+          >
+            Find a professional
+          </Link>
+        </div>
+      </AudienceReadMoreSection>
+    </AudienceJourneyPage>
   );
 };
 

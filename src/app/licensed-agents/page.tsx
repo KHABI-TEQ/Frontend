@@ -23,7 +23,7 @@ type PublicLicensedAgent = {
 };
 
 function dealSiteUrl(slug: string) {
-  return `https://${slug}.khabiteqrealty.com`;
+  return `https://${slug}.khabiteq.com`;
 }
 
 export default function LicensedAgentsPage() {

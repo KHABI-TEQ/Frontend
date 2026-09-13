@@ -7,7 +7,6 @@ import Loading from "@/components/loading-component/loading";
 import { useLoading } from "@/hooks/useLoading";
 import React, { useEffect, useState } from "react";
 import Button from "@/components/general-components/button";
-import Link from "next/link";
 import { usePageContext } from "@/context/page-context";
 import { useUserContext } from "@/context/user-context";
 import { POST_REQUEST } from "@/utils/requests";
@@ -25,7 +24,6 @@ const VerificationSent = () => {
   const [isResending, setIsResending] = useState(false);
 
   const isAgent = userType === "Agent";
-  const isLandowner = userType === "Landowners";
 
   // Redirect authenticated users to dashboard (only after user context is initialized)
   useEffect(() => {
@@ -125,61 +123,6 @@ const VerificationSent = () => {
               Please check your email and click the verification link to
               activate your account.
             </p>
-
-            <p className="text-[14px] leading-[22px] text-[#5A5D63]">
-              {isAgent
-                ? "Once verified, you'll need to complete your KYC (Know Your Customer) verification before you can start posting properties and connecting with clients."
-                : "Once verified, you can immediately start browsing properties and listing your properties on our platform."
-              }
-            </p>
-          </div>
-
-          {/* Instructions Card */}
-          <div className="bg-white border-2 border-[#8DDB90] rounded-xl p-[24px] max-w-[480px] w-full">
-            <h3 className="font-display font-semibold text-[18px] leading-[28px] text-[#09391C] mb-[16px]">
-              What's Next?
-            </h3>
-            <ul className="text-[14px] leading-[22px] text-[#1E1E1E] space-y-[8px] text-left">
-              <li className="flex items-start gap-[8px]">
-                <span className="text-[#8DDB90] font-bold mt-[2px]">•</span>
-                <span>Check your email inbox (and spam folder)</span>
-              </li>
-              <li className="flex items-start gap-[8px]">
-                <span className="text-[#8DDB90] font-bold mt-[2px]">•</span>
-                <span>Click the verification link in the email</span>
-              </li>
-              {isAgent ? (
-                <>
-                  <li className="flex items-start gap-[8px]">
-                    <span className="text-[#8DDB90] font-bold mt-[2px]">•</span>
-                    <span>Complete your agent profile setup</span>
-                  </li>
-                  <li className="flex items-start gap-[8px]">
-                    <span className="text-[#8DDB90] font-bold mt-[2px]">•</span>
-                    <span>Submit KYC (Know Your Customer) verification</span>
-                  </li>
-                  <li className="flex items-start gap-[8px]">
-                    <span className="text-[#8DDB90] font-bold mt-[2px]">•</span>
-                    <span>Wait for approval and start browsing client briefs</span>
-                  </li>
-                </>
-              ) : (
-                <>
-                  <li className="flex items-start gap-[8px]">
-                    <span className="text-[#8DDB90] font-bold mt-[2px]">•</span>
-                    <span>Start using the platform immediately</span>
-                  </li>
-                  <li className="flex items-start gap-[8px]">
-                    <span className="text-[#8DDB90] font-bold mt-[2px]">•</span>
-                    <span>Browse and post properties without restrictions</span>
-                  </li>
-                  <li className="flex items-start gap-[8px]">
-                    <span className="text-[#8DDB90] font-bold mt-[2px]">•</span>
-                    <span>Complete your profile to improve visibility</span>
-                  </li>
-                </>
-              )}
-            </ul>
           </div>
 
           {/* Action Buttons */}
@@ -197,39 +140,6 @@ const VerificationSent = () => {
               className="min-h-[55px] w-full py-[12px] px-[24px] bg-[#FAFAFA] border-2 border-[#D6DDEB] text-[#1E1E1E] text-[16px] leading-[25.6px] font-bold rounded-md transition-all duration-300 hover:border-[#8DDB90]"
               onClick={() => router.push("/auth/login")}
             />
-          </div>
-
-          {/* Additional Info Card for Agents */}
-          {isAgent && (
-            <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-[20px] max-w-[480px] w-full">
-              <h4 className="font-semibold text-[14px] text-[#09391C] mb-[12px]">
-                About KYC Verification
-              </h4>
-              <p className="text-[13px] leading-[20px] text-[#1E1E1E]">
-                KYC verification is a required security step that helps us verify your identity. You'll need to provide valid identification documents. The process usually takes 24-48 hours for approval.
-              </p>
-            </div>
-          )}
-
-          {/* Footer Links */}
-          <div className="flex flex-col items-center gap-[16px] text-center">
-            <p className="text-[16px] leading-[25.6px] font-normal text-[#1E1E1E]">
-              Already verified?{" "}
-              <Link
-                className="font-semibold text-[#09391C] hover:underline transition-all duration-300"
-                href="/auth/login"
-              >
-                Sign in to your account
-              </Link>
-            </p>
-
-            <div className="text-[14px] leading-[22px] text-[#5A5D63] max-w-[400px]">
-              <p>
-                <span className="font-semibold">Didn't receive the email?</span>{" "}
-                Check your spam/junk folder or contact support if you continue to have
-                issues.
-              </p>
-            </div>
           </div>
 
         </div>
