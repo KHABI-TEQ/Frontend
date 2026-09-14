@@ -373,7 +373,7 @@ export default function DeveloperKycForm() {
                   id="developer-id"
                   heading={formik.values.idUrl ? "Replace ID document" : "Upload ID document"}
                   acceptedFileTypes="image/*,.pdf"
-                  setFileUrl={(url) => formik.setFieldValue("idUrl", url || "")}
+                  setFileUrl={(url: string | null) => formik.setFieldValue("idUrl", url || "")}
                 />
                 {formik.values.idUrl && (
                   <p className="text-xs text-emerald-700 mt-1 flex items-center gap-1">
@@ -418,7 +418,7 @@ export default function DeveloperKycForm() {
                     id="developer-project-doc"
                     heading="Upload supporting project document"
                     acceptedFileTypes="image/*,.pdf"
-                    setFileUrl={(url) => {
+                    setFileUrl={(url: string | null) => {
                       if (!url) return;
                       formik.setFieldValue("supportingDocs", [...formik.values.supportingDocs, url]);
                     }}
