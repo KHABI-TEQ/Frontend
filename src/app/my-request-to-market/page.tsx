@@ -10,6 +10,7 @@ import Loading from "@/components/loading-component/loading";
 import CombinedAuthGuard from "@/logic/combinedAuthGuard";
 import AgentEligibilityBanner from "@/components/agent/AgentEligibilityBanner";
 import { useAgentEligibility } from "@/hooks/useAgentEligibility";
+import { useDeveloperPlanEntitlement } from "@/hooks/useDeveloperPlanEntitlement";
 import { ArrowLeft, Handshake, MapPin, Tag, CheckCircle, XCircle, ExternalLink, FileCheck, Mail, Phone, Upload, FileText } from "lucide-react";
 import toast from "react-hot-toast";
 import Cookies from "js-cookie";
@@ -63,6 +64,7 @@ export default function MyRequestToMarketPage() {
   const isAgent = user?.userType === "Agent";
   const isDeveloper = user?.userType === "Developer";
   const { eligibility, loading: eligibilityLoading } = useAgentEligibility();
+  const { entitlement: developerPlan } = useDeveloperPlanEntitlement();
   const role: "agent" | "publisher" = isAgent ? "agent" : "publisher";
 
   const fetchRequests = useCallback(async () => {
@@ -265,6 +267,22 @@ export default function MyRequestToMarketPage() {
           {isAgent && (
             <div className="mb-6">
               <AgentEligibilityBanner eligibility={eligibility} loading={eligibilityLoading} />
+            </div>
+          )}
+
+          {isDeveloper && (
+            <div className="mb-6 rounded-lg border border-emerald-200 bg-white px-4 py-3 text-sm">
+              <p className="font-semibold text-[#09391C]">Professional slots</p>
+              <p className="text-[#5A5D63] mt-1">
+                {developerPlan?.hasActivePlan
+                  ? `${developerPlan.acceptedCount} of ${developerPlan.maxProfessionals} professionals accepted. ${developerPlan.remainingProfessionals} remaining on ${developerPlan.planName}.`
+                  : "Subscribe to Developer Property Distribution to accept professionals. Listing completed properties is still allowed."}
+              </p>
+              {!developerPlan?.hasActivePlan || (developerPlan && developerPlan.remainingProfessionals === 0) ? (
+                <Link href="/agent-subscriptions?tab=plans" className="text-emerald-700 font-medium hover:underline">
+                  {developerPlan?.hasActivePlan ? "Upgrade plan" : "View developer plans"}
+                </Link>
+              ) : null}
             </div>
           )}
 

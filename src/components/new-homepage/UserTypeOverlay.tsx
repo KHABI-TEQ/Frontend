@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import useEmblaCarousel from "embla-carousel-react";
 import {
   Building2,
@@ -41,7 +42,7 @@ const userTypes: UserType[] = [
     title: "Property Seekers",
     headline: "Find Property. Navigate Safely.",
     description:
-      "Tell Khabiteq what you’re looking for, discover suitable properties, and schedule inspections all in one structured journey.\n\nWhen you’re ready, access transaction registration, legal support and regulatory escalation.",
+      "Tell us what you want, get matched to verified listings, and book inspections in one structured journey.",
     cta: "Start Your Journey",
     ctaUrl: "/for-clients",
     image: "/property-preference-matching.jpg",
@@ -59,7 +60,7 @@ const userTypes: UserType[] = [
     title: "Owners & Developers",
     headline: "Bring Your Property Opportunities Into Africa's Digital Real Estate Ecosystem.",
     description:
-      "Present your property opportunities within an infrastructure designed to connect them with relevant property seekers and real estate professionals.",
+      "Connect your property opportunities with relevant seekers and real estate professionals across Africa.",
     cta: "Explore as an Owner or Developer",
     ctaUrl: "/for-owners-developers",
     image: "/property-listings.jpg",
@@ -78,8 +79,8 @@ const userTypes: UserType[] = [
     title: "Real Estate Professionals",
     headline: "Build and Grow Your Digital Practice",
     description:
-      "Create a professional presence where property seekers can discover your profile, understand your services, view your credentials and engage you when your expertise is needed.\n\nIncrease your visibility, access relevant client and service opportunities, and build a more accessible practice through Khabiteq.",
-    cta: "Read more..",
+      "Create your professional presence, get discovered, and access real client and service opportunities.",
+    cta: "Explore as a Professional",
     ctaUrl: "/for-professionals",
     image: "/client-opportunities.jpg",
     imageAlt: "Real estate professional meeting clients",
@@ -440,7 +441,7 @@ export default function UserTypeOverlay({ isOpen, onClose }: UserTypeOverlayProp
                               </div>
                             </div>
 
-                            <div className="relative flex min-h-0 flex-col overflow-hidden px-3.5 py-3 sm:p-6 lg:p-7">
+                            <div className="relative flex min-h-0 flex-col justify-center overflow-hidden px-3.5 py-3 sm:p-6 lg:px-7 lg:py-6">
                               <motion.div
                                 className={`
                                   relative mb-2 hidden h-11 w-11 shrink-0 items-center justify-center rounded-2xl sm:mb-3 sm:flex sm:h-12 sm:w-12
@@ -451,15 +452,15 @@ export default function UserTypeOverlay({ isOpen, onClose }: UserTypeOverlayProp
                                 <Icon className={`relative z-10 h-6 w-6 ${userType.iconColor}`} />
                               </motion.div>
 
-                              <h3 className="mb-1.5 line-clamp-2 text-[15px] font-bold leading-snug text-gray-900 transition-colors duration-300 group-hover:text-[#09391C] sm:mb-2 sm:text-xl lg:text-2xl">
+                              <h3 className="mb-1.5 text-[15px] font-bold leading-snug text-gray-900 transition-colors duration-300 group-hover:text-[#09391C] sm:mb-2 sm:text-xl lg:text-2xl">
                                 {userType.headline}
                               </h3>
-                              <p className="mb-3 min-h-0 flex-1 overflow-hidden text-xs leading-relaxed text-gray-600 line-clamp-2 sm:mb-4 sm:text-sm sm:line-clamp-4 lg:text-base lg:line-clamp-6">
-                                {userType.description.replace(/\n\n/g, " ")}
+                              <p className="mb-3 text-xs leading-relaxed text-gray-600 sm:mb-3.5 sm:text-sm lg:text-base">
+                                {userType.description}
                               </p>
                               <motion.div
                                 className={`
-                                  mt-auto inline-flex shrink-0 items-center gap-2 self-start rounded-xl
+                                  inline-flex shrink-0 items-center gap-2 self-start rounded-xl
                                   bg-gradient-to-r ${userType.gradient}
                                   px-4 py-2 text-xs font-semibold text-white
                                   shadow-lg ${userType.shadowColor}
@@ -521,6 +522,29 @@ export default function UserTypeOverlay({ isOpen, onClose }: UserTypeOverlayProp
                   <ChevronRight className="h-5 w-5" />
                 </button>
               </div>
+
+              <motion.div
+                className="mt-2 shrink-0 self-center sm:mt-3"
+                animate={{ y: [0, -7, 0] }}
+                transition={{
+                  duration: 1.5,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              >
+                <Link
+                  href="/auth/register?intent=scout"
+                  onClick={(e) => e.stopPropagation()}
+                  className="group relative inline-flex max-w-[min(100%,22rem)] items-center justify-center gap-2 overflow-hidden rounded-full border border-white/25 bg-gradient-to-r from-[#8DDB90] via-[#7BC87F] to-[#6BB26F] px-4 py-2 text-center text-[11px] font-semibold leading-snug text-[#09391C] shadow-lg shadow-[#8DDB90]/35 transition-all duration-300 hover:border-white/50 hover:shadow-xl hover:shadow-[#8DDB90]/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B423D] sm:max-w-none sm:px-5 sm:py-2.5 sm:text-sm"
+                >
+                  <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/35 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+                  <Sparkles className="relative h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" aria-hidden />
+                  <span className="relative">
+                    Know a Property Opportunity? Become a Property Scout
+                  </span>
+                  <ArrowRight className="relative h-3.5 w-3.5 shrink-0 transition-transform duration-300 group-hover:translate-x-1 sm:h-4 sm:w-4" aria-hidden />
+                </Link>
+              </motion.div>
             </motion.div>
             </motion.div>
           </div>

@@ -258,11 +258,17 @@ const SideBar = ({
                                         setIsModalOpened(false);
                                         setOpenedMenus({});
                                       }}
-                                      className="text-sm text-[#1E1E1E] hover:text-[#8DDB90] transition-colors py-1"
+                                      className={
+                                        content.name === "Property Scout"
+                                          ? "rounded-lg bg-[#8DDB90]/15 px-2 py-1.5 text-sm font-semibold text-[#09391C] hover:bg-[#8DDB90]/25"
+                                          : "py-1 text-sm text-[#1E1E1E] transition-colors hover:text-[#8DDB90]"
+                                      }
                                       key={contentIDX}
                                       href={content.url}
                                     >
-                                      {content.name}
+                                      {content.name === "Property Scout"
+                                        ? "Property Scout →"
+                                        : content.name}
                                     </Link>
                                   );
                                 },

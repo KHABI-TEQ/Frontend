@@ -18,6 +18,10 @@ const SKIP_AMOUNT_UTTERANCE_RE = /^\s*(please\s+)?skip\b/i;
 export interface AiFillBlockProps {
   /** Main label, e.g. "Describe your property" or "Describe what you're looking for" */
   title: string;
+  /** Helper copy under the title. Pass a string to replace the default, or "" to hide it. */
+  description?: string;
+  /** Show the always-visible voice/auto-send explanation. Default true. */
+  showVoiceInstructions?: boolean;
   /** Placeholder for the textarea */
   placeholder: string;
   /** Button label, e.g. "Fill with AI" */
@@ -79,8 +83,13 @@ function stopSpeechRecognition(rec: SpeechRecognitionInstance | null) {
   }
 }
 
+const DEFAULT_DESCRIPTION =
+  "Optionally describe in a few words or sentences; we'll suggest form fields. You can review and edit before submitting.";
+
 export default function AiFillBlock({
   title,
+  description,
+  showVoiceInstructions = true,
   placeholder,
   buttonLabel = "Fill with AI",
   onSuggest,
@@ -369,18 +378,28 @@ export default function AiFillBlock({
           50% { transform: scaleY(1); }
         }
       `}</style>
-      <div className="mb-2 flex items-center gap-2 text-[#09391C]">
-        <Sparkles className="h-5 w-5 text-[#8DDB90]" aria-hidden />
-        <span className="font-semibold">{title}</span>
-      </div>
-      <p className="mb-3 text-sm text-[#5A5D63]">
-        Optionally describe in a few words or sentences; we&apos;ll suggest form fields. You can review and edit before
-        submitting.{" "}
-        <span className="text-[#09391C] font-medium">
-          Voice: speak clearly — text appears as you talk. After ~5 seconds of silence (or when you tap Stop),
-          your message auto-sends in a few seconds. Tap Cancel to fix a typo, edit the text, or re-record.
-        </span>
-      </p>
+      {title ? (
+        <div className="mb-2 flex items-center gap-2 text-[#09391C]">
+          <Sparkles className="h-5 w-5 text-[#8DDB90]" aria-hidden />
+          <span className="font-semibold">{title}</span>
+        </div>
+      ) : null}
+      {(() => {
+        const helperText = description === undefined ? DEFAULT_DESCRIPTION : description;
+        if (!helperText && !showVoiceInstructions) return null;
+        return (
+          <p className="mb-3 text-sm text-[#5A5D63]">
+            {helperText}
+            {helperText && showVoiceInstructions ? " " : null}
+            {showVoiceInstructions ? (
+              <span className="text-[#09391C] font-medium">
+                Voice: speak clearly — text appears as you talk. After ~5 seconds of silence (or when you tap Stop),
+                your message auto-sends in a few seconds. Tap Cancel to fix a typo, edit the text, or re-record.
+              </span>
+            ) : null}
+          </p>
+        );
+      })()}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
         <div className="relative flex-1">
           <textarea
@@ -429,12 +448,12 @@ export default function AiFillBlock({
                 else startVoice();
               }}
               disabled={!micBusy && (disabled || loading)}
-              className={`relative z-20 inline-flex items-center gap-2 rounded px-2 py-2 text-sm font-medium transition-colors disabled:opacity-50 pointer-events-auto ${
+              className={`relative z-20 inline-flex items-center gap-2 rounded-full px-2.5 py-2 text-sm font-medium transition-colors disabled:opacity-50 pointer-events-auto ${
                 pendingAutoSubmit
                   ? "bg-amber-50 text-amber-800 hover:bg-amber-100"
                   : listening
                     ? "bg-red-50 text-red-600 hover:bg-red-100"
-                    : "text-gray-500 hover:bg-gray-100 hover:text-[#09391C]"
+                    : "bg-[#8DDB90]/15 text-[#09391C] hover:bg-[#8DDB90]/30"
               }`}
               title={
                 pendingAutoSubmit
@@ -459,7 +478,7 @@ export default function AiFillBlock({
                   <span>Stop</span>
                 </>
               ) : (
-                <Mic className="h-5 w-5" />
+                <Mic className="h-6 w-6" />
               )}
             </button>
           </div>
@@ -494,21 +513,19 @@ export default function AiFillBlock({
         </div>
       </div>
       {listening && (
-        <p className="mt-2 text-sm text-[#5A5D63] font-medium" role="status">
-          Listening… After ~5 seconds of silence or when you tap Stop, your message auto-sends in 5 seconds unless you cancel.
+        <p className="mt-2 text-sm text-[#5A5D63]" role="status">
+          Listening…
         </p>
       )}
       {pendingAutoSubmit && !listening && (
-        <p className="mt-2 text-sm text-[#5A5D63] font-medium flex flex-wrap items-center gap-2" role="status">
-          <span>
-            Sending in {autoSubmitSecondsLeft}s… Tap Cancel to fix a typo or edit the text above.
-          </span>
+        <p className="mt-2 text-sm text-[#5A5D63] flex flex-wrap items-center gap-2" role="status">
+          <span>Sending in {autoSubmitSecondsLeft}s…</span>
           <button
             type="button"
             onClick={cancelAutoSubmit}
             className="text-xs font-semibold text-amber-800 underline underline-offset-2 hover:text-amber-900"
           >
-            Cancel auto-send
+            Cancel
           </button>
         </p>
       )}

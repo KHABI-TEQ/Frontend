@@ -1,205 +1,263 @@
 'use client';
 
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Check, Building2, Shield, TrendingUp, HardHat, ArrowRight } from 'lucide-react';
+import { ArrowRight, Building2, Check, Shield, Sparkles } from 'lucide-react';
 import Link from 'next/link';
-import DocumentVerificationPromoSection from '@/components/new-homepage/document-verification-promo-section';
+import {
+  AudienceCheckList,
+  AudienceJourneyPage,
+  AudienceReadMoreSection,
+  type AudienceSlide,
+} from '@/components/new-homepage/AudienceJourneyShowcase';
+
+const journeySlides: AudienceSlide[] = [
+  {
+    key: 'profile',
+    step: '01',
+    title: 'Create Your Developer Profile',
+    caption:
+      'Set up your verified developer profile so professionals and property seekers understand who they are dealing with.',
+    image: '/digital-identity.jpg',
+    imageAlt: 'Developer setting up a professional profile',
+    imagePosition: 'object-[center_28%]',
+  },
+  {
+    key: 'properties',
+    step: '02',
+    title: 'Add Your Properties or Projects',
+    caption:
+      'Showcase your available properties and development projects. You remain in control of what you present.',
+    image: '/property-listings.jpg',
+    imageAlt: 'Developer reviewing property and project listings',
+    imagePosition: 'object-[center_28%]',
+  },
+  {
+    key: 'distribution',
+    step: '03',
+    title: 'Expand Your Property Distribution',
+    caption:
+      "Don't rely only on your internal sales team. Work with real estate professionals who can market your properties.",
+    image: '/owner-review-professionals.jpg',
+    imageAlt: 'Developer reviewing professionals who can market a project',
+    imagePosition: 'object-[center_28%]',
+  },
+  {
+    key: 'offplan',
+    step: '04',
+    title: 'Want to Sell Off-Plan?',
+    caption:
+      'Selling off-plan requires a higher level of buyer confidence. Activate Off-Plan access through Advanced KYC and an Off-Plan plan.',
+    image: '/owner-commission-terms.jpg',
+    imageAlt: 'Off-plan development project under construction',
+    imagePosition: 'object-[center_28%]',
+  },
+];
+
+const distributionBenefits = [
+  'Developer Profile',
+  'Showcase Your Properties',
+  'Accept Up To 10 Professionals',
+  'Expand Your Marketing Reach',
+  'Manage The Professionals You Work With',
+  'Reach More Potential Buyers',
+];
+
+const offPlanBenefits = [
+  'Everything In The Developer Property Distribution Plan',
+  'Activate Off-Plan Sales',
+  'Complete Advanced KYC',
+  'Accept Up To 30 Professionals To Market Your Project',
+  'Wider Professional Distribution',
+  'Stronger Buyer Confidence Proposition',
+  "Participation In Khabiteq's Structured Trust Framework",
+  'Reach More Serious Local And Diaspora Buyers',
+];
+
+const offPlanAnnualBenefits = [
+  'Full Off-Plan Access',
+  'Advanced KYC',
+  'Accept Up To 100 Professionals To Market Your Projects',
+  'Maximum Professional Distribution',
+  'Continuous Project Visibility',
+  'Stronger Long-Term Buyer Confidence Proposition',
+  "Participation In Khabiteq's Structured Trust Framework",
+  'Reach Serious Local And Diaspora Buyers',
+];
+
+const whyJoin = [
+  'Professional distribution',
+  'More potential buyers',
+  'Greater market reach',
+  'A stronger trust proposition',
+  'A structured environment for off-plan sales',
+];
+
+const offPlanActivate = [
+  'Complete Advanced KYC',
+  'Provide Required Business Information',
+  'Provide Required Project Information',
+  'Subscribe To An Off-Plan Plan',
+];
+
+const registerHref = '/auth/register?userType=Developer';
+
+function PlanCard({
+  name,
+  price,
+  term,
+  audience,
+  benefits,
+  tagline,
+  featured,
+}: {
+  name: string;
+  price: string;
+  term: string;
+  audience: string;
+  benefits: readonly string[];
+  tagline: string;
+  featured?: boolean;
+}) {
+  return (
+    <article
+      className={`flex h-full flex-col rounded-2xl border p-5 sm:p-6 ${
+        featured
+          ? 'border-[#8DDB90] bg-[#f0fdf4] shadow-md'
+          : 'border-gray-100 bg-white'
+      }`}
+    >
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-[#5A5D63]">{audience}</p>
+      <h3 className="mt-1 text-lg font-bold text-[#09391C]">{name}</h3>
+      <p className="mt-2 text-2xl font-extrabold text-[#09391C]">
+        {price} <span className="text-sm font-semibold text-[#5A5D63]">/ {term}</span>
+      </p>
+      <ul className="mt-4 flex-1 space-y-2">
+        {benefits.map((item) => (
+          <li key={item} className="flex items-start gap-2 text-sm text-gray-700">
+            <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#16a34a]" />
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-[#09391C]">{tagline}</p>
+      <Link
+        href={registerHref}
+        className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-[#09391C] px-4 py-2.5 text-sm font-semibold text-white"
+      >
+        Get started
+        <ArrowRight className="h-4 w-4" />
+      </Link>
+    </article>
+  );
+}
 
 const ForDevelopersShowcase = () => {
-  const bullets = [
-    'Showcase your projects to more potential buyers through verified agents',
-    'Dedicated project pages with full details and media',
-    'Connect with verified agents to promote your developments',
-    'Track leads and inquiries in real-time',
-    'Secure document verification for all transactions',
-  ];
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.5,
-        ease: [0.25, 0.1, 0.25, 1],
-      },
-    },
-  };
-
   return (
-    <section className="min-h-screen bg-gradient-to-br from-[#F8FAF8] via-white to-[#EEF1F1] pt-24 sm:pt-28 pb-16 sm:pb-20 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-5xl mx-auto">
-        {/* Breadcrumb */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-8"
-        >
-          <nav className="flex items-center gap-2 text-sm text-gray-500">
-            <Link href="/" className="hover:text-[#09391C] transition-colors">
-              Home
-            </Link>
-            <span>/</span>
-            <span className="text-[#09391C] font-medium">For Developers</span>
-          </nav>
-        </motion.div>
-
-        {/* Header Badge */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="mb-8"
-        >
-          <span className="inline-flex items-center gap-2 px-4 py-2 bg-[#09391C]/10 text-[#09391C] rounded-full text-sm font-medium">
-            <Building2 className="w-4 h-4" />
-            For Developers
-          </span>
-        </motion.div>
-
-        {/* Main Content */}
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="bg-white rounded-3xl shadow-xl shadow-[#09391C]/5 border border-gray-100 overflow-hidden"
-        >
-          {/* Hero Section */}
-          <div className="relative bg-gradient-to-br from-[#09391C] via-[#0B423D] to-[#0A4A3C] px-6 sm:px-10 lg:px-16 py-12 sm:py-16">
-            {/* Background Pattern */}
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-[#8DDB90] rounded-full blur-3xl" />
-              <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#8DDB90] rounded-full blur-3xl" />
-            </div>
-
-            <motion.div variants={itemVariants} className="relative z-10">
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
-                Showcase your projects. Reach more buyers.
-              </h1>
-              <p className="text-lg sm:text-xl text-[#D6DDEB] max-w-2xl leading-relaxed">
-                List your developments for sale, rent, or joint venture. Connect with verified agents and reach serious investors with ease.
-              </p>
-            </motion.div>
-          </div>
-
-          {/* Features Section */}
-          <div className="px-6 sm:px-10 lg:px-16 py-10 sm:py-12">
-            <motion.div variants={itemVariants} className="mb-8">
-              <h2 className="text-lg sm:text-xl font-semibold text-[#09391C] mb-6 flex items-center gap-2">
-                <Shield className="w-5 h-5 text-[#8DDB90]" />
-                Why list your projects with Khabi-Teq?
-              </h2>
-            </motion.div>
-
-            <motion.ul
-              variants={containerVariants}
-              className="grid sm:grid-cols-2 gap-4 sm:gap-5"
-            >
-              {bullets.map((bullet, index) => (
-                <motion.li
-                  key={index}
-                  variants={itemVariants}
-                  className="flex items-start gap-3 p-4 rounded-xl bg-[#F8FAF8] hover:bg-[#EEF1F1] transition-colors duration-300 group"
-                >
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#8DDB90]/20 flex items-center justify-center mt-0.5 group-hover:bg-[#8DDB90]/30 transition-colors">
-                    <Check className="w-4 h-4 text-[#09391C]" />
-                  </div>
-                  <span className="text-gray-700 text-sm sm:text-base leading-relaxed">
-                    {bullet}
-                  </span>
-                </motion.li>
-              ))}
-            </motion.ul>
-
-            {/* CTA Section */}
-            <motion.div
-              variants={itemVariants}
-              className="mt-10 pt-8 border-t border-gray-100"
-            >
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-[#09391C] mb-1">
-                    Ready to showcase your development?
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    Showcase your development and reach more buyers on Khabiteq.
-                  </p>
-                </div>
-                <Link
-                  href="/auth/register"
-                  className="group inline-flex items-center gap-2 bg-[#09391C] hover:bg-[#0B423D] text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold text-sm sm:text-base transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
-                >
-                  Get Started
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </div>
-            </motion.div>
-          </div>
-        </motion.div>
-
-        <DocumentVerificationPromoSection />
-
-        {/* Additional Info Cards */}
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-4"
-        >
-          <motion.div
-            variants={itemVariants}
-            className="bg-white rounded-2xl p-6 shadow-md shadow-gray-200/50 border border-gray-100 hover:shadow-lg transition-shadow"
-          >
-            <div className="w-10 h-10 rounded-xl bg-[#8DDB90]/20 flex items-center justify-center mb-4">
-              <Building2 className="w-5 h-5 text-[#09391C]" />
-            </div>
-            <h3 className="font-semibold text-[#09391C] mb-2">Project Showcase</h3>
-            <p className="text-sm text-gray-500">
-              Create detailed project pages with photos, floor plans, and virtual tours.
-            </p>
-          </motion.div>
-
-          <motion.div
-            variants={itemVariants}
-            className="bg-white rounded-2xl p-6 shadow-md shadow-gray-200/50 border border-gray-100 hover:shadow-lg transition-shadow"
-          >
-            <div className="w-10 h-10 rounded-xl bg-[#8DDB90]/20 flex items-center justify-center mb-4">
-              <TrendingUp className="w-5 h-5 text-[#09391C]" />
-            </div>
-            <h3 className="font-semibold text-[#09391C] mb-2">Lead Management</h3>
-            <p className="text-sm text-gray-500">
-              Track inquiries, manage leads, and convert prospects into buyers efficiently.
-            </p>
-          </motion.div>
-
-          <motion.div
-            variants={itemVariants}
-            className="bg-white rounded-2xl p-6 shadow-md shadow-gray-200/50 border border-gray-100 hover:shadow-lg transition-shadow sm:col-span-2 lg:col-span-1"
-          >
-            <div className="w-10 h-10 rounded-xl bg-[#8DDB90]/20 flex items-center justify-center mb-4">
-              <HardHat className="w-5 h-5 text-[#09391C]" />
-            </div>
-            <h3 className="font-semibold text-[#09391C] mb-2">Agent Network</h3>
-            <p className="text-sm text-gray-500">
-              Partner with verified agents who can promote your projects to their network.
-            </p>
-          </motion.div>
-        </motion.div>
+    <AudienceJourneyPage
+      title="Develop. Distribute. Sell with Trust."
+      titleIcon={Building2}
+      headerCta={{ href: registerHref, label: 'Get started' }}
+      slides={journeySlides}
+      lastCta={{ href: registerHref, label: 'Create developer account' }}
+    >
+      <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-[0_4px_24px_-8px_rgba(9,57,28,0.08)] sm:p-6">
+        <p className="text-xs font-semibold uppercase tracking-wide text-[#16a34a]">Welcome to Khabiteq</p>
+        <p className="mt-2 max-w-4xl text-sm leading-relaxed text-gray-600 sm:text-base">
+          Whether you&apos;re selling completed properties or developing off-plan projects, Khabiteq gives you
+          the tools and professional network to expand your reach and grow your property business.
+        </p>
       </div>
-    </section>
+
+      <AudienceReadMoreSection title="Developer Property Distribution Plan" icon={Sparkles}>
+        <p className="mb-4 text-sm font-semibold text-[#09391C]">
+          Your properties. Your control. More professionals marketing for you.
+        </p>
+        <div className="grid gap-4 lg:grid-cols-3">
+          <PlanCard
+            name="Property Distribution"
+            price="₦50,000"
+            term="3 months"
+            audience="Best for completed or available properties"
+            benefits={distributionBenefits}
+            tagline="More professionals. More reach. More sales."
+          />
+          <PlanCard
+            name="Off-Plan"
+            price="₦130,000"
+            term="3 months"
+            audience="Built for developers selling off-plan"
+            benefits={offPlanBenefits}
+            tagline="More trust. More professionals. More serious buyers."
+            featured
+          />
+          <PlanCard
+            name="Off-Plan Annual"
+            price="₦390,000"
+            term="year"
+            audience="Maximum long-term reach"
+            benefits={offPlanAnnualBenefits}
+            tagline="Longer reach. Greater value. Bigger opportunities."
+          />
+        </div>
+      </AudienceReadMoreSection>
+
+      <AudienceReadMoreSection title="Want to sell off-plan?" icon={Shield}>
+        <p className="mb-3 text-sm leading-relaxed text-gray-600 sm:text-base">
+          Selling off-plan requires a higher level of buyer confidence. When buyers commit money to a project
+          that is still under development, they need greater confidence in the developer and the process.
+          That&apos;s why Khabiteq&apos;s Off-Plan access operates within a stronger trust and accountability framework.
+        </p>
+        <p className="mb-3 text-sm font-semibold text-[#09391C]">To activate off-plan sales:</p>
+        <AudienceCheckList items={offPlanActivate} />
+        <h3 className="mb-2 mt-6 text-lg font-bold text-[#09391C]">Buyer trust &amp; confidence</h3>
+        <p className="max-w-4xl text-sm leading-relaxed text-gray-600 sm:text-base">
+          Khabiteq provides buyers with a structured pathway for regulatory escalation and access to free legal
+          support where applicable. This helps create a stronger environment of confidence for buyers when
+          considering participating developers and their projects.
+        </p>
+        <p className="mt-3 text-sm font-semibold text-[#09391C]">
+          More confidence for buyers. A stronger trust proposition for credible developers.
+        </p>
+      </AudienceReadMoreSection>
+
+      <AudienceReadMoreSection title="Why developers join Khabiteq" icon={Building2}>
+        <p className="mb-4 text-sm font-semibold text-[#09391C]">
+          Developers need more than visibility. They need:
+        </p>
+        <AudienceCheckList items={whyJoin} />
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <div className="rounded-xl bg-[#F8FAF8] p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-[#5A5D63]">For completed properties</p>
+            <h3 className="mt-1 font-bold text-[#09391C]">Distribution</h3>
+            <p className="mt-2 text-sm text-gray-600">
+              Get more professionals involved in marketing your properties.
+            </p>
+          </div>
+          <div className="rounded-xl bg-[#F8FAF8] p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-[#5A5D63]">For off-plan projects</p>
+            <h3 className="mt-1 font-bold text-[#09391C]">Distribution + Trust</h3>
+            <p className="mt-2 text-sm text-gray-600">
+              Get wider professional distribution while participating in a stronger trust-focused framework
+              designed to give buyers greater confidence.
+            </p>
+          </div>
+        </div>
+        <p className="mt-6 text-sm font-semibold text-[#09391C]">
+          We help credible developers reach more people. We help buyers engage with greater confidence.
+        </p>
+        <p className="mt-1 text-sm text-gray-600">
+          Build. Distribute. Sell with trust. Real estate. Reimagined for Africa.
+        </p>
+        <div className="mt-6">
+          <Link
+            href={registerHref}
+            className="inline-flex items-center gap-2 rounded-xl bg-[#09391C] px-5 py-3 text-sm font-semibold text-white"
+          >
+            Create your developer account
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </AudienceReadMoreSection>
+    </AudienceJourneyPage>
   );
 };
 

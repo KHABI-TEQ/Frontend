@@ -2345,9 +2345,6 @@ export default function PreferenceAiConversationFlow() {
           <p className="text-sm text-[#5A5D63] mb-6">
             Review the details below. When you&apos;re ready, submit your preference to get matched with properties.
           </p>
-          <div className="mb-6">
-            <MatchingOutlookBanner {...outlookDraftFromCollected(data)} />
-          </div>
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden mb-6">
             <table className="w-full text-sm">
               <thead>
@@ -2418,10 +2415,6 @@ export default function PreferenceAiConversationFlow() {
           <ArrowLeft className="h-4 w-4" /> Change to manual form
         </button>
       </div>
-      <p className="text-sm text-[#5A5D63]">
-        Tell us what you need. We&apos;ll guide you step-by-step.
-      </p>
-
       <div className="border border-[#8DDB90]/30 rounded-lg overflow-hidden bg-white">
         <details className="group">
           <summary className="flex items-center justify-between px-4 py-3 text-sm font-medium text-[#09391C] bg-[#8DDB90]/10 hover:bg-[#8DDB90]/20 cursor-pointer transition-colors list-none select-none">
@@ -2430,33 +2423,45 @@ export default function PreferenceAiConversationFlow() {
           </summary>
           <div className="px-4 py-3 space-y-3 text-sm text-[#5A5D63]">
             <p>
-              <strong>Start with the listing type</strong> — say <strong>Buy</strong>, <strong>Rent</strong>, <strong>Shortlet</strong>, or <strong>JV</strong> first. The AI asks for one detail at a time. For budgets, use commas (e.g. <span className="whitespace-nowrap">20,000,000</span>). Say <strong>skip</strong> on optional lines. Use <strong>I&apos;m done</strong> to review and submit.
+              Start by telling us what you&apos;re looking for. Choose <strong>Buy</strong>, <strong>Rent</strong>, <strong>Shortlet</strong>, or <strong>JV</strong>, and the AI will guide you through the remaining details one step at a time.
             </p>
             <div className="pt-2 border-t border-gray-100">
-              <p className="font-medium text-[#09391C] mb-2">What you need to get started:</p>
-              <p className="mb-2">1. Pick a Type: Buy · Rent · Shortlet · JV</p>
-              <p className="mb-1">2. Key Details to Mention:</p>
-              <ul className="space-y-1 ml-4 text-xs">
+              <p className="font-medium text-[#09391C] mb-2">What you&apos;ll need to provide:</p>
+              <ul className="space-y-3">
                 <li className="flex items-start gap-2">
-                  <span>📍</span>
-                  <span><strong>Location:</strong> Area & LGA (e.g. Ikate, Eti-Osa)</span>
+                  <span className="shrink-0">1.</span>
+                  <span>
+                    <span className="font-medium text-[#09391C]">📍 Location</span>
+                    <span className="mt-0.5 block">Area and preferred location.</span>
+                  </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span>🏡</span>
-                  <span><strong>Property:</strong> Type & Features (Pool, Serviced, etc.)</span>
+                  <span className="shrink-0">2.</span>
+                  <span>
+                    <span className="font-medium text-[#09391C]">🏠 Property</span>
+                    <span className="mt-0.5 block">Property type and preferred features.</span>
+                  </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span>💰</span>
-                  <span><strong>Budget:</strong> Your price range or daily rate</span>
+                  <span className="shrink-0">3.</span>
+                  <span>
+                    <span className="font-medium text-[#09391C]">💰 Budget</span>
+                    <span className="mt-0.5 block">Your price range or daily rate.</span>
+                  </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span>📄</span>
-                  <span><strong>Title (For Buy/JV):</strong> e.g. C of O or Consent</span>
+                  <span className="shrink-0">4.</span>
+                  <span>
+                    <span className="font-medium text-[#09391C]">📄 Preferred Title (Buy/JV)</span>
+                    <span className="mt-0.5 block">
+                      Tell us your preferred title type, if applicable — e.g. C of O, Consent, or other title documentation.
+                    </span>
+                  </span>
                 </li>
               </ul>
             </div>
             <p className="text-xs italic pt-2 border-t border-gray-100">
-              Tip: If voice input fails, type instead. Name and email are confirmed on the next step.
+              Tip: Say &quot;Skip&quot; for optional details. Say &quot;I&apos;m done&quot; when you&apos;re ready to review your preference.
             </p>
           </div>
         </details>
@@ -2592,8 +2597,10 @@ export default function PreferenceAiConversationFlow() {
 
       <div className="flex flex-col gap-3">
         <AiFillBlock
-          title=""
-          placeholder="e.g. Buy — 3-bedroom in Lekki, Lagos, budget max 50,000,000…"
+          title="Describe what you're looking for"
+          description="Tell us what you need, and we'll guide you step-by-step."
+          showVoiceInstructions={false}
+          placeholder="e.g. Buy a 3-bedroom apartment in Lekki with a budget of ₦150,000,000"
           buttonLabel={loading ? "Sending…" : "Send"}
           onSuggest={handleSuggest}
           disabled={loading}
@@ -2607,7 +2614,7 @@ export default function PreferenceAiConversationFlow() {
               onClick={handleProceedToContactConfirm}
               className="px-4 py-2 rounded-lg border-2 border-[#8DDB90] text-[#09391C] font-medium hover:bg-[#8DDB90]/10"
             >
-              I&apos;m done — confirm contact
+              I&apos;m done
             </button>
           )}
         </div>

@@ -124,6 +124,11 @@ export default function AgentSubscriptionsPage() {
 
   useEffect(() => {
     if (!token) return;
+    const raw = (user as { userType?: string } | null)?.userType ?? "";
+    if (String(raw).toLowerCase() === "developer") {
+      setAccountRoleLabel("Developer");
+      return;
+    }
     GET_REQUEST(`${URLS.BASE}${URLS.propertyScoutStatus}`, token)
       .then((res) => {
         const scout = Boolean((res as any)?.data?.isPropertyScout);
@@ -132,7 +137,7 @@ export default function AgentSubscriptionsPage() {
         );
       })
       .catch(() => setAccountRoleLabel(null));
-  }, [token]);
+  }, [token, user]);
 
   const fetchSubscriptions = async (page = 1) => {
     try {
@@ -154,7 +159,12 @@ export default function AgentSubscriptionsPage() {
   const fetchPlans = async () => {
     try {
       setTabLoading(true);
-      const response = await GET_REQUEST(`${URLS.BASE}${URLS.getStandardSubscriptionPlans}`, token);
+      const rawType = user ? (user as { userType?: string }).userType ?? '' : '';
+      const developerCatalog = String(rawType).trim().toLowerCase() === 'developer';
+      const plansUrl = developerCatalog
+        ? `${URLS.BASE}${URLS.getStandardSubscriptionPlans}&audience=developer`
+        : `${URLS.BASE}${URLS.getStandardSubscriptionPlans}`;
+      const response = await GET_REQUEST(plansUrl, token);
       if (response.success) {
         const apiPlans = (response.data || []) as any[];
         let normalized = apiPlans.map((p: any) => {
@@ -195,6 +205,9 @@ export default function AgentSubscriptionsPage() {
             benefits,
             category: p.category || 'standard',
             categoryLabel: p.categoryLabel || 'Standard',
+            audience: p.audience || 'licensed',
+            maxProfessionals: p.maxProfessionals,
+            allowsOffPlan: !!p.allowsOffPlan,
             prices,
             discountedPlans,
             durationInDays: p.durationInDays,
@@ -445,20 +458,41 @@ export default function AgentSubscriptionsPage() {
         {/* Header */}
         <div className="mb-8 space-y-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Agent Subscriptions</h1>
-            <p className="text-gray-600">Standard plans cover practitioner listing eligibility. Add a custom domain with White Labeling.</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              {isDeveloper ? "Developer Subscriptions" : "Agent Subscriptions"}
+            </h1>
+            <p className="text-gray-600">
+              {isDeveloper
+                ? "Distribution and Off-Plan plans for developers. Completed listings do not require a plan; accepting professionals and off-plan listing do."
+                : "Standard plans cover practitioner listing eligibility. Add a custom domain with White Labeling."}
+            </p>
             <p className="mt-3 inline-flex items-center rounded-full bg-slate-100 border border-slate-200 px-3 py-1 text-sm font-medium text-slate-800">
               Account:{" "}
-              {eligibility?.isPropertyScout || accountRoleLabel === "Property Scout"
+              {isDeveloper
+                ? "Developer"
+                : eligibility?.isPropertyScout || accountRoleLabel === "Property Scout"
                 ? "Property Scout"
                 : eligibility?.displayRoleLabel ||
                   accountRoleLabel ||
-                  (isDeveloper ? "Licensed Agent / Developer" : "Licensed Agent / Developer")}
+                  "Licensed Agent / Developer"}
             </p>
           </div>
           {!isDeveloper && (
             <AgentEligibilityBanner eligibility={eligibility} loading={eligibilityLoading} compact />
           )}
+          {isDeveloper ? (
+          <div className="rounded-lg border border-emerald-100 bg-emerald-50/60 p-4 text-sm text-emerald-950">
+            <p className="font-semibold mb-1">Developer plan notes</p>
+            <ul className="list-disc ml-5 space-y-0.5 text-emerald-900/90">
+              <li>Developer Property Distribution — ₦50,000 / 3 months — accept up to 10 professionals</li>
+              <li>Off-Plan — ₦130,000 / 3 months — off-plan listing + up to 30 professionals</li>
+              <li>Off-Plan Annual — ₦390,000 / 12 months — off-plan listing + up to 100 professionals</li>
+              <li>Completed properties can be listed without a plan</li>
+              <li>Off-plan also requires approved Advanced KYC</li>
+            </ul>
+          </div>
+          ) : (
+          <>
           <div className="rounded-lg border border-emerald-100 bg-emerald-50/60 p-4 text-sm text-emerald-950">
             <p className="font-semibold mb-1">Practitioner plan notes</p>
             <ul className="list-disc ml-5 space-y-0.5 text-emerald-900/90">
@@ -488,6 +522,8 @@ export default function AgentSubscriptionsPage() {
               View Custom Domain plans
             </Link>
           </div>
+          </>
+          )}
           {activeSubscriptionFromProfile && (
             <div className="rounded-lg border border-green-200 bg-green-50 p-4">
               <div className="text-sm text-green-800">
@@ -654,7 +690,7 @@ export default function AgentSubscriptionsPage() {
 
               {activeTab === 'plans' && (
                 <>
-                  {!listingEligibility?.unlimitedListings ? (
+                  {!isDeveloper && !listingEligibility?.unlimitedListings ? (
                     <div className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                       <div>
                         <p className="font-semibold text-[#09391C]">Need more than {STANDARD_LISTING_CAP} listings?</p>
@@ -677,6 +713,7 @@ export default function AgentSubscriptionsPage() {
                       </button>
                     </div>
                   ) : null}
+                {!isDeveloper && (
                 <div className="space-y-3 mb-6">
                   {([
                     ["standard", "Standard plans"],
@@ -700,8 +737,18 @@ export default function AgentSubscriptionsPage() {
                     </button>
                   ))}
                 </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {plans.filter((plan: any) => {
+                    if (isDeveloper) {
+                      const code = String(plan.code || "").toUpperCase();
+                      return (
+                        plan.audience === "developer" ||
+                        code === "DEV_DISTRIBUTION_QTR" ||
+                        code === "DEV_OFFPLAN_QTR" ||
+                        code === "DEV_OFFPLAN_YEARLY"
+                      );
+                    }
                     if (!openPlanCategory) return false;
                     const name = String(plan.name || "");
                     const code = String(plan.code || "");

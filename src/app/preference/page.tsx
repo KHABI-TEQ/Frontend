@@ -147,11 +147,11 @@ const SuccessModal = memo(
   ({
     showSuccessModal,
     onSubmitNew,
-    onGoToMarketplace,
+    onDone,
   }: {
     showSuccessModal: boolean;
     onSubmitNew: () => void;
-    onGoToMarketplace: () => void;
+    onDone: () => void;
   }) => {
     // Prevent body scroll when modal is open
     React.useEffect(() => {
@@ -204,9 +204,7 @@ const SuccessModal = memo(
                   Preference Submitted Successfully!
                 </h3>
                 <p className="text-gray-600 mb-6">
-                  Thank you for submitting your property preference. We&apos;ll
-                  start matching you with suitable properties right away. Your preference
-                  will appear for agents on the Agent Marketplace once it has been approved.
+                  Thank you for submitting your property preference. You will receive an acknowledgement by email. Once approved, your preference will be shared with relevant agents to help you find suitable properties.
                 </p>
               </div>
 
@@ -218,12 +216,11 @@ const SuccessModal = memo(
                 Do you want to submit a new preference
               </button>
 
-              {/* Go to Marketplace Link */}
               <button
-                onClick={onGoToMarketplace}
+                onClick={onDone}
                 className="text-sm text-gray-600 hover:text-gray-800 underline transition-colors duration-200"
               >
-                No, go to market place
+                No, I&apos;m done for now
               </button>
             </motion.div>
           </motion.div>
@@ -814,10 +811,8 @@ const PreferenceFormContent: React.FC = () => {
     }, 100);
   }, [dispatch, goToStep]);
 
-  // Handle go to marketplace - memoized to prevent recreation
-  const handleGoToMarketplace = useCallback(() => {
+  const handleDone = useCallback(() => {
     setShowSuccessModal(false);
-    // Reset form data immediately without confirmation
     dispatch({ type: "RESET_FORM" });
     router.push("/");
   }, [dispatch, router]);
@@ -948,8 +943,8 @@ const PreferenceFormContent: React.FC = () => {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
             >
-              Tell us what you&apos;re looking for and we&apos;ll help you find
-              the perfect match
+              Tell us what you&apos;re looking for, and we&apos;ll help you
+              discover suitable property opportunities.
             </motion.p>
           </motion.div>
         </motion.div>
@@ -1089,7 +1084,7 @@ const PreferenceFormContent: React.FC = () => {
       <SuccessModal
         showSuccessModal={showSuccessModal}
         onSubmitNew={handleSubmitNew}
-        onGoToMarketplace={handleGoToMarketplace}
+        onDone={handleDone}
       />
     </motion.div>
   );

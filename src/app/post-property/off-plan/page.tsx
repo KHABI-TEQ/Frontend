@@ -5,6 +5,7 @@ import OutrightSalesPropertyForm from "@/components/post-property-components/for
 import FeatureGate from "@/components/access/FeatureGate";
 import { FEATURE_KEYS } from "@/hooks/useFeatureGate";
 import CombinedAuthGuard from "@/logic/combinedAuthGuard";
+import DeveloperOffPlanGate from "@/components/developer/DeveloperOffPlanGate";
 
 const OffPlanPage = () => {
   return (
@@ -17,11 +18,13 @@ const OffPlanPage = () => {
       agentCustomMessage="You must complete onboarding and be approved before you can post properties."
     >
       <FeatureGate featureKeys={[FEATURE_KEYS.LISTINGS]}>
-        <OutrightSalesPropertyForm
-          listingMode="off-plan"
-          pageTitle="List Your Property - Off-Plan"
-          pageDescription="Follow these simple steps to list your off-plan property and connect with interested buyers"
-        />
+        <DeveloperOffPlanGate>
+          <OutrightSalesPropertyForm
+            listingMode="off-plan"
+            pageTitle="List Your Property - Off-Plan"
+            pageDescription="Follow these simple steps to list your off-plan property and connect with interested buyers"
+          />
+        </DeveloperOffPlanGate>
       </FeatureGate>
     </CombinedAuthGuard>
   );

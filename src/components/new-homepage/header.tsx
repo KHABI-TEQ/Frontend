@@ -503,11 +503,16 @@ const DropdownOptions = ({
               e.preventDefault();
               goTo(item);
             }}
-            className="text-sm font-medium text-gray-700 hover:text-[#09391C] transition-all duration-200 py-2.5 px-4 rounded-lg hover:bg-[#8DDB90]/10"
+            className={
+              item.name === "Property Scout"
+                ? "flex items-center justify-between gap-2 rounded-lg bg-[#8DDB90]/15 px-4 py-2.5 text-sm font-semibold text-[#09391C] transition-all duration-200 hover:bg-[#8DDB90]/25"
+                : "rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 transition-all duration-200 hover:bg-[#8DDB90]/10 hover:text-[#09391C]"
+            }
             href={item.url}
             key={idx}
           >
             {item.name}
+            {item.name === "Property Scout" && <span aria-hidden>→</span>}
           </Link>
         );
       })}

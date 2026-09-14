@@ -42,6 +42,8 @@ export const URLS = {
   agentEligibility: "/account/agent/eligibility",
   /** GET — 25-listing cap snapshot for landlord, agent, developer */
   publisherListingEligibility: "/account/publisher/listing-eligibility",
+  /** GET — Developer plan caps, Advanced KYC, remaining professional slots */
+  developerPlanEntitlement: "/account/developer/plan-entitlement",
   /** GET — Portfolio Unlimited offer (only when at standard cap) */
   publisherUnlimitedListingPlan: "/account/publisher/unlimited-listing-plan",
 

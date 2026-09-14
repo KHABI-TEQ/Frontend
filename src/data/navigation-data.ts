@@ -47,6 +47,7 @@ export const mainNavigationData: NavigationItem[] = [
     subItems: [
       { name: "Property Seekers", url: "/for-clients", isClicked: false },
       { name: "Owners & Developers", url: "/for-owners-developers", isClicked: false },
+      { name: "Developers", url: "/for-developers", isClicked: false },
       {
         name: "Real Estate Professionals",
         url: "/for-professionals",
@@ -58,6 +59,7 @@ export const mainNavigationData: NavigationItem[] = [
           { name: "Property Valuers", url: "/for-professionals?role=valuer", isClicked: false },
         ],
       },
+      { name: "Property Scout", url: "/auth/register?intent=scout", isClicked: false },
     ],
   },
   {
@@ -94,6 +96,11 @@ export const agentNavigationData: NavigationItem[] = [
     isClicked: false,
   },
   {
+    name: "Developers",
+    url: "/for-developers",
+    isClicked: false,
+  },
+  {
     name: "Real Estate Professionals",
     url: "/for-professionals",
     isClicked: false,
@@ -103,6 +110,11 @@ export const agentNavigationData: NavigationItem[] = [
       { name: "Surveyor", url: "/for-professionals?role=surveyor", isClicked: false },
       { name: "Property Valuers", url: "/for-professionals?role=valuer", isClicked: false },
     ],
+  },
+  {
+    name: "Property Scout",
+    url: "/auth/register?intent=scout",
+    isClicked: false,
   },
   {
     name: "About us",

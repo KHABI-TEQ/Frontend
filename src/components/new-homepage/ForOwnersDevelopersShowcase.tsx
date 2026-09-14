@@ -24,8 +24,9 @@ const journeySlides: AudienceSlide[] = [
   {
     key: 'requests',
     step: '02',
-    title: 'Review marketing requests before you accept',
-    caption: 'Licensed professionals can request to market your property. View profiles and credentials first.',
+    title: 'Choose Who Markets Your Property',
+    caption:
+      'Receive requests from licensed professionals and review their profiles and credentials before deciding who to engage.',
     image: '/owner-review-professionals.jpg',
     imageAlt: 'Property owner reviewing professional profiles on a tablet',
     imagePosition: 'object-[center_28%]',
@@ -33,8 +34,9 @@ const journeySlides: AudienceSlide[] = [
   {
     key: 'commission',
     step: '03',
-    title: 'Define commission on your terms',
-    caption: 'Set the commission or payout you offer for a successful sale, rent or joint venture.',
+    title: 'Set Your Terms Before You Engage',
+    caption:
+      'Define the commission or payout you are prepared to offer for a successful sale, rental or joint venture.',
     image: '/owner-commission-terms.jpg',
     imageAlt: 'Developer agreeing commission terms for a residential project',
     imagePosition: 'object-[center_28%]',
@@ -42,8 +44,9 @@ const journeySlides: AudienceSlide[] = [
   {
     key: 'services',
     step: '04',
-    title: 'Connect with licensed professionals',
-    caption: 'Reach buyers on Khabiteq and hire legal, valuation, survey and management support when you need it.',
+    title: 'Access the Right Professionals for Your Property.',
+    caption:
+      'Connect with licensed agents and relevant professionals for marketing, legal, valuation, survey, property management and other services your property may require.',
     image: '/professionals-network.jpg',
     imageAlt: 'Lawyer and surveyor supporting a property transaction',
     imagePosition: 'object-[center_28%]',

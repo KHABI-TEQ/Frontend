@@ -15,6 +15,7 @@ import {
   Users,
   Calendar,
   Handshake,
+  CreditCard,
 } from "lucide-react";
 import { usePageContext } from "@/context/page-context";
 import { AgentNavData } from "@/enums";
@@ -186,6 +187,14 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
                   label: "Inspection Requests",
                   action: () => {
                     clientNavigate("/my-inspection-requests");
+                    closeUserProfileModal(false);
+                  },
+                },
+                {
+                  icon: <CreditCard size={18} />,
+                  label: "Subscription",
+                  action: () => {
+                    clientNavigate("/agent-subscriptions?tab=plans");
                     closeUserProfileModal(false);
                   },
                 },

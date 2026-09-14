@@ -14,6 +14,7 @@ import FeatureGate from "@/components/access/FeatureGate";
 import AgentEligibilityBanner from "@/components/agent/AgentEligibilityBanner";
 import { useAgentEligibility } from "@/hooks/useAgentEligibility";
 import { usePublisherListingEligibility } from "@/hooks/usePublisherListingEligibility";
+import { useDeveloperPlanEntitlement } from "@/hooks/useDeveloperPlanEntitlement";
 
 interface PropertyTypeCard {
   type: "sell" | "off-plan" | "rent" | "shortlet" | "jv";
@@ -73,6 +74,8 @@ const PostPropertyPage = () => {
   const { eligibility, loading: eligibilityLoading } = useAgentEligibility();
   const { eligibility: publisherListing } = usePublisherListingEligibility();
   const isAgent = user?.userType === "Agent";
+  const { entitlement: developerPlan } = useDeveloperPlanEntitlement();
+  const offPlanLocked = user?.userType === "Developer" && !developerPlan?.canListOffPlan;
   const listingsEntry = useAppSelector(selectFeatureEntry(FEATURE_KEYS.LISTINGS));
   const quotaText =
     publisherListing?.unlimitedListings || eligibility?.unlimitedListings
@@ -114,7 +117,11 @@ const PostPropertyPage = () => {
     { label: "Post Property" },
   ];
 
-  const handlePropertyTypeSelect = (route: string) => {
+  const handlePropertyTypeSelect = (route: string, type?: PropertyTypeCard["type"]) => {
+    if (type === "off-plan" && offPlanLocked) {
+      router.push("/post-property/off-plan");
+      return;
+    }
     router.push(route);
   };
 
@@ -165,7 +172,7 @@ const PostPropertyPage = () => {
               {propertyTypes.map((propertyType) => (
                 <div
                   key={propertyType.type}
-                  onClick={() => handlePropertyTypeSelect(propertyType.route)}
+                  onClick={() => handlePropertyTypeSelect(propertyType.route, propertyType.type)}
                   className={`${propertyType.color} border-2 rounded-xl p-6 cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105 transform`}
                 >
                   <div className="flex items-start space-x-4">
@@ -173,9 +180,16 @@ const PostPropertyPage = () => {
                     <div className="flex-1">
                       <h3 className="text-xl font-bold text-[#09391C] mb-2">
                         {propertyType.title}
+                        {propertyType.type === "off-plan" && offPlanLocked ? (
+                          <span className="ml-2 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                            Locked
+                          </span>
+                        ) : null}
                       </h3>
                       <p className="text-[#5A5D63] text-sm md:text-base">
-                        {propertyType.description}
+                        {propertyType.type === "off-plan" && offPlanLocked
+                          ? "Requires approved Advanced KYC and an Off-Plan plan."
+                          : propertyType.description}
                       </p>
                       <div className="mt-4">
                         <span className="inline-flex items-center text-sm font-medium text-[#8DDB90] hover:text-[#7BC87F]">

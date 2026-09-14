@@ -179,7 +179,14 @@ const Register = () => {
   const searchParams = useSearchParams();
   const referralFromUrl = (searchParams.get("ref") || searchParams.get("referral") || "").trim();
   const fromParam = searchParams.get('from');
-  const userTypeFromUrl = resolveRegisterUserType(searchParams.get("userType") || searchParams.get("role"));
+  const isScoutIntent = (searchParams.get("intent") || "").trim().toLowerCase() === "scout";
+  const requestedUserType = resolveRegisterUserType(searchParams.get("userType") || searchParams.get("role"));
+  const userTypeFromUrl =
+    isScoutIntent && requestedUserType !== "Agent" && requestedUserType !== "Developer"
+      ? ""
+      : requestedUserType;
+  const isOwnerRegisterIntent = userTypeFromUrl === "Landowners";
+  const isDeveloperRegisterIntent = userTypeFromUrl === "Developer";
   const [agreed, setAgreed] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [overlayVisible, setOverlayVisible] = useState(false);
@@ -498,21 +505,37 @@ const Register = () => {
           {/* Header */}
           <div className="text-center lg:text-left mb-2">
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-[#09391C] mb-2">
-              Create Your Account
+              {isDeveloperRegisterIntent
+                ? "Create Your Developer Account"
+                : isOwnerRegisterIntent
+                  ? "Create Your Owner Account"
+                  : "Create Your Account"}
             </h2>
             <p className="text-[#5A5D63] text-sm sm:text-base">
-              Join Khabiteq and unlock access to verified properties
+              {isDeveloperRegisterIntent
+                ? "Whether you're selling completed properties or developing off-plan projects, Khabiteq gives you the tools and professional network to grow."
+                : isOwnerRegisterIntent
+                  ? "Choose how you want to list and manage your property opportunities on Khabiteq."
+                  : "Join Khabiteq and get started in the role that fits you."}
             </p>
           </div>
 
           {/* Account Type Selection */}
           <div className="w-full flex flex-col gap-3">
+            {isScoutIntent && (
+              <p className="rounded-xl border border-[#8DDB90]/40 bg-[#8DDB90]/10 px-3 py-2.5 text-sm leading-relaxed text-[#5A5D63]">
+                <span className="font-semibold text-[#09391C]">No license needed.</span>{" "}
+                Choose <span className="font-semibold text-[#09391C]">Agent</span> or{" "}
+                <span className="font-semibold text-[#09391C]">Developer</span> to start as a Property Scout. You can add a license later.
+              </p>
+            )}
             <label className="text-sm font-semibold text-[#09391C]">
               I want to join as a...
             </label>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:items-stretch">
+            <div className={`grid grid-cols-1 gap-3 sm:items-stretch ${isScoutIntent ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3"}`}>
               {/* Landlord Radio Button */}
+              {!isScoutIntent && (
               <label className="relative flex h-full min-h-0 cursor-pointer flex-col group">
                 <input
                   type="radio"
@@ -537,6 +560,7 @@ const Register = () => {
                   </div>
                 </div>
               </label>
+              )}
 
               {/* Agent Radio Button */}
               <label className="relative flex h-full min-h-0 cursor-pointer flex-col group">
@@ -559,6 +583,11 @@ const Register = () => {
                     <div className="flex-1 min-w-0">
                       <span className="block text-base font-semibold text-[#09391C]">Agent</span>
                       <span className="block text-xs text-[#5A5D63]">Help clients buy/sell</span>
+                      {isScoutIntent && (
+                        <span className="mt-0.5 block text-[11px] font-medium text-[#16a34a]">
+                          Works as Property Scout
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -585,11 +614,18 @@ const Register = () => {
                     <div className="flex-1 min-w-0">
                       <span className="block text-base font-semibold text-[#09391C]">Developer</span>
                       <span className="block text-xs text-[#5A5D63]">Showcase projects</span>
+                      {isScoutIntent && (
+                        <span className="mt-0.5 block text-[11px] font-medium text-[#16a34a]">
+                          Works as Property Scout
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
               </label>
 
+              {!isScoutIntent && (
+              <>
               <label className="relative flex h-full min-h-0 cursor-pointer flex-col group">
                 <input
                   type="radio"
@@ -664,6 +700,8 @@ const Register = () => {
                   </div>
                 </div>
               </label>
+              </>
+              )}
             </div>
 
             {formik.touched.userType && formik.errors.userType && (

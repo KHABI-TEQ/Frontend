@@ -32,9 +32,10 @@ import {
   InspectionRepresentativesSummary,
   SyndicationIntegrationSummary,
 } from "@/components/dashboard/DashboardIntegrationSummaries";
-import PublisherDashboardNotice from "@/components/publisher/PublisherDashboardNotice";
 import PublisherListingAllowanceCard from "@/components/publisher/PublisherListingAllowanceCard";
 import { usePublisherListingEligibility } from "@/hooks/usePublisherListingEligibility";
+import DeveloperOnboardingChecklist from "@/components/developer/DeveloperOnboardingChecklist";
+import { useDeveloperPlanEntitlement } from "@/hooks/useDeveloperPlanEntitlement";
 
 interface PendingBrief {
   _id: string;
@@ -75,6 +76,7 @@ export default function DeveloperDashboard() {
     eligibility: listingEligibility,
     loading: listingEligibilityLoading,
   } = usePublisherListingEligibility();
+  const { entitlement: developerPlan } = useDeveloperPlanEntitlement();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [recentProperties, setRecentProperties] = useState<RecentProperty[]>([]);
   /** Total property count from /account/properties/fetchAll (used when dashboard stats are 0) */
@@ -301,6 +303,13 @@ export default function DeveloperDashboard() {
               <span className="whitespace-nowrap">Inspection reps</span>
             </Link>
             <Link
+              href="/agent-subscriptions?tab=plans"
+              className="bg-white hover:bg-gray-50 text-[#09391C] border border-[#8DDB90] px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
+            >
+              <CreditCardIcon size={20} />
+              Subscription
+            </Link>
+            <Link
               href="/post-property"
               className="bg-[#8DDB90] hover:bg-[#7BC87F] text-white px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
             >
@@ -325,7 +334,21 @@ export default function DeveloperDashboard() {
           </div>
         </div>
 
-        <PublisherDashboardNotice userType="Developer" />
+        <DeveloperOnboardingChecklist />
+
+        {developerPlan && (
+          <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800">
+            <p className="font-semibold text-[#09391C]">Professional distribution</p>
+            <p className="mt-1">
+              {developerPlan.hasActivePlan
+                ? `${developerPlan.acceptedCount} of ${developerPlan.maxProfessionals} professionals accepted on ${developerPlan.planName}. ${developerPlan.remainingProfessionals} slot${developerPlan.remainingProfessionals === 1 ? "" : "s"} remaining.`
+                : "Subscribe to Developer Property Distribution to accept professionals. You can still list completed properties."}
+            </p>
+            <Link href="/my-request-to-market" className="text-emerald-700 hover:underline font-medium text-xs">
+              Review agent requests
+            </Link>
+          </div>
+        )}
 
         <PublisherListingAllowanceCard
           eligibility={listingEligibility}
@@ -571,15 +594,27 @@ export default function DeveloperDashboard() {
                 </div>
               </Link>
               <Link
-                href="/agent-kyc"
+                href="/developer-kyc"
                 className="w-full bg-white hover:bg-gray-50 text-[#09391C] border border-gray-200 p-4 rounded-lg font-medium flex items-center gap-3 transition-colors group"
               >
                 <div className="p-2 bg-blue-500 bg-opacity-10 rounded-lg">
                   <CheckCircleIcon size={20} className="text-blue-500" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold">Optional KYC</h3>
-                  <p className="text-sm text-[#5A5D63]">Verify your developer profile (not required)</p>
+                  <h3 className="font-semibold">Developer KYC</h3>
+                  <p className="text-sm text-[#5A5D63]">Basic profile now, Advanced KYC to unlock off-plan</p>
+                </div>
+              </Link>
+              <Link
+                href="/agent-subscriptions?tab=plans"
+                className="w-full bg-white hover:bg-gray-50 text-[#09391C] border border-gray-200 p-4 rounded-lg font-medium flex items-center gap-3 transition-colors group"
+              >
+                <div className="p-2 bg-emerald-500 bg-opacity-10 rounded-lg">
+                  <CreditCardIcon size={20} className="text-emerald-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold">Developer plans</h3>
+                  <p className="text-sm text-[#5A5D63]">Distribution ₦50k, Off-Plan ₦130k, Annual ₦390k</p>
                 </div>
               </Link>
               <Link
