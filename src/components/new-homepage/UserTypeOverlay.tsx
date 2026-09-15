@@ -425,13 +425,13 @@ export default function UserTypeOverlay({ isOpen, onClose }: UserTypeOverlayProp
                           `}
                           whileTap={{ scale: 0.99 }}
                         >
-                          <div className="grid h-full min-h-0 w-full grid-rows-[minmax(8.5rem,32%)_minmax(0,1fr)] sm:grid-rows-[minmax(12rem,40%)_minmax(0,1fr)] lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:grid-rows-none">
+                          <div className="grid h-full min-h-0 w-full grid-rows-[minmax(10.5rem,38%)_minmax(0,1fr)] sm:grid-rows-[minmax(12rem,40%)_minmax(0,1fr)] lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:grid-rows-none">
                             <div className="relative min-h-0 overflow-hidden">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
                                 src={userType.image}
                                 alt={userType.imageAlt}
-                                className={`absolute inset-0 h-full w-full object-cover ${userType.imagePosition ?? "object-[center_65%]"}`}
+                                className={`absolute inset-0 h-full w-full object-cover ${userType.imagePosition ?? "object-[center_32%]"}`}
                               />
                               <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent lg:bg-gradient-to-r lg:from-transparent lg:via-black/5 lg:to-black/20" />
                               <div
