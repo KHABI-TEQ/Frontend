@@ -13,6 +13,7 @@ import {
   getStates,
   getLGAsByState,
   getAreasByStateLGA,
+  PILOT_STATE,
 } from "@/utils/location-utils";
 import {
   briefTypeConfig,
@@ -102,6 +103,9 @@ const JVStep1BasicDetails: React.FC = () => {
       label: state,
     }));
     setStateOptions(states);
+    if (!propertyData.state) {
+      updatePropertyData("state", { value: PILOT_STATE, label: PILOT_STATE });
+    }
 
     const timer = setTimeout(() => {
       isInitialMount.current = false;
@@ -352,7 +356,10 @@ const JVStep1BasicDetails: React.FC = () => {
                   updatePropertyData("state", option);
                   setFieldValue("state", option);
                 }}
-                placeholder="Search and select state"
+                placeholder="Lagos State"
+                isSearchable={false}
+                isClearable={false}
+                isDisabled={true}
                 styles={{
                   ...customStyles,
                   control: (provided, state) => ({
@@ -361,12 +368,10 @@ const JVStep1BasicDetails: React.FC = () => {
                     minHeight: "44px",
                   }),
                 }}
-                isSearchable
-                isClearable
-                filterOption={(option, searchText) =>
-                  option.label.toLowerCase().includes(searchText.toLowerCase())
-                }
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Lagos State only (pilot location)
+              </p>
             </div>
             <div>
               <label className="block text-sm font-medium text-[#707281] mb-2">

@@ -11,7 +11,7 @@ const OffPlanPage = () => {
   return (
     <CombinedAuthGuard
       requireAuth={true}
-      allowedUserTypes={["Agent", "Landowners", "Developer"]}
+      allowedUserTypes={["Agent", "Developer"]}
       requireAgentOnboarding={false}
       requireAgentApproval={false}
       requireKycApproved={true}

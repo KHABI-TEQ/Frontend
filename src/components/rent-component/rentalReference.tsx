@@ -29,6 +29,7 @@ import { shuffleArray } from '@/utils/shuffleArray';
 import SubmitPrefrenceModal from '../can-not-find-brief-modal';
 import { usePageContext } from '@/context/page-context';
 import data from '@/data/state-lga';
+import { isPilotState } from '@/utils/location-utils';
 
 interface RentalReferenceDataProps {
   rentalReferenceData: { heading: string; options: string[] }[];
@@ -185,12 +186,13 @@ const RentalReference = ({
   };
 
   useEffect(() => {
-    // Load Nigerian states correctly
     setStateOptions(
-      Object.keys(data).map((state: string) => ({
-        value: state,
-        label: state,
-      }))
+      Object.keys(data)
+        .filter((state: string) => isPilotState(state))
+        .map((state: string) => ({
+          value: state,
+          label: state,
+        })),
     );
   }, []);
   return (

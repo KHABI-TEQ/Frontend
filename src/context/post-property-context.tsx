@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction } from "react";
 import { briefTypeConfig } from "@/data/comprehensive-post-property-config";
 import { mandatoryAgentCommissionPercent } from "@/utils/listingCommission";
+import { PILOT_STATE } from "@/utils/location-utils";
 
 interface PropertyImage {
   file: File | null;
@@ -200,7 +201,7 @@ const initialPropertyData: PropertyData = {
   leaseHold: "",
   holdDuration: "",
   shortletDuration: "",
-  state: null,
+  state: { value: PILOT_STATE, label: PILOT_STATE },
   lga: null,
   area: "",
   estate: "",

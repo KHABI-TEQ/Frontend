@@ -152,7 +152,7 @@ const PropertyReference = ({
   useEffect(() => {
     // Load Nigerian states correctly
     setStateOptions(
-      naijaStates.states().map((state: string) => ({
+      naijaStates.states().filter((state: string) => /^lagos(\s+state)?$/i.test(state)).map((state: string) => ({
         value: state,
         label: state,
       }))

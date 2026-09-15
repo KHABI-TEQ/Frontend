@@ -10,7 +10,7 @@ export const EMPTY_ADDRESS: AddressBreakdown = {
   houseNumber: "",
   street: "",
   city: "",
-  state: "",
+  state: "Lagos",
   postalCode: "",
 };
 

@@ -5,9 +5,9 @@ import { FormikProps } from 'formik';
 import Input from '@/components/general-components/Input';
 import ReactSelect from 'react-select';
 import RadioCheck from '@/components/general-components/radioCheck';
-import data from '@/data/state-lga';
 import { propertyReferenceData } from '@/data/buy_page_data';
 import customStyles from '@/styles/inputStyle';
+import { getStates, getLGAsByState, PILOT_STATE } from '@/utils/location-utils';
 
 interface Option {
   value: string;
@@ -36,12 +36,20 @@ const Step1PropertyDetails: React.FC<Step1Props> = ({
   const [formattedLandSizeNumber, setFormatedLandNumber] = useState<string>('');
 
   useEffect(() => {
-    // Load Nigerian states
+    const lagos = { value: PILOT_STATE, label: PILOT_STATE };
     setStateOptions(
-      Object.keys(data).map((state: string) => ({
+      getStates().map((state: string) => ({
         value: state,
         label: state,
-      }))
+      })),
+    );
+    setSelectedState(lagos);
+    formik.setFieldValue('selectedState', PILOT_STATE);
+    setLgaOptions(
+      getLGAsByState(PILOT_STATE).map((lga: string) => ({
+        value: lga,
+        label: lga,
+      })),
     );
   }, []);
 
@@ -51,26 +59,17 @@ const Step1PropertyDetails: React.FC<Step1Props> = ({
   };
 
   const handleStateChange = (selected: Option | null) => {
-    formik.setFieldValue('selectedState', selected?.value);
-    setSelectedState(selected);
-
-    if (selected) {
-      const lgas = Object.values(data[selected.label]);
-      if (Array.isArray(lgas)) {
-        setLgaOptions(
-          lgas.map((lga: string) => ({
-            value: lga,
-            label: lga,
-          }))
-        );
-      } else {
-        setLgaOptions([]);
-      }
-      setSelectedLGA(null);
-    } else {
-      setLgaOptions([]);
-      setSelectedLGA(null);
-    }
+    const next = selected || { value: PILOT_STATE, label: PILOT_STATE };
+    formik.setFieldValue('selectedState', next.value);
+    setSelectedState(next);
+    setLgaOptions(
+      getLGAsByState(next.value).map((lga: string) => ({
+        value: lga,
+        label: lga,
+      })),
+    );
+    setSelectedLGA(null);
+    formik.setFieldValue('selectedLGA', '');
   };
 
   const getFormTitle = () => {
@@ -207,12 +206,12 @@ const Step1PropertyDetails: React.FC<Step1Props> = ({
               forState={true}
               forLGA={false}
               type='text'
-              placeholder='Select State'
+              placeholder='Lagos State'
               formik={formik}
               selectedState={selectedState}
               stateOptions={stateOptions}
               setSelectedState={handleStateChange}
-              isDisabled={areInputsDisabled}
+              isDisabled={true}
             />
             <Input
               label='Local Government'
@@ -238,6 +237,7 @@ const Step1PropertyDetails: React.FC<Step1Props> = ({
               isDisabled={areInputsDisabled}
             />
           </div>
+          <p className='text-xs text-gray-500'>Lagos State only (pilot location)</p>
         </div>
 
         {(formik.values.propertyType === 'Land' ||

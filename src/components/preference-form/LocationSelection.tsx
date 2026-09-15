@@ -11,6 +11,7 @@ import {
   getStates,
   getLGAsByState,
   getAreasByStateLGA,
+  PILOT_STATE,
 } from "@/utils/location-utils";
 
 // Types
@@ -135,7 +136,10 @@ const LocationSelectionComponent: React.FC<LocationSelectionProps> = memo(
   ({ className = "" }) => {
     const { state, updateFormData, getValidationErrorsForField } =
       usePreferenceForm();
-    const [selectedState, setSelectedState] = useState<Option | null>(null);
+    const [selectedState, setSelectedState] = useState<Option | null>({
+      value: PILOT_STATE,
+      label: PILOT_STATE,
+    });
     const [selectedLGAs, setSelectedLGAs] = useState<Option[]>([]);
     const [selectedAreas, setSelectedAreas] = useState<Option[]>([]);
     const [lgaAreaMap, setLgaAreaMap] = useState<{ [lga: string]: Option[] }>(
@@ -155,7 +159,7 @@ const LocationSelectionComponent: React.FC<LocationSelectionProps> = memo(
         Object.keys(state.formData).length === 0 ||
         !state.formData.location
       ) {
-        setSelectedState(null);
+        setSelectedState({ value: PILOT_STATE, label: PILOT_STATE });
         setSelectedLGAs([]);
         setSelectedAreas([]);
         setLgaAreaMap({});
@@ -239,7 +243,7 @@ const LocationSelectionComponent: React.FC<LocationSelectionProps> = memo(
 
     // Handle state change
     const handleStateChange = useCallback((selected: SingleValue<Option>) => {
-      setSelectedState(selected);
+      setSelectedState(selected || { value: PILOT_STATE, label: PILOT_STATE });
       setSelectedLGAs([]);
       setSelectedAreas([]);
       setLgaAreaMap({});
@@ -318,7 +322,10 @@ const LocationSelectionComponent: React.FC<LocationSelectionProps> = memo(
             options={stateOptions}
             value={selectedState}
             onChange={handleStateChange}
-            placeholder="Search and select state..."
+            placeholder="Lagos State"
+            isSearchable={false}
+            isClearable={false}
+            isDisabled={true}
             styles={{
               ...customSelectStyles,
               control: (provided: any, state: any) => ({
@@ -341,9 +348,10 @@ const LocationSelectionComponent: React.FC<LocationSelectionProps> = memo(
                 transition: "all 0.2s ease",
               }),
             }}
-            isSearchable
-            isClearable
           />
+          <p className="text-xs text-gray-500">
+            Lagos State only — Khabiteq is currently piloting in Lagos
+          </p>
           {stateErrors.length > 0 && (
             <p className="text-sm text-red-500 font-medium">
               {stateErrors[0].message}

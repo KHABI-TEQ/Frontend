@@ -15,6 +15,7 @@ import AgentEligibilityBanner from "@/components/agent/AgentEligibilityBanner";
 import { useAgentEligibility } from "@/hooks/useAgentEligibility";
 import { usePublisherListingEligibility } from "@/hooks/usePublisherListingEligibility";
 import { useDeveloperPlanEntitlement } from "@/hooks/useDeveloperPlanEntitlement";
+import { canUserListOffPlan } from "@/utils/listingAccess";
 
 interface PropertyTypeCard {
   type: "sell" | "off-plan" | "rent" | "shortlet" | "jv";
@@ -75,7 +76,13 @@ const PostPropertyPage = () => {
   const { eligibility: publisherListing } = usePublisherListingEligibility();
   const isAgent = user?.userType === "Agent";
   const { entitlement: developerPlan } = useDeveloperPlanEntitlement();
-  const offPlanLocked = user?.userType === "Developer" && !developerPlan?.canListOffPlan;
+  const landlordCannotListOffPlan = !canUserListOffPlan(user?.userType);
+  const offPlanLocked =
+    landlordCannotListOffPlan ||
+    (user?.userType === "Developer" && !developerPlan?.canListOffPlan);
+  const visiblePropertyTypes = landlordCannotListOffPlan
+    ? propertyTypes.filter((item) => item.type !== "off-plan")
+    : propertyTypes;
   const listingsEntry = useAppSelector(selectFeatureEntry(FEATURE_KEYS.LISTINGS));
   const quotaText =
     publisherListing?.unlimitedListings || eligibility?.unlimitedListings
@@ -169,7 +176,7 @@ const PostPropertyPage = () => {
 
           <div className="max-w-4xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-              {propertyTypes.map((propertyType) => (
+              {visiblePropertyTypes.map((propertyType) => (
                 <div
                   key={propertyType.type}
                   onClick={() => handlePropertyTypeSelect(propertyType.route, propertyType.type)}

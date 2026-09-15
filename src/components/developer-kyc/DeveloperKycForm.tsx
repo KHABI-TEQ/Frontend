@@ -9,7 +9,7 @@ import { URLS } from "@/utils/URLS";
 import AttachFile from "@/components/general-components/attach_file";
 import { CheckCircle2, Clock, FileText, Plus, X } from "lucide-react";
 import { getCookie } from "cookies-next";
-import { getStates, getLGAsByState } from "@/utils/location-utils";
+import { getLGAsByState, PILOT_STATE, isPilotState, PILOT_LOCATION_MESSAGE } from "@/utils/location-utils";
 import ProcessingRequest from "@/components/loading-component/ProcessingRequest";
 import { handleApiError } from "@/utils/handleApiError";
 import { useDeveloperPlanEntitlement } from "@/hooks/useDeveloperPlanEntitlement";
@@ -34,7 +34,9 @@ const advancedSchema = basicSchema.concat(
     cacNumber: Yup.string().required("CAC number is required"),
     street: Yup.string().required("Street is required"),
     homeNo: Yup.string().required("House number is required"),
-    state: Yup.string().required("State is required"),
+    state: Yup.string()
+      .required("State is required")
+      .test("pilot-state", PILOT_LOCATION_MESSAGE, (value) => isPilotState(value)),
     localGovtArea: Yup.string().required("Local government is required"),
     idType: Yup.string().required("ID type is required"),
     idUrl: Yup.string().required("Upload at least one ID"),
@@ -51,7 +53,7 @@ export default function DeveloperKycForm() {
   const [tier, setTier] = useState<KycTier>("basic");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedTier, setSubmittedTier] = useState<KycTier | null>(null);
-  const states = useMemo(() => getStates(), []);
+  const regionOptions = useMemo(() => getLGAsByState(PILOT_STATE), []);
 
   const formik = useFormik({
     initialValues: {
@@ -62,7 +64,7 @@ export default function DeveloperKycForm() {
       cacNumber: "",
       street: "",
       homeNo: "",
-      state: "",
+      state: PILOT_STATE,
       localGovtArea: "",
       idType: "",
       idUrl: "",
@@ -267,20 +269,20 @@ export default function DeveloperKycForm() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#09391C] mb-2">Regions of operation</label>
+            <label className="block text-sm font-medium text-[#09391C] mb-2">Lagos LGAs of operation</label>
             <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
-              {states.map((state) => (
+              {regionOptions.map((region) => (
                 <button
-                  key={state}
+                  key={region}
                   type="button"
-                  onClick={() => toggleRegion(state)}
+                  onClick={() => toggleRegion(region)}
                   className={`px-3 py-1 rounded-full text-xs border ${
-                    formik.values.regionOfOperation.includes(state)
+                    formik.values.regionOfOperation.includes(region)
                       ? "bg-[#09391C] text-white border-[#09391C]"
                       : "bg-white text-[#09391C] border-gray-200"
                   }`}
                 >
-                  {state}
+                  {region}
                 </button>
               ))}
             </div>
@@ -328,20 +330,13 @@ export default function DeveloperKycForm() {
                   <label className="block text-sm font-medium text-[#09391C] mb-1">State</label>
                   <select
                     name="state"
-                    value={formik.values.state}
-                    onChange={(e) => {
-                      formik.setFieldValue("state", e.target.value);
-                      formik.setFieldValue("localGovtArea", "");
-                    }}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2"
+                    value={formik.values.state || PILOT_STATE}
+                    disabled
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 bg-gray-50 cursor-not-allowed"
                   >
-                    <option value="">Select state</option>
-                    {states.map((state) => (
-                      <option key={state} value={state}>
-                        {state}
-                      </option>
-                    ))}
+                    <option value={PILOT_STATE}>{PILOT_STATE}</option>
                   </select>
+                  <p className="text-xs text-[#5A5D63] mt-1">Lagos State only (pilot location)</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[#09391C] mb-1">Local government</label>

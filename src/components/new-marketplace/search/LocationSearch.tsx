@@ -35,7 +35,7 @@ interface LocationSuggestion {
 const LocationSearch: React.FC<LocationSearchProps> = ({
   value = "",
   onChange,
-  placeholder = "Enter state, LGA, or area...",
+  placeholder = "Search Lagos LGA or area...",
   className = "",
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -79,40 +79,28 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
         display: "Ajah, Lekki, Lagos",
       },
       {
-        state: "Abuja",
-        lga: "Municipal Area Council",
-        area: "Garki",
-        display: "Garki, Municipal Area Council, Abuja",
+        state: "Lagos",
+        lga: "Eti-Osa",
+        area: "Lekki Phase 1",
+        display: "Lekki Phase 1, Eti-Osa, Lagos",
       },
       {
-        state: "Abuja",
-        lga: "Municipal Area Council",
-        area: "Wuse",
-        display: "Wuse, Municipal Area Council, Abuja",
+        state: "Lagos",
+        lga: "Ikeja",
+        area: "GRA Ikeja",
+        display: "GRA Ikeja, Ikeja, Lagos",
       },
       {
-        state: "Rivers",
-        lga: "Port Harcourt",
-        area: "GRA",
-        display: "GRA, Port Harcourt, Rivers",
+        state: "Lagos",
+        lga: "Kosofe",
+        area: "Magodo",
+        display: "Magodo, Kosofe, Lagos",
       },
       {
-        state: "Kano",
-        lga: "Kano Municipal",
-        area: "Sabon Gari",
-        display: "Sabon Gari, Kano Municipal, Kano",
-      },
-      {
-        state: "Oyo",
-        lga: "Ibadan North",
-        area: "Bodija",
-        display: "Bodija, Ibadan North, Oyo",
-      },
-      {
-        state: "Anambra",
-        lga: "Awka South",
-        area: "Awka",
-        display: "Awka, Awka South, Anambra",
+        state: "Lagos",
+        lga: "Ibeju-Lekki",
+        area: "Awoyaya",
+        display: "Awoyaya, Ibeju-Lekki, Lagos",
       },
     ];
   };

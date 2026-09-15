@@ -16,6 +16,11 @@ export function AddressBreakdownFields({
   inputClass,
   required = false,
 }: AddressBreakdownFieldsProps) {
+  React.useEffect(() => {
+    if (value.state !== "Lagos") {
+      onChange({ ...value, state: "Lagos" });
+    }
+  }, [value, onChange]);
   const update = (field: keyof AddressBreakdown, fieldValue: string) => {
     onChange({ ...value, [field]: fieldValue });
   };
@@ -64,12 +69,13 @@ export function AddressBreakdownFields({
           <label className={labelClass}>State{required ? " *" : ""}</label>
           <input
             type="text"
-            value={value.state}
-            onChange={(e) => update("state", e.target.value)}
-            className={inputClass}
-            placeholder="e.g. Lagos State"
+            value={value.state || "Lagos"}
+            readOnly
+            className={`${inputClass} bg-gray-50 cursor-not-allowed`}
+            placeholder="Lagos State"
             required={required}
           />
+          <p className="mt-1 text-xs text-gray-500">Lagos State only (pilot location)</p>
         </div>
       </div>
       <div className="sm:max-w-xs">

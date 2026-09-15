@@ -1,10 +1,13 @@
 /** @format */
 
 import * as Yup from "yup";
+import { isPilotState, PILOT_LOCATION_MESSAGE } from "@/utils/location-utils";
 
 // Base validation schemas
 const locationSchema = Yup.object({
-  state: Yup.string().required("Please select a state"),
+  state: Yup.string()
+    .required("Please select Lagos State")
+    .test("pilot-state", PILOT_LOCATION_MESSAGE, (value) => isPilotState(value)),
   lgas: Yup.array()
     .of(Yup.string())
     .min(1, "Please select at least one Local Government Area"),

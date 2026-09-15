@@ -29,7 +29,7 @@ import Select from "react-select";
 import customStyles from "@/styles/inputStyle";
 import { useUserContext, normalizeUser } from "@/context/user-context";
 import { resolveAgentKycStatus } from "@/hooks/useAgentEligibility";
-import { getStates, getLGAsByState, getAreasByStateLGA } from "@/utils/location-utils";
+import { getStates, getLGAsByState, getAreasByStateLGA, isPilotState, PILOT_LOCATION_MESSAGE } from "@/utils/location-utils";
 import PendingKycReview from "@/components/agent-kyc/PendingKycReview";
 import ProcessingRequest from "../loading-component/ProcessingRequest";
 import { handleApiError } from "@/utils/handleApiError";
@@ -49,7 +49,9 @@ const kycValidationSchema = Yup.object({
   address: Yup.object({
     street: Yup.string().required("Street address is required"),
     homeNo: Yup.string().required("House number is required"),
-    state: Yup.string().required("State is required"),
+    state: Yup.string()
+      .required("State is required")
+      .test("pilot-state", PILOT_LOCATION_MESSAGE, (value) => isPilotState(value)),
     localGovtArea: Yup.string().required("Local government area is required"),
   }),
   regionOfOperation: Yup.array().of(Yup.string()).min(1, "Select at least one region"),
@@ -90,7 +92,7 @@ const AgentKycForm: React.FC = () => {
       address: {
         street: "",
         homeNo: "",
-        state: "",
+        state: "Lagos",
         localGovtArea: "",
       },
       regionOfOperation: [],
@@ -838,9 +840,12 @@ const AgentKycForm: React.FC = () => {
                         formik.setFieldValue("address.localGovtArea", "");
                         formik.setFieldValue("regionOfOperation", []);
                       }}
-                      placeholder="Select state"
-                      isClearable
+                      placeholder="Lagos State"
+                      isClearable={false}
+                      isDisabled={true}
+                      isSearchable={false}
                     />
+                    <p className="text-xs text-gray-500 mt-1">Lagos State only (pilot location)</p>
                     {getError("address.state") && <p className="text-red-500 text-sm mt-2">{getError("address.state")}</p>}
                   </div>
                   <div>

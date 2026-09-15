@@ -348,7 +348,7 @@ export default function UserTypeOverlay({ isOpen, onClose }: UserTypeOverlayProp
             onClick={(e) => e.stopPropagation()}
           >
             <motion.div
-              className="relative z-10 mx-auto flex h-full min-h-0 w-full max-w-5xl flex-col px-3 pb-[max(0.65rem,env(safe-area-inset-bottom))] pt-[max(3.1rem,calc(env(safe-area-inset-top)+2.1rem))] sm:px-6 lg:px-8"
+              className="relative z-10 mx-auto flex h-full min-h-0 w-full max-w-5xl flex-col px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-[max(3.25rem,calc(env(safe-area-inset-top)+2.25rem))] sm:px-6 lg:px-8"
               variants={containerVariants}
               initial="hidden"
               animate="visible"
@@ -372,7 +372,7 @@ export default function UserTypeOverlay({ isOpen, onClose }: UserTypeOverlayProp
 
               <motion.h2
                 id="user-type-overlay-title"
-                className="text-xl font-bold tracking-tight text-white sm:mb-2 sm:text-3xl lg:text-4xl"
+                className="text-[1.65rem] font-bold tracking-tight text-white sm:mb-2 sm:text-3xl lg:text-4xl"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
@@ -384,7 +384,7 @@ export default function UserTypeOverlay({ isOpen, onClose }: UserTypeOverlayProp
               </motion.h2>
 
               <motion.p
-                className="mx-auto hidden max-w-2xl text-white/70 sm:block sm:text-base lg:text-lg"
+                className="mx-auto mt-2 max-w-2xl px-1 text-[15px] leading-relaxed text-white/80 sm:mt-0 sm:text-base lg:text-lg"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
@@ -425,7 +425,7 @@ export default function UserTypeOverlay({ isOpen, onClose }: UserTypeOverlayProp
                           `}
                           whileTap={{ scale: 0.99 }}
                         >
-                          <div className="grid h-full min-h-0 w-full grid-rows-[minmax(10.5rem,44%)_minmax(0,1fr)] sm:grid-rows-[minmax(12rem,40%)_minmax(0,1fr)] lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:grid-rows-none">
+                          <div className="grid h-full min-h-0 w-full grid-rows-[minmax(8.5rem,32%)_minmax(0,1fr)] sm:grid-rows-[minmax(12rem,40%)_minmax(0,1fr)] lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:grid-rows-none">
                             <div className="relative min-h-0 overflow-hidden">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
@@ -435,37 +435,37 @@ export default function UserTypeOverlay({ isOpen, onClose }: UserTypeOverlayProp
                               />
                               <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent lg:bg-gradient-to-r lg:from-transparent lg:via-black/5 lg:to-black/20" />
                               <div
-                                className={`absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r ${userType.gradient} px-2.5 py-1 text-[11px] font-bold text-white shadow-lg sm:left-4 sm:top-4 sm:px-3 sm:py-1.5 sm:text-xs`}
+                                className={`absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r ${userType.gradient} px-3 py-1.5 text-xs font-bold text-white shadow-lg sm:left-4 sm:top-4 sm:px-3 sm:py-1.5 sm:text-xs`}
                               >
                                 {userType.title}
                               </div>
                             </div>
 
-                            <div className="relative flex min-h-0 flex-col justify-center overflow-hidden px-3.5 py-3 sm:p-6 lg:px-7 lg:py-6">
+                            <div className="relative flex min-h-0 flex-col justify-start gap-3 overflow-y-auto px-5 py-5 sm:justify-center sm:gap-0 sm:p-6 lg:px-7 lg:py-6">
                               <motion.div
                                 className={`
-                                  relative mb-2 hidden h-11 w-11 shrink-0 items-center justify-center rounded-2xl sm:mb-3 sm:flex sm:h-12 sm:w-12
+                                  relative mb-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl sm:mb-3 sm:flex sm:h-12 sm:w-12
                                   ${userType.iconBg} shadow-lg ${userType.shadowColor}
                                 `}
                                 animate={isHovered ? floatingAnimation : {}}
                               >
-                                <Icon className={`relative z-10 h-6 w-6 ${userType.iconColor}`} />
+                                <Icon className={`relative z-10 h-5 w-5 sm:h-6 sm:w-6 ${userType.iconColor}`} />
                               </motion.div>
 
-                              <h3 className="mb-1.5 text-[15px] font-bold leading-snug text-gray-900 transition-colors duration-300 group-hover:text-[#09391C] sm:mb-2 sm:text-xl lg:text-2xl">
+                              <h3 className="text-xl font-bold leading-snug text-gray-900 transition-colors duration-300 group-hover:text-[#09391C] sm:mb-2 sm:text-xl lg:text-2xl">
                                 {userType.headline}
                               </h3>
-                              <p className="mb-3 text-xs leading-relaxed text-gray-600 sm:mb-3.5 sm:text-sm lg:text-base">
+                              <p className="text-[15px] leading-relaxed text-gray-600 sm:mb-3.5 sm:text-sm lg:text-base">
                                 {userType.description}
                               </p>
                               <motion.div
                                 className={`
-                                  inline-flex shrink-0 items-center gap-2 self-start rounded-xl
+                                  mt-auto inline-flex shrink-0 items-center gap-2 self-start rounded-xl
                                   bg-gradient-to-r ${userType.gradient}
-                                  px-4 py-2 text-xs font-semibold text-white
+                                  px-5 py-2.5 text-sm font-semibold text-white
                                   shadow-lg ${userType.shadowColor}
                                   transition-all duration-300 group-hover:gap-4
-                                  sm:px-5 sm:py-2.5 sm:text-sm
+                                  sm:mt-0 sm:px-5 sm:py-2.5 sm:text-sm
                                 `}
                               >
                                 <span>{userType.cta}</span>
@@ -535,7 +535,7 @@ export default function UserTypeOverlay({ isOpen, onClose }: UserTypeOverlayProp
                 <Link
                   href="/auth/register?intent=scout"
                   onClick={(e) => e.stopPropagation()}
-                  className="group relative inline-flex max-w-[min(100%,22rem)] items-center justify-center gap-2 overflow-hidden rounded-full border border-white/25 bg-gradient-to-r from-[#8DDB90] via-[#7BC87F] to-[#6BB26F] px-4 py-2 text-center text-[11px] font-semibold leading-snug text-[#09391C] shadow-lg shadow-[#8DDB90]/35 transition-all duration-300 hover:border-white/50 hover:shadow-xl hover:shadow-[#8DDB90]/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B423D] sm:max-w-none sm:px-5 sm:py-2.5 sm:text-sm"
+                  className="group relative inline-flex max-w-[min(100%,24rem)] items-center justify-center gap-2 overflow-hidden rounded-full border border-white/25 bg-gradient-to-r from-[#8DDB90] via-[#7BC87F] to-[#6BB26F] px-4 py-2.5 text-center text-xs font-semibold leading-snug text-[#09391C] shadow-lg shadow-[#8DDB90]/35 transition-all duration-300 hover:border-white/50 hover:shadow-xl hover:shadow-[#8DDB90]/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B423D] sm:max-w-none sm:px-5 sm:py-2.5 sm:text-sm"
                 >
                   <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/35 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                   <Sparkles className="relative h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" aria-hidden />

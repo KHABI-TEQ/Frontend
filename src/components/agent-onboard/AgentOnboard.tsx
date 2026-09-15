@@ -29,7 +29,7 @@ import { useUserContext } from "@/context/user-context";
 import { PUT_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import Cookies from "js-cookie";
-import naijaStates from "naija-state-local-government";
+import { getStates, getLGAsByState, PILOT_STATE, isPilotState, PILOT_LOCATION_MESSAGE } from "@/utils/location-utils";
 import ReactSelect from "react-select";
 import AttachFile from "@/components/general-components/attach_file";
 
@@ -160,7 +160,10 @@ const AgentOnboard: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedAgentType, setSelectedAgentType] =
     useState<string>("Individual");
-  const [selectedState, setSelectedState] = useState<Option | null>(null);
+  const [selectedState, setSelectedState] = useState<Option | null>({
+    value: PILOT_STATE,
+    label: PILOT_STATE,
+  });
   const [selectedLGA, setSelectedLGA] = useState<Option | null>(null);
   const [selectedIdType, setSelectedIdType] = useState<Option | null>(null);
   const [stateOptions, setStateOptions] = useState<Option[]>([]);
@@ -182,7 +185,9 @@ const AgentOnboard: React.FC = () => {
     phoneNumber: Yup.string().required("Phone number is required"),
     houseNumber: Yup.string().required("House number is required"),
     street: Yup.string().required("Street is required"),
-    state: Yup.string().required("State is required"),
+    state: Yup.string()
+      .required("State is required")
+      .test("pilot-state", PILOT_LOCATION_MESSAGE, (value) => isPilotState(value)),
     localGovtArea: Yup.string().required("Local government is required"),
     selectedRegion: Yup.array().min(1, "At least one region is required"),
     typeOfID: Yup.string().required("Type of ID is required"),
@@ -201,7 +206,7 @@ const AgentOnboard: React.FC = () => {
       email: user?.email || "",
       houseNumber: "",
       street: "",
-      state: "",
+      state: PILOT_STATE,
       localGovtArea: "",
       selectedRegion: [],
       typeOfID: "",
@@ -217,35 +222,34 @@ const AgentOnboard: React.FC = () => {
 
   useEffect(() => {
     setStateOptions(
-      naijaStates.states().map((state: string) => ({
+      getStates().map((state: string) => ({
         value: state,
         label: state,
+      })),
+    );
+    const lgas = getLGAsByState(PILOT_STATE);
+    setLgaOptions(
+      lgas.map((lga: string) => ({
+        value: lga,
+        label: lga,
       })),
     );
   }, []);
 
   const handleStateChange = (selected: Option | null) => {
-    formik.setFieldValue("state", selected?.value || "");
-    setSelectedState(selected);
+    const next = selected || { value: PILOT_STATE, label: PILOT_STATE };
+    formik.setFieldValue("state", next.value);
+    setSelectedState(next);
 
-    if (selected) {
-      const lgas = naijaStates.lgas(selected.value)?.lgas;
-      if (Array.isArray(lgas)) {
-        setLgaOptions(
-          lgas.map((lga: string) => ({
-            value: lga,
-            label: lga,
-          })),
-        );
-      } else {
-        setLgaOptions([]);
-      }
-      setSelectedLGA(null);
-      formik.setFieldValue("localGovtArea", "");
-    } else {
-      setLgaOptions([]);
-      setSelectedLGA(null);
-    }
+    const lgas = getLGAsByState(next.value);
+    setLgaOptions(
+      lgas.map((lga: string) => ({
+        value: lga,
+        label: lga,
+      })),
+    );
+    setSelectedLGA(null);
+    formik.setFieldValue("localGovtArea", "");
   };
   
   const handleLGAChange = (selected: Option | null) => {
@@ -673,9 +677,14 @@ const AgentOnboard: React.FC = () => {
                           value={selectedState}
                           onChange={handleStateChange}
                           styles={customSelectStyles}
-                          placeholder="Select state"
-                          isClearable
+                          placeholder="Lagos State"
+                          isClearable={false}
+                          isDisabled={true}
+                          isSearchable={false}
                         />
+                        <p className="text-sm text-[#5A5D63] mt-2">
+                          Lagos State only (pilot location)
+                        </p>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-[#09391C] mb-2">

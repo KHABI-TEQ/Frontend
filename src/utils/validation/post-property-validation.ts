@@ -1,6 +1,7 @@
 /** @format */
 
 import * as Yup from "yup";
+import { isPilotState, PILOT_LOCATION_MESSAGE } from "@/utils/location-utils";
 
 // Helper function to format currency values
 export const formatCurrency = (value: string | number): string => {
@@ -42,7 +43,9 @@ const messages = {
 
 // Base schemas for reusable fields
 const stateSchema = Yup.object({
-  value: Yup.string().required(),
+  value: Yup.string()
+    .required()
+    .test("pilot-state", PILOT_LOCATION_MESSAGE, (value) => isPilotState(value)),
   label: Yup.string().required(),
 }).required(messages.required("State"));
 

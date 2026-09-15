@@ -17,6 +17,8 @@ import {
   getStates,
   getLGAsByState,
   getAreasByStateLGA,
+  isPilotState,
+  PILOT_STATE,
 } from "@/utils/location-utils";
 import { propertyReferenceData } from "@/data/buy_page_data";
 import {
@@ -212,7 +214,7 @@ const EnhancedEditBriefModal: React.FC<EnhancedEditBriefModalProps> = ({
 
     // Location
     location: {
-      state: brief.location.state,
+      state: isPilotState(brief.location.state) ? brief.location.state : PILOT_STATE,
       localGovernment: brief.location.localGovernment,
       area: brief.location.area,
     },
@@ -527,10 +529,15 @@ const EnhancedEditBriefModal: React.FC<EnhancedEditBriefModalProps> = ({
                             setFieldValue("location.localGovernment", "");
                             setFieldValue("location.area", "");
                           }}
-                          placeholder="Select state"
+                          placeholder="Lagos State"
                           styles={customStyles}
-                          isSearchable
+                          isSearchable={false}
+                          isClearable={false}
+                          isDisabled={true}
                         />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Lagos State only (pilot location)
+                        </p>
                         <ErrorMessage
                           name="location.state"
                           component="div"

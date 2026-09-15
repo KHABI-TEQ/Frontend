@@ -7,22 +7,33 @@ export interface LocationData {
   };
 }
 
+/** Canonical pilot market. Listing, preference, and related flows are Lagos-only. */
+export const PILOT_STATE = "Lagos";
+export const PILOT_STATE_LABEL = "Lagos State";
+export const PILOT_LOCATION_MESSAGE =
+  "Khabiteq is currently piloting in Lagos State only. Please choose a Lagos location.";
+
+export function isPilotState(value?: string | null): boolean {
+  const normalized = (value ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+  return normalized === "lagos" || normalized === "lagos state" || normalized === "lagos-state";
+}
+
 export const getStates = (): string[] => {
-  return Object.keys(nigeriaLocationData).sort();
+  const states = Object.keys(nigeriaLocationData);
+  return states.includes(PILOT_STATE) ? [PILOT_STATE] : states.filter(isPilotState);
 };
 
 export const getLGAsByState = (state: string): string[] => {
-  return state
-    ? Object.keys(
-        nigeriaLocationData[state as keyof typeof nigeriaLocationData] || {},
-      ).sort()
-    : [];
+  if (!isPilotState(state)) return [];
+  return Object.keys(
+    nigeriaLocationData[PILOT_STATE as keyof typeof nigeriaLocationData] || {},
+  ).sort();
 };
 
 export const getAreasByStateLGA = (state: string, lga: string): string[] => {
-  if (!state || !lga) return [];
+  if (!state || !lga || !isPilotState(state)) return [];
   const stateData =
-    nigeriaLocationData[state as keyof typeof nigeriaLocationData];
+    nigeriaLocationData[PILOT_STATE as keyof typeof nigeriaLocationData];
   if (!stateData) return [];
   const areas = stateData[lga as keyof typeof stateData] || [];
   return (areas as string[]).sort();
@@ -35,7 +46,7 @@ export const getEstatesByStateLgaArea = (
   lga: string,
   area: string,
 ): string[] => {
-  if (!state || !lga || !area) return [];
+  if (!state || !lga || !area || !isPilotState(state)) return [];
   const stateBucket =
     (estatesRoot[state] as Record<string, Record<string, string[]>> | undefined) ||
     (Object.keys(estatesRoot)
@@ -80,6 +91,7 @@ export const searchLocations = (
   };
 
   Object.entries(nigeriaLocationData).forEach(([state, lgaData]) => {
+    if (!isPilotState(state)) return;
     if (matches(state)) {
       results.push({ state });
     }

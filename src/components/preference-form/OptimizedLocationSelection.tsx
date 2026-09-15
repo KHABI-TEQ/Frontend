@@ -20,6 +20,7 @@ import {
   getLGAsByState,
   getAreasByStateLGA,
   getEstatesByStateLgaArea,
+  PILOT_STATE,
 } from "@/utils/location-utils";
 
 // Types
@@ -230,6 +231,12 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
       }));
     }, [selectedState?.value]);
 
+    useEffect(() => {
+      if (!selectedState) {
+        setSelectedState({ value: PILOT_STATE, label: PILOT_STATE });
+      }
+    }, [selectedState]);
+
     // Get available areas for a specific LGA
     const getAreasForLGA = useCallback(
       (lgaName: string) => {
@@ -285,7 +292,7 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
 
       // Reset local state if no location data (form was reset)
       if (!locationData || Object.keys(state.formData).length === 0) {
-        setSelectedState(null);
+        setSelectedState({ value: PILOT_STATE, label: PILOT_STATE });
         setSelectedLGAs([]);
         setLgasWithAreas([]);
         setCustomLocation("");
@@ -300,13 +307,13 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
         // 1. We haven't initialized yet (first mount), OR
         // 2. The user didn't just clear it, AND we need to sync from context
         if (
-          locationData.state &&
           !selectedState &&
           !hasUserClearedStateRef.current
         ) {
+          const stateName = locationData.state || PILOT_STATE;
           setSelectedState({
-            value: locationData.state,
-            label: locationData.state,
+            value: stateName,
+            label: stateName,
           });
         }
 
@@ -403,12 +410,10 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
 
     // Handler functions
     const handleStateChange = useCallback((newValue: SingleValue<Option>) => {
-      setSelectedState(newValue);
-      // Track if user intentionally cleared the state (clicked X button)
+      setSelectedState(newValue || { value: PILOT_STATE, label: PILOT_STATE });
       if (newValue === null) {
-        hasUserClearedStateRef.current = true;
+        hasUserClearedStateRef.current = false;
       }
-      // Reset LGAs and areas when state changes
       setSelectedLGAs([]);
       setLgasWithAreas([]);
       lgaOrderRef.current = [];
@@ -591,14 +596,15 @@ const OptimizedLocationSelection: React.FC<LocationSelectionProps> = memo(
               onChange={handleStateChange}
               options={stateOptions}
               styles={stableSelectStylesRef.current}
-              placeholder="Select a state"
-              isSearchable={true}
-              isClearable={true}
+              placeholder="Lagos State"
+              isSearchable={false}
+              isClearable={false}
+              isDisabled={true}
               className="react-select-container"
               classNamePrefix="react-select"
             />
             <p className="text-xs text-gray-500">
-              Choose the state where you want to find properties
+              Lagos State only — Khabiteq is currently piloting in Lagos
             </p>
           </div>
 

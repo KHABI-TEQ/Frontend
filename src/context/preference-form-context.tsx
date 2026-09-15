@@ -21,6 +21,7 @@ import {
   FeatureDefinition,
 } from "@/types/preference-form";
 import { FEATURE_CONFIGS, DEFAULT_BUDGET_THRESHOLDS } from "@/data/preference-configs";
+import { isPilotState, PILOT_LOCATION_MESSAGE } from "@/utils/location-utils";
 
 // Step configurations for different preference types
 const getStepsForPreferenceType = (preferenceType?: string) => {
@@ -431,6 +432,11 @@ export const PreferenceFormProvider: React.FC<{ children: ReactNode }> = ({
             errors.push({
               field: "location.state",
               message: "State is required",
+            });
+          } else if (!isPilotState(formData.location.state)) {
+            errors.push({
+              field: "location.state",
+              message: PILOT_LOCATION_MESSAGE,
             });
           }
           if (!formData.location?.lgas?.length) {

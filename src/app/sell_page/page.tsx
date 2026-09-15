@@ -42,13 +42,23 @@ const Sell = () => {
   const [lgaOptions, setLgaOptions] = useState<Option[]>([]);
 
   useEffect(() => {
-    // Load Nigerian states correctly
-    setStateOptions(
-      naijaStates.states().map((state: string) => ({
-        value: state,
-        label: state,
-      }))
-    );
+    const lagosOptions = naijaStates.states().filter((state: string) => /^lagos(\s+state)?$/i.test(state)).map((state: string) => ({
+      value: state,
+      label: state,
+    }));
+    setStateOptions(lagosOptions);
+    const lagos = lagosOptions[0] || { value: 'Lagos', label: 'Lagos' };
+    setSelectedState(lagos);
+    formik.setFieldValue('selectedState', lagos.value);
+    const lgas = naijaStates.lgas(lagos.value)?.lgas;
+    if (Array.isArray(lgas)) {
+      setLgaOptions(
+        lgas.map((lga: string) => ({
+          value: lga,
+          label: lga,
+        })),
+      );
+    }
   }, []);
 
   const handleLGAChange = (selected: Option | null) => {
@@ -324,12 +334,12 @@ const Sell = () => {
                         forState={true}
                         forLGA={false}
                         type='text'
-                        placeholder='Select State'
+                        placeholder='Lagos State'
                         formik={formik}
                         selectedState={selectedState}
                         stateOptions={stateOptions}
                         setSelectedState={handleStateChange}
-                        isDisabled={areInputsDisabled}
+                        isDisabled={true}
                       />
                       <Input
                         label='Local Government'

@@ -43,11 +43,12 @@ const SideBar = ({
           <div>
             <div className="flex justify-between w-full">
               {(user?._id || user?.id) ? (
-                <div className="flex items-center gap-[10px]">
-                  <Link
-                    href="/public-access-page"
-                    className="w-[61px] h-[61px] cursor-pointer rounded-full flex items-center justify-center bg-[#FAFAFA]"
-                  >
+                <Link
+                  href="/dashboard"
+                  onClick={() => setIsModalOpened(false)}
+                  className="flex items-center gap-[10px] min-w-0"
+                >
+                  <span className="w-[61px] h-[61px] shrink-0 rounded-full flex items-center justify-center bg-[#FAFAFA]">
                     <Image
                       src={userIcon}
                       width={1000}
@@ -55,14 +56,14 @@ const SideBar = ({
                       alt=""
                       className="w-[24px] h-[24px]"
                     />
-                  </Link>
-                  <div className="flex flex-col gap-[1px]">
-                    <h2 className="text-base text-black font-medium">
+                  </span>
+                  <div className="flex flex-col gap-[1px] min-w-0">
+                    <h2 className="text-base text-black font-medium truncate">
                       {user.firstName} {user.lastName}
                     </h2>
                     <p className="text-sm text-[#5A5D63]">{user.userType}</p>
                   </div>
-                </div>
+                </Link>
               ) : (
                 <div className="w-[136px] flex">
                   <button
@@ -306,7 +307,29 @@ const SideBar = ({
               })}
             </div>
           </div>
-          
+          {(user?._id || user?.id) && (
+            <button
+              type="button"
+              onClick={() => {
+                setIsModalOpened(false);
+                void logout();
+              }}
+              className="flex items-center gap-2 w-fit pb-1 text-left"
+            >
+              <svg
+                width="10"
+                height="10"
+                viewBox="0 0 10 10"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle cx="5" cy="5" r="5" fill="#09391C" />
+              </svg>
+              <span className="text-[#09391C] text-[18px] leading-[21.09px] font-medium">
+                Logout
+              </span>
+            </button>
+          )}
         </nav>
       )}
     </section>

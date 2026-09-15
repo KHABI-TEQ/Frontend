@@ -30,6 +30,8 @@ import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import { ArrowLeft, MessageSquare, Bot, Loader2, Volume2, VolumeX } from "lucide-react";
 import { getAreasByStateLGA, getLGAsByState, getStates } from "@/utils/location-utils";
+import { useUserContext } from "@/context/user-context";
+import { canUserListOffPlan, LANDLORD_CANNOT_LIST_OFF_PLAN } from "@/utils/listingAccess";
 
 const LOCATION_OPTIONS_PAGE_SIZE = Number.MAX_SAFE_INTEGER;
 const SHOW_MORE_LOCATION_OPTIONS = "Show more";
@@ -326,6 +328,8 @@ export default function PropertyAiConversationFlow({
     setCurrentStep,
     setPostingMode,
   } = usePostPropertyContext();
+  const { user } = useUserContext();
+  const allowOffPlanListing = canUserListOffPlan(user?.userType);
 
   const [loading, setLoading] = useState(false);
   const skippedFieldsRef = useRef<Set<string>>(new Set());
@@ -641,7 +645,20 @@ export default function PropertyAiConversationFlow({
     const storedListing = normalizedListingPropertyType((collectedDataRef.current || {}) as Record<string, unknown>);
     const detectedListing =
       detectListingPropertyTypeFromText(trimmed) || detectListingPropertyTypeFromText(accumulated);
-    const effectiveListing = storedListing || listingTypePreset || detectedListing;
+    const rawListing = storedListing || listingTypePreset || detectedListing;
+    if (rawListing === "off-plan" && !allowOffPlanListing) {
+      setAiConversationMessages((prev) => [
+        ...prev,
+        { role: "user", content: trimmed },
+        {
+          role: "assistant",
+          content: LANDLORD_CANNOT_LIST_OFF_PLAN,
+          speakLine: LANDLORD_CANNOT_LIST_OFF_PLAN,
+        },
+      ]);
+      return;
+    }
+    const effectiveListing = rawListing;
 
     if (!effectiveListing) {
       const typeField = "property type — start with Sale, Rent, Shortlet, or JV (listing type on the form)";
@@ -692,6 +709,9 @@ export default function PropertyAiConversationFlow({
         return;
       }
       let data = mergePropertyAiCollectedData(localBeforeApi, res.data || {}, effectiveListing);
+      if (!allowOffPlanListing && String(data.propertyType || "").toLowerCase() === "off-plan") {
+        data = { ...data, propertyType: effectiveListing || "sell" };
+      }
       data = applyPropertyLocationFromNaturalText(data, accumulated || trimmed, getStates());
       data = applyFocusedPropertyAnswer(trimmed, focus, data);
       const lgaUser = extractLocalGovernmentFromText(trimmed);

@@ -6,6 +6,8 @@ import { useFormikContext } from "formik";
 import RadioCheck from "@/components/general-components/radioCheck";
 import { usePostPropertyContext } from "@/context/post-property-context";
 import { briefTypeConfig } from "@/data/comprehensive-post-property-config";
+import { useUserContext } from "@/context/user-context";
+import { canUserListOffPlan } from "@/utils/listingAccess";
 
 interface StepProps {
   // No props needed
@@ -13,8 +15,12 @@ interface StepProps {
 
 const Step0PropertyTypeSelection: React.FC<StepProps> = () => {
   const { propertyData, updatePropertyData } = usePostPropertyContext();
+  const { user } = useUserContext();
   const { errors, touched, setFieldTouched, setFieldValue } =
     useFormikContext<any>();
+  const briefTypes = Object.entries(briefTypeConfig).filter(
+    ([key]) => canUserListOffPlan(user?.userType) || key !== "off-plan",
+  );
 
   const handlePropertyTypeChange = (
     newBriefType: "sell" | "rent" | "jv" | "shortlet",
@@ -52,7 +58,7 @@ const Step0PropertyTypeSelection: React.FC<StepProps> = () => {
       </div>
 
       <div className="space-y-4">
-        {Object.entries(briefTypeConfig).map(([key, type]) => (
+        {briefTypes.map(([key, type]) => (
           <motion.div
             key={key}
             initial={{ opacity: 0, x: -20 }}
