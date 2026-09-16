@@ -1,7 +1,7 @@
 /** @format */
 
 "use client";
-import React, { Fragment, Suspense, lazy } from "react";
+import React, { Fragment, Suspense, lazy, useEffect, useState } from "react";
 import Loading from "@/components/loading-component/loading";
 import { useLoading } from "@/hooks/useLoading";
 import { useHomePageSettings } from "@/hooks/useSystemSettings";
@@ -14,6 +14,8 @@ import PreferenceAndCode from "@/components/landing/PreferenceAndCode";
 import AudienceAndProfessionals from "@/components/landing/AudienceAndProfessionals";
 import TrustAndClose, { FinalJourneyCta } from "@/components/landing/TrustAndClose";
 import PartnerApiSection from "@/components/new-homepage/partner-api-section";
+import UserTypeOverlay from "@/components/new-homepage/UserTypeOverlay";
+import UserTypeFloatingButton from "@/components/new-homepage/UserTypeFloatingButton";
 
 const SocialProofSection = lazy(() => import("@/components/new-homepage/social-proof-section"));
 
@@ -22,6 +24,16 @@ const NewHomepage = ({
 }: { isComingSoon?: boolean } = {}) => {
   const isLoading = useLoading();
   const { loading: settingsLoading } = useHomePageSettings();
+  const [showUserTypeOverlay, setShowUserTypeOverlay] = useState(false);
+
+  useEffect(() => {
+    if (!isLoading && !settingsLoading) {
+      const timer = setTimeout(() => {
+        setShowUserTypeOverlay(true);
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading, settingsLoading]);
 
   if (isLoading || settingsLoading) return <Loading />;
 
@@ -60,6 +72,15 @@ const NewHomepage = ({
           <FinalJourneyCta />
         </main>
       </section>
+
+      <UserTypeOverlay
+        isOpen={showUserTypeOverlay}
+        onClose={() => setShowUserTypeOverlay(false)}
+      />
+      <UserTypeFloatingButton
+        onClick={() => setShowUserTypeOverlay(true)}
+        isVisible={!showUserTypeOverlay}
+      />
 
       <Suspense fallback={null}>
         <EmailVerification />
