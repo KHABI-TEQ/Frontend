@@ -256,13 +256,21 @@ const ForProfessionalsToolsShowcase = () => {
               Start onboarding, set up your practice, and unlock the dashboard tools
               available to professionals on Khabiteq.
             </p>
-            <Link
-              href="/auth/register"
-              className="inline-flex items-center gap-2 bg-[#8DDB90] hover:bg-[#7BC87F] text-[#09391C] px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold transition-colors"
-            >
-              Create your professional profile
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link
+                href="/auth/register"
+                className="inline-flex items-center gap-2 bg-[#8DDB90] hover:bg-[#7BC87F] text-[#09391C] px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold transition-colors"
+              >
+                Create your professional profile
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <Link
+                href="/pricing"
+                className="inline-flex items-center gap-2 border border-white/30 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold hover:bg-white/10 transition-colors"
+              >
+                View professional plans
+              </Link>
+            </div>
           </motion.div>
         </motion.div>
       </div>

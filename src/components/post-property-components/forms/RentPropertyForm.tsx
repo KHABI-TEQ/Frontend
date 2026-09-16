@@ -461,9 +461,10 @@ const RentPropertyForm: React.FC<RentPropertyFormProps> = ({
   return (
     <CombinedAuthGuard
       requireAuth={true}
-      allowedUserTypes={["Agent", "Landowners", "Developer"]}
+      allowedUserTypes={["Agent", "Landowners", "Developer", "PropertyScout"]}
       requireAgentOnboarding={false}
       requireAgentApproval={false}
+      requireKycApproved={true}
       requireActiveSubscription={false}
       agentCustomMessage="You must complete onboarding and be approved before you can post properties."
     >

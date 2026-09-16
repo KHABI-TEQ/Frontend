@@ -53,16 +53,15 @@ export default function PartnerApiSection() {
                 id="partner-platforms-heading"
                 className="text-2xl sm:text-3xl lg:text-[2rem] font-bold text-white leading-tight tracking-tight"
               >
-                Syndicate listings with{" "}
+                OPERATE A PROPERTY PLATFORM?
+                <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#C8F5CA] to-[#8DDB90]">
-                  Khabiteq
+                  CONNECT WITH KHABITEQ.
                 </span>
               </h2>
 
               <p className="text-sm sm:text-base text-[#B8C9C4] max-w-xl leading-relaxed">
-                Built for teams running other property portals and marketplaces. Apply to connect
-                your catalogue—separate from the tools we build for agents, developers, landlords,
-                and buyers on this site.
+                Explore opportunities to connect property listings and property demand with the Khabiteq ecosystem.
               </p>
 
               <div className="flex flex-wrap gap-3 pt-1">
@@ -81,7 +80,7 @@ export default function PartnerApiSection() {
                 href="/partner-api"
                 className="group inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3.5 bg-[#8DDB90] text-[#09391C] font-semibold text-sm sm:text-base shadow-lg shadow-black/20 hover:bg-[#9ee4a1] hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300"
               >
-                Start partner onboarding
+                PARTNER WITH KHABITEQ
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
               </Link>
               <Link

@@ -7,6 +7,7 @@
  */
 
 import type { PreferencePayload } from "./schema";
+import { readStoredPropertyCode } from "@/utils/propertyCode";
 
 type FormData = Record<string, unknown>;
 
@@ -182,6 +183,8 @@ export function buildPreferencePayload(
         feat.autoAdjustToFeatures ?? feat.autoAdjustToBudget,
       ),
     },
+    propertyCode:
+      toStr((fd as { propertyCode?: unknown }).propertyCode) || readStoredPropertyCode(),
   };
 
   const contact = (fd.contactInfo || {}) as Record<string, unknown>;

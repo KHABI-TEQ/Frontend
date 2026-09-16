@@ -18,7 +18,7 @@ export default function AgentKycPage() {
   return (
     <CombinedAuthGuard
       requireAuth={true}
-      allowedUserTypes={["Agent"]}
+      allowedUserTypes={["Agent", "PropertyScout"]}
       requireAgentOnboarding={false}
       requireAgentApproval={false}
     >

@@ -795,7 +795,7 @@ const SharedUpdatePropertyForm: React.FC<SharedUpdatePropertyFormProps> = ({
   return (
     <CombinedAuthGuard
       requireAuth={true}
-      allowedUserTypes={["Agent", "Landowners", "Developer"]}
+      allowedUserTypes={["Agent", "Landowners", "Developer", "PropertyScout"]}
       requireAgentOnboarding={true}
       requireAgentApproval={true}
       agentCustomMessage="You must complete onboarding and be approved before you can update properties."

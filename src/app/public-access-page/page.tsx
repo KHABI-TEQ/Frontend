@@ -269,12 +269,12 @@ export default function OverviewPage() {
                 </span>
               )}
             </div>
-            {previewUrl && dealSiteStatus !== "pending" && !isPaused && (
+            {previewUrl && (
               <div className="mt-2 flex items-center gap-2 flex-wrap">
                 <a
-                  href={previewUrl}
+                  href={`${previewUrl.replace(/\/$/, "")}/?preview=1`}
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   className="text-emerald-600 hover:underline flex items-center gap-1 break-all"
                 >
                   {previewUrl}
@@ -422,7 +422,11 @@ export default function OverviewPage() {
           title="View Live Page"
           description="See how your page looks to visitors"
           icon="👁️"
-          onClick={() => previewUrl && window.open(previewUrl, "_blank")}
+          href={previewUrl ? `${previewUrl.replace(/\/$/, "")}/?preview=1` : null}
+          onClick={() => {
+            toast.error("Your public page is not ready yet. Complete setup to get your live link.");
+            router.push("/public-access-page/setup");
+          }}
         />
         <QuickLink
           title="Manage Listings"
@@ -491,24 +495,37 @@ function QuickLink({
   description,
   icon,
   onClick,
+  href,
 }: {
   title: string;
   description: string;
   icon: string;
   onClick: () => void;
+  href?: string | null;
 }) {
-  return (
-    <button
-      onClick={onClick}
-      className="bg-white rounded-lg border border-gray-200 p-6 hover:border-emerald-300 hover:shadow-md transition-all text-left"
-    >
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="font-semibold text-[#09391C]">{title}</p>
-          <p className="text-sm text-gray-600 mt-1">{description}</p>
-        </div>
-        <div className="text-4xl">{icon}</div>
+  const className =
+    "bg-white rounded-lg border border-gray-200 p-6 hover:border-emerald-300 hover:shadow-md transition-all text-left w-full block";
+  const content = (
+    <div className="flex items-start justify-between">
+      <div>
+        <p className="font-semibold text-[#09391C]">{title}</p>
+        <p className="text-sm text-gray-600 mt-1">{description}</p>
       </div>
+      <div className="text-4xl">{icon}</div>
+    </div>
+  );
+
+  if (href) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className={className}>
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <button type="button" onClick={onClick} className={className}>
+      {content}
     </button>
   );
 }

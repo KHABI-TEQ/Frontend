@@ -33,7 +33,7 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
   const ref = React.useRef<HTMLDivElement | null>(null);
   const { logout, user: contextUser } = useUserContext();
   const { setSelectedNav } = usePageContext();
-  type UserTypeValue = "Agent" | "Landowners" | "Developer" | "FieldAgent" | "Lawyer" | "Surveyor";
+  type UserTypeValue = "Agent" | "Landowners" | "Developer" | "FieldAgent" | "Lawyer" | "Surveyor" | "Valuer" | "PropertyScout";
   const [position, setPosition] = useState({ top: 0, right: 0 });
 
   useClickOutside(ref, () => closeUserProfileModal(false));
@@ -50,7 +50,9 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
     if (lower === "agent") return "Agent";
     if (lower === "lawyer") return "Lawyer";
     if (lower === "surveyor") return "Surveyor";
-    if (["Agent", "Landowners", "Developer", "FieldAgent", "Lawyer", "Surveyor"].includes(s)) return s as UserTypeValue;
+    if (lower === "valuer") return "Valuer";
+    if (lower === "propertyscout" || lower === "property_scout") return "PropertyScout";
+    if (["Agent", "Landowners", "Developer", "FieldAgent", "Lawyer", "Surveyor", "Valuer", "PropertyScout"].includes(s)) return s as UserTypeValue;
     return null;
   };
 
@@ -95,7 +97,11 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
               ? "Lawyer"
               : effectiveUserType === "Surveyor"
                 ? "Surveyor"
-                : effectiveUserType;
+                : effectiveUserType === "Valuer"
+                  ? "Valuer"
+                  : effectiveUserType === "PropertyScout"
+                    ? "Property Scout"
+                    : effectiveUserType;
 
   // Calculate position based on screen size
   useEffect(() => {
@@ -235,13 +241,58 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
         ]
       : []),
 
-    ...(effectiveUserType === "Lawyer" || effectiveUserType === "Surveyor"
+    ...(effectiveUserType === "Lawyer" || effectiveUserType === "Surveyor" || effectiveUserType === "Valuer"
       ? [
           {
             icon: <Briefcase size={18} />,
             label: "Jobs",
             action: () => {
               clientNavigate("/dashboard");
+              closeUserProfileModal(false);
+            },
+          },
+          {
+            icon: <Settings size={18} />,
+            label: "Account Settings",
+            action: () => {
+              clientNavigate("/profile-settings");
+              closeUserProfileModal(false);
+            },
+          },
+        ]
+      : []),
+
+    ...(effectiveUserType === "PropertyScout"
+      ? [
+          {
+            icon: <Home size={18} />,
+            label: "Submit Opportunity",
+            action: () => {
+              clientNavigate("/post-property");
+              closeUserProfileModal(false);
+            },
+          },
+          {
+            icon: <Briefcase size={18} />,
+            label: "My Listings",
+            action: () => {
+              clientNavigate("/my-listings");
+              closeUserProfileModal(false);
+            },
+          },
+          {
+            icon: <Users size={18} />,
+            label: "Referral",
+            action: () => {
+              clientNavigate("/referral");
+              closeUserProfileModal(false);
+            },
+          },
+          {
+            icon: <Handshake size={18} />,
+            label: "Upgrade Account",
+            action: () => {
+              clientNavigate("/account/upgrade");
               closeUserProfileModal(false);
             },
           },

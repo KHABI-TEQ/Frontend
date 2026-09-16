@@ -30,15 +30,16 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     }
 
     // If trying to access setup and already setup complete, redirect to overview
-    if (pathname === "/practitioner-page/setup" && isSetupComplete) {
-      router.replace("/practitioner-page");
+    if (pathname === "/public-access-page/setup" && isSetupComplete) {
+      router.replace("/public-access-page");
     }
 
     // If trying to access dashboard but setup not complete, show modal
     if (
-      pathname !== "/practitioner-page/setup" &&
+      pathname !== "/public-access-page/setup" &&
+      pathname !== "/public-access-page/branding" &&
       !isSetupComplete &&
-      pathname.startsWith("/practitioner-page")
+      pathname.startsWith("/public-access-page")
     ) {
       setShowSetupModal(true);
     }
@@ -46,14 +47,14 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
   // On the setup route, clear modal state so we never leave body scroll locked from the dashboard modal
   useEffect(() => {
-    if (pathname === "/practitioner-page/setup") {
+    if (pathname === "/public-access-page/setup") {
       setShowSetupModal(false);
     }
   }, [pathname]);
 
   // Prevent background scroll when modal is open (never lock scroll on the setup URL)
   useEffect(() => {
-    if (pathname === "/practitioner-page/setup") {
+    if (pathname === "/public-access-page/setup") {
       document.body.style.overflow = "";
       return () => {
         document.body.style.overflow = "";
@@ -90,7 +91,9 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             Access Denied
           </h2>
           <p className="text-gray-600 mb-6">
-            Only agents and developers can access the Practitioner Page dashboard.
+            {user?.userType === "PropertyScout"
+              ? "Practitioner pages are available after you upgrade to a verified professional."
+              : "Only agents and developers can access the Practitioner Page dashboard."}
           </p>
           <button
             onClick={() => router.back()}
@@ -113,7 +116,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   }
 
   // If on setup page, don't show sidebar
-  if (pathname === "/practitioner-page/setup") {
+  if (pathname === "/public-access-page/setup") {
     return <>{children}</>;
   }
 
@@ -130,7 +133,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
               Your Practitioner page is not yet configured. Set it up now to get started.
             </p>
             <button
-              onClick={() => router.push("/practitioner-page/setup")}
+              onClick={() => router.push("/public-access-page/setup")}
               className="w-full px-6 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-all"
             >
               Set Up Your Practitioner Page Now

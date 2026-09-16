@@ -27,6 +27,7 @@ import {
   Mail as MailIcon,
   LogOut as LogOutIcon,
   Globe2,
+  FileText,
 } from "lucide-react";
 import Loading from "@/components/loading-component/loading";
 import { SyndicationIntegrationSummary } from "@/components/dashboard/DashboardIntegrationSummaries";
@@ -344,6 +345,13 @@ export default function AgentDashboard() {
             >
               <CalendarIcon size={20} />
               <span className="hidden sm:inline">Inspection</span>Requests
+            </Link>
+            <Link
+              href="/my-transactions"
+              className="bg-white hover:bg-gray-50 text-[#09391C] border border-[#8DDB90] px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
+            >
+              <FileText size={20} />
+              My Transactions
             </Link>
             {eligibility?.isLicensedPublisher ? (
               <Link

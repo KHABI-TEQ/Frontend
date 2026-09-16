@@ -22,7 +22,7 @@ export interface PublisherListingEligibility {
   canAcceptInspectionRequests?: boolean;
 }
 
-const PUBLISHER_TYPES = new Set(["Agent", "Developer", "Landowners"]);
+const PUBLISHER_TYPES = new Set(["Agent", "Developer", "Landowners", "PropertyScout"]);
 
 export function usePublisherListingEligibility() {
   const { user, isInitialized } = useUserContext();

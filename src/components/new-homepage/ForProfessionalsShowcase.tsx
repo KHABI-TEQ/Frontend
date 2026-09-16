@@ -103,8 +103,8 @@ const roleContent: Record<
       {
         key: 'marketplace',
         step: '02',
-        title: 'Join the document verification marketplace',
-        caption: 'After KYC approval, clients can hire you for title review at a fee you set within platform bounds.',
+        title: 'Make legal due diligence discoverable',
+        caption: 'After KYC approval, property seekers can connect with you for relevant legal and document review.',
         image: '/title-document-verification.jpg',
         imageAlt: 'Lawyer reviewing property title documents',
         imagePosition: headroomCrop,
@@ -112,7 +112,7 @@ const roleContent: Record<
       {
         key: 'jobs',
         step: '03',
-        title: 'Accept or decline title-review jobs',
+        title: 'Accept or decline professional requests',
         caption: 'Review incoming requests, take the work that fits your practice, and keep your pipeline clear.',
         image: '/professionals-network.jpg',
         imageAlt: 'Legal professional reviewing documents while a surveyor works on site',
@@ -120,8 +120,8 @@ const roleContent: Record<
       {
         key: 'payouts',
         step: '04',
-        title: 'Submit reports and get paid',
-        caption: 'Deliver your verification report and receive payouts through your settlement account.',
+        title: 'Deliver the service and get paid',
+        caption: 'Provide the review directly and receive payouts through your settlement account.',
         image: '/practice-dashboard.jpg',
         imageAlt: 'Professionals coordinating transaction work from one dashboard',
       },
@@ -132,16 +132,16 @@ const roleContent: Record<
         body: 'Create a structured profile so property seekers, owners and developers can find you, review credentials and hire you.',
       },
       {
-        title: 'Join the Document Verification Marketplace',
-        body: 'After KYC approval, appear on the marketplace and set a clear verification fee within platform bounds.',
+        title: 'Make legal services discoverable',
+        body: 'After KYC approval, appear so property seekers can connect with you for relevant legal and document review.',
       },
       {
-        title: 'Accept Title-Review Jobs',
-        body: 'Receive incoming title-review requests, accept or decline them, and complete the work through Khabiteq.',
+        title: 'Accept professional requests',
+        body: 'Receive incoming requests, accept or decline them, and complete the work through Khabiteq.',
       },
       {
-        title: 'Submit Reports and Receive Payouts',
-        body: 'File your report and get paid through your connected settlement account.',
+        title: 'Deliver reports and receive payouts',
+        body: 'Provide the service directly and get paid through your connected settlement account.',
       },
     ],
   },
@@ -359,13 +359,19 @@ function ForProfessionalsShowcaseInner() {
         <AudienceDetailList items={dashboardTools} />
         <h3 className="mb-3 mt-8 text-lg font-bold text-[#09391C]">Supported professional roles</h3>
         <AudienceCheckList items={supportedRoles} />
-        <div className="mt-6">
+        <div className="mt-6 flex flex-wrap gap-3">
           <Link
             href={`/auth/register?userType=${roleRegisterTypes[role]}`}
             className="inline-flex items-center gap-2 rounded-xl bg-[#09391C] px-5 py-3 text-sm font-semibold text-white"
           >
             Create your profile
             <ArrowRight className="h-4 w-4" />
+          </Link>
+          <Link
+            href="/pricing"
+            className="inline-flex items-center gap-2 rounded-xl border border-[#09391C]/20 px-5 py-3 text-sm font-semibold text-[#09391C]"
+          >
+            View professional plans
           </Link>
         </div>
       </AudienceReadMoreSection>

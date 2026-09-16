@@ -55,6 +55,8 @@ export interface Property {
   isApproved: boolean;
   isRejected: boolean;
   isDeleted: boolean;
+  listingReviewNote?: string;
+  propertyCode?: string;
   createdByRole: string;
   createdAt: string;
   updatedAt: string;

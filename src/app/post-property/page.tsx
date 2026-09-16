@@ -111,10 +111,11 @@ const PostPropertyPage = () => {
       effectiveType === "landowners" ||
       effectiveType === "landowner" ||
       effectiveType === "developer" ||
-      effectiveType === "agent";
+      effectiveType === "agent" ||
+      effectiveType === "propertyscout";
     if (canPost) return;
 
-    toast.error("You need to be a landowner, agent, or developer to post properties");
+    toast.error("You need to be a landowner, agent, developer, or property scout to post properties");
     router.push("/dashboard");
   }, [user, router, isInitialized]);
 
@@ -143,7 +144,7 @@ const PostPropertyPage = () => {
   return (
     <CombinedAuthGuard
       requireAuth={true}
-      allowedUserTypes={["Agent", "Landowners", "Developer"]}
+      allowedUserTypes={["Agent", "Landowners", "Developer", "PropertyScout"]}
       requireAgentOnboarding={false}
       requireAgentApproval={false}
       requireKycApproved={true}

@@ -420,7 +420,7 @@ const DocumentVerificationPage: React.FC = () => {
     <div className="bg-white rounded-lg shadow-sm p-8 mb-6">
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold text-gray-800 mb-3">Step 1: Select & Upload Documents</h2>
-        <p className="text-gray-600">Choose up to 2 documents for verification and upload them securely</p>
+        <p className="text-gray-600">Choose up to 2 documents and upload them so the professional you select can review them.</p>
       </div>
 
       {/* Document Selection Grid */}
@@ -781,11 +781,11 @@ const DocumentVerificationPage: React.FC = () => {
         {/* Header Section */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-4">
-            <span className="text-green-400">Verify</span>{' '}
-            <span className="text-gray-800">Your Document</span>
+            <span className="text-green-400">Connect</span>{' '}
+            <span className="text-gray-800">with a professional</span>
           </h1>
           <p className="text-gray-600 mb-6">
-            Need to verify a document? Upload it and we&apos;ll handle the verification for you—fast, secure, and independent
+            Request legal document review from a qualified property lawyer. The professional provides the service directly — Khabiteq provides the connection and platform infrastructure.
           </p>
           
           <div className="mb-4">
@@ -822,21 +822,21 @@ const DocumentVerificationPage: React.FC = () => {
                   <li className="flex items-start">
                     <span className="w-2 h-2 bg-gray-400 rounded-full mt-2 mr-3 flex-shrink-0"></span>
                     <div>
-                      <span className="font-medium">Document Authenticity:</span> We verify whether your document is genuine and properly registered with the relevant state authorities in Nigeria. This ensures you&apos;re not dealing with a forged or invalid document.
+                      <span className="font-medium">Document Authenticity:</span> The appointed lawyer reviews whether the document appears genuine and properly registered with the relevant authorities. This is professional legal work, not a Khabiteq certification.
+                  </div>
+                  </li>
+                  
+                  <li className="flex items-start">
+                    <span className="w-2 h-2 bg-gray-400 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                    <div>
+                      <span className="font-medium">Ownership Information:</span> The report may include details on the current owner of the land and, where applicable, a history of previous owners.
                     </div>
                   </li>
                   
                   <li className="flex items-start">
                     <span className="w-2 h-2 bg-gray-400 rounded-full mt-2 mr-3 flex-shrink-0"></span>
                     <div>
-                      <span className="font-medium">Ownership Information:</span> The report provides details on the current owner of the land and, where applicable, a history of previous owners. This helps you confirm who legally holds the title.
-                    </div>
-                  </li>
-                  
-                  <li className="flex items-start">
-                    <span className="w-2 h-2 bg-gray-400 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                    <div>
-                      <span className="font-medium">Expert Recommendations:</span> Our legal team offers clear advice on what to do next—whether it&apos;s safe to proceed with a transaction or if further investigation is required. This guidance is tailored to your situation.
+                      <span className="font-medium">Professional recommendations:</span> The lawyer offers advice on what to do next. This guidance is provided by the professional, not by Khabiteq as a substitute for that professional.
                     </div>
                   </li>
                 </ul>

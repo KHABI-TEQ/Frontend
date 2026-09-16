@@ -37,11 +37,13 @@ export interface User {
   lastName?: string;
   phoneNumber?: string;
   selectedRegion?: string[];
-  userType?: "Agent" | "Landowners" | "FieldAgent" | "Developer" | "Lawyer" | "Surveyor";
+  userType?: "Agent" | "Landowners" | "FieldAgent" | "Developer" | "Lawyer" | "Surveyor" | "Valuer" | "PropertyScout";
   accountId?: string;
   profile_picture?: string;
   referralCode?: string;
   createdAt?: string;
+  pendingProfessionalType?: "Agent" | "Developer" | "Lawyer" | "Surveyor" | "Valuer" | null;
+  professionalUpgradeStatus?: "none" | "pending" | "approved" | "rejected";
   /** Canonical publisher KYC status from GET /account/profile */
   kycStatus?: "none" | "pending" | "in_review" | "approved" | "rejected";
   isAccountVerified?: boolean;
@@ -85,7 +87,7 @@ export interface User {
   dealSite?: Record<string, unknown> | null;
 }
 
-const CANONICAL_USER_TYPES = ["Agent", "Landowners", "FieldAgent", "Developer", "Lawyer", "Surveyor"] as const;
+const CANONICAL_USER_TYPES = ["Agent", "Landowners", "FieldAgent", "Developer", "Lawyer", "Surveyor", "Valuer", "PropertyScout"] as const;
 type CanonicalUserType = (typeof CANONICAL_USER_TYPES)[number];
 
 function toCanonicalUserType(value: unknown): User["userType"] | undefined {
@@ -99,6 +101,8 @@ function toCanonicalUserType(value: unknown): User["userType"] | undefined {
   if (lower === "fieldagent" || lower === "field_agent") return "FieldAgent";
   if (lower === "lawyer") return "Lawyer";
   if (lower === "surveyor") return "Surveyor";
+  if (lower === "valuer") return "Valuer";
+  if (lower === "propertyscout" || lower === "property_scout") return "PropertyScout";
   return CANONICAL_USER_TYPES.includes(s as CanonicalUserType) ? (s as CanonicalUserType) : undefined;
 }
 

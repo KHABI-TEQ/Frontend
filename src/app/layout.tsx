@@ -18,7 +18,7 @@ export const dynamic = 'force-dynamic';
 export const metadata = {
   title: 'Khabiteq',
   description:
-    "Simplifying real estate transactions in Lagos. Buy, sell, rent, and manage properties with ease through Khabi-Teq's trusted platform",
+    "Khabiteq is digital infrastructure for a structured real estate transaction journey — from finding the right opportunity to due diligence, inspection and transaction registration.",
   icons: {
     icon: '/khabiteq_logo_nobg.png',
   },

@@ -26,6 +26,7 @@ import {
   Users as UsersIcon,
   Globe2,
   UserCircle,
+  FileText,
 } from "lucide-react";
 import Loading from "@/components/loading-component/loading";
 import {
@@ -264,6 +265,13 @@ export default function DeveloperDashboard() {
             >
               <BriefcaseIcon size={20} />
               <span className="hidden sm:inline">View </span>Listings
+            </Link>
+            <Link
+              href="/my-transactions"
+              className="bg-white hover:bg-gray-50 text-[#09391C] border border-[#8DDB90] px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
+            >
+              <FileText size={20} />
+              My Transactions
             </Link>
             <Link
               href="/my-inspection-requests"
@@ -543,6 +551,18 @@ export default function DeveloperDashboard() {
                 <div className="flex-1">
                   <h3 className="font-semibold">Browse Marketplace</h3>
                   <p className="text-sm text-[#5A5D63]">Find new opportunities</p>
+                </div>
+              </Link>
+              <Link
+                href="/my-transactions"
+                className="w-full bg-white hover:bg-gray-50 text-[#09391C] border border-gray-200 p-4 rounded-lg font-medium flex items-center gap-3 transition-colors group"
+              >
+                <div className="p-2 bg-[#09391C]/10 rounded-lg">
+                  <FileText size={20} className="text-[#09391C]" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold">My Transactions</h3>
+                  <p className="text-sm text-[#5A5D63]">View certificates and journey records</p>
                 </div>
               </Link>
               <Link

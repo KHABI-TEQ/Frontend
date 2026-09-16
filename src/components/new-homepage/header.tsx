@@ -39,38 +39,13 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
   const { user, logout } = useUserContext();
   const [isScrolled, setIsScrolled] = useState(false);
 
-  // Track scroll position for navbar styling
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
     };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  // Show "Listing owner properties (Request to Market)" for logged-in Agents under Who is it for?
-  useEffect(() => {
-    const base =
-      user?.userType === "Agent"
-        ? mainNavigationData.map((item) => {
-            if (item.name === "Who is it for?" && item.subItems) {
-              return {
-                ...item,
-                subItems: [
-                  ...item.subItems,
-                  {
-                    name: "Listing owner properties (Request to Market)",
-                    url: "/lasrera-marketplace",
-                    isClicked: false,
-                  },
-                ],
-              };
-            }
-            return item;
-          })
-        : mainNavigationData;
-    setNavigationState(base);
-  }, [user?.userType]);
   const [isUserProfileModalOpened, setIsUserProfileModal] =
     useState<boolean>(false);
   const [isNotificationModalOpened, setIsNotificationModalOpened] =
@@ -329,7 +304,7 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
                   href="/auth/register"
                   className="whitespace-nowrap px-4 xl:px-5 py-2 xl:py-2.5 text-[13px] xl:text-sm font-semibold text-white bg-[#09391C] hover:bg-[#0B423D] rounded-full shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
                 >
-                  Get Started
+                  GET STARTED
                 </Link>
               </div>
             )}

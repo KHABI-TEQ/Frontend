@@ -295,7 +295,7 @@ const MyListingPage = () => {
   return (
     <CombinedAuthGuard
       requireAuth={true} // User must be logged in
-      allowedUserTypes={["Agent", "Landowners", "Developer"]}
+      allowedUserTypes={["Agent", "Landowners", "Developer", "PropertyScout"]}
       requireAgentOnboarding={false}
       requireAgentApproval={false}
       agentCustomMessage="You must complete onboarding and be approved before you view posted properties."
@@ -335,11 +335,13 @@ const MyListingPage = () => {
               </nav>
               <div className="flex items-center gap-3 mb-2">
                 <h1 className="text-2xl sm:text-3xl font-bold text-[#09391C] font-display">
-                  My Property Listings
+                  {user?.userType === "PropertyScout" ? "Property Opportunities" : "My Property Listings"}
                 </h1>
               </div>
               <p className="text-gray-600 text-sm sm:text-base">
-                Manage and view all your property listings
+                {user?.userType === "PropertyScout"
+                  ? "KYC verifies your identity. Each listing still needs Khabiteq review before it is LIVE."
+                  : "Manage and view all your property listings"}
               </p>
             </div>
             

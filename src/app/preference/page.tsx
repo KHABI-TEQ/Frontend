@@ -37,6 +37,7 @@ import {
 import { POST_REQUEST } from "@/utils/requests";
 import PreferenceModeSelector from "@/components/preference-form/PreferenceModeSelector";
 import PreferenceAiConversationFlow from "@/components/preference-form/PreferenceAiConversationFlow";
+import { readStoredPropertyCode, storePropertyCode } from "@/utils/propertyCode";
 
 // Preference type configurations - memoized to prevent recreation
 const PREFERENCE_CONFIGS = {
@@ -373,12 +374,20 @@ const PreferenceFormContent: React.FC = () => {
   const [selectedPreferenceType, setSelectedPreferenceType] =
     useState<keyof typeof PREFERENCE_CONFIGS>("buy");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [linkedPropertyCode, setLinkedPropertyCode] = useState("");
 
   // When user submits from AI summary, show the same success modal
   useEffect(() => {
     registerOnSubmittedFromAi(() => setShowSuccessModal(true));
     return () => registerOnSubmittedFromAi(null);
   }, [registerOnSubmittedFromAi]);
+
+  // Capture Property Code from URL so matching can prioritise that listing.
+  useEffect(() => {
+    const code = searchParams.get("code");
+    if (code) storePropertyCode(code);
+    setLinkedPropertyCode(readStoredPropertyCode());
+  }, [searchParams]);
 
   // Sync initial preference type from URL (e.g. /preference?type=rent opens Rent)
   useEffect(() => {
@@ -470,6 +479,7 @@ const PreferenceFormContent: React.FC = () => {
           ) || [],
         autoAdjustToFeatures: formData.features?.autoAdjustToBudget || false,
       },
+      propertyCode: readStoredPropertyCode(),
     };
 
     // Helper function to remove empty/null/undefined values
@@ -948,6 +958,12 @@ const PreferenceFormContent: React.FC = () => {
             </motion.p>
           </motion.div>
         </motion.div>
+
+        {linkedPropertyCode ? (
+          <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+            Property Code <span className="font-semibold">{linkedPropertyCode}</span> will be attached to this preference so matching can identify the exact listing and professional.
+          </div>
+        ) : null}
 
         {/* Mode selector: Use AI or Fill form manually (AI_VS_MANUAL_FORM_IMPLEMENTATION_GUIDE) */}
         {preferenceEntryMode === null && (

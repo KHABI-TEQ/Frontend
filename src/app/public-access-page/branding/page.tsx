@@ -15,7 +15,7 @@ import { URLS } from "@/utils/URLS";
 import StandardPreloader from "@/components/new-marketplace/StandardPreloader";
 
 export default function BrandingPage() {
-  const { settings, updateSettings } = useDealSite();
+  const { settings, updateSettings, loadSettings, markSetupComplete } = useDealSite();
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [keywordInput, setKeywordInput] = useState(settings.keywords.join(", "));
@@ -68,6 +68,8 @@ export default function BrandingPage() {
 
       if (res?.success) {
         toast.success("Settings saved successfully");
+        await loadSettings();
+        markSetupComplete();
       } else {
         toast.error(res?.message || "Failed to save settings");
       }
@@ -77,7 +79,7 @@ export default function BrandingPage() {
     } finally {
       setSaving(false);
     }
-  }, [settings]);
+  }, [settings, loadSettings, markSetupComplete]);
 
   const inputBase =
     "w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400 text-gray-900";

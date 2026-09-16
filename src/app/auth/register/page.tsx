@@ -181,10 +181,7 @@ const Register = () => {
   const fromParam = searchParams.get('from');
   const isScoutIntent = (searchParams.get("intent") || "").trim().toLowerCase() === "scout";
   const requestedUserType = resolveRegisterUserType(searchParams.get("userType") || searchParams.get("role"));
-  const userTypeFromUrl =
-    isScoutIntent && requestedUserType !== "Agent" && requestedUserType !== "Developer"
-      ? ""
-      : requestedUserType;
+  const userTypeFromUrl = isScoutIntent ? "PropertyScout" : requestedUserType;
   const isOwnerRegisterIntent = userTypeFromUrl === "Landowners";
   const isDeveloperRegisterIntent = userTypeFromUrl === "Developer";
   const [agreed, setAgreed] = useState(false);
@@ -491,6 +488,11 @@ const Register = () => {
                   <span className="text-sm font-medium">{item}</span>
                 </div>
               ))}
+              {["Agent", "Developer", "Lawyer", "Surveyor", "Valuer", "PropertyScout"].includes(formik.values.userType) ? (
+                <Link href="/pricing" className="inline-flex text-sm font-semibold text-[#8DDB90] hover:underline">
+                  View professional plans
+                </Link>
+              ) : null}
             </div>
           </div>
         </div>
@@ -505,14 +507,18 @@ const Register = () => {
           {/* Header */}
           <div className="text-center lg:text-left mb-2">
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-[#09391C] mb-2">
-              {isDeveloperRegisterIntent
+              {isScoutIntent
+                ? "Become a Property Scout"
+                : isDeveloperRegisterIntent
                 ? "Create Your Developer Account"
                 : isOwnerRegisterIntent
                   ? "Create Your Owner Account"
                   : "Create Your Account"}
             </h2>
             <p className="text-[#5A5D63] text-sm sm:text-base">
-              {isDeveloperRegisterIntent
+              {isScoutIntent
+                ? "Know about a property opportunity? Join Khabiteq as a Property Scout and earn from successful property referrals."
+                : isDeveloperRegisterIntent
                 ? "Whether you're selling completed properties or developing off-plan projects, Khabiteq gives you the tools and professional network to grow."
                 : isOwnerRegisterIntent
                   ? "Choose how you want to list and manage your property opportunities on Khabiteq."
@@ -520,15 +526,18 @@ const Register = () => {
             </p>
           </div>
 
-          {/* Account Type Selection */}
-          <div className="w-full flex flex-col gap-3">
-            {isScoutIntent && (
-              <p className="rounded-xl border border-[#8DDB90]/40 bg-[#8DDB90]/10 px-3 py-2.5 text-sm leading-relaxed text-[#5A5D63]">
-                <span className="font-semibold text-[#09391C]">No license needed.</span>{" "}
-                Choose <span className="font-semibold text-[#09391C]">Agent</span> or{" "}
-                <span className="font-semibold text-[#09391C]">Developer</span> to start as a Property Scout. You can add a license later.
+          {isScoutIntent && (
+            <div className="rounded-xl border border-[#8DDB90]/40 bg-[#8DDB90]/10 px-4 py-3 text-sm leading-relaxed text-[#5A5D63]">
+              <p className="font-semibold text-[#09391C]">No professional license required.</p>
+              <p className="mt-1">
+                Anyone can become a Property Scout. You can share property opportunities you know about and earn when your referral leads to a successful transaction.
               </p>
-            )}
+            </div>
+          )}
+
+          {/* Account Type Selection */}
+          {!isScoutIntent && (
+          <div className="w-full flex flex-col gap-3">
             <label className="text-sm font-semibold text-[#09391C]">
               I want to join as a...
             </label>
@@ -583,11 +592,6 @@ const Register = () => {
                     <div className="flex-1 min-w-0">
                       <span className="block text-base font-semibold text-[#09391C]">Agent</span>
                       <span className="block text-xs text-[#5A5D63]">Help clients buy/sell</span>
-                      {isScoutIntent && (
-                        <span className="mt-0.5 block text-[11px] font-medium text-[#16a34a]">
-                          Works as Property Scout
-                        </span>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -614,11 +618,6 @@ const Register = () => {
                     <div className="flex-1 min-w-0">
                       <span className="block text-base font-semibold text-[#09391C]">Developer</span>
                       <span className="block text-xs text-[#5A5D63]">Showcase projects</span>
-                      {isScoutIntent && (
-                        <span className="mt-0.5 block text-[11px] font-medium text-[#16a34a]">
-                          Works as Property Scout
-                        </span>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -710,6 +709,7 @@ const Register = () => {
               </span>
             )}
           </div>
+          )}
 
           {/* Social Login Section - Show only when userType is selected */}
           {formik.values.userType && (

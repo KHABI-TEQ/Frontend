@@ -8,146 +8,21 @@ export interface NavigationItem {
 }
 
 export const mainNavigationData: NavigationItem[] = [
-  {
-    name: "Home",
-    url: "/",
-    isClicked: true,
-  },
-  {
-    name: "Compliance",
-    url: "/document-verification",
-    isClicked: false,
-    subItems: [
-      {
-        name: "Document Verification",
-        url: "/document-verification",
-        isClicked: false,
-      },
-      {
-        name: "Survey Services",
-        url: "/survey-services",
-        isClicked: false,
-      },
-      {
-        name: "Licensed Professionals",
-        url: "/licensed-agents",
-        isClicked: false,
-      },
-      {
-        name: "Transaction Registration",
-        url: "/transaction-registration",
-        isClicked: false,
-      },
-    ],
-  },
-  {
-    name: "Who is it for?",
-    url: "/user-types",
-    isClicked: false,
-    subItems: [
-      { name: "Property Seekers", url: "/for-clients", isClicked: false },
-      { name: "Owners & Developers", url: "/for-owners-developers", isClicked: false },
-      { name: "Developers", url: "/for-developers", isClicked: false },
-      {
-        name: "Real Estate Professionals",
-        url: "/for-professionals",
-        isClicked: false,
-        subItems: [
-          { name: "Agent", url: "/for-professionals?role=agent", isClicked: false },
-          { name: "Lawyer", url: "/for-professionals?role=lawyer", isClicked: false },
-          { name: "Surveyor", url: "/for-professionals?role=surveyor", isClicked: false },
-          { name: "Property Valuers", url: "/for-professionals?role=valuer", isClicked: false },
-        ],
-      },
-      { name: "Property Scout", url: "/auth/register?intent=scout", isClicked: false },
-    ],
-  },
-  {
-    name: "About us",
-    url: "/about_us",
-    isClicked: false,
-  },
+  { name: "Home", url: "/", isClicked: true },
+  { name: "How It Works", url: "/how-it-works", isClicked: false },
+  { name: "Find Property", url: "/preference", isClicked: false },
+  { name: "Professionals", url: "/for-professionals", isClicked: false },
+  { name: "Trust & Safety", url: "/trust-and-safety", isClicked: false },
+  { name: "Pricing", url: "/pricing", isClicked: false },
+  { name: "About", url: "/about_us", isClicked: false },
 ];
 
-export const agentNavigationData: NavigationItem[] = [
-  {
-    name: "Home",
-    url: "/",
-    isClicked: true,
-  },
-  {
-    name: "Document Verification",
-    url: "/document-verification",
-    isClicked: false,
-  },
-  {
-    name: "Who's it for",
-    url: "/user-types",
-    isClicked: false,
-  },
-  {
-    name: "Property Seekers",
-    url: "/for-clients",
-    isClicked: false,
-  },
-  {
-    name: "Owners & Developers",
-    url: "/for-owners-developers",
-    isClicked: false,
-  },
-  {
-    name: "Developers",
-    url: "/for-developers",
-    isClicked: false,
-  },
-  {
-    name: "Real Estate Professionals",
-    url: "/for-professionals",
-    isClicked: false,
-    subItems: [
-      { name: "Agent", url: "/for-professionals?role=agent", isClicked: false },
-      { name: "Lawyer", url: "/for-professionals?role=lawyer", isClicked: false },
-      { name: "Surveyor", url: "/for-professionals?role=surveyor", isClicked: false },
-      { name: "Property Valuers", url: "/for-professionals?role=valuer", isClicked: false },
-    ],
-  },
-  {
-    name: "Property Scout",
-    url: "/auth/register?intent=scout",
-    isClicked: false,
-  },
-  {
-    name: "About us",
-    url: "/about_us",
-    isClicked: false,
-  },
-];
+export const agentNavigationData: NavigationItem[] = mainNavigationData;
 
-// Marketplace dropdown data (used in both headers)
 export const marketplaceDropdownData: NavigationItem[] = [
-  {
-    name: "Buy",
-    url: "/preference?type=buy",
-    isClicked: false,
-  },
-  {
-    name: "Rent",
-    url: "/preference?type=rent",
-    isClicked: false,
-  },
-  {
-    name: "Shortlet",
-    url: "/preference?type=shortlet",
-    isClicked: false,
-  },
-  {
-    name: "Joint Venture",
-    url: "/preference?type=joint-venture",
-    isClicked: false,
-  },
-  {
-    name: "Off-Plan",
-    url: "/preference?type=off-plan",
-    isClicked: false,
-  },
+  { name: "Buy", url: "/preference?type=buy", isClicked: false },
+  { name: "Rent", url: "/preference?type=rent", isClicked: false },
+  { name: "Shortlet", url: "/preference?type=shortlet", isClicked: false },
+  { name: "Joint Venture", url: "/preference?type=joint-venture", isClicked: false },
+  { name: "Off-Plan", url: "/preference?type=off-plan", isClicked: false },
 ];

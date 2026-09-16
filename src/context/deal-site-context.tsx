@@ -312,7 +312,11 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  const previewUrl = settings.publicSlug ? `https://${settings.publicSlug}.khabiteq.com` : null;
+  const fallbackPublicSlug = String(
+    (user?.dealSite as { publicSlug?: string } | null | undefined)?.publicSlug || ""
+  ).trim();
+  const resolvedPublicSlug = (settings.publicSlug || fallbackPublicSlug).trim();
+  const previewUrl = resolvedPublicSlug ? `https://${resolvedPublicSlug}.khabiteq.com` : null;
 
   // Load settings from API
   const loadSettings = useCallback(async () => {
@@ -333,10 +337,11 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
         const data = Array.isArray(res.data) ? res.data[0] : res.data;
 
         if (data) {
+          const nextSlug = data.publicSlug || fallbackPublicSlug || "";
           setSettings((prev) => ({
             ...prev,
             _id: data._id || prev._id,
-            publicSlug: data.publicSlug || prev.publicSlug,
+            publicSlug: nextSlug || prev.publicSlug,
             title: data.title || prev.title,
             keywords: data.keywords || prev.keywords,
             description: data.description || prev.description,
@@ -355,7 +360,7 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
             subscribeSettings: data.subscribeSettings || prev.subscribeSettings,
             status: data.status || prev.status,
           }));
-          if (data.publicSlug) setSlugLocked(true);
+          if (nextSlug) setSlugLocked(true);
           if (data.status) {
             setDealSiteStatus(data.status);
             if (data.status === "on-hold") setIsOnHold(true);
@@ -367,18 +372,27 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
               ? data.pausedByPolicy
               : null
           );
-          setIsSetupComplete(!!data.publicSlug);
+          setIsSetupComplete(!!nextSlug);
         }
+      } else if (fallbackPublicSlug) {
+        setSettings((prev) => ({ ...prev, publicSlug: prev.publicSlug || fallbackPublicSlug }));
+        setSlugLocked(true);
+        setIsSetupComplete(true);
       }
     } catch (error) {
       // Log error but don't crash the app
       console.warn("Failed to load DealSite settings (this is normal if not yet set up):", error);
-      // Use default settings as fallback
-      setIsSetupComplete(false);
+      if (fallbackPublicSlug) {
+        setSettings((prev) => ({ ...prev, publicSlug: prev.publicSlug || fallbackPublicSlug }));
+        setSlugLocked(true);
+        setIsSetupComplete(true);
+      } else {
+        setIsSetupComplete(false);
+      }
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [fallbackPublicSlug]);
 
   const updateSettings = useCallback((updates: Partial<DealSiteSettings>) => {
     setSettings((prev) => ({ ...prev, ...updates }));

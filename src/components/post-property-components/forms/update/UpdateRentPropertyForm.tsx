@@ -448,7 +448,7 @@ const UpdateRentPropertyForm: React.FC<UpdateRentPropertyFormProps> = ({
   return (
     <CombinedAuthGuard
       requireAuth={true}
-      allowedUserTypes={["Agent", "Landowners", "Developer"]}
+      allowedUserTypes={["Agent", "Landowners", "Developer", "PropertyScout"]}
       requireAgentOnboarding={false}
       requireAgentApproval={false}
       agentCustomMessage="You must complete onboarding and be approved before you can update properties."

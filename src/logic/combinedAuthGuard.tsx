@@ -16,7 +16,7 @@ export const REDIRECT_AFTER_SUBSCRIPTION_KEY = "redirectAfterSubscription";
 interface CombinedAuthGuardProps {
   children: ReactNode;
   requireAuth?: boolean;
-  allowedUserTypes?: ("Agent" | "Landowners" | "FieldAgent" | "Developer")[];
+  allowedUserTypes?: ("Agent" | "Landowners" | "FieldAgent" | "Developer" | "PropertyScout" | "Lawyer" | "Surveyor" | "Valuer")[];
   redirectTo?: string;
   // Kept for backward-compatibility but ignored
   requireAgentOnboarding?: boolean;
@@ -45,6 +45,7 @@ export const CombinedAuthGuard: React.FC<CombinedAuthGuardProps> = ({
 
   const isAgent = user?.userType === "Agent";
   const isDeveloper = user?.userType === "Developer";
+  const isPropertyScout = user?.userType === "PropertyScout";
   const kycStatus = user && isAgent ? resolveAgentKycStatus(user) : undefined;
   const kycApproved = kycStatus === "approved";
   const hasActiveSubscription = !!(
@@ -106,6 +107,18 @@ export const CombinedAuthGuard: React.FC<CombinedAuthGuardProps> = ({
         message={message}
         actionHref="/agent-kyc"
         actionLabel="Submit KYC"
+        icon={<CheckCircle2 size={32} className="text-[#8DDB90]" />}
+      />
+    );
+  }
+
+  if (requireKycApproved && isPropertyScout && user?.kycStatus !== "approved") {
+    return (
+      <Block
+        title="KYC Verification Required"
+        message="Complete your KYC verification to start submitting property opportunities."
+        actionHref="/scout-kyc"
+        actionLabel="Complete KYC"
         icon={<CheckCircle2 size={32} className="text-[#8DDB90]" />}
       />
     );

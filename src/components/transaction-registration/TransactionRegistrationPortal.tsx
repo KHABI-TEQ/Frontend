@@ -98,6 +98,7 @@ export default function TransactionRegistrationPortal() {
   const [certResult, setCertResult] = useState<{
     certificateUrl: string;
     certificateNumber?: string;
+    transactionReference?: string;
     buyerName?: string;
   } | null>(null);
   const [certError, setCertError] = useState<string | null>(null);
@@ -180,6 +181,7 @@ export default function TransactionRegistrationPortal() {
         setCertResult({
           certificateUrl: res.data.certificateUrl,
           certificateNumber: res.data.certificateNumber,
+          transactionReference: res.data.transactionReference,
           buyerName: res.data.buyerName,
         });
       } else {
@@ -803,21 +805,22 @@ export default function TransactionRegistrationPortal() {
               <div className="h-10 w-10 rounded-xl bg-[#0B5D3B]/10 flex items-center justify-center">
                 <Award className="h-5 w-5 text-[#0B5D3B]" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900">Download transaction registration certificate</h2>
+              <h2 className="text-xl font-bold text-gray-900">Download Khabiteq Transaction Registration Certificate</h2>
             </div>
             <p className="text-sm text-gray-600 mb-6">
-              Once LASRERA has approved your registration, download your official certificate here. For security, you must
-              enter the <strong>buyer email</strong> and <strong>registration reference</strong> from your confirmation email.
+              Once your transaction has been registered on Khabiteq and the certificate has been issued, download your
+              digital record of the transaction journey here. For security, enter the <strong>buyer email</strong> and{" "}
+              <strong>transaction reference</strong> from your confirmation email.
             </p>
             <form onSubmit={handleCertificateDownload} className="space-y-4">
               <div>
-                <label className={labelClass}>Registration reference (transaction ID) *</label>
+                <label className={labelClass}>Transaction reference *</label>
                 <input
                   type="text"
                   value={certRegistrationId}
                   onChange={(e) => setCertRegistrationId(e.target.value)}
                   className={inputClass}
-                  placeholder="e.g. 674a1b2c3d4e5f678901234"
+                  placeholder="e.g. KHT-TR-000482"
                   required
                   autoComplete="off"
                 />
@@ -850,8 +853,10 @@ export default function TransactionRegistrationPortal() {
                 <p className="font-semibold text-emerald-950">
                   Certificate verified{certResult.buyerName ? ` for ${certResult.buyerName}` : ""}
                 </p>
-                {certResult.certificateNumber && (
-                  <p className="text-sm text-emerald-900">Certificate no.: {certResult.certificateNumber}</p>
+                {(certResult.transactionReference || certResult.certificateNumber) && (
+                  <p className="text-sm text-emerald-900">
+                    Transaction reference: {certResult.transactionReference || certResult.certificateNumber}
+                  </p>
                 )}
                 <a
                   href={certResult.certificateUrl}

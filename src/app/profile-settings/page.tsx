@@ -36,7 +36,7 @@ interface UserProfile {
   address?: string;
   accountId?: string;
   profileImage?: string;
-  userType: "Agent" | "Landowners" | "FieldAgent" | "Developer" | "Lawyer" | "Surveyor";
+  userType: "Agent" | "Landowners" | "FieldAgent" | "Developer" | "Lawyer" | "Surveyor" | "Valuer" | "PropertyScout";
   accountApproved?: boolean;
   createdAt: string;
 }

@@ -731,9 +731,10 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
   return (
     <CombinedAuthGuard
       requireAuth={true}
-      allowedUserTypes={["Agent", "Landowners", "Developer"]}
+      allowedUserTypes={["Agent", "Landowners", "Developer", "PropertyScout"]}
       requireAgentOnboarding={true}
       requireAgentApproval={true}
+      requireKycApproved={true}
       requireActiveSubscription={false}
       agentCustomMessage="You must complete onboarding and be approved before you can post properties."
     >

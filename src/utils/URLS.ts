@@ -34,6 +34,7 @@ export const URLS = {
    * Property Endpoints
    */
   propertyBaseUrl: "/properties",
+  propertyByCode: "/properties/code",
   /**
    * Settings
    */
@@ -90,6 +91,7 @@ export const URLS = {
     `/account/inspectionsFieldAgent/${inspectionId}/representation/respond`,
   /** Property Scout → licensed Agent representation (replaces Field Agent request) */
   propertyScoutStatus: "/account/property-scout/status",
+  professionalUpgrade: "/account/professional-upgrade",
   licensedAgentRepresentationTerms: "/account/licensed-agents/representation-terms",
   licensedAgentsAvailable: "/account/licensed-agents/available",
   licensedAgentRepresentationRequests:
@@ -293,6 +295,8 @@ export const URLS = {
   transactionRegistrationEgisValidate: "/transaction-registration/egis-validate",
   transactionRegistrationRegister: "/transaction-registration/register",
   transactionRegistrationCertificateDownload: "/transaction-registration/certificate/download",
+  transactionRegistrationVerify: "/transaction-registration/verify",
+  myTransactionRegistrations: "/account/my-transaction-registrations",
 
   /** Public file upload (documents, images, etc.) */
   uploadSingleFile: "/upload-single-file",

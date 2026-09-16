@@ -13,27 +13,25 @@ import KhabiteqFooterLogo from '@/components/branding/KhabiteqFooterLogo';
 
 const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
   const exploreLinks = [
-    { name: 'Buy Properties', url: '#' },
-    { name: 'Rent Properties', url: '#' },
-    { name: 'Sell Properties', url: '#' },
-    { name: 'Joint Ventures', url: '#' },
-    { name: 'Agent Marketplace', url: '#' }
+    { name: "Home", url: "/" },
+    { name: "How It Works", url: "/how-it-works" },
+    { name: "Submit Preference", url: "/preference" },
+    { name: "Property Code", url: "/property-code" },
+    { name: "For Professionals", url: "/for-professionals" },
+    { name: "Pricing", url: "/pricing" },
   ];
 
   const servicesLinks = [
-    { name: 'Document Verification', url: '#' },
-    { name: 'Property Inspection', url: '#' },
-    { name: 'Secure Transactions', url: '#' },
-    { name: 'Agent Services', url: '#' },
-    { name: 'Referral Program', url: '#' }
+    { name: "Due Diligence", url: "/due-diligence" },
+    { name: "Transaction Registration", url: "/transaction-registration" },
+    { name: "Report & Escalate", url: "/report-escalate" },
+    { name: "About", url: "/about_us" },
+    { name: "Contact", url: "/contact-us" },
   ];
 
   const supportLinks = [
-    { name: 'About Us', url: '/about_us' },
-    { name: 'Contact Us', url: '/contact-us' },
-    { name: 'FAQs', url: '/homepage#faqs' },
-    { name: 'Privacy Policy', url: '/policies_page' },
-    { name: 'Terms of Service', url: '/policies_page' }
+    { name: "Privacy Policy", url: "/policies_page" },
+    { name: "Terms of Service", url: "/policies_page" },
   ];
 
   const defaultSocialLinks = [
@@ -85,9 +83,9 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
   ];
 
   const quickActions = [
-    { name: 'Submit Property Preference', url: '/preference' },
-    { name: 'Join as an Agent', url: '/agent-kyc' },
-    { name: 'Verify Documents', url: '/document-verification' }
+    { name: "Submit Property Preference", url: "/preference" },
+    { name: "Become a Property Scout", url: "/auth/register?intent=scout" },
+    { name: "Find a professional", url: "/due-diligence" },
   ];
 
   const [email, setEmail] = useState('');
@@ -220,7 +218,7 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
                 <KhabiteqFooterLogo />
               </div>
               <p className={`text-[#D6DDEB]/90 text-sm sm:text-base leading-relaxed mb-6 max-w-md ${footerFontClass}`}>
-                Simplifying real estate transactions in Nigeria. Buy, sell, rent, and manage properties with ease through our trusted platform.
+                Real Estate Transaction Infrastructure.
               </p>
               {/* Quick Actions */}
               <div className='space-y-2'>
@@ -347,10 +345,10 @@ const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
           <div className='grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-center'>
             <div>
               <h4 className={`text-white font-bold text-lg sm:text-xl mb-2 ${footerFontClass}`}>
-                Stay Updated with Property Deals
+                Stay updated on the Khabiteq journey
               </h4>
               <p className="text-[#D6DDEB]/80 text-sm sm:text-base">
-                Get notified about new properties, market insights, and exclusive offers.
+                Get notified about structured matching, professional connection and platform updates.
               </p>
             </div>
             <div className='flex flex-col sm:flex-row gap-2 sm:gap-3'>

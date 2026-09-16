@@ -25,6 +25,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { createPortal } from "react-dom";
 import { Property } from "@/types/my-listings.types";
+import { scoutListingStatusLabel } from "@/utils/scoutListingStatus";
 
 interface MyListingPropertyCardProps {
   property: Property;
@@ -101,6 +102,10 @@ const MyListingPropertyCard: React.FC<MyListingPropertyCardProps> = ({
         return "bg-yellow-100 text-yellow-800 border-yellow-200";
       case "rejected":
         return "bg-red-100 text-red-800 border-red-200";
+      case "draft":
+        return "bg-gray-100 text-gray-800 border-gray-200";
+      case "flagged":
+        return "bg-amber-100 text-amber-800 border-amber-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
     }
@@ -232,9 +237,15 @@ const MyListingPropertyCard: React.FC<MyListingPropertyCardProps> = ({
         <div className="absolute top-3 left-3">
           <div className={`px-2 py-1 rounded-full text-xs font-medium border flex items-center gap-1 ${getStatusColor(property.status)}`}>
             {getStatusIcon(property.status)}
-            {property.status.charAt(0).toUpperCase() + property.status.slice(1)}
+            {scoutListingStatusLabel(property)}
           </div>
         </div>
+
+        {property.propertyCode ? (
+          <div className="absolute bottom-3 left-3 bg-black/70 text-white px-2 py-1 rounded text-[11px] font-semibold tracking-wide">
+            {property.propertyCode}
+          </div>
+        ) : null}
 
         {/* Premium Badge */}
         {property.isPremium && (
@@ -294,7 +305,7 @@ const MyListingPropertyCard: React.FC<MyListingPropertyCardProps> = ({
                   <Edit size={14} />
                   Edit Property
                 </button>
-                {!["pending", "deleted", "rejected", "hold", "flagged"].includes(property.status) && (
+                {!["pending", "deleted", "rejected", "hold", "flagged", "draft"].includes(property.status) && property.isApproved && (
                   <button
                     type="button"
                     onClick={() => { onChangeStatus(); setShowDropdown(false); }}
@@ -343,6 +354,11 @@ const MyListingPropertyCard: React.FC<MyListingPropertyCardProps> = ({
           <h3 className="font-semibold text-gray-900 text-lg mb-1 line-clamp-1">
             {property.propertyType.charAt(0).toUpperCase() + property.propertyType.slice(1)}
           </h3>
+          {property.listingReviewNote ? (
+            <p className="mb-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1">
+              Action required: {property.listingReviewNote}
+            </p>
+          ) : null}
           <div className="flex items-center justify-between">
             <p className="text-xl font-bold text-[#09391C]">
               {formatPrice(property.price)}

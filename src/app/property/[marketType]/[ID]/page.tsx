@@ -95,6 +95,7 @@ interface PropertyDetails {
     isProvided: boolean;
   }[];
   briefType: string;
+  propertyCode?: string;
   propertyCondition: string;
   noOfCarParks: number;
   noOfBathrooms: number;
@@ -829,6 +830,7 @@ const ProductDetailsPage = () => {
                 : propertyData.propertyCategory === "for_rent"
                   ? "Rent"
                   : "Unknown"),
+            propertyCode: propertyData.propertyCode || "",
             propertyCondition: propertyData.propertyCondition || "",
             noOfCarParks: propertyData.additionalFeatures?.noOfCarPark || 0,
             noOfBathrooms: propertyData.additionalFeatures?.noOfBathroom || 0,
@@ -991,6 +993,13 @@ const ProductDetailsPage = () => {
             >
               <ImageGallery images={details.pictures} />
             </motion.div>
+
+            {details.propertyCode ? (
+              <div className="rounded-xl border border-[#8DDB90]/40 bg-[#F5F7F9] px-4 py-3 text-sm">
+                <span className="font-semibold text-[#09391C]">Property Code:</span>{" "}
+                <span className="tracking-wide text-[#09391C]">{details.propertyCode}</span>
+              </div>
+            ) : null}
 
             {/* Video Gallery */}
             {details.videos && details.videos.length > 0 && (

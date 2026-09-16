@@ -496,6 +496,7 @@ const AgentKycForm: React.FC = () => {
             <p className="text-[#4F5B57] mb-6">Your agent KYC has been approved. You can now proceed to your dashboard and access verified agent features.</p>
             <div className="flex items-center justify-center gap-3">
               <a href="/dashboard" className="px-6 py-2 bg-green-600 text-white rounded-lg">Go to Dashboard</a>
+              <a href="/pricing" className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg">View professional plans</a>
               <a href="/agent-subscriptions" className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg">Manage Subscription</a>
             </div>
           </div>

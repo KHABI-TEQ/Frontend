@@ -7,6 +7,8 @@ import Landlord from "./landlord";
 import FieldAgent from "./field-agent";
 import Developer from "./developer";
 import ProfessionalDashboard from "./professional";
+import Scout from "./scout";
+import Valuer from "./valuer";
 import { DealSiteSetupOverlay } from "@/components/dashboard/DealSiteSetupOverlay";
 import { PractitionerWelcomeOverlay } from "@/components/dashboard/PractitionerWelcomeOverlay";
 
@@ -46,7 +48,18 @@ export default function Dashboard() {
     if (typeof window === "undefined" || !effectiveType) return;
     try {
       const current = localStorage.getItem("userType") ?? "";
-      const canonical = typeLower === "landowner" ? "Landowners" : typeLower === "developer" ? "Developer" : typeLower === "agent" ? "Agent" : typeLower === "fieldagent" || typeLower === "field_agent" ? "FieldAgent" : effectiveType;
+      const canonical =
+        typeLower === "landowner"
+          ? "Landowners"
+          : typeLower === "developer"
+            ? "Developer"
+            : typeLower === "agent"
+              ? "Agent"
+              : typeLower === "propertyscout"
+                ? "PropertyScout"
+                : typeLower === "fieldagent" || typeLower === "field_agent"
+                  ? "FieldAgent"
+                  : effectiveType;
       if (canonical && current !== canonical) {
         localStorage.setItem("userType", canonical);
       }
@@ -59,6 +72,8 @@ export default function Dashboard() {
   const showFieldAgent = typeLower === "fieldagent" || typeLower === "field_agent";
   const showLawyer = typeLower === "lawyer";
   const showSurveyor = typeLower === "surveyor";
+  const showValuer = typeLower === "valuer";
+  const showScout = typeLower === "propertyscout";
 
   const noTypeMatched =
     !showAgentDashboard &&
@@ -66,7 +81,9 @@ export default function Dashboard() {
     !showLandlord &&
     !showFieldAgent &&
     !showLawyer &&
-    !showSurveyor;
+    !showSurveyor &&
+    !showValuer &&
+    !showScout;
 
   const fallbackDeveloper =
     noTypeMatched &&
@@ -76,10 +93,10 @@ export default function Dashboard() {
   const showDeveloper =
     showDeveloperDashboard ||
     fallbackDeveloper ||
-    (noTypeMatched && typeof window !== "undefined");
+    (noTypeMatched && typeof window !== "undefined" && !showScout);
 
   const showProfessionalWelcome =
-    showAgentDashboard || showDeveloper || showLawyer || showSurveyor;
+    showAgentDashboard || showDeveloper || showLawyer || showSurveyor || showValuer;
 
   return (
     <>
@@ -95,6 +112,8 @@ export default function Dashboard() {
       {showFieldAgent && <FieldAgent />}
       {showLawyer && <ProfessionalDashboard role="Lawyer" />}
       {showSurveyor && <ProfessionalDashboard role="Surveyor" />}
+      {showValuer && <Valuer />}
+      {showScout && <Scout />}
     </>
   );
 }

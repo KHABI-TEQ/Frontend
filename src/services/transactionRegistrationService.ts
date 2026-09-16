@@ -69,6 +69,8 @@ export type TransactionRegistrationSearchResult = {
 export type TransactionRegistrationCertificateResponse = {
   certificateUrl: string;
   certificateNumber?: string;
+  transactionReference?: string;
+  propertyCode?: string;
   issuedAt?: string;
   buyerName?: string;
   registrationId?: string;

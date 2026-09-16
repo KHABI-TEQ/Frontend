@@ -159,7 +159,10 @@ export default function DeveloperKycForm() {
               Dashboard
             </Link>
             <Link href="/agent-subscriptions?tab=plans" className="px-5 py-2 rounded-lg border border-[#8DDB90] text-[#09391C] font-medium">
-              View plans
+              Subscribe
+            </Link>
+            <Link href="/pricing" className="px-5 py-2 rounded-lg border border-gray-200 text-[#09391C] font-medium">
+              View professional plans
             </Link>
           </div>
         </div>
