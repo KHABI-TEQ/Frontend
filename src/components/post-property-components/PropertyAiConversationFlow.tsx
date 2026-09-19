@@ -29,7 +29,7 @@ import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import { ArrowLeft, MessageSquare, Bot, Loader2, Volume2, VolumeX } from "lucide-react";
-import { getAreasByStateLGA, getLGAsByState, getStates } from "@/utils/location-utils";
+import { getAreasByStateLGA, getLGAsByState, getStates, PILOT_STATE } from "@/utils/location-utils";
 import { useUserContext } from "@/context/user-context";
 import { canUserListOffPlan, LANDLORD_CANNOT_LIST_OFF_PLAN } from "@/utils/listingAccess";
 
@@ -139,9 +139,9 @@ function normalizeFieldKey(field: string): string {
 
 function resolveCanonicalStateName(rawState: string): string {
   const state = rawState.trim();
-  if (!state) return "";
+  if (!state) return PILOT_STATE;
   const match = getStates().find((s) => s.toLowerCase() === state.toLowerCase());
-  return match || state;
+  return match || PILOT_STATE;
 }
 
 function resolveCanonicalLgaName(state: string, rawLga: string): string {
@@ -161,7 +161,7 @@ function applyPropertyLocationFromFocusedAnswer(
   const focus = normalizeFieldKey(focusedMissingField);
   const next = { ...location };
   if (focus.includes("state")) {
-    next.state = value;
+    next.state = PILOT_STATE;
     next.localGovernment = "";
     next.area = "";
     return next;
@@ -339,6 +339,7 @@ export default function PropertyAiConversationFlow({
   /** Default on: speak each assistant reply automatically; user can mute via toggle or stop via speaker icon. */
   const [playRepliesAloud, setPlayRepliesAloud] = useState(true);
   const [selectedAreaOptions, setSelectedAreaOptions] = useState<string[]>([]);
+  const selectedAreaOptionsRef = useRef<string[]>([]);
   const prevMessageCountRef = useRef(0);
   const conversationScrollRef = useRef<HTMLDivElement>(null);
   const inputSectionRef = useRef<HTMLDivElement>(null);
@@ -376,6 +377,10 @@ export default function PropertyAiConversationFlow({
   useEffect(() => {
     collectedDataRef.current = aiCollectedData;
   }, [aiCollectedData]);
+
+  useEffect(() => {
+    selectedAreaOptionsRef.current = selectedAreaOptions;
+  }, [selectedAreaOptions]);
 
   useEffect(() => {
     if (aiConversationMessages.length === 0) {
@@ -495,24 +500,54 @@ export default function PropertyAiConversationFlow({
         : String(currentLoc.area || "").trim()
           ? [String(currentLoc.area).trim()]
           : [];
-      if (doneSelectingAreas && existingAreas.length > 0) {
+      const markerAreas = doneMarkerPayload
+        .split(",")
+        .map((x) => x.trim())
+        .filter(Boolean);
+      if (doneSelectingAreas) {
+        let dataForNext = currentData;
+        if (markerAreas.length > 0 || existingAreas.length === 0) {
+          const source = markerAreas.length > 0 ? markerAreas.join(", ") : trimmed;
+          const nextLoc = applyPropertyLocationFromFocusedAnswer(
+            source,
+            lastAssistant?.focusedMissingField,
+            currentLoc,
+          );
+          dataForNext = {
+            ...currentData,
+            location: { ...nextLoc, state: PILOT_STATE },
+          };
+          setAiCollectedData(dataForNext);
+          collectedDataRef.current = dataForNext;
+        }
+        const savedAreas = Array.isArray((dataForNext.location as Record<string, unknown> | undefined)?.areas)
+          ? ((dataForNext.location as Record<string, unknown>).areas as unknown[])
+              .map((x) => String(x).trim())
+              .filter(Boolean)
+          : String((dataForNext.location as Record<string, unknown> | undefined)?.area || "").trim()
+            ? [String((dataForNext.location as Record<string, unknown>).area).trim()]
+            : [];
+        if (savedAreas.length === 0) {
+          toast.error("Select at least one area, or type an area name, then tap Done.");
+          return;
+        }
         const reply = withPropertyLocationOptions(
           buildPropertyInteractiveReply(
-            currentData,
+            dataForNext,
             skippedFieldsRef.current,
             listingTypePreset,
             userAnsweredFieldsRef.current,
           ),
-          currentData,
+          dataForNext,
         );
         setAiConversationMessages((prev) => [
           ...prev,
-          { role: "user", content: trimmed },
+          { role: "user", content: savedAreas.join(", ") },
           {
             role: "assistant",
             content: reply.content,
             speakLine: reply.speakLine,
-            data: currentData,
+            data: dataForNext,
             missingFields: reply.missingFields.length ? reply.missingFields : undefined,
             focusedMissingField: reply.focusedMissingField,
             remainingMissingCount: reply.remainingMissingCount,
@@ -871,11 +906,18 @@ export default function PropertyAiConversationFlow({
       }
 
       if (option === DONE_SELECTING_AREAS) {
-        if (selectedAreaOptions.length === 0) {
-          toast.error("Select at least one area before tapping Done.");
+        const chips = selectedAreaOptionsRef.current;
+        const loc = ((collectedDataRef.current || {}).location || {}) as Record<string, unknown>;
+        const existing = [
+          ...(Array.isArray(loc.areas) ? (loc.areas as unknown[]).map((x) => String(x).trim()) : []),
+          String(loc.area ?? "").trim(),
+        ].filter(Boolean);
+        const chosen = chips.length > 0 ? chips : existing;
+        if (chosen.length === 0) {
+          toast.error("Select at least one area, or type an area name, then tap Done.");
           return;
         }
-        await handleSuggest(`${AREA_DONE_MARKER}${selectedAreaOptions.join(", ")}`);
+        await handleSuggest(`${AREA_DONE_MARKER}${chosen.join(", ")}`);
         setSelectedAreaOptions([]);
         return;
       }
@@ -891,7 +933,7 @@ export default function PropertyAiConversationFlow({
           : [...prev, option],
       );
     },
-    [handleSuggest, selectedAreaOptions],
+    [handleSuggest],
   );
 
   const handleProceedToSummary = useCallback(() => {

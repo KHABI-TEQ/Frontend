@@ -12,6 +12,7 @@ import {
   applySmartLocationFromNaturalText,
   sanitizeConversationLocation,
 } from "@/utils/preference-ai-conversation";
+import { PILOT_STATE } from "@/utils/location-utils";
 
 export const PROPERTY_AI_FIELD = {
   LISTING_TYPE: "listingType",
@@ -259,6 +260,8 @@ export function normalizePropertyAiCollectedData(data: Record<string, unknown>):
     if (land.measurementType) next.measurementType = land.measurementType;
   }
   next.additionalFeatures = add;
+  const loc = (next.location || {}) as Record<string, unknown>;
+  next.location = { ...loc, state: PILOT_STATE };
   return next;
 }
 
@@ -605,14 +608,12 @@ export function getPropertyAiMissingFields(
   }
 
   const loc = (normalized.location || {}) as Record<string, unknown>;
-  const hasState = isMeaningful(loc.state);
   const hasLga = isMeaningful(loc.localGovernment);
   const hasArea =
     isMeaningful(loc.area) ||
     (Array.isArray(loc.areas) && (loc.areas as unknown[]).length > 0);
 
-  if (!hasState) missing.push(PROPERTY_AI_FIELD.STATE);
-  else if (!hasLga) missing.push(PROPERTY_AI_FIELD.LGA);
+  if (!hasLga) missing.push(PROPERTY_AI_FIELD.LGA);
   else if (!hasArea) missing.push(PROPERTY_AI_FIELD.AREA);
 
   const price = normalized.price;

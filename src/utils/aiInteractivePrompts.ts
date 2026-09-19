@@ -72,8 +72,10 @@ function pickVariant<T>(choices: T[], variant: number): T {
 export function getPreferenceFieldPrompt(
   focus: string,
   variant: number,
+  preferenceType?: string,
 ): { displayLine: string; speakLine: string } {
   const f = focus.toLowerCase().replace(/\u2013|\u2014/g, "-");
+  const pt = String(preferenceType || "").toLowerCase().replace(/\s+/g, "-");
   const sample = preferenceSample(focus);
   const lab = fieldPromptLabel(focus);
 
@@ -126,12 +128,12 @@ export function getPreferenceFieldPrompt(
   }
 
   if (f.includes("preference location - state")) {
-    const speak = "Which Nigerian state?";
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    const speak = "Khabiteq is piloting in Lagos. Which Lagos local government area?";
+    return { displayLine: `${speak} (format: Ikeja)`, speakLine: speak };
   }
 
   if (f.includes("preference location - lga")) {
-    const speak = "Which local government area?";
+    const speak = "Which Lagos local government area?";
     return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
   }
 
@@ -141,11 +143,8 @@ export function getPreferenceFieldPrompt(
   }
 
   if (f.includes("location state") || (f.includes("state") && f.includes("required") && f.includes("location"))) {
-    const speak = pickVariant(
-      ["Which state?", "What state?", "Which Nigerian state should it be in?"],
-      variant,
-    );
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    const speak = "Khabiteq is piloting in Lagos. Which Lagos local government area?";
+    return { displayLine: `${speak} (format: Ikeja)`, speakLine: speak };
   }
 
   if (
@@ -277,14 +276,7 @@ export function getPreferenceFieldPrompt(
   }
 
   if (f.includes("bathroom") && f.includes("residential buy")) {
-    const speak = pickVariant(
-      [
-        "How many bathrooms? Say 1 to 10, or more for more than ten.",
-        "Bathroom count for your buy preference: 1 through 10, or more.",
-        "Minimum bathrooms: a number from 1 to 10, or say more.",
-      ],
-      variant,
-    );
+    const speak = "How many bathrooms?";
     return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
   }
 
@@ -310,10 +302,12 @@ export function getPreferenceFieldPrompt(
   }
 
   if (f.includes("property subtype")) {
-    const speak = f.includes("off-plan")
-      ? "Property subtype for off-plan: land, residential, or commercial."
-      : "Property subtype: land, residential, or commercial for a buy preference, or your rent subtype such as flat or bungalow.";
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    if (pt === "rent" || f.includes("self-con") || f.includes("flat")) {
+      const speak = "Residential or commercial?";
+      return { displayLine: `${speak} (format: residential)`, speakLine: speak };
+    }
+    const speak = "Land, residential, or commercial?";
+    return { displayLine: `${speak} (format: residential)`, speakLine: speak };
   }
 
   if (f.includes("property type") && f.includes("shortlet")) {
@@ -514,10 +508,10 @@ export function getPropertyFieldPrompt(
 
   if (f.includes("location") && f.includes("state")) {
     const speak = pickVariant(
-      ["State, area, and local government area?", "Full location?", "Where is it located?"],
+      ["Which Lagos local government area and neighbourhood?", "Where in Lagos is it?", "Name the Lagos LGA and area."],
       variant,
     );
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: `${speak} (format: Ikeja, GRA)`, speakLine: speak };
   }
 
   if (f.includes("lga") || f.includes("local government")) {

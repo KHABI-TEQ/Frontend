@@ -33,6 +33,13 @@ const paths = [
     href: "/auth/register?intent=scout",
     icon: Compass,
   },
+  {
+    title: "I NEED A PAID PROFESSIONAL SERVICE",
+    meta: "Lawyer · Surveyor · Valuer",
+    cta: "VIEW SERVICES AND PRICES",
+    href: "/professional-services",
+    icon: Scale,
+  },
 ];
 
 const professionals = [

@@ -1310,10 +1310,8 @@ function isMissingPreferenceType(data: Record<string, unknown>): boolean {
   return !["buy", "rent", "joint-venture", "shortlet", "off-plan"].includes(p);
 }
 
-function isMissingState(data: Record<string, unknown>): boolean {
-  const l = getLoc(data);
-  if (!l) return true;
-  return !l.state || String(l.state).trim() === "";
+function isMissingState(_data: Record<string, unknown>): boolean {
+  return false;
 }
 
 function isMissingLga(data: Record<string, unknown>): boolean {
@@ -1356,20 +1354,24 @@ function isConversationFieldMissing(data: Record<string, unknown>, id: Conversat
     case "measurement_unit":
       if (pt !== "buy" && pt !== "rent" && pt !== "off-plan") return false;
       if (!pd) return true;
+      if (normSubtype(pd) !== "land") return false;
       return !measurementUnitNorm(pd);
     case "land_size_single":
       if (pt !== "buy" && pt !== "rent" && pt !== "off-plan") return false;
       if (!pd) return true;
+      if (normSubtype(pd) !== "land") return false;
       if (measurementUnitNorm(pd) === "sqm") return false;
       return !numOk(landSingleValue(pd));
     case "land_size_sqm_min":
       if (pt !== "buy" && pt !== "rent" && pt !== "off-plan") return false;
       if (!pd) return true;
+      if (normSubtype(pd) !== "land") return false;
       if (measurementUnitNorm(pd) !== "sqm") return false;
       return !numOk(minSqmValue(pd));
     case "land_size_sqm_max":
       if (pt !== "buy" && pt !== "rent" && pt !== "off-plan") return false;
       if (!pd) return true;
+      if (normSubtype(pd) !== "land") return false;
       if (measurementUnitNorm(pd) !== "sqm") return false;
       if (!numOk(minSqmValue(pd)) || !numOk(maxSqmValue(pd))) return true;
       const min =
@@ -1534,7 +1536,6 @@ function baseOrderForType(pt: NormalizedPreferenceType): ConversationFieldId[] {
     case "buy":
       return [
         "preference_type",
-        "state",
         "lga",
         "area",
         "property_subtype",
@@ -1558,7 +1559,6 @@ function baseOrderForType(pt: NormalizedPreferenceType): ConversationFieldId[] {
     case "rent":
       return [
         "preference_type",
-        "state",
         "lga",
         "area",
         "property_subtype",
@@ -1582,7 +1582,6 @@ function baseOrderForType(pt: NormalizedPreferenceType): ConversationFieldId[] {
     case "shortlet":
       return [
         "preference_type",
-        "state",
         "lga",
         "area",
         "shortlet_property_type",
@@ -1601,7 +1600,6 @@ function baseOrderForType(pt: NormalizedPreferenceType): ConversationFieldId[] {
     case "joint-venture":
       return [
         "preference_type",
-        "state",
         "lga",
         "area",
         "jv_development_types",
@@ -1615,7 +1613,6 @@ function baseOrderForType(pt: NormalizedPreferenceType): ConversationFieldId[] {
     case "off-plan":
       return [
         "preference_type",
-        "state",
         "lga",
         "area",
         "property_subtype",
@@ -1640,7 +1637,7 @@ function baseOrderForType(pt: NormalizedPreferenceType): ConversationFieldId[] {
         "phone",
       ];
     default:
-      return ["preference_type", "state", "lga", "area", "phone"];
+      return ["preference_type", "lga", "area", "phone"];
   }
 }
 
@@ -1702,13 +1699,13 @@ function getConversationFieldDisplayLines(
       };
     case "state":
       return {
-        screen: `Which Nigerian state? (format: Lagos)${suf}`,
-        speech: "Which Nigerian state?",
+        screen: `Khabiteq is piloting in Lagos State only. Which Lagos local government area next? (format: Ikeja)${suf}`,
+        speech: "Khabiteq is piloting in Lagos. Which local government area?",
       };
     case "lga":
       return {
-        screen: `Which local government area (LGA)? (format: Ikeja)${suf}`,
-        speech: "Which local government area?",
+        screen: `Which Lagos local government area (LGA)? (format: Ikeja)${suf}`,
+        speech: "Which Lagos local government area?",
       };
     case "area":
       return {
@@ -1718,13 +1715,13 @@ function getConversationFieldDisplayLines(
     case "property_subtype":
       if (pt === "rent") {
         return {
-          screen: `Property subtype for rent: residential or commercial — then we’ll ask for building type (e.g. flat, bungalow). (format: residential)${suf}`,
-          speech: "Is the rent preference residential or commercial?",
+          screen: `Residential or commercial? (format: residential)${suf}`,
+          speech: "Residential or commercial?",
         };
       }
       return {
-        screen: `Property subtype: land, residential, or commercial. (format: residential)${suf}`,
-        speech: "Is it land, residential, or commercial?",
+        screen: `Land, residential, or commercial? (format: residential)${suf}`,
+        speech: "Land, residential, or commercial?",
       };
     case "measurement_unit":
       return {

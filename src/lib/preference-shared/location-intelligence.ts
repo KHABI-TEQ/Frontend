@@ -1,10 +1,21 @@
 /**
  * Location extraction and sanitization for AI preference/property conversations.
- * Enforces question order State → LGA → Area while allowing area-first mentions
- * (e.g. "3 bedroom in Lekki to buy" → capture area, then ask state, then LGA).
+ * Lagos is the only pilot market — state is never asked. Order is LGA → Area,
+ * with area-first mentions (e.g. "3 bedroom in Lekki") also inferring the LGA.
  */
 
 import { getAreasByLGA, getLGAsByState, searchPreferenceLocations } from "./location-resolver";
+
+const PILOT_STATE = "Lagos";
+
+function isPilotStateName(value?: string | null): boolean {
+  const normalized = (value ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+  return normalized === "lagos" || normalized === "lagos state" || normalized === "lagos-state";
+}
+
+function withPilotState(loc: Record<string, unknown>): Record<string, unknown> {
+  return { ...loc, state: PILOT_STATE };
+}
 
 function locationPayloadHasAreas(l: Record<string, unknown>): boolean {
   const sel = l.selectedAreas;
@@ -359,7 +370,7 @@ export function filterLocationToUserMentionedOnly(
   let out: Record<string, unknown> = { ...loc };
 
   const st = String(out.state ?? "").trim();
-  if (st && !userTextMentionsPhrase(userMessagesCombined, st)) {
+  if (st && !isPilotStateName(st) && !userTextMentionsPhrase(userMessagesCombined, st)) {
     out = { ...out, state: "" };
   }
 
@@ -415,19 +426,17 @@ function stripImplausibleState(loc: Record<string, unknown>): Record<string, unk
 
 function coerceLocationHierarchy(loc: Record<string, unknown>, stateOptions: string[]): Record<string, unknown> {
   const st = String(loc.state ?? "").trim();
-  if (!st) {
-    const next: Record<string, unknown> = { ...loc, localGovernmentAreas: [], lgas: [] };
-    return next;
+  if (!st || !isPilotStateName(st)) {
+    return withPilotState(loc);
   }
-  if (!isRecognizedStateName(st, stateOptions)) {
-    return {
+  if (stateOptions.length > 0 && !isRecognizedStateName(st, stateOptions) && !isPilotStateName(st)) {
+    return withPilotState({
       ...loc,
-      state: "",
-      localGovernmentAreas: [],
-      lgas: [],
-    };
+      localGovernmentAreas: loc.localGovernmentAreas,
+      lgas: loc.lgas,
+    });
   }
-  return loc;
+  return withPilotState(loc);
 }
 
 /**
@@ -444,7 +453,7 @@ export function sanitizeConversationLocation(
   if (stateOptions.length > 0) {
     out = coerceLocationHierarchy(out, stateOptions);
   }
-  return out;
+  return withPilotState(out);
 }
 
 /**
@@ -462,10 +471,8 @@ function applyAreaSearchHitToLoc(
     next.area = hit.area;
     next.customLocation = hit.area;
   }
-  if (hit.state && userTextMentionsPhrase(raw, hit.state) && !flags.hasState) {
-    next.state = hit.state;
-  }
-  if (hit.lga && userTextMentionsPhrase(raw, hit.lga) && !flags.hasLga) {
+  next.state = PILOT_STATE;
+  if (hit.lga && !flags.hasLga) {
     next.localGovernmentAreas = [hit.lga];
     next.lgas = [hit.lga];
   }
@@ -508,13 +515,14 @@ export function applySmartLocationFromNaturalText(
   const hasArea = locationPayloadHasAreas(loc);
   const flags = { hasState, hasLga, hasArea };
 
-  const next: Record<string, unknown> = { ...loc };
+  const next: Record<string, unknown> = withPilotState({ ...loc });
   const parts = raw.split(/[,;]/).map((p) => p.trim()).filter(Boolean);
 
   if (parts.length >= 3) {
-    next.state = parts[0];
-    next.localGovernmentAreas = [parts[1]];
-    next.lgas = [parts[1]];
+    next.state = PILOT_STATE;
+    const maybeLga = resolveLgaName(parts[0], PILOT_STATE) || resolveLgaName(parts[1], PILOT_STATE) || parts[1];
+    next.localGovernmentAreas = [maybeLga];
+    next.lgas = [maybeLga];
     next.areas = [parts.slice(2).join(", ")];
     next.area = parts.slice(2).join(", ");
     return { ...data, location: next };
@@ -568,12 +576,14 @@ export function applySmartLocationFromNaturalText(
 
   if (parts.length === 1) {
     const v = parts[0];
-    const st = String(next.state ?? "").trim();
+    const st = PILOT_STATE;
+    next.state = PILOT_STATE;
 
-    if (!hasState) {
-      const asState = stateOptions.length ? resolveStateName(v, stateOptions) : null;
-      if (asState) {
-        next.state = asState;
+    if (!hasLga) {
+      const asLga = resolveLgaName(v, st);
+      if (asLga) {
+        next.localGovernmentAreas = [asLga];
+        next.lgas = [asLga];
         return { ...data, location: next };
       }
       const hit = bestSearchHit(v);
@@ -584,30 +594,20 @@ export function applySmartLocationFromNaturalText(
           next.area = areaName;
           next.customLocation = areaName;
         }
-        if (userTextMentionsPhrase(raw, hit.state) && !hasState) next.state = hit.state;
-        if (hit.lga && userTextMentionsPhrase(raw, hit.lga) && !hasLga) {
+        if (hit.lga) {
           next.localGovernmentAreas = [hit.lga];
           next.lgas = [hit.lga];
         }
         return { ...data, location: next };
       }
       if (hit?.lga && !hit.area) {
-        if (userTextMentionsPhrase(raw, hit.state)) next.state = hit.state;
-        if (!hasLga) {
-          next.localGovernmentAreas = [hit.lga];
-          next.lgas = [hit.lga];
-        }
+        next.localGovernmentAreas = [hit.lga];
+        next.lgas = [hit.lga];
         return { ...data, location: next };
       }
-      if (hit?.state && !hit.lga && userTextMentionsPhrase(raw, hit.state)) {
-        next.state = hit.state;
+      if (isPilotStateName(v)) {
         return { ...data, location: next };
       }
-    } else if (!hasLga) {
-      const lga = resolveLgaName(v, st) ?? v;
-      next.localGovernmentAreas = [lga];
-      next.lgas = [lga];
-      return { ...data, location: next };
     } else if (!hasArea) {
       const lgaList = Array.isArray(next.localGovernmentAreas)
         ? (next.localGovernmentAreas as string[]).map(String)
@@ -625,14 +625,5 @@ export function applySmartLocationFromNaturalText(
     return { ...data, location: next };
   }
 
-  if (!hasState && stateOptions.length > 0) {
-    for (const st of stateOptions) {
-      if (userTextMentionsPhrase(raw, st)) {
-        next.state = st;
-        return { ...data, location: next };
-      }
-    }
-  }
-
-  return data;
+  return { ...data, location: withPilotState(next) };
 }

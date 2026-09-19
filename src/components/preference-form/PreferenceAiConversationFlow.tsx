@@ -20,13 +20,12 @@ import {
   resolveVoiceArea,
   resolveVoiceIntent,
   resolveVoiceLga,
-  resolveVoiceState,
 } from "@/utils/voicePreferenceResolver";
 import { isLongMultiFieldUtterance } from "@/utils/wrapAiSuggestUserInput";
 import toast from "react-hot-toast";
 import { ArrowLeft, MessageSquare, Bot, Loader2, CheckCircle, Volume2, VolumeX, ChevronDown } from "lucide-react";
 import nigerianStateLgaJson from "@/data/state-lga.json";
-import { getAreasByStateLGA, getLGAsByState, getStates } from "@/utils/location-utils";
+import { getAreasByStateLGA, getLGAsByState, getStates, PILOT_STATE, isPilotState } from "@/utils/location-utils";
 import {
   applyLocationFromNaturalText,
   applyBulkExtractFromUserText,
@@ -53,7 +52,6 @@ const AREA_DONE_MARKER = "__AREA_DONE__::";
 const NIGERIAN_STATE_NAMES_LOWER = new Set(
   Object.keys(nigerianStateLgaJson as Record<string, unknown>).map((k) => k.trim().toLowerCase()),
 );
-const NIGERIAN_STATE_NAMES = Object.keys(nigerianStateLgaJson as Record<string, unknown>).map((k) => k.trim());
 
 function sanitizeAiFailureMessage(raw: unknown): string {
   const message = String(raw || "").trim();
@@ -123,8 +121,9 @@ function buildPreferenceInteractiveReply(
   }
 
   const focus = missing[0];
+  const preferenceType = normalizedPreferenceType(data);
   // Stable wording (variant 0): do not rotate phrasing for the same field — avoids sounding like a new question.
-  const { displayLine, speakLine } = getPreferenceFieldPrompt(focus, 0);
+  const { displayLine, speakLine } = getPreferenceFieldPrompt(focus, 0, preferenceType);
 
   return {
     content: displayLine,
@@ -132,6 +131,7 @@ function buildPreferenceInteractiveReply(
     focusedMissingField: focus,
     missingFields: [focus],
     remainingMissingCount: Math.max(0, missingRequiredForCount.length - 1),
+    ...subtypeQuickOptions(focus, preferenceType),
   };
 }
 
@@ -173,9 +173,9 @@ function buildLocationPagedReply(
 
 function resolveCanonicalStateName(rawState: string): string {
   const state = rawState.trim();
-  if (!state) return "";
+  if (!state || isPilotState(state)) return PILOT_STATE;
   const match = getStates().find((s) => s.toLowerCase() === state.toLowerCase());
-  return match || state;
+  return match || PILOT_STATE;
 }
 
 function resolveCanonicalLgaName(state: string, rawLga: string): string {
@@ -225,6 +225,18 @@ function withPreferenceLocationOptions(
   }
 
   return withPreferenceOffPlanQuickOptions(reply, data);
+}
+
+function subtypeQuickOptions(
+  focus: string,
+  preferenceType: string,
+): { quickOptions?: string[] } {
+  const f = normalizePreferenceFieldKey(focus);
+  if (!f.includes("property subtype")) return {};
+  if (preferenceType === "rent") {
+    return { quickOptions: ["Residential", "Commercial"] };
+  }
+  return { quickOptions: ["Land", "Residential", "Commercial"] };
 }
 
 function withPreferenceOffPlanQuickOptions<T extends { quickOptions?: string[] }>(
@@ -764,7 +776,7 @@ function applyPreferenceLocationFromFocusedAnswer(
   const next: Record<string, unknown> = { ...loc };
 
   if (f.includes("preference location - state")) {
-    next.state = raw;
+    next.state = PILOT_STATE;
     next.localGovernmentAreas = [];
     next.lgas = [];
     next.areas = [];
@@ -855,7 +867,7 @@ function filterPreferenceLocationToUserMentionedOnly(
 
   let out: Record<string, unknown> = syncPreferenceLocationAreaKeys({ ...loc });
   const st = String(out.state ?? "").trim();
-  if (st && !userMessagesMentionPhrase(blob, st)) {
+  if (st && !isPilotState(st) && !userMessagesMentionPhrase(blob, st)) {
     out = { ...out, state: "" };
   }
 
@@ -887,20 +899,16 @@ function filterPreferenceLocationToUserMentionedOnly(
 /** Same order as the form: no state → no LGA/areas; unknown state string → clear children. */
 function coercePreferenceLocationFormHierarchy(loc: Record<string, unknown>): Record<string, unknown> {
   const st = String(loc.state ?? "").trim();
-  if (!st) {
-    const next: Record<string, unknown> = { ...loc, state: "", localGovernmentAreas: [], lgas: [], areas: [] };
-    delete next.area;
-    return syncPreferenceLocationLgaKeys(next);
+  if (!st || !isPilotState(st)) {
+    return syncPreferenceLocationLgaKeys({ ...loc, state: PILOT_STATE });
   }
-  if (!isRecognizedNigerianStateName(st)) {
+  if (!isRecognizedNigerianStateName(st) && !isPilotState(st)) {
     return syncPreferenceLocationLgaKeys({
-      state: "",
-      localGovernmentAreas: [],
-      lgas: [],
-      areas: [],
+      ...loc,
+      state: PILOT_STATE,
     });
   }
-  return syncPreferenceLocationLgaKeys(loc);
+  return syncPreferenceLocationLgaKeys({ ...loc, state: PILOT_STATE });
 }
 
 /** Until at least one LGA is chosen, drop areas so the flow stays state → LGA → area. */
@@ -928,6 +936,7 @@ function getSanitizedPreferenceLocation(data: Record<string, unknown>): Record<s
   loc = stripImplausiblePreferenceLocationState(loc);
   loc = coercePreferenceLocationFormHierarchy(loc);
   loc = stripPreferenceAreasThatDuplicateStateOrLga(loc);
+  loc = { ...loc, state: PILOT_STATE };
   return syncPreferenceLocationAreaKeys(loc);
 }
 
@@ -1182,20 +1191,15 @@ function getMissingFieldsFromPreferenceData(data: Record<string, unknown>): stri
 
   const pushLocs = () => {
     const loc = getSanitizedPreferenceLocation(data);
-    const hasState = loc && isMeaningful(loc.state);
-    const hasLgas = loc && getMeaningfulLgas(loc, String(loc.state || "")).length > 0;
-    const hasArea = loc && getMeaningfulAreas(loc, String(loc.state || "")).length > 0;
+    const hasLgas = loc && getMeaningfulLgas(loc, PILOT_STATE).length > 0;
+    const hasArea = loc && getMeaningfulAreas(loc, PILOT_STATE).length > 0;
     const custom = String(loc?.customLocation ?? "").trim();
     const customL = custom.toLowerCase();
     const hasCustomLocation =
       custom.length > 0 &&
-      customL !== String(loc?.state ?? "").trim().toLowerCase() &&
-      !new Set(getMeaningfulLgas((loc || {}) as Record<string, unknown>, String(loc?.state || "")).map((x) => x.toLowerCase())).has(customL);
+      customL !== PILOT_STATE.toLowerCase() &&
+      !new Set(getMeaningfulLgas((loc || {}) as Record<string, unknown>, PILOT_STATE).map((x) => x.toLowerCase())).has(customL);
 
-    if (!hasState) {
-      missing.push("preference location - state (required)");
-      return;
-    }
     if (!hasLgas) {
       missing.push("preference location - LGA (required)");
       return;
@@ -1255,26 +1259,28 @@ function getMissingFieldsFromPreferenceData(data: Record<string, unknown>): stri
         if (!pd || !isMeaningful(pd.propertySubtype ?? pd.propertyType)) {
           missing.push(
             type === "buy"
-              ? "property subtype (required — land, residential, or commercial, as on Property details & Budget)"
+              ? "property subtype (land, residential, or commercial)"
               : type === "off-plan"
-                ? "property subtype (required for off-plan — land, residential, or commercial, as on Property details & Budget)"
-                : "property subtype (required — e.g. self-con, flat, as on Property details & Budget)",
+                ? "property subtype (land, residential, or commercial)"
+                : "property subtype (residential or commercial)",
           );
         }
       }
 
       if (type === "buy" && subtype) {
-        if (!pd || !isValidLandMeasurementUnitValue(pd.measurementUnit)) {
-          missing.push("land measurement unit (required for buy — plot, sqm, hectares, or acres)");
-        } else if (String(pd.measurementUnit).toLowerCase() === "sqm") {
-          if (!landSizeAmountPositive(pd.minLandSize)) {
-            missing.push("minimum land size (required for buy when unit is sqm — same as form min land size)");
+        if (subtype === "land") {
+          if (!pd || !isValidLandMeasurementUnitValue(pd.measurementUnit)) {
+            missing.push("land measurement unit (plot, sqm, or acres)");
+          } else if (String(pd.measurementUnit).toLowerCase() === "sqm") {
+            if (!landSizeAmountPositive(pd.minLandSize)) {
+              missing.push("minimum land size in sqm");
+            }
+            if (!landSizeAmountPositive(pd.maxLandSize)) {
+              missing.push("maximum land size in sqm");
+            }
+          } else if (!landSizeAmountPositive(pd.landSize)) {
+            missing.push("land size");
           }
-          if (!landSizeAmountPositive(pd.maxLandSize)) {
-            missing.push("maximum land size (required for buy when unit is sqm — same as form max land size)");
-          }
-        } else if (!landSizeAmountPositive(pd.landSize)) {
-          missing.push("land size (required for buy — single size when unit is not sqm, same as form)");
         }
 
         if (!pd || !Array.isArray(pd.documentTypes) || (pd.documentTypes as unknown[]).length === 0) {
@@ -1304,17 +1310,19 @@ function getMissingFieldsFromPreferenceData(data: Record<string, unknown>): stri
       }
 
       if (type === "off-plan" && subtype) {
-        if (!pd || !isValidLandMeasurementUnitValue(pd.measurementUnit)) {
-          missing.push("land measurement unit (required for off-plan — plot, sqm, hectares, or acres)");
-        } else if (String(pd.measurementUnit).toLowerCase() === "sqm") {
-          if (!landSizeAmountPositive(pd.minLandSize)) {
-            missing.push("minimum land size (required for off-plan when unit is sqm — same as form min land size)");
+        if (subtype === "land") {
+          if (!pd || !isValidLandMeasurementUnitValue(pd.measurementUnit)) {
+            missing.push("land measurement unit (plot, sqm, or acres)");
+          } else if (String(pd.measurementUnit).toLowerCase() === "sqm") {
+            if (!landSizeAmountPositive(pd.minLandSize)) {
+              missing.push("minimum land size in sqm");
+            }
+            if (!landSizeAmountPositive(pd.maxLandSize)) {
+              missing.push("maximum land size in sqm");
+            }
+          } else if (!landSizeAmountPositive(pd.landSize)) {
+            missing.push("land size");
           }
-          if (!landSizeAmountPositive(pd.maxLandSize)) {
-            missing.push("maximum land size (required for off-plan when unit is sqm — same as form max land size)");
-          }
-        } else if (!landSizeAmountPositive(pd.landSize)) {
-          missing.push("land size (required for off-plan — single size when unit is not sqm, same as form)");
         }
 
         if (!pd || !Array.isArray(pd.documentTypes) || (pd.documentTypes as unknown[]).length === 0) {
@@ -1548,6 +1556,7 @@ export default function PreferenceAiConversationFlow() {
   /** Default on: speak each assistant reply automatically; user can mute via toggle or stop via speaker icon. */
   const [playRepliesAloud, setPlayRepliesAloud] = useState(true);
   const [selectedAreaOptions, setSelectedAreaOptions] = useState<string[]>([]);
+  const selectedAreaOptionsRef = useRef<string[]>([]);
   const prevMessageCountRef = useRef(0);
   const conversationScrollRef = useRef<HTMLDivElement | null>(null);
   const newestChipsRef = useRef<HTMLDivElement | null>(null);
@@ -1570,6 +1579,20 @@ export default function PreferenceAiConversationFlow() {
   useEffect(() => {
     collectedDataRef.current = preferenceAiCollectedData;
   }, [preferenceAiCollectedData]);
+
+  useEffect(() => {
+    selectedAreaOptionsRef.current = selectedAreaOptions;
+  }, [selectedAreaOptions]);
+
+  useEffect(() => {
+    if (!preferenceAiCollectedData) return;
+    const loc = (preferenceAiCollectedData.location || {}) as Record<string, unknown>;
+    if (String(loc.state || "").trim() === PILOT_STATE) return;
+    setPreferenceAiCollectedData({
+      ...preferenceAiCollectedData,
+      location: { ...loc, state: PILOT_STATE },
+    });
+  }, [preferenceAiCollectedData, setPreferenceAiCollectedData]);
 
   useEffect(() => {
     if (preferenceAiMessages.length === 0) {
@@ -1674,24 +1697,7 @@ export default function PreferenceAiConversationFlow() {
         }
         normalizedInput = resolved.value;
       } else if (voiceFocusNorm.includes("preference location - state")) {
-        const resolved = resolveVoiceState(trimmed, NIGERIAN_STATE_NAMES);
-        if (resolved.kind === "clarify") {
-          setPreferenceAiMessages((prev) => [
-            ...prev,
-            { role: "user", content: trimmed },
-            {
-              role: "assistant",
-              content: resolved.prompt,
-              speakLine: resolved.prompt,
-              missingFields: voiceFocus ? [voiceFocus] : undefined,
-              focusedMissingField: voiceFocus,
-              remainingMissingCount: 0,
-              quickOptions: resolved.options,
-            },
-          ]);
-          return;
-        }
-        normalizedInput = resolved.value;
+        normalizedInput = PILOT_STATE;
       } else if (voiceFocusNorm.includes("preference location - lga")) {
         if (pulledLocationOptions.some((o) => o.toLowerCase() === trimmed.toLowerCase())) {
           normalizedInput = pulledLocationOptions.find(
@@ -1828,20 +1834,40 @@ export default function PreferenceAiConversationFlow() {
         );
         const availableAreas = getAreasByStateLGA(state, selectedLga);
         const existingAreas = getMeaningfulAreas(currentLoc, state);
+        const markerAreas = doneMarkerPayload
+          .split(",")
+          .map((x) => x.trim())
+          .filter(Boolean);
 
-        if (doneSelectingAreas && existingAreas.length > 0) {
+        if (doneSelectingAreas) {
+          let dataForNext = currentData;
+          if (markerAreas.length > 0 || existingAreas.length === 0) {
+            const source = markerAreas.length > 0 ? markerAreas.join(", ") : userText;
+            const nextLoc = applyPreferenceLocationFromFocusedAnswer(source, voiceFocus, currentLoc);
+            dataForNext = { ...currentData, location: { ...nextLoc, state: PILOT_STATE } };
+            setPreferenceAiCollectedData(dataForNext);
+            collectedDataRef.current = dataForNext;
+          }
+          const savedAreas = getMeaningfulAreas(
+            (dataForNext.location || {}) as Record<string, unknown>,
+            PILOT_STATE,
+          );
+          if (savedAreas.length === 0) {
+            toast.error("Select at least one area, or type an area name, then tap Done.");
+            return;
+          }
           const reply = withPreferenceLocationOptions(
-            buildPreferenceInteractiveReply(currentData, skippedFieldsRef.current, 0),
-            currentData,
+            buildPreferenceInteractiveReply(dataForNext, skippedFieldsRef.current, 0),
+            dataForNext,
           );
           setPreferenceAiMessages((prev) => [
             ...prev,
-            { role: "user", content: userText },
+            { role: "user", content: savedAreas.join(", ") },
             {
               role: "assistant",
               content: reply.content,
               speakLine: reply.speakLine,
-              data: currentData,
+              data: dataForNext,
               missingFields: reply.missingFields.length ? reply.missingFields : undefined,
               focusedMissingField: reply.focusedMissingField,
               remainingMissingCount: reply.remainingMissingCount,
@@ -2142,11 +2168,16 @@ export default function PreferenceAiConversationFlow() {
       }
 
         if (option === DONE_SELECTING_AREAS) {
-        if (selectedAreaOptions.length === 0) {
-          toast.error("Select at least one area before tapping Done.");
+        const chips = selectedAreaOptionsRef.current;
+        const loc = ((collectedDataRef.current || {}).location || {}) as Record<string, unknown>;
+        const existing = getMeaningfulAreas(loc, PILOT_STATE);
+        const custom = String(loc.customLocation ?? "").trim();
+        const chosen = chips.length > 0 ? chips : existing;
+        if (chosen.length === 0 && !custom) {
+          toast.error("Select at least one area, or type an area name, then tap Done.");
           return;
         }
-          await handleSuggest(`${AREA_DONE_MARKER}${selectedAreaOptions.join(", ")}`);
+          await handleSuggest(`${AREA_DONE_MARKER}${(chosen.length > 0 ? chosen : [custom]).join(", ")}`);
           setSelectedAreaOptions([]);
           return;
       }
@@ -2162,7 +2193,7 @@ export default function PreferenceAiConversationFlow() {
           : [...prev, option],
       );
     },
-    [handleSuggest, selectedAreaOptions],
+    [handleSuggest],
   );
 
   const handleProceedToContactConfirm = useCallback(() => {
@@ -2580,9 +2611,7 @@ export default function PreferenceAiConversationFlow() {
                     ) : null}
                     {(msg as { remainingMissingCount?: number }).remainingMissingCount ? (
                       <p className="text-xs text-[#5A5D63] mt-2 pt-2 border-t border-gray-200">
-                        {(msg as { remainingMissingCount: number }).remainingMissingCount} more item
-                        {(msg as { remainingMissingCount: number }).remainingMissingCount !== 1 ? "s" : ""}{" "}
-                        after this (or say skip).
+                        {(msg as { remainingMissingCount: number }).remainingMissingCount} more after this.
                       </p>
                     ) : null}
                   </>
