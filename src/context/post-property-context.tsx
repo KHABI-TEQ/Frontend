@@ -208,7 +208,7 @@ const initialPropertyData: PropertyData = {
   streetAddress: "",
   landSize: "",
   measurementType: "",
-  inspectionFee: 5000,
+  inspectionFee: 0,
   bedrooms: 0,
   sittingRooms: 0,
   bathrooms: 0,

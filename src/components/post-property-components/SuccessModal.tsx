@@ -4,6 +4,7 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, X, Home, Eye } from "lucide-react";
 import Button from "@/components/general-components/button";
+import CopyPropertyCodeButton from "@/components/common/CopyPropertyCodeButton";
 import { useRouter } from "next/navigation";
 
 type PublisherUserType = "Developer" | "Landlord";
@@ -15,6 +16,8 @@ interface SuccessModalProps {
   isUpdate?: boolean; // New prop to differentiate between create and update
   /** User type for dynamic success message. Pass from user context (e.g. user?.userType). */
   userType?: SuccessModalUserType | string | null;
+  /** Generated public property code (KH-…). */
+  propertyCode?: string | null;
 }
 
 const SuccessModal: React.FC<SuccessModalProps> = ({
@@ -22,6 +25,7 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
   onClose,
   isUpdate = false,
   userType,
+  propertyCode,
 }) => {
   const router = useRouter();
   const isPublisher = userType === "Developer" || userType === "Landlord";
@@ -122,6 +126,15 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
 
           {/* Content */}
           <div className="p-6">
+            {propertyCode ? (
+              <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-[#8DDB90]/40 bg-[#F5F7F9] px-4 py-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-[#5A5D63]">Property code</p>
+                  <p className="truncate font-semibold tracking-wide text-[#09391C]">{propertyCode}</p>
+                </div>
+                <CopyPropertyCodeButton code={propertyCode} />
+              </div>
+            ) : null}
             {/* What happens next */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
               <h4 className="font-semibold text-blue-800 mb-2">

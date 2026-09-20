@@ -166,7 +166,7 @@ export function DealSiteSetupOverlay({ user }: Props) {
           >
             <motion.div className="sm:flex-1" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Link
-                href="/public-access-page"
+                href="/public-access-page/setup"
                 className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#09391C] via-emerald-800 to-[#0a4d2a] px-5 py-3.5 text-sm font-semibold text-white shadow-md shadow-emerald-900/25 ring-2 ring-white/20 transition-shadow hover:shadow-lg hover:shadow-emerald-700/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8DDB90] focus-visible:ring-offset-2"
               >
                 Set up now

@@ -37,6 +37,7 @@ import PublisherListingAllowanceCard from "@/components/publisher/PublisherListi
 import { usePublisherListingEligibility } from "@/hooks/usePublisherListingEligibility";
 import DeveloperOnboardingChecklist from "@/components/developer/DeveloperOnboardingChecklist";
 import { useDeveloperPlanEntitlement } from "@/hooks/useDeveloperPlanEntitlement";
+import ListPropertyCta from "@/components/dashboard/ListPropertyCta";
 
 interface PendingBrief {
   _id: string;
@@ -317,13 +318,7 @@ export default function DeveloperDashboard() {
               <CreditCardIcon size={20} />
               Subscription
             </Link>
-            <Link
-              href="/post-property"
-              className="bg-[#8DDB90] hover:bg-[#7BC87F] text-white px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
-            >
-              <PlusIcon size={20} />
-              List New Property
-            </Link>
+            <ListPropertyCta listingEligibility={listingEligibility} variant="hero" />
           </div>
         </div>
 
@@ -461,13 +456,7 @@ export default function DeveloperDashboard() {
                 <BriefcaseIcon size={32} className="mx-auto text-gray-400 mb-3" />
                 <h3 className="text-base font-medium text-gray-600 mb-2">No Properties Listed Yet</h3>
                 <p className="text-sm text-gray-500 mb-4">List your first development or property</p>
-                <Link
-                  href="/post-property"
-                  className="bg-[#8DDB90] hover:bg-[#7BC87F] text-white px-4 py-2 rounded-lg font-medium inline-flex items-center gap-2 transition-colors text-sm"
-                >
-                  <PlusIcon size={16} />
-                  List New Property
-                </Link>
+                <ListPropertyCta listingEligibility={listingEligibility} variant="inline" />
               </div>
             ) : (
               <div className="divide-y divide-gray-200">
@@ -529,18 +518,7 @@ export default function DeveloperDashboard() {
                   <p className="text-sm text-indigo-700/90">Send an email to all your Practitioner subscribers</p>
                 </div>
               </Link>
-              <Link
-                href="/post-property"
-                className="w-full bg-[#8DDB90] hover:bg-[#7BC87F] text-white p-4 rounded-lg font-medium flex items-center gap-3 transition-colors group"
-              >
-                <div className="p-2 bg-white bg-opacity-20 rounded-lg">
-                  <PlusIcon size={20} />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold">List New Property</h3>
-                  <p className="text-sm opacity-90">Add property to portfolio</p>
-                </div>
-              </Link>
+              <ListPropertyCta listingEligibility={listingEligibility} variant="quick" />
               <Link
                 href="/agent-marketplace"
                 className="w-full bg-white hover:bg-gray-50 text-[#09391C] border border-[#8DDB90] p-4 rounded-lg font-medium flex items-center gap-3 transition-colors group"

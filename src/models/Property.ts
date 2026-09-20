@@ -96,6 +96,8 @@ export interface IProperty {
   location: IPropertyLocation;
   landSize?: ILandSize;
   price: number;
+  propertyCode?: string;
+  inspectionFee?: number;
   additionalFeatures?: IAdditionalFeatures;
   docOnProperty?: IDocOnProperty[];
   features?: string[];

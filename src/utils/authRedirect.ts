@@ -57,6 +57,28 @@ export const resolveRedirectTarget = (
   return queryString ? `${sanitizedPath}?${queryString}` : sanitizedPath;
 };
 
+const PUBLIC_POST_LOGIN_PATHS = new Set([
+  "/",
+  "/home",
+  "/homepage",
+  "/auth/login",
+  "/auth/register",
+  "/auth/forgot-password",
+]);
+
+/** After login, send users to a protected destination — never back to the public landing page. */
+export function resolvePostLoginPath(
+  redirectTarget: string | null | undefined,
+  fallback = "/dashboard",
+): string {
+  if (!redirectTarget) return fallback;
+  const base = redirectTarget.split("?")[0].replace(/\/$/, "") || "/";
+  if (PUBLIC_POST_LOGIN_PATHS.has(base) || PUBLIC_POST_LOGIN_PATHS.has(redirectTarget.split("?")[0])) {
+    return fallback;
+  }
+  return redirectTarget;
+}
+
 export const encodeRedirectTarget = (target: string | null | undefined): string | undefined => {
   if (!target) {
     return undefined;

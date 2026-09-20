@@ -45,14 +45,17 @@ export const CombinedAuthGuard: React.FC<CombinedAuthGuardProps> = ({
 
   const isAgent = user?.userType === "Agent";
   const isDeveloper = user?.userType === "Developer";
+  const isLandowner = user?.userType === "Landowners";
   const isPropertyScout = user?.userType === "PropertyScout";
+  const isPublisher = isAgent || isDeveloper || isLandowner || isPropertyScout;
   const kycStatus = user && isAgent ? resolveAgentKycStatus(user) : undefined;
   const kycApproved = kycStatus === "approved";
   const hasActiveSubscription = !!(
     user?.activeSubscription && user.activeSubscription.status === "active"
   );
-  const hasPaidSubscription = eligibility?.hasPaidSubscription === true;
-  const canListDuringPolicy = eligibility?.canListProperties ?? (kycApproved || !requireKycApproved);
+  const hasPaidSubscription = isAgent
+    ? eligibility?.hasPaidSubscription === true
+    : hasActiveSubscription;
 
 
   if (isLoading || !isInitialized || (isAgent && (requireKycApproved || requireActiveSubscription) && eligibilityLoading)) {
@@ -95,18 +98,45 @@ export const CombinedAuthGuard: React.FC<CombinedAuthGuardProps> = ({
     }
   }
 
-  // KYC restriction: agents in the 7-day grace may post 1 property; otherwise require approval or policy pass.
-  if (requireKycApproved && isAgent && !canListDuringPolicy) {
+  if (requireActiveSubscription && isPublisher && !hasPaidSubscription) {
+    if (pathname && typeof window !== "undefined") {
+      try {
+        sessionStorage.setItem(REDIRECT_AFTER_SUBSCRIPTION_KEY, pathname);
+      } catch {}
+    }
+    const roleMessage = isLandowner
+      ? "Property owners need an active subscription to list. Subscribe to a plan to continue."
+      : isPropertyScout
+        ? "Property scouts need an active subscription to list. Subscribe to a plan to continue."
+        : isDeveloper
+          ? "Developers need an active subscription to post properties. Subscribe to a plan to continue."
+          : eligibility?.gate && !eligibility.gate.ok && eligibility.gate.reason === "subscription"
+            ? eligibility.gate.message
+            : "Subscribe to an active plan to list properties. Listing is only available with a paid subscription.";
+    return (
+      <Block
+        title="Active Subscription Required"
+        message={roleMessage}
+        actionHref="/agent-subscriptions?tab=plans"
+        actionLabel="Choose a paid plan"
+        icon={<CreditCard size={32} className="text-[#EF4444]" />}
+      />
+    );
+  }
+
+  if (requireKycApproved && isAgent && !kycApproved) {
     const message =
-      eligibility?.gate && !eligibility.gate.ok
+      eligibility?.gate && !eligibility.gate.ok && eligibility.gate.reason === "kyc"
         ? eligibility.gate.message
-        : "You must complete KYC verification and obtain approval to continue (the 7-day grace period has expired).";
+        : "Complete KYC verification and obtain approval before listing properties.";
     return (
       <Block
         title="KYC Verification Required"
-        message={message}
+        message={`${message} You can still choose a paid plan while you wait.`}
         actionHref="/agent-kyc"
-        actionLabel="Submit KYC"
+        actionLabel="View KYC status"
+        secondaryHref="/agent-subscriptions?tab=plans"
+        secondaryLabel="Choose a paid plan"
         icon={<CheckCircle2 size={32} className="text-[#8DDB90]" />}
       />
     );
@@ -116,58 +146,14 @@ export const CombinedAuthGuard: React.FC<CombinedAuthGuardProps> = ({
     return (
       <Block
         title="KYC Verification Required"
-        message="Complete your KYC verification to start submitting property opportunities."
+        message="Complete your KYC verification to start submitting property opportunities. You can still choose a paid plan while you wait."
         actionHref="/scout-kyc"
-        actionLabel="Complete KYC"
+        actionLabel="View KYC status"
+        secondaryHref="/agent-subscriptions?tab=plans"
+        secondaryLabel="Choose a paid plan"
         icon={<CheckCircle2 size={32} className="text-[#8DDB90]" />}
       />
     );
-  }
-
-  // Subscription restriction: agents need paid subscription only after trial/cap (backend policy).
-  if (requireActiveSubscription && (isAgent || isDeveloper)) {
-    if (isAgent && !kycApproved) {
-      return (
-        <Block
-          title="KYC Required Before Subscribing"
-          message={
-            "Please submit your KYC for approval before purchasing a subscription."
-          }
-          actionHref="/agent-kyc"
-          actionLabel="Submit KYC"
-          icon={<CheckCircle2 size={32} className="text-[#8DDB90]" />}
-        />
-      );
-    }
-
-    const subscriptionBlocked =
-      isAgent
-        ? eligibility?.subscriptionRequired === true && !hasPaidSubscription
-        : !hasActiveSubscription;
-
-    if (subscriptionBlocked) {
-      // Remember where they wanted to go so payment-verification can redirect back (e.g. /post-property/outright-sales)
-      if (pathname && typeof window !== "undefined") {
-        try {
-          sessionStorage.setItem(REDIRECT_AFTER_SUBSCRIPTION_KEY, pathname);
-        } catch {}
-      }
-      return (
-        <Block
-          title="Active Subscription Required"
-          message={
-            isDeveloper
-              ? "Developers need an active subscription to post properties. Subscribe to a plan to continue."
-              : eligibility?.gate && !eligibility.gate.ok && eligibility.gate.reason === "subscription"
-                ? eligibility.gate.message
-                : "Your trial has ended or you have reached the listing limit. Subscribe to a paid plan to continue."
-          }
-          actionHref="/agent-subscriptions?tab=plans"
-          actionLabel="View Plans"
-          icon={<CreditCard size={32} className="text-[#EF4444]" />}
-        />
-      );
-    }
   }
 
   return <>{children}</>;

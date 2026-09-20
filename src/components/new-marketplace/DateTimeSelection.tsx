@@ -361,7 +361,9 @@ const DateTimeSelection: React.FC<DateTimeSelectionProps> = ({
         title={isRedirectingToPayment ? "Redirecting to Payment" : "Submitting Request"}
         message={isRedirectingToPayment
                 ? "Your inspection request has been processed. You will be redirected to the payment page shortly..."
-                : "Please wait while we process your inspection request and generate your payment link..."}
+                : inspectionFee > 0
+                  ? "Please wait while we process your inspection request and generate your payment link..."
+                  : "Please wait while we process your inspection request..."}
         iconColor="#8DDB90"
       />
 
@@ -381,7 +383,7 @@ const DateTimeSelection: React.FC<DateTimeSelectionProps> = ({
           <div className="flex justify-between items-center">
             <span className="text-[#5A5D63]">Inspection Fee:</span>
             <span className="font-semibold text-[#09391C] text-lg">
-              ₦{inspectionFee.toLocaleString()}
+              {inspectionFee > 0 ? `₦${inspectionFee.toLocaleString()}` : "No inspection fee"}
             </span>
           </div>
 

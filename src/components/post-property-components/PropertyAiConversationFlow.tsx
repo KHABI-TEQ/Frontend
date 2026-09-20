@@ -30,6 +30,11 @@ import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import { ArrowLeft, MessageSquare, Bot, Loader2, Volume2, VolumeX } from "lucide-react";
 import { getAreasByStateLGA, getLGAsByState, getStates, PILOT_STATE } from "@/utils/location-utils";
+import {
+  applyCatalogLocationToPropertyLoc,
+  formatCatalogLocation,
+  resolveSpokenLocationAgainstCatalog,
+} from "@/utils/voiceLocationCatalog";
 import { useUserContext } from "@/context/user-context";
 import { canUserListOffPlan, LANDLORD_CANNOT_LIST_OFF_PLAN } from "@/utils/listingAccess";
 
@@ -151,6 +156,13 @@ function resolveCanonicalLgaName(state: string, rawLga: string): string {
   return match || lga;
 }
 
+function locationFocusKind(focusedMissingField?: string): "lga" | "area" | null {
+  const focus = normalizeFieldKey(focusedMissingField || "");
+  if (focus.includes("local government") || focus.includes("/ lga") || focus.includes("lga")) return "lga";
+  if (focus.includes("area")) return "area";
+  return null;
+}
+
 function applyPropertyLocationFromFocusedAnswer(
   text: string,
   focusedMissingField: string | undefined,
@@ -166,32 +178,41 @@ function applyPropertyLocationFromFocusedAnswer(
     next.area = "";
     return next;
   }
-  if (focus.includes("local government") || focus.includes("/ lga") || focus.includes("lga")) {
-    next.localGovernment = value;
-    next.area = "";
-    return next;
-  }
-  if (focus.includes("area")) {
-    const current = Array.isArray(next.areas)
-      ? (next.areas as unknown[]).map((x) => String(x).trim()).filter(Boolean)
-      : [];
-    const additions = value
-      .split(",")
-      .map((x) => x.trim())
-      .filter(Boolean);
-    const merged = [...current];
-    const seen = new Set(current.map((x) => x.toLowerCase()));
-    for (const item of additions) {
-      const key = item.toLowerCase();
-      if (seen.has(key)) continue;
-      seen.add(key);
-      merged.push(item);
+  const kind = locationFocusKind(focusedMissingField);
+  if (!kind) return next;
+
+  const parts = value.split(",").map((x) => x.trim()).filter(Boolean);
+  let mergedLoc: Record<string, unknown> = { ...next, state: PILOT_STATE };
+  for (const part of parts) {
+    const { resolved } = resolveSpokenLocationAgainstCatalog(part, {
+      currentLga: String(mergedLoc.localGovernment || ""),
+      focus: kind,
+    });
+    if (resolved) {
+      mergedLoc = applyCatalogLocationToPropertyLoc(mergedLoc, resolved);
+      continue;
     }
-    next.areas = merged;
-    next.area = merged[0] || "";
-    return next;
+    if (kind === "lga") {
+      const lgas = getLGAsByState(PILOT_STATE);
+      const match = lgas.find((lga) => lga.toLowerCase() === part.toLowerCase());
+      if (match) {
+        mergedLoc = { ...mergedLoc, localGovernment: match, area: "", areas: [] };
+      }
+    } else {
+      const areas = getAreasByStateLGA(PILOT_STATE, String(mergedLoc.localGovernment || ""));
+      const match = areas.find((area) => area.toLowerCase() === part.toLowerCase());
+      if (match) {
+        const current = Array.isArray(mergedLoc.areas)
+          ? (mergedLoc.areas as unknown[]).map((x) => String(x).trim()).filter(Boolean)
+          : [];
+        const areasNext = current.some((x) => x.toLowerCase() === match.toLowerCase())
+          ? current
+          : [...current, match];
+        mergedLoc = { ...mergedLoc, areas: areasNext, area: areasNext[0] || match };
+      }
+    }
   }
-  return next;
+  return mergedLoc;
 }
 
 function withPropertyLocationOptions(
@@ -332,6 +353,7 @@ export default function PropertyAiConversationFlow({
   const allowOffPlanListing = canUserListOffPlan(user?.userType);
 
   const [loading, setLoading] = useState(false);
+  const [processingStatus, setProcessingStatus] = useState("");
   const skippedFieldsRef = useRef<Set<string>>(new Set());
   /** Fields the user already answered — never ask again even if the suggest API omits them. */
   const userAnsweredFieldsRef = useRef<Set<string>>(new Set());
@@ -668,6 +690,7 @@ export default function PropertyAiConversationFlow({
         });
       } finally {
         setLoading(false);
+        setProcessingStatus("");
       }
       return;
     }
@@ -713,7 +736,101 @@ export default function PropertyAiConversationFlow({
       return;
     }
 
+    const lastAssistForLocal = [...aiConversationMessages].reverse().find((m) => m.role === "assistant");
+    const locationKind = locationFocusKind(lastAssistForLocal?.focusedMissingField);
+    if (locationKind) {
+      const currentLoc = ((collectedDataRef.current || {}).location || {}) as Record<string, unknown>;
+      const spokenResolution = resolveSpokenLocationAgainstCatalog(trimmed, {
+        currentLga: String(currentLoc.localGovernment || ""),
+        focus: locationKind,
+      });
+      const canResolveLocally = Boolean(spokenResolution.resolved) || spokenResolution.suggestions.length > 0;
+      if (canResolveLocally) {
+        setProcessingStatus("Confirming property details…");
+        setLoading(true);
+        try {
+          markPropertyAiUserAnswer(userAnsweredFieldsRef.current, lastAssistForLocal?.focusedMissingField, trimmed);
+          let data = normalizePropertyAiCollectedData({
+            ...(collectedDataRef.current || {}),
+            propertyType: effectiveListing,
+          });
+          if (spokenResolution.resolved) {
+            data = {
+              ...data,
+              location: applyCatalogLocationToPropertyLoc(
+                (data.location || {}) as Record<string, unknown>,
+                spokenResolution.resolved,
+              ),
+            };
+          }
+          data = {
+            ...data,
+            location: applyPropertyLocationFromFocusedAnswer(
+              trimmed,
+              lastAssistForLocal?.focusedMissingField,
+              (data.location || {}) as Record<string, unknown>,
+            ),
+          };
+          data = normalizePropertyAiCollectedData(data);
+          setAiCollectedData(data);
+          collectedDataRef.current = data;
+          const reply = withPropertyLocationOptions(
+            buildPropertyInteractiveReply(
+              data,
+              skippedFieldsRef.current,
+              listingTypePreset,
+              userAnsweredFieldsRef.current,
+            ),
+            data,
+          );
+          const suggestionChips = spokenResolution.suggestions.map(formatCatalogLocation);
+          const confirmed = spokenResolution.resolved
+            ? formatCatalogLocation({
+                state: spokenResolution.resolved.state,
+                lga: spokenResolution.resolved.localGovernment,
+                area: spokenResolution.resolved.area || undefined,
+                label: "",
+              })
+            : "";
+          setAiConversationMessages((prev) => [
+            ...prev,
+            { role: "user", content: trimmed },
+            {
+              role: "assistant",
+              content: spokenResolution.resolved
+                ? `${reply.content}${
+                    suggestionChips.length
+                      ? `\n\nMatched ${confirmed} from the listing locations. Tap another option if that is not right.`
+                      : `\n\nMatched ${confirmed} from the listing locations.`
+                  }`
+                : `I found more than one matching Lagos location. Tap the option that matches what you said.`,
+              speakLine: spokenResolution.resolved
+                ? reply.speakLine
+                : "I found more than one matching location. Please choose one.",
+              data,
+              missingFields: spokenResolution.resolved ? reply.missingFields : lastAssistForLocal?.missingFields,
+              focusedMissingField: spokenResolution.resolved
+                ? reply.focusedMissingField
+                : lastAssistForLocal?.focusedMissingField,
+              remainingMissingCount: spokenResolution.resolved ? reply.remainingMissingCount : reply.remainingMissingCount,
+              quickOptions: spokenResolution.resolved
+                ? [...(reply.quickOptions || []), ...suggestionChips]
+                : suggestionChips,
+              locationAllOptions: spokenResolution.resolved ? reply.locationAllOptions : suggestionChips,
+              locationOptionsOffset: reply.locationOptionsOffset,
+              locationOptionsLabel: spokenResolution.resolved ? reply.locationOptionsLabel : "matching locations",
+            },
+          ]);
+        } finally {
+          setLoading(false);
+          setProcessingStatus("");
+        }
+        return;
+      }
+    }
+
     setLoading(true);
+    setProcessingStatus("Processing…");
     setAiConversationMessages((prev) => [...prev, { role: "user", content: trimmed }]);
 
     try {
@@ -735,6 +852,7 @@ export default function PropertyAiConversationFlow({
         ? `${accumulated || trimmed}\n\n[The user is answering this specific field: ${focus}]`
         : accumulated || trimmed;
 
+      setProcessingStatus("Confirming property details…");
       const res = await suggestProperty(contextual, Cookies.get("token") ?? "");
       if (!res.success) {
         setAiConversationMessages((prev) => [
@@ -771,6 +889,31 @@ export default function PropertyAiConversationFlow({
           getStates(),
         ),
       };
+      {
+        const currentLoc = (data.location || {}) as Record<string, unknown>;
+        const catalog = resolveSpokenLocationAgainstCatalog(accumulated || trimmed, {
+          currentLga: String(currentLoc.localGovernment || ""),
+          focus: locationFocusKind(focus) || "any",
+        });
+        if (catalog.resolved) {
+          data = {
+            ...data,
+            location: applyCatalogLocationToPropertyLoc(currentLoc, catalog.resolved),
+          };
+        } else {
+          const lgaHit = resolveSpokenLocationAgainstCatalog(String(currentLoc.localGovernment || ""), {
+            focus: "lga",
+          });
+          const areaHit = resolveSpokenLocationAgainstCatalog(String(currentLoc.area || ""), {
+            currentLga: String(currentLoc.localGovernment || ""),
+            focus: "area",
+          });
+          let nextLoc = currentLoc;
+          if (lgaHit.resolved) nextLoc = applyCatalogLocationToPropertyLoc(nextLoc, lgaHit.resolved);
+          if (areaHit.resolved) nextLoc = applyCatalogLocationToPropertyLoc(nextLoc, areaHit.resolved);
+          data = { ...data, location: nextLoc };
+        }
+      }
       const fromUser = extractDocumentsFromText(trimmed);
       const fromAccumulated = extractDocumentsFromText(accumulated || trimmed);
       const parsedDocs = [...new Set([...fromUser, ...fromAccumulated])];
@@ -834,6 +977,7 @@ export default function PropertyAiConversationFlow({
       ]);
     } finally {
       setLoading(false);
+      setProcessingStatus("");
     }
   }, [
     aiCollectedData,
@@ -1108,14 +1252,14 @@ export default function PropertyAiConversationFlow({
             </div>
           ))
         )}
-        {loading && (
+        {(loading || processingStatus) && (
           <div className="flex gap-2 justify-start">
             <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#8DDB90]/20 flex items-center justify-center">
               <Bot className="h-4 w-4 text-[#09391C]" aria-hidden />
             </div>
             <div className="flex items-center gap-2 rounded-lg bg-gray-100 px-4 py-2.5 text-sm text-[#09391C]">
               <Loader2 className="h-4 w-4 flex-shrink-0 animate-spin text-[#8DDB90]" aria-hidden />
-              <span>Reading your description and preparing suggestions…</span>
+              <span>{processingStatus || "Processing…"}</span>
             </div>
           </div>
         )}
@@ -1132,6 +1276,15 @@ export default function PropertyAiConversationFlow({
           buttonLabel={loading ? "Sending…" : "Send"}
           onSuggest={handleSuggest}
           disabled={loading}
+          processingLabel={processingStatus || undefined}
+          successToast={false}
+          onListeningChange={(isListening) => {
+            setProcessingStatus((prev) => {
+              if (isListening) return "Listening…";
+              if (prev === "Listening…") return "";
+              return prev;
+            });
+          }}
           maxHeight="80px"
           amountEntryMode={propertyAmountEntryMode}
           formatAmountRunsInText={!propertyAmountEntryMode}

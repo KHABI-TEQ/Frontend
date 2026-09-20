@@ -16,6 +16,7 @@ import * as Yup from "yup";
 import { POST_REQUEST, GET_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import { useDealSite } from "@/context/deal-site-context";
+import { useUserContext } from "@/context/user-context";
 import { DealSiteSettings } from "@/context/deal-site-context";
 import Stepper from "@/components/post-property-components/Stepper";
 
@@ -97,6 +98,7 @@ const createValidationSchema = (step: number) => {
 
 const Setup = () => {
   const router = useRouter();
+  const { user, setUser } = useUserContext();
   const { settings, updateSettings, markSetupComplete } = useDealSite();
   const [step, setStep] = useState(0);
 
@@ -240,10 +242,21 @@ const Setup = () => {
       if (res?.success) {
         updateSettings({ ...values, ...payload } as DealSiteSettings);
         markSetupComplete();
-        toast.success("Setup complete!");
-        setTimeout(() => {
-          router.replace("/public-access-page");
-        }, 1000);
+        if (user) {
+          setUser({
+            ...user,
+            dealSite: {
+              ...(user.dealSite || {}),
+              ...(res as { data?: Record<string, unknown> }).data,
+              publicSlug: values.publicSlug || payload.publicSlug,
+            },
+          });
+        }
+        try {
+          sessionStorage.setItem("khabiteq-public-page-just-saved", "1");
+        } catch {}
+        toast.success("Public page setup complete");
+        router.replace("/public-access-page?setup=complete");
       } else {
         const msg =
           (res as any)?.message ||

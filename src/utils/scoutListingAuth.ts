@@ -3,8 +3,12 @@ import { GET_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import { shouldHideListingOwnerDeclaration } from "@/utils/listingOwnerDeclaration";
 
+/** Persist only an agent-set fee. Empty/0/null stays 0 (no fee). */
 export function listingInspectionFeeNaira(value: unknown): number {
-  return Math.min(50000, Math.max(1000, Number(value) || 5000));
+  if (value == null || value === "") return 0;
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return Math.min(50000, Math.max(1000, Math.round(n)));
 }
 
 /** True when a Property Scout tried to submit without the mandate checkbox. */

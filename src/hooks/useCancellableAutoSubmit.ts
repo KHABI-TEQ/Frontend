@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 /** Grace period after dictation ends before auto-submit fires (user can cancel). */
-export const VOICE_AUTO_SUBMIT_DELAY_MS = 5_000;
+export const VOICE_AUTO_SUBMIT_DELAY_MS = 2_000;
 
 export function useCancellableAutoSubmit(submit: (text: string) => Promise<void>) {
   const [pending, setPending] = useState(false);

@@ -32,6 +32,12 @@ export interface AiFillBlockProps {
   disabled?: boolean;
   /** Optional: max height of textarea */
   maxHeight?: string;
+  /** Override the send-button loading label (e.g. Processing…). */
+  processingLabel?: string;
+  /** Set false to skip the success toast after each send. */
+  successToast?: boolean;
+  /** Called when listening starts/stops so parent can show Listening… */
+  onListeningChange?: (listening: boolean) => void;
   /**
    * When true (e.g. budget min/max focused in preference AI): spoken amounts like "five million"
    * become comma-formatted digits in the box; submit sends digits only. Typing is auto-formatted with commas.
@@ -97,6 +103,9 @@ export default function AiFillBlock({
   maxHeight = "120px",
   amountEntryMode = false,
   formatAmountRunsInText: formatAmountRunsInTextProp = false,
+  processingLabel,
+  successToast = true,
+  onListeningChange,
 }: AiFillBlockProps) {
   const [input, setInput] = useState("");
   const canSend = input.trim().length > 0;
@@ -104,7 +113,7 @@ export default function AiFillBlock({
   const [listening, setListening] = useState(false);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   /** Max allowed silence (ms) before we end the listening session and commit text. */
-  const SILENCE_GRACE_MS = 5_000;
+  const SILENCE_GRACE_MS = 2_500;
   /** Textarea snapshot when current mic session started — new speech appends after this. */
   const voiceBaseRef = useRef("");
   /** Final transcript accumulated across recognition restarts within one mic session. */
@@ -307,7 +316,9 @@ export default function AiFillBlock({
       setLoading(true);
       try {
         await onSuggest(toSend);
-        toast.success("Suggestions applied. Review and edit as needed.");
+        if (successToast) {
+          toast.success("Suggestions applied. Review and edit as needed.");
+        }
         setInput("");
       } catch (e) {
         toast.error((e as Error)?.message || "Something went wrong.");
@@ -318,7 +329,7 @@ export default function AiFillBlock({
         }
       }
     },
-    [amountEntryMode, onSuggest],
+    [amountEntryMode, onSuggest, successToast],
   );
 
   const { pendingAutoSubmit, autoSubmitSecondsLeft, scheduleAutoSubmit, cancelAutoSubmit } =
@@ -370,6 +381,10 @@ export default function AiFillBlock({
 
   const micBusy = listening || pendingAutoSubmit;
 
+  useEffect(() => {
+    onListeningChange?.(listening);
+  }, [listening, onListeningChange]);
+
   return (
     <div className="rounded-xl border border-[#8DDB90]/40 bg-[#f0fdf4]/60 p-4 md:p-5">
       <style>{`
@@ -393,8 +408,8 @@ export default function AiFillBlock({
             {helperText && showVoiceInstructions ? " " : null}
             {showVoiceInstructions ? (
               <span className="text-[#09391C] font-medium">
-                Voice: speak clearly — text appears as you talk. After ~5 seconds of silence (or when you tap Stop),
-                your message auto-sends in a few seconds. Tap Cancel to fix a typo, edit the text, or re-record.
+                Voice: speak clearly — text appears as you talk. After a short pause (or when you tap Stop),
+                your message auto-sends. Tap Cancel to fix a typo, edit the text, or re-record.
               </span>
             ) : null}
           </p>
@@ -496,7 +511,7 @@ export default function AiFillBlock({
             ) : (
               <Sparkles className="h-5 w-5" aria-hidden />
             )}
-            <span>{loading ? "Getting suggestions…" : buttonLabel}</span>
+            <span>{loading ? processingLabel || "Processing…" : buttonLabel}</span>
           </button>
           {!canSend && !loading && !disabled && (
             <div
@@ -513,13 +528,13 @@ export default function AiFillBlock({
         </div>
       </div>
       {listening && (
-        <p className="mt-2 text-sm text-[#5A5D63]" role="status">
+        <p className="mt-2 text-sm font-medium text-[#09391C]" role="status">
           Listening…
         </p>
       )}
       {pendingAutoSubmit && !listening && (
         <p className="mt-2 text-sm text-[#5A5D63] flex flex-wrap items-center gap-2" role="status">
-          <span>Sending in {autoSubmitSecondsLeft}s…</span>
+          <span>Processing… sending in {autoSubmitSecondsLeft}s</span>
           <button
             type="button"
             onClick={cancelAutoSubmit}

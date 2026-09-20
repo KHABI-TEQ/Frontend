@@ -43,7 +43,7 @@ const labelClass = "block text-sm font-semibold text-gray-800 mb-2";
 
 export default function TransactionRegistrationPortal() {
   const searchParams = useSearchParams();
-  const propertyIdFromUrl = searchParams.get("propertyId") ?? "";
+  const propertyIdFromUrl = searchParams.get("propertyCode") ?? searchParams.get("propertyId") ?? "";
   const tabFromUrl = searchParams.get("tab");
   const initialTab: TabId =
     tabFromUrl === "certificate" || tabFromUrl === "search" || tabFromUrl === "register" || tabFromUrl === "guidelines"
@@ -132,7 +132,7 @@ export default function TransactionRegistrationPortal() {
       const params: { address?: string; propertyId?: string; lat?: number; lng?: number } = {};
       if (searchMode === "propertyId") {
         if (!searchPropertyId.trim()) {
-          setSearchError("Enter a Property ID or search by address/GPS for off-platform properties.");
+          setSearchError("Enter a Property Code or search by address/GPS for off-platform properties.");
           return;
         }
         params.propertyId = searchPropertyId.trim();
@@ -206,7 +206,7 @@ export default function TransactionRegistrationPortal() {
       return;
     }
     if (propertyListedOnPlatform && !regPropertyId.trim()) {
-      toast.error("Property ID is required when the property is listed on KHABITEQ.");
+      toast.error("Property Code is required when the property is listed on KHABITEQ.");
       return;
     }
     if (!propertyListedOnPlatform && !practitionerOffPlatform) {
@@ -420,21 +420,21 @@ export default function TransactionRegistrationPortal() {
           <div className="rounded-2xl border border-gray-200 bg-white p-6 md:p-8 shadow-sm">
             <h2 className="text-xl font-bold text-gray-900 mb-2">Check property status</h2>
             <p className="text-sm text-gray-600 mb-6">
-              Search the KHABITEQ registry by Property ID (listed properties), address, or GPS. Unlisted properties can only be checked by address or coordinates.
+              Search the KHABITEQ registry by Property Code (listed properties), address, or GPS. Unlisted properties can only be checked by address or coordinates.
             </p>
             <form onSubmit={handleSearch} className="space-y-4 max-w-xl">
               <div>
                 <label className={labelClass}>Search by</label>
                 <select value={searchMode} onChange={(e) => setSearchMode(e.target.value as typeof searchMode)} className={inputClass}>
                   <option value="address">Address</option>
-                  <option value="propertyId">Property ID (KHABITEQ listing)</option>
+                  <option value="propertyId">Property Code (KHABITEQ listing)</option>
                   <option value="gps">GPS (lat/lng)</option>
                 </select>
               </div>
               {searchMode === "propertyId" && (
                 <div>
-                  <label className={labelClass}>Property ID</label>
-                  <input type="text" value={searchPropertyId} onChange={(e) => setSearchPropertyId(e.target.value)} className={inputClass} />
+                  <label className={labelClass}>Property Code</label>
+                  <input type="text" value={searchPropertyId} onChange={(e) => setSearchPropertyId(e.target.value)} className={inputClass} placeholder="e.g. KH-ABC-12345" />
                 </div>
               )}
               {searchMode === "address" && (
@@ -473,7 +473,9 @@ export default function TransactionRegistrationPortal() {
                       <div key={i} className="rounded-xl border border-gray-200 p-4 text-sm">
                         <p className="font-semibold">{r.registrationStatus || "Registered"}</p>
                         <p className="text-gray-600 mt-1">{r.address || "—"}</p>
-                        {r.propertyId && <p className="text-gray-500 mt-1">Property ID: {r.propertyId}</p>}
+                        {(r.propertyCode || r.propertyId) && (
+                          <p className="text-gray-500 mt-1">Property Code: {r.propertyCode || r.propertyId}</p>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -521,8 +523,8 @@ export default function TransactionRegistrationPortal() {
                 </label>
                 {propertyListedOnPlatform && (
                   <div>
-                    <label className={labelClass}>Property ID *</label>
-                    <input type="text" value={regPropertyId} onChange={(e) => setRegPropertyId(e.target.value)} className={inputClass} />
+                    <label className={labelClass}>Property Code *</label>
+                    <input type="text" value={regPropertyId} onChange={(e) => setRegPropertyId(e.target.value)} className={inputClass} placeholder="e.g. KH-ABC-12345" />
                   </div>
                 )}
               </div>

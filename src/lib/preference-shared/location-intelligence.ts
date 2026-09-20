@@ -62,6 +62,7 @@ const VOICE_AREA_ALIASES: Record<string, string> = {
   "ibeju lekki": "Ibeju-Lekki",
   ajah: "Ajah",
   ikeja: "Ikeja",
+  ikate: "Ikate",
   yaba: "Yaba",
   ikoyi: "Ikoyi",
   chevron: "Chevron",

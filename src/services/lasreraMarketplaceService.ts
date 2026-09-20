@@ -20,6 +20,7 @@ export interface LasreraMarketplaceParams {
 
 export interface LasreraMarketplaceProperty {
   _id: string;
+  propertyCode?: string;
   propertyType?: string;
   propertyCategory?: string;
   price?: number;

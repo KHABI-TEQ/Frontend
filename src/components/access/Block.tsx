@@ -9,6 +9,8 @@ interface BlockProps {
   message: string;
   actionHref: string;
   actionLabel: string;
+  secondaryHref?: string;
+  secondaryLabel?: string;
   icon: React.ReactNode;
 }
 
@@ -17,6 +19,8 @@ const Block: React.FC<BlockProps> = ({
   message,
   actionHref,
   actionLabel,
+  secondaryHref,
+  secondaryLabel,
   icon,
 }) => {
   return (
@@ -32,12 +36,22 @@ const Block: React.FC<BlockProps> = ({
         </div>
         <h2 className="text-2xl font-semibold text-[#0C1E1B] mb-2">{title}</h2>
         <p className="text-[#4F5B57] mb-6">{message}</p>
-        <Link
-          href={actionHref}
-          className="bg-[#0B572B] hover:bg-[#094C25] text-white px-6 py-3 rounded-lg font-medium inline-block transition-colors"
-        >
-          {actionLabel}
-        </Link>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Link
+            href={actionHref}
+            className="bg-[#0B572B] hover:bg-[#094C25] text-white px-6 py-3 rounded-lg font-medium inline-block transition-colors"
+          >
+            {actionLabel}
+          </Link>
+          {secondaryHref && secondaryLabel ? (
+            <Link
+              href={secondaryHref}
+              className="border border-[#0B572B] text-[#0B572B] px-6 py-3 rounded-lg font-medium inline-block hover:bg-[#F4FBF5] transition-colors"
+            >
+              {secondaryLabel}
+            </Link>
+          ) : null}
+        </div>
       </motion.div>
     </div>
   );

@@ -27,9 +27,12 @@ import {
   Filter as FilterIcon,
   Bell as BellIcon,
   Search as SearchIcon,
+  CreditCard as CreditCardIcon,
 } from "lucide-react";
 import Loading from "@/components/loading-component/loading";
 import { InspectionRepresentativesSection } from "@/components/dashboard/inspection-representatives-section";
+import { usePublisherListingEligibility } from "@/hooks/usePublisherListingEligibility";
+import ListPropertyCta from "@/components/dashboard/ListPropertyCta";
 
 interface PendingBrief {
   _id: string;
@@ -53,6 +56,7 @@ interface DashboardData {
 export default function LandlordDashboard() {
   const router = useRouter();
   const { user } = useUserContext();
+  const { eligibility: listingEligibility } = usePublisherListingEligibility();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(
     null,
   );
@@ -205,6 +209,15 @@ export default function LandlordDashboard() {
       bgColor: "bg-purple-50",
     },
     {
+      title: "Subscription Plans",
+      description: "Subscribe to list properties",
+      href: "/agent-subscriptions?tab=plans",
+      icon: CreditCardIcon,
+      color: "bg-gradient-to-r from-teal-500 to-amber-500",
+      textColor: "text-teal-600",
+      bgColor: "bg-teal-50",
+    },
+    {
       title: "Profile Settings",
       description: "Manage your profile and account",
       href: "/profile-settings",
@@ -248,13 +261,7 @@ export default function LandlordDashboard() {
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 flex-shrink-0 flex-wrap">
-              <Link
-                href="/post-property"
-                className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-5 py-2.5 sm:px-6 sm:py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all duration-200 shadow-lg hover:shadow-xl text-sm sm:text-base"
-              >
-                <PlusIcon size={20} />
-                List New Property
-              </Link>
+              <ListPropertyCta listingEligibility={listingEligibility} variant="hero" />
               <Link
                 href="/my-listings"
                 className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 px-5 py-2.5 sm:px-6 sm:py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors text-sm sm:text-base"
@@ -378,13 +385,9 @@ export default function LandlordDashboard() {
                   <p className="text-gray-500 mb-6 max-w-sm mx-auto">
                     Start building your portfolio by listing your first property
                   </p>
-                                    <Link
-                    href="/post-property"
-                    className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-3 rounded-lg font-semibold inline-flex items-center gap-2 transition-all duration-200 transform hover:scale-105"
-                  >
-                    <PlusIcon size={20} />
-                    List Your First Property
-                  </Link>
+                  <div className="flex justify-center">
+                    <ListPropertyCta listingEligibility={listingEligibility} variant="inline" />
+                  </div>
                 </div>
               ) : (
                 <div className="divide-y divide-gray-100 max-h-96 overflow-y-auto">

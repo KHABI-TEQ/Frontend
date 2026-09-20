@@ -8,9 +8,8 @@ export interface NavigationItem {
 }
 
 export const mainNavigationData: NavigationItem[] = [
-  { name: "Home", url: "/", isClicked: true },
+  { name: "Home", url: "/home", isClicked: true },
   { name: "How It Works", url: "/how-it-works", isClicked: false },
-  { name: "Find Property", url: "/preference", isClicked: false },
   { name: "Professionals", url: "/for-professionals", isClicked: false },
   { name: "Trust & Safety", url: "/trust-and-safety", isClicked: false },
   { name: "Pricing", url: "/pricing", isClicked: false },

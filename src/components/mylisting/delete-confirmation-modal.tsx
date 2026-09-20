@@ -8,6 +8,7 @@ import { DELETE_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
+import { formatListingPrice } from "@/utils/price-helpers";
 
 interface Brief {
   _id: string;
@@ -94,14 +95,7 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
     }
   };
 
-  const formatPrice = (price: number) => {
-    if (price >= 1000000) {
-      return `₦${(price / 1000000).toFixed(1)}M`;
-    } else if (price >= 1000) {
-      return `₦${(price / 1000).toFixed(1)}K`;
-    }
-    return `₦${price.toLocaleString()}`;
-  };
+  const formatPrice = (price: number) => formatListingPrice(price);
 
   const getApprovalStatus = () => {
     if (brief.isApproved && !brief.isRejected) {

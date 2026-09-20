@@ -12,14 +12,11 @@ import DateTimeSelection from "@/components/new-marketplace/DateTimeSelection";
 import Button from "@/components/general-components/button";
 import { useGlobalInspectionState } from "@/hooks/useGlobalInspectionState";
 import InspectionSuccessModal from "@/components/modals/InspectionSuccessModal";
-import { useInspectionSettings } from "@/hooks/useSystemSettings";
+import { listingInspectionFeeNaira } from "@/utils/scoutListingAuth";
 
 const ContinueInspectionPage = () => {
   const router = useRouter();
   const isMobile = IsMobile();
-
-  // System settings for dynamic pricing
-  const { settings: inspectionSettings, loading: settingsLoading } = useInspectionSettings();
 
   const {
     selectedProperties,
@@ -57,27 +54,12 @@ const ContinueInspectionPage = () => {
     }
   }, [selectedProperties.length, router, initialLoad]);
 
-  // Calculate inspection fee using system settings
   const inspectionFee = useMemo(() => {
-    // Use dynamic pricing from system settings with fallback to original prices
-    const baseAmount = inspectionSettings.inspection_base_fee || 5000;
-    const additionalAmount = inspectionSettings.inspection_different_lga_fee || 10000;
-
-    if (selectedProperties.length === 1) {
-      return baseAmount;
-    }
-
-    if (selectedProperties.length === 2) {
-      const [propertyA, propertyB] = selectedProperties;
-      const lgaA = propertyA.property?.location?.localGovernment;
-      const lgaB = propertyB.property?.location?.localGovernment;
-      const uniqueLGAs = new Set([lgaA, lgaB]);
-
-      return uniqueLGAs.size === 1 ? baseAmount : baseAmount + additionalAmount;
-    }
-
-    return baseAmount;
-  }, [selectedProperties, inspectionSettings]);
+    return selectedProperties.reduce((sum, item) => {
+      const raw = (item.property as { inspectionFee?: unknown } | undefined)?.inspectionFee;
+      return sum + listingInspectionFeeNaira(raw);
+    }, 0);
+  }, [selectedProperties]);
 
   const handleBack = () => {
     if (currentStep === "selection") {
@@ -285,27 +267,18 @@ const ContinueInspectionPage = () => {
                       Inspection Fee
                     </h3>
                     <p className="text-sm text-[#5A5D63]">
-                      {selectedProperties.length === 2
-                        ? inspectionFee > (inspectionSettings.inspection_base_fee || 5000)
-                          ? "Two properties in different areas"
-                          : "Two properties in same area"
-                        : "Single property inspection"}
+                      {inspectionFee > 0
+                        ? selectedProperties.length === 2
+                          ? "Sum of the listing agents' inspection fees"
+                          : "Fee set by the listing agent"
+                        : "The listing agent did not set an inspection fee"}
                     </p>
-                    {/* Show fee breakdown if multiple properties in different areas */}
-                    {selectedProperties.length === 2 && inspectionFee > (inspectionSettings.inspection_base_fee || 5000) && (
-                      <p className="text-xs text-[#5A5D63] mt-1">
-                        Base fee: ₦{(inspectionSettings.inspection_base_fee || 5000).toLocaleString()} +
-                        Different LGA fee: ₦{(inspectionSettings.inspection_different_lga_fee || 10000).toLocaleString()}
-                      </p>
-                    )}
                   </div>
                   <div className="text-right">
                     <span className="text-2xl font-bold text-[#09391C]">
-                      {settingsLoading ? (
-                        <div className="animate-pulse bg-gray-200 h-8 w-24 rounded"></div>
-                      ) : (
-                        `₦${inspectionFee.toLocaleString()}`
-                      )}
+                      {inspectionFee > 0
+                        ? `₦${inspectionFee.toLocaleString()}`
+                        : "No inspection fee"}
                     </span>
                   </div>
                 </div>

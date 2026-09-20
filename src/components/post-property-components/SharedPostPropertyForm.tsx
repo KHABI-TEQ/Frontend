@@ -23,6 +23,7 @@ import Step1BasicDetails from "@/components/post-property-components/Step1BasicD
 import Step3ImageUpload from "@/components/post-property-components/Step3ImageUpload";
 import EnhancedPropertySummary from "@/components/post-property-components/EnhancedPropertySummary";
 import SuccessModal from "@/components/post-property-components/SuccessModal";
+import { extractCreatedPropertyCode } from "@/components/common/CopyPropertyCodeButton";
 import Button from "@/components/general-components/button";
 import Loading from "@/components/loading-component/loading";
 import Preloader from "@/components/general-components/preloader";
@@ -285,6 +286,7 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
   } = usePostPropertyContext();
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [createdPropertyCode, setCreatedPropertyCode] = useState("");
   const [showFreeLimitBanner, setShowFreeLimitBanner] = useState(false);
   const [freeLimitMessage, setFreeLimitMessage] = useState<string | null>(null);
   const [showPortfolioUnlimitedModal, setShowPortfolioUnlimitedModal] = useState(false);
@@ -671,6 +673,7 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
         dispatch(decrementFeature({ key: FEATURE_KEYS.LISTINGS, amount: 1 }));
         void refreshPublisherListing();
         resetForm();
+        setCreatedPropertyCode(extractCreatedPropertyCode(response));
         setShowSuccessModal(true);
       } else {
         let errorMessage =
@@ -735,7 +738,7 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
       requireAgentOnboarding={true}
       requireAgentApproval={true}
       requireKycApproved={true}
-      requireActiveSubscription={false}
+      requireActiveSubscription={true}
       agentCustomMessage="You must complete onboarding and be approved before you can post properties."
     >
       <Preloader isVisible={isSubmitting} message="Submitting Property..." />
@@ -912,6 +915,7 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
             isOpen={showSuccessModal}
             onClose={() => setShowSuccessModal(false)}
             userType={user?.userType as "Agent" | "Developer" | "Landlord" | undefined}
+            propertyCode={createdPropertyCode}
           />
         </div>
       </div>

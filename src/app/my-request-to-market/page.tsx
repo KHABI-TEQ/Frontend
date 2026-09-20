@@ -311,7 +311,7 @@ export default function MyRequestToMarketPage() {
             <ul className="space-y-4">
               {requests.map((item) => {
                 const displayAmount = item.agentCommissionAmount ?? DEFAULT_AGENT_COMMISSION_DISPLAY_NAIRA;
-                const prop = item.propertyId && typeof item.propertyId === "object" ? item.propertyId as { briefType?: string; price?: number; pictures?: string[] } : null;
+                const prop = item.propertyId && typeof item.propertyId === "object" ? item.propertyId as { briefType?: string; price?: number; pictures?: string[]; propertyCode?: string } : null;
                 const agentDisplay = getAgentDisplay(item);
                 const firstPicture = prop?.pictures?.[0];
                 const isAccepted = item.status === "accepted";
@@ -341,6 +341,11 @@ export default function MyRequestToMarketPage() {
                                 <span>{prop.briefType}</span>
                               </div>
                             )}
+                            {prop?.propertyCode ? (
+                              <p className="text-xs font-semibold tracking-wide text-[#09391C] mb-1">
+                                Property Code: {prop.propertyCode}
+                              </p>
+                            ) : null}
                             {typeof prop?.price === "number" && (
                               <p className="text-sm font-medium text-[#09391C] mt-1">{formatPriceForDisplay(prop.price)}</p>
                             )}

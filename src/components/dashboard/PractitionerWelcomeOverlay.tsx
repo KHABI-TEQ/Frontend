@@ -195,11 +195,11 @@ export function PractitionerWelcomeOverlay({ user, onOpenChange }: Props) {
 
           <div className="mt-6 flex flex-col sm:flex-row gap-3">
             <Link
-              href="/agent-subscriptions"
+              href="/agent-subscriptions?tab=plans"
               onClick={dismiss}
               className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#09391C] px-5 py-3.5 text-sm font-semibold text-white hover:bg-[#0B423D]"
             >
-              Subscribe to go live
+              Choose a paid plan
               <ArrowRight size={16} />
             </Link>
             <button

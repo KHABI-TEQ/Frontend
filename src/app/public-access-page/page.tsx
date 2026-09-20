@@ -6,6 +6,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
@@ -19,6 +20,7 @@ import ConfirmationModal from "@/components/public-access-page/ConfirmationModal
 import AgentEligibilityBanner from "@/components/agent/AgentEligibilityBanner";
 import { useAgentEligibility } from "@/hooks/useAgentEligibility";
 import { useUserContext } from "@/context/user-context";
+import PublicPageSetupComplete from "@/components/public-access-page/PublicPageSetupComplete";
 
 interface DashboardStats {
   viewsByDay: Array<{ date: string; count: number }>;
@@ -38,6 +40,7 @@ export default function OverviewPage() {
   const [logs, setLogs] = useState<DealSiteLog[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
   const [preloader, setPreloader] = useState(false);
+  const [showSetupComplete, setShowSetupComplete] = useState(false);
 
   // Confirmation modal state
   const [confirmModal, setConfirmModal] = useState<{
@@ -45,6 +48,19 @@ export default function OverviewPage() {
     action?: "pause" | "resume";
     isLoading?: boolean;
   }>({ isOpen: false });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    try {
+      if (params.get("setup") === "complete" || sessionStorage.getItem("khabiteq-public-page-just-saved")) {
+        setShowSetupComplete(true);
+        sessionStorage.removeItem("khabiteq-public-page-just-saved");
+      }
+    } catch {
+      if (params.get("setup") === "complete") setShowSetupComplete(true);
+    }
+  }, []);
 
   // Check if all required fields are set for playing the page
   const isPageConfigured = (): boolean => {
@@ -180,6 +196,35 @@ export default function OverviewPage() {
           Dashboard Overview
         </h1>
         <p className="text-gray-600 mt-2">Monitor your Practitioner page performance and activity</p>
+      </div>
+
+      {showSetupComplete && (
+        <PublicPageSetupComplete
+          previewUrl={previewUrl}
+          continueHref="/public-access-page/branding"
+          continueLabel="Continue Setup"
+        />
+      )}
+
+      <div className="rounded-xl border border-[#09391C]/10 bg-white p-5">
+        <h3 className="text-base font-semibold text-[#09391C]">What&apos;s next</h3>
+        <p className="mt-1 text-sm text-[#5A5D63]">
+          After public page setup, list a property from your dashboard. If KYC is still pending, you can choose a paid plan now — listing unlocks after approval.
+        </p>
+        <div className="mt-4 flex flex-col sm:flex-row flex-wrap gap-3">
+          <Link
+            href="/dashboard#list-property"
+            className="inline-flex items-center justify-center rounded-lg bg-[#09391C] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0B423D]"
+          >
+            Go to Dashboard
+          </Link>
+          <Link
+            href="/agent-subscriptions?tab=plans"
+            className="inline-flex items-center justify-center rounded-lg border border-[#09391C]/20 px-4 py-2.5 text-sm font-semibold text-[#09391C] hover:bg-[#F4FBF5]"
+          >
+            Choose a paid plan
+          </Link>
+        </div>
       </div>
 
       {isAgent && (

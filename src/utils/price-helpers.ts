@@ -9,6 +9,14 @@
  * @param value - The numeric value to format
  * @returns Formatted string with ₦ symbol and commas
  */
+/** Listing prices: always ₦150,000,000 (full commas, no ₦150.0M). */
+export function formatListingPrice(amount: number | string | null | undefined): string {
+  if (amount == null || amount === "") return "";
+  const n = typeof amount === "number" ? amount : Number(String(amount).replace(/[^\d.-]/g, ""));
+  if (!Number.isFinite(n)) return "";
+  return `₦${Math.round(n).toLocaleString("en-NG")}`;
+}
+
 export const formatPriceForDisplay = (value: string | number): string => {
   if (!value && value !== 0) return "";
 

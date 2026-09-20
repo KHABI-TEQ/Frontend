@@ -12,6 +12,8 @@ export interface PublisherListingEligibility {
   listingsRemaining: number | null;
   unlimitedListings: boolean;
   canListProperties: boolean;
+  hasPaidSubscription?: boolean;
+  requiresActiveSubscription?: boolean;
   requiresSpecialPlan: boolean;
   specialPlanCode: string;
   specialPlanName: string;

@@ -18,6 +18,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useUserContext } from "@/context/user-context";
 import dynamic from "next/dynamic";
 import KhabiteqHeaderLogo from "@/components/branding/KhabiteqHeaderLogo";
+import LookingToDoNav from "@/components/new-homepage/LookingToDoNav";
 
 // Lazy load heavy components that are only shown on interaction
 const SideBar = dynamic(() => import("../general-components/sideBar"), { ssr: false });
@@ -33,7 +34,9 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
     viewImage,
     isSubmittedSuccessfully,
   } = usePageContext();
-  const [navigationState, setNavigationState] = useState(mainNavigationData);
+  const [navigationState, setNavigationState] = useState(() =>
+    mainNavigationData.map((item) => ({ ...item, subItems: item.subItems?.map((sub) => ({ ...sub })) })),
+  );
   const pathName = useClientPathname();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const { user, logout } = useUserContext();
@@ -131,7 +134,7 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
         }`}
       >
         <motion.nav 
-          initial={{ y: -100, opacity: 0 }}
+          initial={false}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
           className={`mx-3 sm:mx-5 lg:mx-6 mt-3 sm:mt-4 px-4 sm:px-5 lg:px-6 py-3.5 sm:py-4 rounded-2xl flex justify-between items-center gap-3 transition-all duration-500 ${
@@ -219,10 +222,11 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
                   </div>
                 );
               }
+              const href = item.name === "Home" ? "/home" : item.url;
               return (
                 <Link
                   key={idx}
-                  href={item.url}
+                  href={href}
                   onClick={() => {
                     // Close any open dropdowns
                     setOpenDropdown(null);
@@ -234,14 +238,14 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
                     setNavigationState(updatedNav);
                   }}
                   className={`relative whitespace-nowrap px-2.5 xl:px-3 py-2 text-[13px] xl:text-sm font-medium tracking-wide transition-all duration-300 rounded-lg hover:bg-[#8DDB90]/10 group ${
-                    item.url === pathName 
+                    href === pathName
                       ? "text-[#09391C] bg-[#8DDB90]/10" 
                       : "text-gray-700 hover:text-[#09391C]"
                   }`}
                 >
                   {item.name}
                   <span className={`absolute bottom-1 left-3 right-3 h-0.5 bg-[#8DDB90] rounded-full transition-all duration-300 ${
-                    item.url === pathName ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                    href === pathName ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                   }`} />
                 </Link>
               );
@@ -250,9 +254,19 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
 
           {/**Buttons for desktop screens */}
           <div className="hidden lg:flex shrink-0 items-center gap-2 xl:gap-3">
+            <LookingToDoNav />
             {user?._id || user?.id ? (
               <>
-                {/* User Profile */}
+                <Link
+                  href="/dashboard"
+                  className={`whitespace-nowrap px-3.5 xl:px-4 py-2 text-[13px] xl:text-sm font-semibold rounded-full transition-all duration-300 ${
+                    pathName === "/dashboard" || pathName?.startsWith("/dashboard/")
+                      ? "text-white bg-[#09391C] shadow-md"
+                      : "text-[#09391C] bg-[#8DDB90]/20 hover:bg-[#8DDB90]/35 ring-1 ring-[#8DDB90]/40"
+                  }`}
+                >
+                  Dashboard
+                </Link>
                 <div className="relative profile-dropdown">
                   <button
                     type="button"

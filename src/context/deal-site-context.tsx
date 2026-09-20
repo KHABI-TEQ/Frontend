@@ -230,6 +230,9 @@ export interface DealSiteSettings {
   contactUs?: ContactUsSection;
   subscribeSettings?: SubscribeSettings;
   paymentDetails?: BankDetails;
+  navigation?: { items: { key: string; label: string; href: string; enabled: boolean }[] };
+  faqs?: { title?: string; items: { question: string; answer: string }[] };
+  customPages?: { slug: string; title: string; body: string; enabled: boolean }[];
   status?: string;
 }
 
@@ -298,6 +301,9 @@ const DEFAULT_SETTINGS: DealSiteSettings = {
   about: {},
   contactUs: {},
   subscribeSettings: {},
+  navigation: { items: [] },
+  faqs: { title: "Frequently asked questions", items: [] },
+  customPages: [],
 };
 
 export function DealSiteProvider({ children }: { children: ReactNode }) {
@@ -351,8 +357,11 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
             socialLinks: data.socialLinks || prev.socialLinks,
             contactVisibility: data.contactVisibility || prev.contactVisibility,
             featureSelection: data.featureSelection || prev.featureSelection,
-            practitionerPage: data.practitionerPage || prev.practitionerPage,
-            footer: data.footer || prev.footer,
+            practitionerPage: data.publicPage || data.practitionerPage || prev.practitionerPage,
+            footer: data.footer || data.footerSection || prev.footer,
+            navigation: data.navigation || prev.navigation,
+            faqs: data.faqs || prev.faqs,
+            customPages: data.customPages || prev.customPages,
             paymentDetails: data.paymentDetails || prev.paymentDetails,
             about: data.about || prev.about,
             contactUs: data.contactUs || prev.contactUs,

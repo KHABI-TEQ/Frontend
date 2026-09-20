@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import toast from "react-hot-toast";
 import api from "@/utils/axiosConfig";
 import { URLS } from "@/utils/URLS";
@@ -247,6 +248,12 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
         <p className="text-[#5A5D63] mb-6">
           Manage KYC, incoming jobs, payouts and your public professional page.
         </p>
+        <Link
+          href="/agent-subscriptions?tab=plans"
+          className="mb-6 inline-flex rounded-full bg-[#09391C] px-4 py-2 text-sm font-semibold text-white"
+        >
+          Subscription plans
+        </Link>
 
         <div className="flex flex-wrap gap-2 mb-6">
           {(

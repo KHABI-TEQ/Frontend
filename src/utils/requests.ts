@@ -1,6 +1,7 @@
 /** @format */
 
 import Cookies from 'js-cookie';
+import { resolvePostLoginPath } from "./authRedirect";
 
 interface ApiResponse<T = unknown, P = unknown> {
   success: boolean;
@@ -31,7 +32,7 @@ const handleAuthExpirySideEffects = () => {
     if (typeof window !== 'undefined') {
       try { localStorage.removeItem('token'); } catch {}
       const current = (window.location?.pathname || '') + (window.location?.search || '');
-      if (current && !sessionStorage.getItem('redirectAfterLogin')) {
+      if (current && !sessionStorage.getItem('redirectAfterLogin') && resolvePostLoginPath(current, "")) {
         try { sessionStorage.setItem('redirectAfterLogin', current); } catch {}
       }
       try { window.dispatchEvent(new CustomEvent('auth:expired')); } catch {}

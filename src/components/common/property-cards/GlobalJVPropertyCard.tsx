@@ -12,7 +12,7 @@ import ImageSwiper from "@/components/new-marketplace/ImageSwiper";
 import Button from "@/components/general-components/button";
 import { X } from "lucide-react";
 import { PropertyImage } from "@/types";
-import CopyPropertyIdButton from "@/components/common/CopyPropertyIdButton";
+import CopyPropertyCodeButton from "@/components/common/CopyPropertyCodeButton";
 
 interface GlobalJVPropertyCardProps {
   property: any;
@@ -59,7 +59,12 @@ const GlobalJVPropertyCard: React.FC<GlobalJVPropertyCardProps> = ({
       <div className="flex flex-col gap-[8px] w-full flex-grow">
         {/* Image Section */}
         <div className="w-full h-[148px] bg-gray-200 relative">
-          <CopyPropertyIdButton property={property} variant="overlay" />
+          {property.propertyCode ? (
+            <div className="absolute bottom-2 left-2 z-20 flex items-center gap-1.5 bg-black/70 text-white px-2 py-1 rounded text-[11px] font-semibold tracking-wide">
+              <span>{property.propertyCode}</span>
+              <CopyPropertyCodeButton code={property.propertyCode} variant="overlay" />
+            </div>
+          ) : null}
           {/* Premium Badge */}
           {isPremium && (
             <div className="w-[88px] z-10 h-[28px] py-[8px] px-[6px] text-white flex gap-x-1 items-center bg-[#FF3D00] absolute rounded-br-md">

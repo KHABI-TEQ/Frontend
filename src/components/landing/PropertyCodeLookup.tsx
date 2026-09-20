@@ -5,6 +5,7 @@ import Link from "next/link";
 import { GET_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import { normalizePropertyCode, storePropertyCode } from "@/utils/propertyCode";
+import CopyPropertyCodeButton from "@/components/common/CopyPropertyCodeButton";
 
 type LookupResult = {
   propertyCode: string;
@@ -112,9 +113,15 @@ export default function PropertyCodeLookup({
             dark ? "border border-white/15 bg-white/10 text-white" : "border border-gray-100 bg-white text-[#09391C]"
           }`}
         >
-          <p className={`text-xs tracking-[0.16em] uppercase ${dark ? "text-[#8DDB90]" : "text-[#5aa85d]"}`}>
-            {result.propertyCode}
-          </p>
+          <div className="flex items-center justify-between gap-3">
+            <p className={`text-xs tracking-[0.16em] uppercase ${dark ? "text-[#8DDB90]" : "text-[#5aa85d]"}`}>
+              {result.propertyCode}
+            </p>
+            <CopyPropertyCodeButton
+              code={result.propertyCode}
+              className={dark ? "border-white/20 bg-white/10 text-white hover:bg-white/20" : ""}
+            />
+          </div>
           {result.isLive && result.property ? (
             <>
               <h4 className="mt-2 text-lg font-bold">

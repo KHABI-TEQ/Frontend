@@ -21,6 +21,7 @@ import {
 import { useRouter } from "next/navigation";
 import ImageSlider from "./ImageSlider";
 import ActionDropdown from "./ActionDropdown";
+import { formatListingPrice } from "@/utils/price-helpers";
 
 interface Brief {
   _id: string;
@@ -118,16 +119,7 @@ const BriefCard: React.FC<BriefCardProps> = ({
     });
   };
 
-  const formatPrice = (price: number) => {
-    if (price >= 1000000000) {
-      return `₦${(price / 1000000000).toFixed(1)}B`;
-    } else if (price >= 1000000) {
-      return `₦${(price / 1000000).toFixed(1)}M`;
-    } else if (price >= 1000) {
-      return `₦${(price / 1000).toFixed(0)}K`;
-    }
-    return `₦${price.toLocaleString()}`;
-  };
+  const formatPrice = (price: number) => formatListingPrice(price);
 
   const handleEditClick = () => {
     router.push(`/my-listings/edit/${brief._id}`);

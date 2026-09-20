@@ -1,5 +1,5 @@
-import NewHomepage from '@/app/new-homepage/page';
+import NewHomepage from "@/components/new-homepage/NewHomepage";
 
-export default function Home() {
-  return <NewHomepage />;
+export default function RootLandingPage() {
+  return <NewHomepage showOverlayOnLoad />;
 }

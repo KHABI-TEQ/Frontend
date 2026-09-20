@@ -366,6 +366,32 @@ body {
   animation-delay: 1.2s;
 }
 
+@keyframes looking-to-do-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.looking-to-do-bounce {
+  animation: looking-to-do-bounce 1.35s ease-in-out infinite;
+}
+
+.looking-to-do-bounce-paused,
+.looking-to-do-bounce:hover,
+.looking-to-do-bounce:focus-visible {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .looking-to-do-bounce {
+    animation: none !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .support-role-card,
   .support-role-card:hover,

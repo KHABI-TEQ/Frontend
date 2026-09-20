@@ -15,8 +15,8 @@ export default function ContactUsPage() {
   const [preloader, setPreloader] = useState(false);
   const [activeTab, setActiveTab] = useState<"settings" | "messages">("settings");
   const [formData, setFormData] = useState({
-    contactUsTitle: settings.contactUs?.hero?.title || "Get in Touch",
-    contactUsDescription: settings.contactUs?.hero?.description || "Have a question? We'd love to hear from you.",
+    contactUsTitle: settings.contactUs?.title || settings.contactUs?.hero?.title || "Get in Touch",
+    contactUsDescription: settings.contactUs?.description || settings.contactUs?.hero?.description || "Have a question? We'd love to hear from you.",
     enableContactForm: settings.contactVisibility?.enableContactForm ?? true,
     responseMessage: settings.contactUs?.cta?.title || "Thank you for reaching out. We'll get back to you soon.",
     showEmail: settings.contactVisibility?.showEmail ?? true,
@@ -48,6 +48,8 @@ export default function ContactUsPage() {
       const payload = {
         contactUs: {
           ...settings.contactUs,
+          title: formData.contactUsTitle,
+          description: formData.contactUsDescription,
           hero: {
             ...settings.contactUs?.hero,
             title: formData.contactUsTitle,

@@ -925,7 +925,7 @@ const PostPropertyByPreference = () => {
         allowedUserTypes={["Agent"]}
         requireAgentOnboarding={false}
         requireAgentApproval={false}
-        requireActiveSubscription={false}
+        requireActiveSubscription={true}
         agentCustomMessage="You must complete onboarding and be approved before you can post properties."
       >
         <FeatureGate featureKeys={[FEATURE_KEYS.AGENT_MARKETPLACE]}>
@@ -963,7 +963,7 @@ const PostPropertyByPreference = () => {
       allowedUserTypes={["Agent"]}
       requireAgentOnboarding={false}
       requireAgentApproval={false}
-      requireActiveSubscription={false}
+      requireActiveSubscription={true}
       agentCustomMessage="You must complete onboarding and be approved before you can post properties."
     >
       <FeatureGate featureKeys={[FEATURE_KEYS.AGENT_MARKETPLACE]}>

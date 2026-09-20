@@ -261,8 +261,8 @@ const POLICIES_DATA: PolicyData[] = [
         sectionNumber: '1',
         title: 'Subscription Policy',
         items: [
-          { text: 'Subscription is available only to registered agents.' },
-          { text: 'All new agents enjoy a 7-day Free Trial with Premium benefits. After trial, subscription is required to maintain access.' },
+          { text: 'Subscription is available to registered practitioners, including licensed agents, property scouts, developers, and property owners.' },
+          { text: 'After signup, an active paid subscription is required before you can list properties. Complimentary signup listings, KYC trial listings, and time-boxed free trials are not offered.' },
           { text: 'Premium – ₦15,000/month (all features, no commission).' },
           { text: 'Quarterly – (save 10%).' },
           { text: 'Yearly – (save 20%).' },

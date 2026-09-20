@@ -35,6 +35,13 @@ import {
   ShortletPreferencePayload,
 } from "@/types/preference-form";
 import { POST_REQUEST } from "@/utils/requests";
+import SearchInsuranceCard from "@/components/search-insurance/SearchInsuranceCard";
+import BuyerAuthModal from "@/components/search-insurance/BuyerAuthModal";
+import {
+  checkoutSearchInsurance,
+  getBuyerProfile,
+  getBuyerToken,
+} from "@/lib/search-insurance";
 import PreferenceModeSelector from "@/components/preference-form/PreferenceModeSelector";
 import PreferenceAiConversationFlow from "@/components/preference-form/PreferenceAiConversationFlow";
 import { readStoredPropertyCode, storePropertyCode } from "@/utils/propertyCode";
@@ -375,6 +382,8 @@ const PreferenceFormContent: React.FC = () => {
     useState<keyof typeof PREFERENCE_CONFIGS>("buy");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [linkedPropertyCode, setLinkedPropertyCode] = useState("");
+  const [insureSearch, setInsureSearch] = useState(false);
+  const [showBuyerAuth, setShowBuyerAuth] = useState(false);
 
   // When user submits from AI summary, show the same success modal
   useEffect(() => {
@@ -387,6 +396,7 @@ const PreferenceFormContent: React.FC = () => {
     const code = searchParams.get("code");
     if (code) storePropertyCode(code);
     setLinkedPropertyCode(readStoredPropertyCode());
+    if (searchParams.get("insure") === "1") setInsureSearch(true);
   }, [searchParams]);
 
   // Sync initial preference type from URL (e.g. /preference?type=rent opens Rent)
@@ -774,10 +784,18 @@ const PreferenceFormContent: React.FC = () => {
       return;
     }
 
+    if (insureSearch && !getBuyerToken()) {
+      setShowBuyerAuth(true);
+      return;
+    }
+
     dispatch({ type: "SET_SUBMITTING", payload: true });
 
     try {
-      const payload = generatePayload();
+      const payload = {
+        ...generatePayload(),
+        insureSearch,
+      };
 
       // Log payload for debugging (keeping as requested in development only)
       if (process.env.NODE_ENV === "development") {
@@ -785,18 +803,27 @@ const PreferenceFormContent: React.FC = () => {
       }
 
       const url = `${process.env.NEXT_PUBLIC_API_URL}/preferences/submit`;
+      const buyerToken = getBuyerToken();
 
-      const response = await POST_REQUEST(url, payload);
+      const response = await POST_REQUEST(url, payload, buyerToken || undefined);
 
       if (response.success) {
-        console.log("Preference submitted successfully:", response);
-        toast.success("Preference submitted successfully!");
-        // Reset form data immediately after successful submission
+        const preferenceId = (response.data as any)?._id || (response.data as any)?.id;
+        if (insureSearch && preferenceId) {
+          const checkout = await checkoutSearchInsurance(String(preferenceId));
+          if (checkout.success && checkout.data?.paymentUrl) {
+            toast.success("Preference saved. Redirecting to insurance payment...");
+            window.location.href = checkout.data.paymentUrl;
+            return;
+          }
+          toast.error(checkout.message || "Search saved. Insurance payment could not start.");
+        } else {
+          toast.success("Preference submitted successfully!");
+        }
         dispatch({ type: "RESET_FORM" });
-        // Show success modal
         setShowSuccessModal(true);
       } else {
-        throw new Error("Submission failed");
+        throw new Error(response.message || "Submission failed");
       }
     } catch (error) {
       console.error("Submission error:", error);
@@ -804,7 +831,7 @@ const PreferenceFormContent: React.FC = () => {
     } finally {
       dispatch({ type: "SET_SUBMITTING", payload: false });
     }
-  }, [generatePayload, dispatch, isFormValid]);
+  }, [generatePayload, dispatch, isFormValid, insureSearch]);
 
   // Handle submit new preference - memoized to prevent recreation
   const handleSubmitNew = useCallback(() => {
@@ -1081,11 +1108,12 @@ const PreferenceFormContent: React.FC = () => {
 
           {/* Submit Button */}
           <motion.div
-            className="mt-8 pt-6 border-t border-gray-200"
+            className="mt-8 space-y-5 pt-6 border-t border-gray-200"
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
+            <SearchInsuranceCard optedIn={insureSearch} onToggle={setInsureSearch} />
             <SubmitButton onSubmit={handleSubmit} />
           </motion.div>
         </motion.div>
@@ -1096,6 +1124,17 @@ const PreferenceFormContent: React.FC = () => {
         )}
       </div>
 
+      <BuyerAuthModal
+        open={showBuyerAuth}
+        onClose={() => setShowBuyerAuth(false)}
+        defaultName={getBuyerProfile()?.fullName || (state.formData as any)?.contactInfo?.fullName}
+        defaultEmail={getBuyerProfile()?.email || (state.formData as any)?.contactInfo?.email}
+        defaultPhone={getBuyerProfile()?.phoneNumber || (state.formData as any)?.contactInfo?.phoneNumber}
+        onAuthed={() => {
+          setShowBuyerAuth(false);
+          void handleSubmit();
+        }}
+      />
       {/* Success Modal */}
       <SuccessModal
         showSuccessModal={showSuccessModal}

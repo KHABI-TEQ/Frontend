@@ -16,6 +16,7 @@ import React, {
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import type { AgentKycSubmissionPayload } from "@/types/agent-upgrade.types";
+import { resolvePostLoginPath } from "@/utils/authRedirect";
 
 function getCurrentPathWithSearch(): string {
   if (typeof window === "undefined") return "/";
@@ -210,7 +211,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         try { localStorage.removeItem('token'); } catch {}
         toast.error("Session expired, please login again");
         const from = getCurrentPathWithSearch();
-        try { if (!sessionStorage.getItem('redirectAfterLogin')) sessionStorage.setItem('redirectAfterLogin', from); } catch {}
+        try {
+          if (!sessionStorage.getItem("redirectAfterLogin") && resolvePostLoginPath(from, "")) {
+            sessionStorage.setItem("redirectAfterLogin", from);
+          }
+        } catch {}
         redirectToLogin(from);
       }
     } catch (error) {

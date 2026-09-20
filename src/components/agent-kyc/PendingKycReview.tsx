@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import Link from "next/link";
 import { useUserContext } from "@/context/user-context";
 import { CheckCircle2, Clock, FileText, MapPin, Briefcase, Award, Mail, Phone, User } from "lucide-react";
 
@@ -68,7 +69,39 @@ const PendingKycReview: React.FC = () => {
             <div className="flex-1">
               <h2 className="text-2xl font-semibold text-[#0C1E1B]">KYC Pending Review</h2>
               <p className="text-[#4F5B57] mt-1">{statusLabel}.</p>
+              <p className="text-sm text-[#4F5B57] mt-2">
+                You do not need to stay on this page. Return to your dashboard and continue other account work while we review your documents.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <Link
+                  href="/dashboard"
+                  className="inline-flex items-center justify-center rounded-lg bg-[#09391C] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#0B423D]"
+                >
+                  Back to Dashboard
+                </Link>
+                <Link
+                  href="/public-access-page/setup"
+                  className="inline-flex items-center justify-center rounded-lg border border-[#09391C]/20 bg-white px-5 py-2.5 text-sm font-semibold text-[#09391C] hover:bg-[#F4FBF5]"
+                >
+                  Set up public page
+                </Link>
+                <Link
+                  href="/agent-subscriptions?tab=plans"
+                  className="inline-flex items-center justify-center rounded-lg border border-[#09391C]/20 bg-white px-5 py-2.5 text-sm font-semibold text-[#09391C] hover:bg-[#F4FBF5]"
+                >
+                  Choose a paid plan
+                </Link>
+              </div>
             </div>
+          </div>
+          <div className="mx-6 mt-4 mb-2 rounded-xl border border-amber-200 bg-amber-50 p-4">
+            <p className="text-sm font-semibold text-amber-950">What you can do while waiting</p>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-amber-900">
+              <li>Return to your dashboard and review your account.</li>
+              <li>Set up your practitioner / public page (logo, footer, and branding).</li>
+              <li>Choose a paid subscription so you are ready to list as soon as KYC is approved.</li>
+              <li>Listing a property stays locked until KYC is approved and a paid plan is active.</li>
+            </ul>
           </div>
 
           {/* Profile summary */}

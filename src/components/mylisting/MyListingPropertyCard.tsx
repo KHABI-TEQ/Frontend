@@ -26,6 +26,8 @@ import Image from "next/image";
 import { createPortal } from "react-dom";
 import { Property } from "@/types/my-listings.types";
 import { scoutListingStatusLabel } from "@/utils/scoutListingStatus";
+import CopyPropertyCodeButton from "@/components/common/CopyPropertyCodeButton";
+import { formatListingPrice } from "@/utils/price-helpers";
 
 interface MyListingPropertyCardProps {
   property: Property;
@@ -124,14 +126,7 @@ const MyListingPropertyCard: React.FC<MyListingPropertyCardProps> = ({
     }
   };
 
-  const formatPrice = (price: number) => {
-    if (price >= 1000000) {
-      return `₦${(price / 1000000).toFixed(1)}M`;
-    } else if (price >= 1000) {
-      return `₦${(price / 1000).toFixed(0)}K`;
-    }
-    return `₦${price.toLocaleString()}`;
-  };
+  const formatPrice = (price: number) => formatListingPrice(price);
 
   const formatLocation = (location: any) => {
     return [location.area, location.localGovernment, location.state]
@@ -242,8 +237,9 @@ const MyListingPropertyCard: React.FC<MyListingPropertyCardProps> = ({
         </div>
 
         {property.propertyCode ? (
-          <div className="absolute bottom-3 left-3 bg-black/70 text-white px-2 py-1 rounded text-[11px] font-semibold tracking-wide">
-            {property.propertyCode}
+          <div className="absolute bottom-3 left-3 z-20 flex items-center gap-1.5 bg-black/70 text-white px-2 py-1 rounded text-[11px] font-semibold tracking-wide">
+            <span>{property.propertyCode}</span>
+            <CopyPropertyCodeButton code={property.propertyCode} variant="overlay" />
           </div>
         ) : null}
 

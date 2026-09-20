@@ -330,7 +330,7 @@ const SharedUpdatePropertyForm: React.FC<SharedUpdatePropertyFormProps> = ({
             landSize: property.landSize?.size || "",
             measurementType: property.landSize?.measurementType || "",
             price: property.price?.toString() || "",
-            inspectionFee: Number(property.inspectionFee) || 5000,
+            inspectionFee: listingInspectionFeeNaira(property.inspectionFee),
             priceChangeBlocked: Boolean(property.priceChangeBlocked),
             priceChangeBlockedMessage: property.priceChangeBlockedMessage || "",
             bedrooms: parseInt(property.additionalFeatures?.noOfBedroom) || 0,

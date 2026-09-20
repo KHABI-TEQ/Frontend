@@ -7,6 +7,7 @@ import StandardPropertyCard, { StandardPropertyCardProps } from "./StandardPrope
 import JVPropertyCard, { JVPropertyCardProps } from "./JVPropertyCard";
 import { useGlobalInspectionState } from "@/hooks/useGlobalInspectionState";
 import toast from "react-hot-toast";
+import { formatListingPrice } from "@/utils/price-helpers";
 
 // Combined props interface
 export interface UniversalPropertyCardProps {
@@ -219,7 +220,7 @@ export const createPropertyCardData = (property: any, propertyType?: string): { 
   if (type === "Joint Venture") {
     return [
       { header: "Property Type", value: property.propertyType || "N/A" },
-      { header: "Investment Amount", value: `₦${Number(property.investmentAmount || property.price || 0).toLocaleString()}` },
+      { header: "Investment Amount", value: formatListingPrice(property.investmentAmount || property.price || 0) },
       { header: "Expected ROI", value: property.expectedROI || "N/A" },
       { header: "Investment Type", value: property.investmentType || "Joint Venture" },
       { header: "Bedrooms", value: property.additionalFeatures?.noOfBedroom || property.noOfBedroom || "0" },
@@ -238,7 +239,7 @@ export const createPropertyCardData = (property: any, propertyType?: string): { 
   // Standard property card data (for Outright Sales, Rent, Shortlet)
   return [
     { header: "Property Type", value: property.propertyType || "N/A" },
-    { header: "Price", value: `₦${Number(property.price || 0).toLocaleString()}` },
+    { header: "Price", value: formatListingPrice(property.price || 0) },
     { header: "Bedrooms", value: property.additionalFeatures?.noOfBedroom || property.noOfBedroom || "0" },
     { header: "Bathrooms", value: property.additionalFeatures?.noOfBathroom || property.noOfBathroom || "0" },
     { header: "CarParks", value: property.additionalFeatures?.noOfCarPark || property.noOfCarPark || "0" },

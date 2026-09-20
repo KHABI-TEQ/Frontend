@@ -27,6 +27,7 @@ import SellStep2FeaturesConditions from "@/components/post-property-components/s
 import Step3ImageUpload from "@/components/post-property-components/Step3ImageUpload";
 import EnhancedPropertySummary from "@/components/post-property-components/EnhancedPropertySummary";
 import SuccessModal from "@/components/post-property-components/SuccessModal";
+import { extractCreatedPropertyCode } from "@/components/common/CopyPropertyCodeButton";
 import Button from "@/components/general-components/button";
 import Loading from "@/components/loading-component/loading";
 import Preloader from "@/components/general-components/preloader";
@@ -198,6 +199,7 @@ const OutrightSalesPropertyForm: React.FC<OutrightSalesPropertyFormProps> = ({
   } = usePostPropertyContext();
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [createdPropertyCode, setCreatedPropertyCode] = useState("");
   const [showFreeLimitBanner, setShowFreeLimitBanner] = useState(false);
   const [freeLimitMessage, setFreeLimitMessage] = useState<string | null>(null);
 
@@ -457,6 +459,7 @@ const OutrightSalesPropertyForm: React.FC<OutrightSalesPropertyFormProps> = ({
             : "Outright sales property created successfully!",
         );
         resetForm();
+        setCreatedPropertyCode(extractCreatedPropertyCode(response));
         setShowSuccessModal(true);
       } else {
         let errorMessage = (response as any)?.error || (response as any)?.message || "Failed to submit property";
@@ -506,7 +509,7 @@ const OutrightSalesPropertyForm: React.FC<OutrightSalesPropertyFormProps> = ({
       requireAgentOnboarding={false}
       requireAgentApproval={false}
       requireKycApproved={true}
-      requireActiveSubscription={false}
+      requireActiveSubscription={true}
       agentCustomMessage="You must complete onboarding and be approved before you can post properties."
     >
       <Preloader isVisible={isSubmitting} message="Submitting Property..." />
@@ -667,6 +670,7 @@ const OutrightSalesPropertyForm: React.FC<OutrightSalesPropertyFormProps> = ({
             isOpen={showSuccessModal}
             onClose={() => setShowSuccessModal(false)}
             userType={user?.userType as "Agent" | "Developer" | "Landlord" | undefined}
+            propertyCode={createdPropertyCode}
           />
         </div>
       </div>

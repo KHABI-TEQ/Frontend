@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { AlertCircle, CheckCircle2, Clock, CreditCard, Shield } from "lucide-react";
+import { CheckCircle2, CreditCard, Shield } from "lucide-react";
 import type { AgentEligibility } from "@/types/agent-eligibility.types";
-import { STANDARD_LISTING_CAP, FREE_TRIAL_LISTING_CAP, AGENT_TRIAL_DAYS } from "@/utils/subscription-plan-features";
+import { STANDARD_LISTING_CAP } from "@/utils/subscription-plan-features";
 
 interface AgentEligibilityBannerProps {
   eligibility: AgentEligibility | null;
@@ -62,23 +62,10 @@ export default function AgentEligibilityBanner({
   if (!eligibility) return null;
 
   const {
-    policyPhase,
-    kycGraceDaysRemaining,
-    trialDaysRemaining,
-    ownedProperties,
-    listingLimit,
-    listingsRemaining,
-    unlimitedListings,
     hasPaidSubscription,
-    hasComplimentarySubscription,
+    unlimitedListings,
     gate,
-    constants,
   } = eligibility;
-
-  const trialCap =
-    constants?.trialMaxPropertiesWithoutSubscription ??
-    listingLimit ??
-    FREE_TRIAL_LISTING_CAP;
 
   const cta = (href: string, label: string, primary = true) => (
     <Link
@@ -100,11 +87,16 @@ export default function AgentEligibilityBanner({
         tone="red"
         icon={isKyc ? <Shield size={18} /> : <CreditCard size={18} />}
         title={isKyc ? "KYC verification required" : "Paid subscription required"}
-        body={gate.message}
+        body={
+          gate.message ||
+          (isKyc
+            ? "Complete KYC verification and obtain approval before listing."
+            : "Subscribe to an active plan to list properties.")
+        }
         actions={
           <>
             {isKyc ? cta("/agent-kyc", "Complete KYC") : null}
-            {!isKyc ? cta("/agent-subscriptions?tab=plans", "View plans") : null}
+            {cta("/agent-subscriptions?tab=plans", isKyc ? "Choose a paid plan" : "View plans", !isKyc)}
           </>
         }
       />
@@ -126,66 +118,9 @@ export default function AgentEligibilityBanner({
     );
   }
 
-  const items: React.ReactNode[] = [];
-
-  if (policyPhase === "kyc_grace") {
-    items.push(
-      <BannerShell
-        key="grace"
-        tone="blue"
-        icon={<Clock size={18} />}
-        title={`KYC grace period — ${kycGraceDaysRemaining ?? constants.kycGracePeriodDays} day(s) left`}
-        body={
-          <>
-            You may list <strong>1 property</strong> and use your practitioner page while you complete KYC.
-            {ownedProperties >= 1 ? (
-              <> You have reached the grace-period listing limit until KYC is approved.</>
-            ) : (
-              <> Submit KYC early to unlock up to {trialCap} trial listings.</>
-            )}
-          </>
-        }
-        actions={cta("/agent-kyc", "Complete KYC")}
-      />
-    );
-  }
-
-  if (policyPhase === "trial") {
-    items.push(
-      <BannerShell
-        key="trial"
-        tone="blue"
-        icon={<Clock size={18} />}
-        title={`Trial period — ${trialDaysRemaining ?? "?"} day(s) left`}
-        body={
-          <>
-            KYC approved. You may list up to{" "}
-            <strong>{listingLimit ?? trialCap} properties</strong> without a paid
-            subscription
-            {listingsRemaining != null ? (
-              <> ({listingsRemaining} remaining)</>
-            ) : null}
-            . After the {AGENT_TRIAL_DAYS}-day trial ends, a paid plan is required
-            even if you have not used all Free listings. Listing volume above{" "}
-            {STANDARD_LISTING_CAP} needs <strong>Portfolio Unlimited</strong> —
-            Premium plans stay within that cap (Free trial is capped at{" "}
-            {FREE_TRIAL_LISTING_CAP}).
-          </>
-        }
-        actions={
-          <>
-            {cta("/agent-subscriptions?tab=plans", "View plans", false)}
-            {cta("/post-property", "Post property")}
-          </>
-        }
-      />
-    );
-  }
-
   if (hasPaidSubscription && unlimitedListings) {
-    items.push(
+    return (
       <BannerShell
-        key="paid"
         tone="emerald"
         icon={<CheckCircle2 size={18} />}
         title="Portfolio Unlimited active"
@@ -193,10 +128,11 @@ export default function AgentEligibilityBanner({
         actions={cta("/agent-subscriptions", "Manage subscription", false)}
       />
     );
-  } else if (hasPaidSubscription) {
-    items.push(
+  }
+
+  if (hasPaidSubscription) {
+    return (
       <BannerShell
-        key="paid-capped"
         tone="emerald"
         icon={<CheckCircle2 size={18} />}
         title="Practitioner subscription active"
@@ -204,39 +140,15 @@ export default function AgentEligibilityBanner({
         actions={cta("/agent-subscriptions", "Manage subscription", false)}
       />
     );
-  } else if (hasComplimentarySubscription && !hasPaidSubscription) {
-    items.push(
-      <BannerShell
-        key="complimentary"
-        tone="amber"
-        icon={<AlertCircle size={18} />}
-        title="Complimentary welcome plan"
-        body={`Your KYC welcome grant does not replace a paid practitioner subscription after the ${AGENT_TRIAL_DAYS}-day trial window. Listings are limited (1 in KYC grace, up to ${FREE_TRIAL_LISTING_CAP} on Free trial, hard Premium cap ${STANDARD_LISTING_CAP}). Subscribe to keep listing, your public page, and Request To Market access.`}
-        actions={cta("/agent-subscriptions?tab=plans", "Choose a paid plan")}
-      />
-    );
   }
 
-  if (items.length === 0) {
-    return (
-      <BannerShell
-        tone="blue"
-        icon={<Shield size={18} />}
-        title="Agent account policy"
-        body={
-          <>
-            Days 0–7: up to 1 listing without KYC approval. After KYC: up to{" "}
-            {trialCap} listings during the {AGENT_TRIAL_DAYS}-day Free trial.
-            When the trial ends, a paid subscription is required regardless of how
-            many listings you used. Paid Premium plans keep access after trial but
-            stay within the {STANDARD_LISTING_CAP}-listing cap. Only Portfolio
-            Unlimited removes that cap.
-          </>
-        }
-        actions={cta("/agent-kyc", "KYC status", false)}
-      />
-    );
-  }
-
-  return <div className="space-y-3">{items}</div>;
+  return (
+    <BannerShell
+      tone="amber"
+      icon={<CreditCard size={18} />}
+      title="Subscribe to start listing"
+      body="After signup, an active paid plan is required before you can list properties. Complimentary or trial listings are no longer available."
+      actions={cta("/agent-subscriptions?tab=plans", "View plans")}
+    />
+  );
 }

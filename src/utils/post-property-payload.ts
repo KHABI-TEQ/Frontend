@@ -20,20 +20,19 @@ export function normalizeIsTenantedForApi(
 }
 
 /**
- * Backend policy 403 messages for agent listing limits (grace, trial, subscription).
+ * Backend policy 403 messages for listing eligibility (subscription + cap).
  */
 export function isAgentListingPolicyError(message: string | undefined | null): boolean {
   if (!message || typeof message !== "string") return false;
   const m = message.toLowerCase();
   return (
-    m.includes("7-day signup grace period") ||
-    m.includes("7-day grace period has expired") ||
-    m.includes("trial limit of") ||
-    m.includes("4-week trial period has ended") ||
+    m.includes("subscribe to an active plan") ||
+    m.includes("listing is only available with a paid subscription") ||
     m.includes("kyc-approved before creating") ||
+    m.includes("complete kyc verification") ||
     m.includes("maximum of 25 property listings") ||
     m.includes("portfolio unlimited") ||
-    (m.includes("subscribe") && (m.includes("trial") || m.includes("property") || m.includes("plan")))
+    (m.includes("subscribe") && (m.includes("property") || m.includes("plan") || m.includes("list")))
   );
 }
 

@@ -101,7 +101,7 @@ const ESSENTIAL_GUIDELINES: {
     items: [
       "Your valid ID (e.g. NIN, international passport, or driver's licence) — upload on the registration form.",
       "A receipt or proof of payment for the transaction value you paid to the seller or landlord — upload on the registration form.",
-      "Property ID from the listing (use Copy property ID on the marketplace, or from your inspection email).",
+      "Property Code from the listing (use Copy on the marketplace listing card, or from your inspection email).",
       "Your first and last name, email, and phone number as the buyer or tenant.",
       "For buildings (residential, commercial): provide the exact property address.",
       "For land: provide GPS coordinates; add survey plan reference if you have one.",
@@ -116,9 +116,9 @@ const ESSENTIAL_GUIDELINES: {
     defaultOpen: false,
     numbered: true,
     items: [
-      "Start with Check property status — search by Property ID, address, or GPS to see if an active or completed registration already exists.",
+      "Start with Check property status — search by Property Code, address, or GPS to see if an active or completed registration already exists.",
       "When an inspection is required, complete it first; after it finishes, confirm your intent to proceed and keep your Inspection ID for the form.",
-      "On Register transaction, submit your details, Property ID, transaction value, your valid ID, deal payment receipt, and property identification.",
+      "On Register transaction, submit your details, Property Code, transaction value, your valid ID, deal payment receipt, and property identification.",
       "After you submit, you are redirected to Paystack to pay the processing fee that applies to your transaction value.",
       "Once registered, the property is flagged in the central registry so others see pending or completed transactions.",
     ],

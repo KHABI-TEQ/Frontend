@@ -1,46 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import type { ElementType } from "react";
 import { ArrowRight, Briefcase, Building2, Compass, Home, Landmark, Scale } from "lucide-react";
 import { DarkCta, FadeIn, LandingSection, OutlineCta, PrimaryCta, SectionHeading, SectionText } from "./primitives";
+import { LOOKING_TO_DO_HEADING, LOOKING_TO_DO_PATHS, type LookingToDoIcon } from "@/data/looking-to-do";
 
-const paths = [
-  {
-    title: "I WANT TO FIND PROPERTY",
-    meta: "Buy · Rent · Invest",
-    cta: "SUBMIT YOUR PREFERENCE",
-    href: "/preference",
-    icon: Home,
-  },
-  {
-    title: "I HAVE A PROPERTY",
-    meta: "Owner · Developer · Property Opportunity",
-    cta: "PRESENT YOUR PROPERTY",
-    href: "/post-property",
-    icon: Building2,
-  },
-  {
-    title: "I'M A PROFESSIONAL",
-    meta: "Agent · Lawyer · Surveyor · Valuer · Other eligible professionals",
-    cta: "JOIN KHABITEQ",
-    href: "/for-professionals",
-    icon: Briefcase,
-  },
-  {
-    title: "I HAVE A PROPERTY OPPORTUNITY",
-    meta: "Property Scout",
-    cta: "BECOME A PROPERTY SCOUT",
-    href: "/auth/register?intent=scout",
-    icon: Compass,
-  },
-  {
-    title: "I NEED A PAID PROFESSIONAL SERVICE",
-    meta: "Lawyer · Surveyor · Valuer",
-    cta: "VIEW SERVICES AND PRICES",
-    href: "/professional-services",
-    icon: Scale,
-  },
-];
+const pathIcons: Record<LookingToDoIcon, ElementType> = {
+  home: Home,
+  building: Building2,
+  briefcase: Briefcase,
+  compass: Compass,
+  scale: Scale,
+};
 
 const professionals = [
   { label: "Agents", href: "/for-professionals?role=agent", icon: Briefcase },
@@ -74,11 +46,11 @@ export default function AudienceAndProfessionals() {
     <>
       <LandingSection id="get-started">
         <FadeIn className="mb-8">
-          <SectionHeading>WHAT ARE YOU LOOKING TO DO?</SectionHeading>
+          <SectionHeading>{LOOKING_TO_DO_HEADING}</SectionHeading>
         </FadeIn>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {paths.map((path, index) => {
-            const Icon = path.icon;
+          {LOOKING_TO_DO_PATHS.map((path, index) => {
+            const Icon = pathIcons[path.icon];
             return (
               <FadeIn key={path.title} delay={index * 0.05}>
                 <article className="h-full rounded-2xl border border-gray-100 bg-white p-6 flex flex-col shadow-[0_10px_32px_-20px_rgba(9,57,28,0.35)]">

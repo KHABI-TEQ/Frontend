@@ -32,6 +32,7 @@ import axios from "axios";
 import api from "@/utils/axiosConfig";
 import toast from "react-hot-toast";
 import { URLS } from "@/utils/URLS";
+import CopyPropertyCodeButton from "@/components/common/CopyPropertyCodeButton";
 import { useSelectedBriefs } from "@/context/selected-briefs-context";
 import { useGlobalPropertyActions } from "@/context/global-property-actions-context";
 import GlobalPriceNegotiationModal from "@/components/modals/GlobalPriceNegotiationModal";
@@ -973,9 +974,11 @@ const ProductDetailsPage = () => {
               <span className="font-medium">Back</span>
             </button>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-500">
-                ID: {details.owner.slice(-8)}
-              </span>
+              {details.propertyCode ? (
+                <span className="text-sm text-gray-500">
+                  Property Code: {details.propertyCode}
+                </span>
+              ) : null}
             </div>
           </div>
         </div>
@@ -995,9 +998,12 @@ const ProductDetailsPage = () => {
             </motion.div>
 
             {details.propertyCode ? (
-              <div className="rounded-xl border border-[#8DDB90]/40 bg-[#F5F7F9] px-4 py-3 text-sm">
-                <span className="font-semibold text-[#09391C]">Property Code:</span>{" "}
-                <span className="tracking-wide text-[#09391C]">{details.propertyCode}</span>
+              <div className="flex items-center justify-between gap-3 rounded-xl border border-[#8DDB90]/40 bg-[#F5F7F9] px-4 py-3 text-sm">
+                <div>
+                  <span className="font-semibold text-[#09391C]">Property Code:</span>{" "}
+                  <span className="tracking-wide text-[#09391C]">{details.propertyCode}</span>
+                </div>
+                <CopyPropertyCodeButton code={details.propertyCode} />
               </div>
             ) : null}
 

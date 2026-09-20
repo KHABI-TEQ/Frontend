@@ -27,7 +27,9 @@ import {
   Activity,
   ChevronDown,
   FileText,
-  Globe,
+  HelpCircle,
+  Eye,
+  Compass,
 } from "lucide-react";
 import { useDealSite } from "@/context/deal-site-context";
 
@@ -45,17 +47,21 @@ const NAV_ITEMS: NavItem[] = [
 
   // Content & Design
   { id: "branding", label: "Branding & SEO", path: "/public-access-page/branding", icon: <Settings size={18} />, group: "content" },
-  { id: "custom-domain", label: "Custom Domain", path: "/public-access-page/custom-domain", icon: <Globe size={18} />, group: "content" },
   { id: "theme", label: "Theme", path: "/public-access-page/theme", icon: <Palette size={18} />, group: "content" },
   { id: "home-page", label: "Home Page", path: "/public-access-page/home-page", icon: <Home size={18} />, group: "content" },
   { id: "featured", label: "Featured Listings", path: "/public-access-page/featured", icon: <Star size={18} />, group: "content" },
+  { id: "website-content", label: "Website content", path: "/public-access-page/website-content", icon: <BookOpen size={18} />, group: "content" },
+  { id: "about", label: "About Us", path: "/public-access-page/about", icon: <BookOpen size={18} />, group: "content" },
+  { id: "contact-us", label: "Contact Us", path: "/public-access-page/contact-us", icon: <Mail size={18} />, group: "content" },
+  { id: "social", label: "Social Links", path: "/public-access-page/social", icon: <Share2 size={18} />, group: "content" },
+  { id: "faqs", label: "FAQs", path: "/public-access-page/faqs", icon: <HelpCircle size={18} />, group: "content" },
+  { id: "custom-pages", label: "Custom pages", path: "/public-access-page/custom-pages", icon: <FileText size={18} />, group: "content" },
+  { id: "navigation", label: "Navigation", path: "/public-access-page/navigation", icon: <Compass size={18} />, group: "content" },
+  { id: "preview", label: "Preview published page", path: "/public-access-page/preview", icon: <Eye size={18} />, group: "content" },
   { id: "preferences", label: "Preferences Requests", path: "/public-access-page/preferences", icon: <FileText size={18} />, group: "content" },
 
   // Settings
   { id: "inspection", label: "Inspection Settings", path: "/public-access-page/inspection", icon: <CheckSquare size={18} />, group: "settings" },
-  { id: "social", label: "Social Links", path: "/public-access-page/social", icon: <Share2 size={18} />, group: "settings" },
-  { id: "about", label: "About Us", path: "/public-access-page/about", icon: <BookOpen size={18} />, group: "settings" },
-  { id: "contact-us", label: "Contact Us Page", path: "/public-access-page/contact-us", icon: <Mail size={18} />, group: "settings" },
   { id: "payment", label: "Payment Details", path: "/public-access-page/payment", icon: <DollarSign size={18} />, group: "settings" },
   { id: "subscribe", label: "Subscribe Settings", path: "/public-access-page/subscribe-settings", icon: <Mail size={18} />, group: "settings" },
 

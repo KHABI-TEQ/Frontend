@@ -9,6 +9,7 @@ export const config = {
 
 const publicRoutes = [
   "/",
+  "/home",
   "/homepage",
   "/about_us",
   "/contact-us",
@@ -31,7 +32,10 @@ const publicRoutes = [
   "/for-agents",
   "/for-clients",
   "/for-developers",
-  "/user-types"
+  "/user-types",
+  "/buyer",
+  "/pricing",
+  "/preference"
 ];
 
 

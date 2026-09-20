@@ -1,8 +1,9 @@
-/** Shared listing-cap copy aligned with server publisherListingLimits / agent trial. */
+/** Shared listing-cap copy aligned with server publisherListingLimits. */
 export const STANDARD_LISTING_CAP = 25;
-export const FREE_TRIAL_LISTING_CAP = 10;
-/** Agent Free trial length in days (matches server AGENT_TRIAL_PERIOD_DAYS). */
-export const AGENT_TRIAL_DAYS = 28;
+/** @deprecated Unpaid trial listings are retired. */
+export const FREE_TRIAL_LISTING_CAP = 0;
+/** @deprecated Time-boxed free trial is retired. */
+export const AGENT_TRIAL_DAYS = 0;
 
 export function isListingsFeature(feature: {
   key?: string;
@@ -44,8 +45,8 @@ export function formatCatalogListingsFeature(plan: {
   if (isFree) {
     return {
       label: baseLabel,
-      valueText: `: up to ${FREE_TRIAL_LISTING_CAP} in trial (1 in KYC grace)`,
-      isOn: true,
+      valueText: ": paid plan required to list",
+      isOn: false,
     };
   }
 

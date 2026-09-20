@@ -293,6 +293,11 @@ export default function LasreraMarketplacePage() {
                     </div>
                     <div className="p-4">
                       <h2 className="font-semibold text-[#09391C] line-clamp-2 mb-1">{title}</h2>
+                      {prop.propertyCode ? (
+                        <p className="text-xs font-semibold tracking-wide text-[#09391C] mb-1">
+                          Property Code: {prop.propertyCode}
+                        </p>
+                      ) : null}
                       {prop.location && (
                         <p className="flex items-center gap-1 text-sm text-[#5A5D63] mb-1">
                           <MapPin size={14} />

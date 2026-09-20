@@ -50,8 +50,9 @@ function propertyOptionLabel(p: Record<string, unknown>): string {
     (loc?.area && String(loc.area).trim()) ||
     [loc?.localGovernment, loc?.state].filter(Boolean).join(", ") ||
     "";
-  const shortId = String(p._id ?? "").slice(-6);
-  return place ? `${bt} — ${place}` : `${bt} (…${shortId})`;
+  const code = String(p.propertyCode ?? "").trim();
+  const shortId = code || `…${String(p._id ?? "").slice(-6)}`;
+  return place ? `${bt} — ${place}${code ? ` · ${code}` : ""}` : `${bt} (${shortId})`;
 }
 
 const s = {
@@ -73,7 +74,7 @@ const s = {
  * Uses GET/POST/PATCH/DELETE `/account/properties/:propertyId/inspection-representatives`.
  */
 export function PropertyInspectionRepresentativesSection({ anchorId = "property-inspection-representatives" }: { anchorId?: string }) {
-  const [properties, setProperties] = useState<{ _id: string; label: string }[]>([]);
+  const [properties, setProperties] = useState<{ _id: string; label: string; propertyCode?: string }[]>([]);
   const [propertiesLoading, setPropertiesLoading] = useState(true);
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>("");
 
@@ -107,9 +108,9 @@ export function PropertyInspectionRepresentativesSection({ anchorId = "property-
           const id = String(p._id ?? "");
           if (!id) return null;
           if (p.isApproved === false) return null;
-          return { _id: id, label: propertyOptionLabel(p) };
+          return { _id: id, label: propertyOptionLabel(p), propertyCode: String(p.propertyCode ?? "").trim() };
         })
-        .filter(Boolean) as { _id: string; label: string }[];
+        .filter(Boolean) as { _id: string; label: string; propertyCode?: string }[];
       setProperties(opts);
       setSelectedPropertyId((prev) => {
         if (prev && opts.some((o) => o._id === prev)) return prev;
@@ -336,8 +337,17 @@ export function PropertyInspectionRepresentativesSection({ anchorId = "property-
             <>
               <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                 <p className="text-xs text-[#5A6570]">
-                  Managing representatives for listing ID{" "}
-                  <code className="rounded bg-[#EEF1F1] px-1 py-0.5 font-mono text-[11px]">{selectedPropertyId}</code>
+                  Managing representatives for{" "}
+                  {properties.find((p) => p._id === selectedPropertyId)?.propertyCode ? (
+                    <>
+                      Property Code{" "}
+                      <code className="rounded bg-[#EEF1F1] px-1 py-0.5 font-mono text-[11px]">
+                        {properties.find((p) => p._id === selectedPropertyId)?.propertyCode}
+                      </code>
+                    </>
+                  ) : (
+                    "this listing"
+                  )}
                 </p>
                 {!showAdd && !editingId && (
                   <button

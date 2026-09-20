@@ -23,6 +23,12 @@ export default function Valuer() {
         >
           Complete valuer KYC
         </Link>
+        <Link
+          href="/agent-subscriptions?tab=plans"
+          className="inline-flex rounded-xl border border-[#09391C]/15 bg-white px-4 py-2.5 text-sm font-semibold text-[#09391C]"
+        >
+          View subscription plans
+        </Link>
         <Link href="/profile-settings" className="block text-sm font-medium text-[#09391C] underline">
           Account settings
         </Link>

@@ -43,6 +43,12 @@ const PaymentVerificationPage = () => {
         const trxType = (response.data as any)?.transaction?.transactionType;
 
         // Subscription: redirect to intended page (e.g. /post-property/outright-sales) if stored, else dashboard
+        if (trxType === 'search-insurance') {
+          toast.success('Search insurance payment verified.');
+          router.push('/buyer/searches');
+          return;
+        }
+
         if (trxType === 'subscription') {
           let redirectPath = '/dashboard';
           if (typeof window !== 'undefined') {

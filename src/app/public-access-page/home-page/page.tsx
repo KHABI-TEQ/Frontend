@@ -310,7 +310,7 @@ export default function HomePageSettings() {
       const supportCardsForBackend = supportCards.map(({ id, ...rest }) => rest);
 
       const payload = {
-        practitionerPage: {
+        publicPage: {
           ...settings.practitionerPage,
           heroTitle: formData.heroTitle,
           heroSubtitle: formData.heroSubtitle,
@@ -349,7 +349,7 @@ export default function HomePageSettings() {
       if (res?.success) {
         // Update context with the full payload structure (backend won't have id, but frontend state has them)
         updateSettings({
-          practitionerPage: payload.practitionerPage,
+          practitionerPage: payload.publicPage,
           homeSettings: {
             testimonials: {
               title: testimonialsSection.title,

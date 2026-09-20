@@ -19,7 +19,7 @@ export const navData: {
 }[] = [
   {
     name: 'Home',
-    url: '/',
+    url: '/home',
     isClicked: true,
   },
   {
@@ -86,7 +86,7 @@ export const agentnavData: {
 }[] = [
   {
     name: 'Home',
-    url: '/',
+    url: '/home',
     isClicked: true,
   },
   {

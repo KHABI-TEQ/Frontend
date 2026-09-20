@@ -17,7 +17,7 @@ import OverlayPreloader from "@/components/general-components/OverlayPreloader";
 import Button from "@/components/general-components/button";
 import { RegisterWith } from "@/components/general-components/registerWith";
 import InputField from "@/components/common/InputField";
-import { encodeRedirectTarget, resolveRedirectTarget } from "@/utils/authRedirect";
+import { encodeRedirectTarget, resolvePostLoginPath, resolveRedirectTarget } from "@/utils/authRedirect";
 
 // Hooks & Context
 import { useLoading } from "@/hooks/useLoading";
@@ -141,7 +141,7 @@ const Login: FC = () => {
   }, [user, isInitialized, router]);
 
   useEffect(() => {
-    if (resolvedRedirectTarget) {
+    if (resolvedRedirectTarget && resolvePostLoginPath(resolvedRedirectTarget, "") ) {
       try { sessionStorage.setItem('redirectAfterLogin', resolvedRedirectTarget); } catch {}
     }
   }, [resolvedRedirectTarget]);
@@ -181,17 +181,11 @@ const Login: FC = () => {
           return;
         }
 
-        const redirectUrl = resolvedRedirectTarget || sessionStorage.getItem("redirectAfterLogin");
-        if (redirectUrl) {
-          try {
-            sessionStorage.removeItem("redirectAfterLogin");
-          } catch {}
-          router.push(redirectUrl);
-          setOverlayVisible(false);
-          return;
-        }
-
-        router.push("/dashboard");
+        const stored = resolvedRedirectTarget || sessionStorage.getItem("redirectAfterLogin");
+        try {
+          sessionStorage.removeItem("redirectAfterLogin");
+        } catch {}
+        router.replace(resolvePostLoginPath(stored, "/dashboard"));
         setOverlayVisible(false);
       }, forced ? 400 : 1500);
     },

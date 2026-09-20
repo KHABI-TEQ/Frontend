@@ -92,6 +92,7 @@ export const LAGOS_AREA_ALIASES: Record<string, (typeof LAGOS_MAJOR_AREAS)[numbe
   "abule egba": "Abule Egba",
   "mile twelve": "Mile 12",
   "alagbadoo": "Alagbado",
+  "ikate": "Ikate",
   "ikate elegushi": "Ikate",
   "ojodu berger": "Ojodu",
   "kettu": "Ketu",

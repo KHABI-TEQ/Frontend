@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import { GET_REQUEST, POST_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import { formatSubscriptionBonusLabel, resolvePlanBonusDays } from "@/utils/subscription-bonus";
-import { STANDARD_LISTING_CAP, FREE_TRIAL_LISTING_CAP } from "@/utils/subscription-plan-features";
+import { STANDARD_LISTING_CAP } from "@/utils/subscription-plan-features";
 
 interface DiscountedPlanOption {
   name: string;
@@ -112,7 +112,7 @@ export default function PortfolioUnlimitedModal({
 
   const defaultMessage = required
     ? `You have reached the Premium limit of ${STANDARD_LISTING_CAP} property listings. Upgrade for unlimited listings across your portfolio.`
-    : `Free plans are capped at ${FREE_TRIAL_LISTING_CAP} listings; Premium at ${STANDARD_LISTING_CAP}. Portfolio Unlimited is the only plan that removes those caps${
+    : `Paid plans are capped at ${STANDARD_LISTING_CAP} listings. Portfolio Unlimited is the only plan that removes that cap${
         remaining != null
           ? ` (${remaining} of ${STANDARD_LISTING_CAP} Premium slots remaining)`
           : ""
@@ -233,7 +233,7 @@ export default function PortfolioUnlimitedModal({
 
             <ul className="mt-4 space-y-1 text-sm text-[#5A5D63]">
               <li>Unlimited property listings</li>
-              <li>Free plans stay within {FREE_TRIAL_LISTING_CAP} listings</li>
+              <li>An active paid subscription is required to list</li>
               <li>Premium catalog plans stay within the {STANDARD_LISTING_CAP}-listing cap</li>
               <li>For agents, developers, and landlords with growing portfolios</li>
             </ul>

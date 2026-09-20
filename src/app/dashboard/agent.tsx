@@ -35,6 +35,7 @@ import AgentEligibilityBanner from "@/components/agent/AgentEligibilityBanner";
 import { useAgentEligibility } from "@/hooks/useAgentEligibility";
 import PublisherListingAllowanceCard from "@/components/publisher/PublisherListingAllowanceCard";
 import { usePublisherListingEligibility } from "@/hooks/usePublisherListingEligibility";
+import ListPropertyCta from "@/components/dashboard/ListPropertyCta";
 
 interface Brief {
   _id: string;
@@ -332,6 +333,11 @@ export default function AgentDashboard() {
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 sm:items-center flex-wrap">
+            <ListPropertyCta
+              eligibility={eligibility}
+              listingEligibility={listingEligibility}
+              variant="hero"
+            />
             <Link
               href="/my-listings"
               className="bg-[#8DDB90] hover:bg-[#7BC87F] text-white px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
@@ -435,11 +441,7 @@ export default function AgentDashboard() {
                       <p className="mt-1 text-xs text-emerald-900/90 leading-relaxed">
                         {eligibility?.hasPaidSubscription
                           ? "Paid practitioner subscription active — full page access and matching tools. Listings stay capped at 25 unless you upgrade to Portfolio Unlimited."
-                          : eligibility?.policyPhase === "kyc_grace"
-                            ? "KYC grace: list 1 property without a paid plan. Complete KYC to unlock the 4-week Free trial (up to 10 listings)."
-                            : eligibility?.policyPhase === "trial"
-                              ? `Free trial active: up to ${eligibility.listingLimit ?? 10} listings without a paid subscription. When the 4-week trial ends, a paid plan is required even if you have not used all Free slots.`
-                              : "No paid subscription yet. After your 4-week Free trial, a paid plan is required for listings and your practitioner page — regardless of how many Free listings you used. Listing volume above 25 needs Portfolio Unlimited."}
+                          : "Subscribe to a paid plan to list properties. Listing is only available with an active subscription."}
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2 shrink-0">
@@ -576,13 +578,11 @@ export default function AgentDashboard() {
                 <p className="text-sm text-gray-500 mb-4">
                   Create new brief / Listing
                 </p>
-                <Link
-                  href="/post-property"
-                  className="bg-[#8DDB90] hover:bg-[#7BC87F] text-white px-4 py-2 rounded-lg font-medium inline-flex items-center gap-2 transition-colors text-sm"
-                >
-                  <PlusIcon size={16} />
-                  Post Brief
-                </Link>
+                <ListPropertyCta
+                  eligibility={eligibility}
+                  listingEligibility={listingEligibility}
+                  variant="inline"
+                />
               </div>
             ) : (
               <div className="divide-y divide-gray-200">
@@ -663,20 +663,11 @@ export default function AgentDashboard() {
                 </div>
               </Link>
 
-              <Link
-                href="/post-property"
-                className="w-full bg-[#8DDB90] hover:bg-[#7BC87F] text-white p-4 rounded-lg font-medium flex items-center gap-3 transition-colors group"
-              >
-                <div className="p-2 bg-white bg-opacity-20 rounded-lg">
-                  <PlusIcon size={20} />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold">List New Property</h3>
-                  <p className="text-sm opacity-90">
-                    Add property to portfolio
-                  </p>
-                </div>
-              </Link>
+              <ListPropertyCta
+                eligibility={eligibility}
+                listingEligibility={listingEligibility}
+                variant="quick"
+              />
 
               <Link
                 href="/agent-marketplace"

@@ -20,17 +20,18 @@ export default function InspectionFeeField() {
   return (
     <EnhancedPriceInput
       name="inspectionFee"
-      label="Inspection fee"
-      value={formatPriceForDisplay(value)}
+      label="Inspection fee (optional)"
+      value={value > 0 ? formatPriceForDisplay(value) : ""}
       onChange={(raw: string) => {
-        const n = listingInspectionFeeNaira(cleanNumericInput(raw));
+        const cleaned = cleanNumericInput(raw);
+        const n = cleaned === "" || cleaned == null ? 0 : listingInspectionFeeNaira(cleaned);
         setFieldTouched("inspectionFee", true);
         setFieldValue("inspectionFee", n);
         updatePropertyData("inspectionFee" as any, n);
       }}
-      placeholder="5000"
+      placeholder="Leave blank if none"
       prefix="₦"
-      description="Buyer pays this fee after you accept the inspection request. Allowed range ₦1,000–₦50,000. Default ₦5,000."
+      description="Optional. Buyer pays this after you accept the inspection request. If you set a fee, use ₦1,000–₦50,000. Leave blank if there is no inspection fee."
     />
   );
 }

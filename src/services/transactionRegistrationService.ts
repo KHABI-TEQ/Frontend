@@ -59,6 +59,7 @@ export interface TransactionRegistrationRegisterResponse {
 export type TransactionRegistrationSearchResult = {
   address?: string | null;
   propertyId?: string | null;
+  propertyCode?: string | null;
   hasRegisteredTransaction?: boolean;
   registrationStatus?: string;
   propertyStatus?: string | null;

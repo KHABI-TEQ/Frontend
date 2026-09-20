@@ -74,18 +74,44 @@ export default function Scout() {
           )}
         </div>
 
-        <Link
-          href={kycVerified ? "/post-property" : "/scout-kyc"}
-          className="flex items-center justify-center gap-2 rounded-2xl bg-[#09391C] px-6 py-4 text-base font-semibold text-white shadow-md"
-        >
-          <Plus className="h-5 w-5" />
-          Submit a Property Opportunity
-        </Link>
+        {kycVerified ? (
+          <Link
+            href="/post-property"
+            className="flex items-center justify-center gap-2 rounded-2xl bg-[#09391C] px-6 py-4 text-base font-semibold text-white shadow-md"
+          >
+            <Plus className="h-5 w-5" />
+            Submit a Property Opportunity
+          </Link>
+        ) : (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+            <p className="font-semibold text-amber-950">
+              List Property — Available after KYC approval
+            </p>
+            <p className="mt-1 text-sm text-amber-900">
+              Complete KYC and subscribe to a paid plan before you can submit an opportunity. You can still choose a plan while you wait.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Link
+                href="/scout-kyc"
+                className="inline-flex rounded-xl bg-[#09391C] px-4 py-2.5 text-sm font-semibold text-white"
+              >
+                View KYC status
+              </Link>
+              <Link
+                href="/agent-subscriptions?tab=plans"
+                className="inline-flex rounded-xl border border-[#09391C]/20 bg-white px-4 py-2.5 text-sm font-semibold text-[#09391C]"
+              >
+                Choose a paid plan
+              </Link>
+            </div>
+          </div>
+        )}
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <DashLink href="/my-listings" icon={<LayoutDashboard className="h-5 w-5" />} title="Property Opportunities" subtitle="Listings and review statuses" />
           <DashLink href="/referral" icon={<Share2 className="h-5 w-5" />} title="Referral Activity" subtitle={user?.referralCode ? `Code: ${user.referralCode}` : "Your referral code"} />
           <DashLink href="/referral" icon={<Gift className="h-5 w-5" />} title="Earnings / Rewards" subtitle="Rewards from successful referrals" />
+          <DashLink href="/agent-subscriptions?tab=plans" icon={<UserRound className="h-5 w-5" />} title="Subscription" subtitle="₦23,500 / 3 months Property Scout plan" />
           <DashLink href="/profile-settings" icon={<UserRound className="h-5 w-5" />} title="Profile" subtitle="Account details" />
           <DashLink href="/account/upgrade" icon={<BadgeCheck className="h-5 w-5" />} title="Upgrade Account" subtitle="Become a verified professional" />
           <DashLink href="/scout-kyc" icon={<ShieldCheck className="h-5 w-5" />} title="KYC Verification" subtitle={kycLabel} />

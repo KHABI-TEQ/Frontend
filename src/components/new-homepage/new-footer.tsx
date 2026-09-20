@@ -13,7 +13,7 @@ import KhabiteqFooterLogo from '@/components/branding/KhabiteqFooterLogo';
 
 const NewFooter = ({ isComingSoon }: { isComingSoon?: boolean }) => {
   const exploreLinks = [
-    { name: "Home", url: "/" },
+    { name: "Home", url: "/home" },
     { name: "How It Works", url: "/how-it-works" },
     { name: "Submit Preference", url: "/preference" },
     { name: "Property Code", url: "/property-code" },

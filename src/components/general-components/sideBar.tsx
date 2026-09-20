@@ -11,6 +11,7 @@ import { useState } from "react";
 import Image from "next/image";
 import userIcon from "@/svgs/user.svg";
 import { mainNavigationData } from "@/data/navigation-data";
+import { LookingToDoMobileNav } from "@/components/new-homepage/LookingToDoNav";
 
 const SideBar = ({
   isModalOpened,
@@ -123,6 +124,23 @@ const SideBar = ({
               </button>
             </div>
             <div className="w-full mt-10 flex flex-col gap-[20px]">
+              {(user?._id || user?.id) && (
+                <Link
+                  href="/dashboard"
+                  onClick={() => setIsModalOpened(false)}
+                  className={`flex items-center gap-2 w-fit pb-1 text-[#09391C] text-[18px] leading-[21.09px] font-semibold ${
+                    pathName === "/dashboard" || pathName?.startsWith("/dashboard/")
+                      ? "border-b-2 border-[#09391C]"
+                      : "hover:border-b-2 hover:border-[#09391C]"
+                  }`}
+                >
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="5" cy="5" r="5" fill="#09391C" />
+                  </svg>
+                  Dashboard
+                </Link>
+              )}
+              <LookingToDoMobileNav onNavigate={() => setIsModalOpened(false)} />
               {mainNavigationData.map((item, idx: number) => {
                 if (item?.subItems !== undefined) {
                   const isMenuOpen = openedMenus[item.name] || false;
@@ -287,7 +305,7 @@ const SideBar = ({
                       setIsModalOpened(false);
                     }}
                     className={`flex items-center gap-2 w-fit pb-1 transition-all hover:border-b-2 hover:border-[#09391C] hover:pb-1 duration-500`}
-                    href={item.url}
+                    href={item.name === "Home" ? "/home" : item.url}
                     key={idx}
                   >
                     <svg

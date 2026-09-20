@@ -52,6 +52,14 @@ export const URLS = {
    * Preference Endpoints
    */
   preferenceBaseUrl: "/preferences",
+  buyerRegister: "/buyer/auth/register",
+  buyerLogin: "/buyer/auth/login",
+  buyerClaimAccount: "/buyer/auth/claim-account",
+  buyerMe: "/buyer/auth/me",
+  buyerPreferences: "/buyer/auth/me/preferences",
+  buyerSearchInsurance: "/buyer/auth/me/search-insurance",
+  buyerSearchInsuranceCheckout: (preferenceId: string) =>
+    `/preferences/${preferenceId}/search-insurance/checkout`,
 
   /**
    * Request for inspection
