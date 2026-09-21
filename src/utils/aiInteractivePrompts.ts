@@ -39,8 +39,8 @@ function preferenceSample(focusLower: string): string {
   if (f.includes("property subtype")) return "residential";
   if (f.includes("property type") && f.includes("shortlet")) return "Studio";
   if (f.includes("property type")) return "residential";
-  if (f.includes("building type")) return "duplex";
-  if (f.includes("property condition")) return "new";
+  if (f.includes("building type")) return "Duplex";
+  if (f.includes("property condition")) return "Good Condition";
   if (f.includes("document type") || f.includes("document")) return "C of O";
   if (f.includes("lease term")) return "1 Year";
   if (f.includes("landmark")) return "near Shoprite";
@@ -371,13 +371,13 @@ export function getPreferenceFieldPrompt(
   }
 
   if (f.includes("building type")) {
-    const speak = pickVariant(["What type of building?", "Detached, duplex, flat?", "Building type?"], variant);
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    const speak = "What type of building?";
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("property condition")) {
-    const speak = pickVariant(["What condition?", "New, renovated, or used?", "Property condition?"], variant);
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    const speak = "What condition?";
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("document type") || (f.includes("document") && f.includes("least"))) {

@@ -436,7 +436,9 @@ export default function MyInspectionRequestsPage() {
 
   const [fieldAgentModalInspection, setFieldAgentModalInspection] =
     useState<InspectionData | null>(null);
-  const [isPropertyScout, setIsPropertyScout] = useState(false);
+  const [isPropertyScout, setIsPropertyScout] = useState(
+    user?.userType === "PropertyScout",
+  );
 
   const fieldAgentModalLocation = useMemo(
     () =>
@@ -447,22 +449,8 @@ export default function MyInspectionRequestsPage() {
   );
 
   useEffect(() => {
-    if (!token) return;
-    if (user?.userType !== "Agent" && user?.userType !== "Developer") return;
-    void (async () => {
-      try {
-        const res = await GET_REQUEST<{ isPropertyScout?: boolean }>(
-          `${URLS.BASE}${URLS.propertyScoutStatus}`,
-          token,
-        );
-        if (res?.success && res.data) {
-          setIsPropertyScout(Boolean((res.data as { isPropertyScout?: boolean }).isPropertyScout));
-        }
-      } catch {
-        setIsPropertyScout(false);
-      }
-    })();
-  }, [token, user?.userType]);
+    setIsPropertyScout(user?.userType === "PropertyScout");
+  }, [user?.userType]);
 
   const INSPECTION_FEE_MIN = 1000;
   const INSPECTION_FEE_MAX = 50000;
@@ -711,7 +699,7 @@ export default function MyInspectionRequestsPage() {
 
  
   return (
-    <CombinedAuthGuard requireAuth={true} allowedUserTypes={["Agent", "Landowners", "Developer", "PropertyScout"]} requireAgentOnboarding={false} requireAgentApproval={false} requireActiveSubscription={user?.userType === "Agent"} agentCustomMessage="You must complete onboarding and be approved before you view inspection requests.">
+    <CombinedAuthGuard requireAuth={true} allowedUserTypes={["Agent", "Landowners", "Developer", "PropertyScout"]} requireAgentOnboarding={false} requireAgentApproval={false} requireActiveSubscription={user?.userType === "Agent" || user?.userType === "Developer" || user?.userType === "PropertyScout"} agentCustomMessage="You must complete onboarding and be approved before you view inspection requests.">
       <div className="min-h-screen bg-[#EEF1F1]">
         <div className="container mx-auto px-4 sm:px-6 max-w-7xl py-8">
           <div className="mb-8">

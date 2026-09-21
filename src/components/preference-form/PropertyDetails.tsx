@@ -11,6 +11,11 @@ import React, {
 } from "react";
 import Select from "react-select";
 import { usePreferenceForm } from "@/context/preference-form-context";
+import {
+  PREFERENCE_PROPERTY_CONDITIONS,
+  PREFERENCE_BUILDING_TYPES,
+  findPreferenceOption,
+} from "@/data/preference-condition-building";
 
 interface Option {
   value: string;
@@ -52,31 +57,24 @@ const MEASUREMENT_UNITS = [
   { value: "acres", label: "Acres" },
 ];
 
+const SHARED_RESIDENTIAL_CONDITIONS = PREFERENCE_PROPERTY_CONDITIONS.map((o) => ({
+  value: o.value,
+  label: o.label,
+}));
+const SHARED_RESIDENTIAL_BUILDINGS = PREFERENCE_BUILDING_TYPES.map((o) => ({
+  value: o.value,
+  label: o.label,
+}));
+
 // Property conditions
 const PROPERTY_CONDITIONS = {
   buy: {
-    residential: [
-      { value: "new", label: "New" },
-      { value: "renovated", label: "Renovated" },
-      { value: "old", label: "Old" },
-    ],
-    commercial: [
-      { value: "new", label: "New" },
-      { value: "renovated", label: "Renovated" },
-      { value: "old", label: "Old" },
-    ],
+    residential: SHARED_RESIDENTIAL_CONDITIONS,
+    commercial: SHARED_RESIDENTIAL_CONDITIONS,
   },
   rent: {
-    residential: [
-      { value: "new", label: "New" },
-      { value: "good-condition", label: "Good Condition" },
-      { value: "renovation", label: "Renovation" },
-    ],
-    commercial: [
-      { value: "new", label: "New" },
-      { value: "good-condition", label: "Good Condition" },
-      { value: "renovation", label: "Renovation" },
-    ],
+    residential: SHARED_RESIDENTIAL_CONDITIONS,
+    commercial: SHARED_RESIDENTIAL_CONDITIONS,
   },
   "joint-venture": {
     residential: [
@@ -109,13 +107,7 @@ const PROPERTY_CONDITIONS = {
 // Building types
 const BUILDING_TYPES = {
   buy: {
-    residential: [
-      { value: "bungalow", label: "Bungalow" },
-      { value: "duplex-fully-detached", label: "Duplex (Fully Detached)" },
-      { value: "duplex-semi-detached", label: "Duplex (Semi Detached)" },
-      { value: "duplex-terrace", label: "Duplex (Terrace)" },
-      { value: "blocks-of-flat", label: "Blocks of Flat" },
-    ],
+    residential: SHARED_RESIDENTIAL_BUILDINGS,
     commercial: [
       { value: "office-complex", label: "Office Complex" },
       { value: "warehouse", label: "Warehouse" },
@@ -124,13 +116,7 @@ const BUILDING_TYPES = {
     ],
   },
   rent: {
-    residential: [
-      { value: "detached", label: "Detached" },
-      { value: "semi-detached", label: "Semi-detached" },
-      { value: "bungalow", label: "Bungalow" },
-      { value: "duplex", label: "Duplex" },
-      { value: "blocks-of-flat", label: "Blocks of Flat" },
-    ],
+    residential: SHARED_RESIDENTIAL_BUILDINGS,
     commercial: [
       { value: "office-complex", label: "Office Complex" },
       { value: "plaza", label: "Plaza" },
@@ -206,6 +192,20 @@ const BATHROOM_OPTIONS = [
   { value: "8", label: "8 Bathrooms" },
   { value: "9", label: "9 Bathrooms" },
   { value: "10", label: "10 Bathrooms" },
+  { value: "more", label: "More than 10" },
+];
+
+const TOILET_OPTIONS = [
+  { value: "1", label: "1 Toilet" },
+  { value: "2", label: "2 Toilets" },
+  { value: "3", label: "3 Toilets" },
+  { value: "4", label: "4 Toilets" },
+  { value: "5", label: "5 Toilets" },
+  { value: "6", label: "6 Toilets" },
+  { value: "7", label: "7 Toilets" },
+  { value: "8", label: "8 Toilets" },
+  { value: "9", label: "9 Toilets" },
+  { value: "10", label: "10 Toilets" },
   { value: "more", label: "More than 10" },
 ];
 
@@ -309,6 +309,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
     const landConditionOptions = useMemo(() => LAND_CONDITIONS, []);
     const bedroomOptions = useMemo(() => BEDROOM_OPTIONS, []);
     const bathroomOptions = useMemo(() => BATHROOM_OPTIONS, []);
+    const toiletOptions = useMemo(() => TOILET_OPTIONS, []);
     const shortletPropertyTypeOptions = useMemo(
       () => SHORTLET_PROPERTY_TYPES,
       [],
@@ -330,6 +331,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
     const [buildingType, setBuildingType] = useState<Option | null>(null);
     const [bedrooms, setBedrooms] = useState<Option | null>(null);
     const [bathrooms, setBathrooms] = useState<Option | null>(null);
+    const [toilets, setToilets] = useState<Option | null>(null);
     const [landConditions, setLandConditions] = useState<Option[]>([]);
 
     // Shortlet specific fields
@@ -356,6 +358,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
         setBuildingType(null);
         setBedrooms(null);
         setBathrooms(null);
+        setToilets(null);
         setLandConditions([]);
         setPropertyType(null);
         setMaxGuests("");
@@ -411,18 +414,20 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
 
             setDocumentTypes(propertyDetails.documentTypes || []);
 
-            const propertyConditionOption = (
+            const propertyConditionOption = findPreferenceOption(
               PROPERTY_CONDITIONS[preferenceType]?.[
                 propertyDetails.propertySubtype as keyof (typeof PROPERTY_CONDITIONS)[typeof preferenceType]
-              ] || []
-            ).find((opt) => opt.value === propertyDetails.propertyCondition);
+              ] || [],
+              propertyDetails.propertyCondition,
+            );
             setPropertyCondition(propertyConditionOption || null);
 
-            const buildingTypeOption = (
+            const buildingTypeOption = findPreferenceOption(
               BUILDING_TYPES[preferenceType]?.[
                 propertyDetails.propertySubtype as keyof (typeof BUILDING_TYPES)[typeof preferenceType]
-              ] || []
-            ).find((opt) => opt.value === propertyDetails.buildingType);
+              ] || [],
+              propertyDetails.buildingType,
+            );
             setBuildingType(buildingTypeOption || null);
 
             const bedroomOption = BEDROOM_OPTIONS.find(
@@ -434,6 +439,13 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
               (opt) => opt.value === propertyDetails.bathrooms?.toString()
             );
             setBathrooms(bathroomOption || null);
+
+            const toiletOption = TOILET_OPTIONS.find(
+              (opt) =>
+                opt.value === propertyDetails.toilets?.toString() ||
+                opt.value === String(propertyDetails.toilets || "").toLowerCase(),
+            );
+            setToilets(toiletOption || null);
 
             // Map land conditions to proper labels
             const landConditionOptions = propertyDetails.landConditions
@@ -473,18 +485,20 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
 
             setDocumentTypes(propertyDetails.documentTypes || []);
 
-            const propertyConditionOption = (
+            const propertyConditionOption = findPreferenceOption(
               PROPERTY_CONDITIONS[preferenceType]?.[
                 propertyDetails.propertySubtype as keyof (typeof PROPERTY_CONDITIONS)[typeof preferenceType]
-              ] || []
-            ).find((opt) => opt.value === propertyDetails.propertyCondition);
+              ] || [],
+              propertyDetails.propertyCondition,
+            );
             setPropertyCondition(propertyConditionOption || null);
 
-            const buildingTypeOption = (
+            const buildingTypeOption = findPreferenceOption(
               BUILDING_TYPES[preferenceType]?.[
                 propertyDetails.propertySubtype as keyof (typeof BUILDING_TYPES)[typeof preferenceType]
-              ] || []
-            ).find((opt) => opt.value === propertyDetails.buildingType);
+              ] || [],
+              propertyDetails.buildingType,
+            );
             setBuildingType(buildingTypeOption || null);
 
             const bedroomOption = BEDROOM_OPTIONS.find(
@@ -496,6 +510,13 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
               (opt) => opt.value === propertyDetails.bathrooms?.toString()
             );
             setBathrooms(bathroomOption || null);
+
+            const toiletOption = TOILET_OPTIONS.find(
+              (opt) =>
+                opt.value === propertyDetails.toilets?.toString() ||
+                opt.value === String(propertyDetails.toilets || "").toLowerCase(),
+            );
+            setToilets(toiletOption || null);
 
             // Map land conditions to proper labels
             const landConditionOptions = propertyDetails.landConditions
@@ -535,6 +556,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
           buildingType: buildingType?.value || "",
           bedrooms: bedrooms?.value || "",
           bathrooms: bathrooms?.value || "",
+          toilets: toilets?.value || "",
           landConditions: landConditions.map((lc) => lc.value) || [],
           expectedCompletionDate,
           developmentStage: developmentStage?.value || "",
@@ -553,6 +575,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
           buildingType: buildingType?.value || "",
           bedrooms: bedrooms?.value || "",
           bathrooms: bathrooms?.value || "",
+          toilets: toilets?.value || "",
           landConditions: landConditions.map((lc) => lc.value) || [],
         };
         updateFormData({ propertyDetails: propertyData } as any);
@@ -569,6 +592,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
       buildingType,
       bedrooms,
       bathrooms,
+      toilets,
       landConditions,
       propertyType,
       maxGuests,
@@ -951,15 +975,15 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
               </div>
             )}
 
-            {/* Bedrooms and Bathrooms (for residential) */}
+            {/* Bedrooms, bathrooms, and toilets (for residential and commercial) */}
             {propertySubtype.value !== "land" && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="space-y-2">
                   <label className="block text-sm font-semibold text-gray-800">
                     Bedrooms <span className="text-red-500">*</span>
                   </label>
                   <Select
-                    options={BEDROOM_OPTIONS}
+                    options={bedroomOptions}
                     value={bedrooms}
                     onChange={setBedrooms}
                     placeholder="Select bedrooms..."
@@ -972,10 +996,23 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = memo(
                     Bathrooms <span className="text-red-500">*</span>
                   </label>
                   <Select
-                    options={BATHROOM_OPTIONS}
+                    options={bathroomOptions}
                     value={bathrooms}
                     onChange={setBathrooms}
                     placeholder="Select bathrooms..."
+                    styles={customSelectStyles}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-800">
+                    Toilets <span className="text-red-500">*</span>
+                  </label>
+                  <Select
+                    options={toiletOptions}
+                    value={toilets}
+                    onChange={setToilets}
+                    placeholder="Select toilets..."
                     styles={customSelectStyles}
                   />
                 </div>

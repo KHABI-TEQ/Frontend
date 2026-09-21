@@ -539,6 +539,7 @@ const PreferenceFormContent: React.FC = () => {
               buyData.propertyDetails?.bathrooms ||
               buyData.propertyDetails?.minBathrooms ||
               0,
+            toilets: buyData.propertyDetails?.toilets || "",
             propertyCondition: buyData.propertyDetails?.propertyCondition || "",
             purpose: buyData.propertyDetails?.purpose || "For living",
             landSize: buyData.propertyDetails?.landSize || "",
@@ -589,6 +590,7 @@ const PreferenceFormContent: React.FC = () => {
               rentData.propertyDetails?.bathrooms ||
               rentData.propertyDetails?.minBathrooms ||
               0,
+            toilets: rentData.propertyDetails?.toilets || "",
             leaseTerm: rentData.propertyDetails?.leaseTerm || "1 Year",
             propertyCondition:
               rentData.propertyDetails?.propertyCondition || "",
@@ -738,6 +740,7 @@ const PreferenceFormContent: React.FC = () => {
               offPlanData.propertyDetails?.bathrooms ||
               offPlanData.propertyDetails?.minBathrooms ||
               0,
+            toilets: offPlanData.propertyDetails?.toilets || "",
             propertyCondition: offPlanData.propertyDetails?.propertyCondition || "",
             purpose: offPlanData.propertyDetails?.purpose || "Investment",
             landSize: offPlanData.propertyDetails?.landSize || "",
@@ -1113,7 +1116,9 @@ const PreferenceFormContent: React.FC = () => {
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            <SearchInsuranceCard optedIn={insureSearch} onToggle={setInsureSearch} />
+            {state.currentStep === state.steps.length - 1 ? (
+              <SearchInsuranceCard optedIn={insureSearch} onToggle={setInsureSearch} />
+            ) : null}
             <SubmitButton onSubmit={handleSubmit} />
           </motion.div>
         </motion.div>

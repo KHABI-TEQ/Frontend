@@ -62,7 +62,7 @@ export function naira(value: number) {
 export async function buyerFetch<T = any>(
   path: string,
   init?: RequestInit & { token?: string | null }
-): Promise<{ success: boolean; message?: string; data?: T }> {
+): Promise<{ success: boolean; message?: string; errors?: string[]; data?: T }> {
   const base = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
   const token = init?.token ?? getBuyerToken();
   const headers: Record<string, string> = {
@@ -76,11 +76,16 @@ export async function buyerFetch<T = any>(
   const json = (await res.json().catch(() => ({}))) as {
     success?: boolean;
     message?: string;
+    errors?: string[];
     data?: T;
   };
+  const errorDetail = Array.isArray(json.errors)
+    ? json.errors.filter(Boolean).join(" ")
+    : "";
   return {
     success: !!json.success,
-    message: json.message,
+    message: errorDetail || json.message,
+    errors: json.errors,
     data: json.data,
   };
 }

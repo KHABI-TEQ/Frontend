@@ -1,18 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import type { ElementType } from "react";
-import { ArrowRight, Briefcase, Building2, Compass, Home, Landmark, Scale } from "lucide-react";
+import { Briefcase, Building2, Compass, Landmark, Scale } from "lucide-react";
 import { DarkCta, FadeIn, LandingSection, OutlineCta, PrimaryCta, SectionHeading, SectionText } from "./primitives";
-import { LOOKING_TO_DO_HEADING, LOOKING_TO_DO_PATHS, type LookingToDoIcon } from "@/data/looking-to-do";
-
-const pathIcons: Record<LookingToDoIcon, ElementType> = {
-  home: Home,
-  building: Building2,
-  briefcase: Briefcase,
-  compass: Compass,
-  scale: Scale,
-};
 
 const professionals = [
   { label: "Agents", href: "/for-professionals?role=agent", icon: Briefcase },
@@ -43,36 +33,6 @@ const ownerFeatures = [
 
 export default function AudienceAndProfessionals() {
   return (
-    <>
-      <LandingSection id="get-started">
-        <FadeIn className="mb-8">
-          <SectionHeading>{LOOKING_TO_DO_HEADING}</SectionHeading>
-        </FadeIn>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {LOOKING_TO_DO_PATHS.map((path, index) => {
-            const Icon = pathIcons[path.icon];
-            return (
-              <FadeIn key={path.title} delay={index * 0.05}>
-                <article className="h-full rounded-2xl border border-gray-100 bg-white p-6 flex flex-col shadow-[0_10px_32px_-20px_rgba(9,57,28,0.35)]">
-                  <div className="w-11 h-11 rounded-xl bg-[#09391C] text-[#8DDB90] flex items-center justify-center mb-4">
-                    <Icon size={20} />
-                  </div>
-                  <h3 className="text-lg font-bold text-[#09391C]">{path.title}</h3>
-                  <p className="mt-2 text-sm text-[#5A5D63]">{path.meta}</p>
-                  <Link
-                    href={path.href}
-                    className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#09391C]"
-                  >
-                    {path.cta}
-                    <ArrowRight size={16} />
-                  </Link>
-                </article>
-              </FadeIn>
-            );
-          })}
-        </div>
-      </LandingSection>
-
       <LandingSection id="professionals" tone="mist">
         <FadeIn className="mb-8 max-w-3xl">
           <p className="text-xs sm:text-sm font-semibold tracking-[0.18em] uppercase text-[#0B423D]/60 mb-3">
@@ -154,6 +114,5 @@ export default function AudienceAndProfessionals() {
           </div>
         </FadeIn>
       </LandingSection>
-    </>
   );
 }

@@ -27,9 +27,11 @@ import { ArrowLeft, MessageSquare, Bot, Loader2, CheckCircle, Volume2, VolumeX, 
 import nigerianStateLgaJson from "@/data/state-lga.json";
 import { getAreasByStateLGA, getLGAsByState, getStates, PILOT_STATE, isPilotState } from "@/utils/location-utils";
 import {
+  applyBudgetToData,
   applyLocationFromNaturalText,
   applyBulkExtractFromUserText,
   correctTranscriptionLocationTypos,
+  parseNairaAmountFromText,
   sanitizeConversationLocation,
   userTextMentionsPhrase,
 } from "@/utils/preference-ai-conversation";
@@ -42,11 +44,29 @@ import {
   OFF_PLAN_PREFERENCE_DEVELOPMENT_STAGES,
   OFF_PLAN_PREFERENCE_PAYMENT_PLANS,
 } from "@/data/off-plan-preference-options";
+import {
+  PREFERENCE_BUILDING_TYPE_LABELS,
+  PREFERENCE_COMMERCIAL_BUILDING_LABELS,
+  PREFERENCE_PROPERTY_CONDITION_LABELS,
+  normalizePreferenceBuildingType,
+  normalizePreferenceCondition,
+} from "@/data/preference-condition-building";
+import { FEATURE_CONFIGS } from "@/data/preference-configs";
+import SearchInsuranceCard from "@/components/search-insurance/SearchInsuranceCard";
+import BuyerAuthModal from "@/components/search-insurance/BuyerAuthModal";
+import {
+  checkoutSearchInsurance,
+  getBuyerToken,
+} from "@/lib/search-insurance";
 
 const LOCATION_OPTIONS_PAGE_SIZE = Number.MAX_SAFE_INTEGER;
 const SHOW_MORE_LOCATION_OPTIONS = "Show more";
 const DONE_SELECTING_AREAS = "Done selecting areas";
 const AREA_DONE_MARKER = "__AREA_DONE__::";
+const DONE_SELECTING_FEATURES = "Done selecting features";
+const FEATURE_DONE_MARKER = "__FEATURE_DONE__::";
+const SKIP_FEATURES_OPTION = "Skip features";
+const ROOM_COUNT_CHIPS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "More than 10"];
 
 /** Lowercase names as in the location form dataset (keys of state-lga.json). */
 const NIGERIAN_STATE_NAMES_LOWER = new Set(
@@ -224,7 +244,7 @@ function withPreferenceLocationOptions(
     }
   }
 
-  return withPreferenceOffPlanQuickOptions(reply, data);
+  return withPreferenceChoiceQuickOptions(reply, data);
 }
 
 function subtypeQuickOptions(
@@ -237,6 +257,78 @@ function subtypeQuickOptions(
     return { quickOptions: ["Residential", "Commercial"] };
   }
   return { quickOptions: ["Land", "Residential", "Commercial"] };
+}
+
+function getPreferenceFeatureLabels(data: Record<string, unknown>): string[] {
+  const type = normalizedPreferenceType(data);
+  const subtype = getPropertySubtype(data.propertyDetails as Record<string, unknown> | undefined) || "residential";
+  const key = type === "shortlet" ? "shortlet" : `${type}-${subtype}`;
+  const config = FEATURE_CONFIGS[key];
+  if (!config) return [];
+  return [
+    ...config.basic.map((f) => f.name),
+    ...config.premium.map((f) => f.name),
+  ];
+}
+
+function classifyPreferenceFeatures(
+  names: string[],
+  data: Record<string, unknown>,
+): { basic: string[]; premium: string[] } {
+  const type = normalizedPreferenceType(data);
+  const subtype = getPropertySubtype(data.propertyDetails as Record<string, unknown> | undefined) || "residential";
+  const key = type === "shortlet" ? "shortlet" : `${type}-${subtype}`;
+  const config = FEATURE_CONFIGS[key];
+  const premiumSet = new Set((config?.premium || []).map((f) => f.name.toLowerCase()));
+  const basic: string[] = [];
+  const premium: string[] = [];
+  const seen = new Set<string>();
+  for (const name of names) {
+    const trimmed = name.trim();
+    if (!trimmed) continue;
+    const k = trimmed.toLowerCase();
+    if (seen.has(k)) continue;
+    seen.add(k);
+    if (premiumSet.has(k)) premium.push(trimmed);
+    else basic.push(trimmed);
+  }
+  return { basic, premium };
+}
+
+function withPreferenceChoiceQuickOptions<T extends { quickOptions?: string[] }>(
+  reply: T,
+  data: Record<string, unknown>,
+): T {
+  const focus = normalizePreferenceFieldKey(
+    (reply as { focusedMissingField?: string }).focusedMissingField || "",
+  );
+  if (focus.includes("property condition") && !focus.includes("off-plan")) {
+    return { ...reply, quickOptions: [...PREFERENCE_PROPERTY_CONDITION_LABELS] };
+  }
+  if (focus.includes("building type")) {
+    const subtype = getPropertySubtype(data.propertyDetails as Record<string, unknown> | undefined);
+    if (subtype === "commercial") {
+      return { ...reply, quickOptions: [...PREFERENCE_COMMERCIAL_BUILDING_LABELS] };
+    }
+    return { ...reply, quickOptions: [...PREFERENCE_BUILDING_TYPE_LABELS] };
+  }
+  if (
+    focus.includes("number of bedrooms") ||
+    focus.includes("number of bathrooms") ||
+    focus.includes("number of toilets")
+  ) {
+    return { ...reply, quickOptions: [...ROOM_COUNT_CHIPS] };
+  }
+  if (focus.includes("key features") || (focus.includes("features") && focus.includes("amenities"))) {
+    const labels = getPreferenceFeatureLabels(data);
+    if (labels.length > 0) {
+      return {
+        ...reply,
+        quickOptions: [...labels, DONE_SELECTING_FEATURES, SKIP_FEATURES_OPTION],
+      };
+    }
+  }
+  return withPreferenceOffPlanQuickOptions(reply, data);
 }
 
 function withPreferenceOffPlanQuickOptions<T extends { quickOptions?: string[] }>(
@@ -518,9 +610,8 @@ function applyPreferenceSubtypeFromFocusedAnswer(
   if (type !== "buy" && type !== "rent" && type !== "off-plan") return data;
 
   const pd = { ...((data.propertyDetails || {}) as Record<string, unknown>) };
-  if (type === "buy" || type === "off-plan") {
-    const buySubtype = parseBuyPropertySubtypeFromUserText(trimmed);
-    if (!buySubtype) return data;
+  const buySubtype = parseBuyPropertySubtypeFromUserText(trimmed);
+  if (buySubtype) {
     return { ...data, propertyDetails: { ...pd, propertySubtype: buySubtype, propertyType: buySubtype } };
   }
 
@@ -633,6 +724,46 @@ function applyPreferenceOffPlanFieldsFromFocusedAnswer(
   return data;
 }
 
+function isBudgetMinFocus(field: string): boolean {
+  const f = normalizePreferenceFieldKey(field);
+  return (
+    (f.includes("budget") && f.includes("minimum")) ||
+    (f.includes("min price") && !f.includes("max"))
+  );
+}
+
+function isBudgetMaxFocus(field: string): boolean {
+  const f = normalizePreferenceFieldKey(field);
+  return (
+    f.includes("max price") ||
+    (f.includes("budget") && (f.includes("maximum") || f.includes("must be greater")))
+  );
+}
+
+function parseBudgetAmountFromUserText(text: string): number | null {
+  const t = text.trim();
+  if (!t) return null;
+  return parseNairaAmountFromText(t);
+}
+
+/** Persist min/max budget from the focused budget prompt without sending the figure to the AI JSON parser. */
+function applyPreferenceBudgetFromFocusedAnswer(
+  data: Record<string, unknown>,
+  trimmed: string,
+  focusedField: string | undefined,
+): { data: Record<string, unknown>; applied: boolean } {
+  if (!focusedField || !trimmed) return { data, applied: false };
+  const amount = parseBudgetAmountFromUserText(trimmed);
+  if (amount == null || amount <= 0) return { data, applied: false };
+  if (isBudgetMinFocus(focusedField)) {
+    return { data: applyBudgetToData(data, "min_budget", amount), applied: true };
+  }
+  if (isBudgetMaxFocus(focusedField)) {
+    return { data: applyBudgetToData(data, "max_budget", amount), applied: true };
+  }
+  return { data, applied: false };
+}
+
 /** Persist bedroom count when answering the bedrooms question (suggest API often omits or strips it). */
 function applyPreferenceBedroomsFromFocusedAnswer(
   data: Record<string, unknown>,
@@ -661,29 +792,109 @@ function applyPreferenceBuyResidentialCountFromFocusedAnswer(
 ): Record<string, unknown> {
   if (!focusedField || !trimmed) return data;
   const type = normalizedPreferenceType(data);
-  if (type !== "buy" && type !== "off-plan") return data;
+  if (type !== "buy" && type !== "off-plan" && type !== "rent") return data;
   const pd = (data.propertyDetails || {}) as Record<string, unknown>;
   if (getPropertySubtype(pd) !== "residential") return data;
 
   const f = normalizePreferenceFieldKey(focusedField);
   const nextPd = () => ({ ...pd });
-  const isResidential =
-    f.includes("residential buy") || f.includes("residential off-plan");
+  const isCountField =
+    f.includes("residential buy") ||
+    f.includes("residential off-plan") ||
+    f.includes("residential rent") ||
+    (type === "rent" && (f.includes("number of bathrooms") || f.includes("number of toilets")));
 
-  if (f.includes("number of bathrooms") && isResidential) {
+  if (f.includes("number of bathrooms") && isCountField) {
     const b = parseBuyBathroomChoiceFromUserText(trimmed);
     if (b) return { ...data, propertyDetails: { ...nextPd(), bathrooms: b } };
   }
-  if (f.includes("number of toilets") && isResidential && type === "buy") {
+  if (f.includes("number of toilets") && isCountField) {
+    if (/\bmore\b/i.test(trimmed)) {
+      return { ...data, propertyDetails: { ...nextPd(), toilets: "more" } };
+    }
     const n = parseFirstCountFromUserText(trimmed);
     if (n != null && n >= 0 && n <= 99) return { ...data, propertyDetails: { ...nextPd(), toilets: n } };
   }
-  if (f.includes("car park") && isResidential && type === "buy") {
+  if (f.includes("car park") && type === "buy") {
     const n = parseFirstCountFromUserText(trimmed);
     if (n != null && n >= 0 && n <= 99) return { ...data, propertyDetails: { ...nextPd(), parkingSpaces: n } };
   }
 
   return data;
+}
+
+function applyPreferenceConditionBuildingFromFocusedAnswer(
+  data: Record<string, unknown>,
+  trimmed: string,
+  focusedField: string | undefined,
+): { data: Record<string, unknown>; applied: boolean } {
+  if (!focusedField || !trimmed) return { data, applied: false };
+  const f = normalizePreferenceFieldKey(focusedField);
+  const pd = { ...((data.propertyDetails || {}) as Record<string, unknown>) };
+  if (f.includes("property condition")) {
+    const value = normalizePreferenceCondition(trimmed);
+    if (value) return { data: { ...data, propertyDetails: { ...pd, propertyCondition: value } }, applied: true };
+  }
+  if (f.includes("building type")) {
+    const value = normalizePreferenceBuildingType(trimmed);
+    if (value) return { data: { ...data, propertyDetails: { ...pd, buildingType: value } }, applied: true };
+  }
+  return { data, applied: false };
+}
+
+function applyPreferenceFeaturesFromFocusedAnswer(
+  data: Record<string, unknown>,
+  trimmed: string,
+  focusedField: string | undefined,
+): { data: Record<string, unknown>; applied: boolean } {
+  if (!focusedField || !trimmed) return { data, applied: false };
+  const f = normalizePreferenceFieldKey(focusedField);
+  if (!(f.includes("key features") || (f.includes("features") && f.includes("amenities")))) {
+    return { data, applied: false };
+  }
+  if (SKIP_UTTERANCE_RE.test(trimmed) || /^\s*skip features\s*$/i.test(trimmed)) {
+    return {
+      data: {
+        ...data,
+        features: {
+          ...((data.features || {}) as Record<string, unknown>),
+          baseFeatures: [],
+          basicFeatures: [],
+          premiumFeatures: [],
+        },
+      },
+      applied: true,
+    };
+  }
+  const names = parseDocumentTypesFromUserText(trimmed);
+  if (names.length === 0) return { data, applied: false };
+  const { basic, premium } = classifyPreferenceFeatures(names, data);
+  return {
+    data: {
+      ...data,
+      features: {
+        ...((data.features || {}) as Record<string, unknown>),
+        baseFeatures: basic,
+        basicFeatures: basic,
+        premiumFeatures: premium,
+      },
+    },
+    applied: true,
+  };
+}
+
+function applyPreferenceChoiceFromFocusedAnswer(
+  data: Record<string, unknown>,
+  trimmed: string,
+  focusedField: string | undefined,
+): { data: Record<string, unknown>; applied: boolean } {
+  const condition = applyPreferenceConditionBuildingFromFocusedAnswer(data, trimmed, focusedField);
+  if (condition.applied) return condition;
+  const beforeBeds = applyPreferenceBedroomsFromFocusedAnswer(data, trimmed, focusedField);
+  if (beforeBeds !== data) return { data: beforeBeds, applied: true };
+  const counts = applyPreferenceBuyResidentialCountFromFocusedAnswer(data, trimmed, focusedField);
+  if (counts !== data) return { data: counts, applied: true };
+  return applyPreferenceFeaturesFromFocusedAnswer(data, trimmed, focusedField);
 }
 
 function normalizePreferenceFieldKey(field: string): string {
@@ -1370,8 +1581,21 @@ function getMissingFieldsFromPreferenceData(data: Record<string, unknown>): stri
           if (!isMeaningful(pd?.buildingType)) {
             missing.push("building type (required for rent when not land — same as form)");
           }
-          if (subtype === "residential" && !bedroomsPresent(pd)) {
-            missing.push("number of bedrooms (required for residential rent — same as form)");
+          if (subtype === "residential") {
+            const pdr = (pd || {}) as Record<string, unknown>;
+            if (!bedroomsPresent(pd)) {
+              missing.push("number of bedrooms (required for residential rent — same as form)");
+            } else if (!buyResidentialBathroomsAnswered(pd)) {
+              missing.push("number of bathrooms (required for residential rent — after bedrooms)");
+            } else if (!nonNegativeIntPresent(pdr.toilets) && String(pdr.toilets || "").toLowerCase() !== "more") {
+              missing.push("number of toilets (required for residential rent — after bathrooms)");
+            }
+          }
+          const feat = data.features as Record<string, unknown> | undefined;
+          const basic = (feat?.baseFeatures ?? feat?.basicFeatures) as unknown[] | undefined;
+          const premium = feat?.premiumFeatures as unknown[] | undefined;
+          if ((!Array.isArray(basic) || basic.length === 0) && (!Array.isArray(premium) || premium.length === 0)) {
+            missing.push("key features and amenities (optional — select from the list or skip)");
           }
         }
       }
@@ -1509,7 +1733,9 @@ function flattenPreferenceData(data: Record<string, unknown>): { key: string; la
   }
   const contact = data.contactInfo as Record<string, unknown> | undefined;
   if (contact) {
-    if (contact.fullName) out.push({ key: "fullName", label: "Name", value: String(contact.fullName) });
+    if (contact.fullName || contact.contactPerson) {
+      out.push({ key: "fullName", label: "Name", value: String(contact.fullName || contact.contactPerson) });
+    }
     if (contact.email) out.push({ key: "email", label: "Email", value: String(contact.email) });
     if (contact.phoneNumber) out.push({ key: "phoneNumber", label: "Phone", value: String(contact.phoneNumber) });
     if (contact.preferredCheckInTime) out.push({ key: "preferredCheckInTime", label: "Check-in time", value: String(contact.preferredCheckInTime) });
@@ -1517,7 +1743,7 @@ function flattenPreferenceData(data: Record<string, unknown>): { key: string; la
   }
   const features = data.features as Record<string, unknown> | undefined;
   if (features) {
-    const base = features.baseFeatures as string[] | undefined;
+    const base = (features.baseFeatures ?? features.basicFeatures) as string[] | undefined;
     const premium = features.premiumFeatures as string[] | undefined;
     if (Array.isArray(base) && base.length) out.push({ key: "baseFeatures", label: "Features", value: base.join(", ") });
     if (Array.isArray(premium) && premium.length) out.push({ key: "premiumFeatures", label: "Premium features", value: premium.join(", ") });
@@ -1549,6 +1775,11 @@ export default function PreferenceAiConversationFlow() {
   /** Manual name/email after voice (typed for accuracy). */
   const [manualFullName, setManualFullName] = useState("");
   const [manualEmail, setManualEmail] = useState("");
+  const [manualPhone, setManualPhone] = useState("");
+  const [insureSearch, setInsureSearch] = useState(false);
+  const [showBuyerAuth, setShowBuyerAuth] = useState(false);
+  const [selectedFeatureOptions, setSelectedFeatureOptions] = useState<string[]>([]);
+  const selectedFeatureOptionsRef = useRef<string[]>([]);
   /** Fields the user skipped in the interactive AI flow (exact strings from getMissingFieldsFromPreferenceData). */
   const skippedFieldsRef = useRef<Set<string>>(new Set());
   const collectedDataRef = useRef<Record<string, unknown> | null>(null);
@@ -1583,6 +1814,10 @@ export default function PreferenceAiConversationFlow() {
   useEffect(() => {
     selectedAreaOptionsRef.current = selectedAreaOptions;
   }, [selectedAreaOptions]);
+
+  useEffect(() => {
+    selectedFeatureOptionsRef.current = selectedFeatureOptions;
+  }, [selectedFeatureOptions]);
 
   useEffect(() => {
     if (!preferenceAiCollectedData) return;
@@ -1919,6 +2154,70 @@ export default function PreferenceAiConversationFlow() {
         }
       }
 
+      if (rawInput.startsWith(FEATURE_DONE_MARKER) || /^\s*done(\s+selecting\s+features)?\s*$/i.test(userText)) {
+        const lastAssistFeatures = [...preferenceAiMessages].reverse().find((m) => m.role === "assistant");
+        const featureFocus = lastAssistFeatures?.focusedMissingField;
+        const featureFocusNorm = normalizePreferenceFieldKey(featureFocus || "");
+        if (featureFocusNorm.includes("key features") || featureFocusNorm.includes("amenities")) {
+          const markerNames = rawInput.startsWith(FEATURE_DONE_MARKER)
+            ? rawInput.slice(FEATURE_DONE_MARKER.length)
+            : selectedFeatureOptionsRef.current.join(", ");
+          const current = { ...(collectedDataRef.current || {}) } as Record<string, unknown>;
+          if (!markerNames.trim()) {
+            skippedFieldsRef.current.add(featureFocus || "key features and amenities (optional — select from the list or skip)");
+            const reply = withPreferenceLocationOptions(
+              buildPreferenceInteractiveReply(current, skippedFieldsRef.current, 0),
+              current,
+            );
+            setPreferenceAiMessages((prev) => [
+              ...prev,
+              { role: "user", content: "Skip features" },
+              {
+                role: "assistant",
+                content: reply.content,
+                speakLine: reply.speakLine,
+                data: current,
+                missingFields: reply.missingFields.length ? reply.missingFields : undefined,
+                focusedMissingField: reply.focusedMissingField,
+                remainingMissingCount: reply.remainingMissingCount,
+                quickOptions: reply.quickOptions,
+                locationAllOptions: reply.locationAllOptions,
+                locationOptionsOffset: reply.locationOptionsOffset,
+                locationOptionsLabel: reply.locationOptionsLabel,
+              },
+            ]);
+            setSelectedFeatureOptions([]);
+            return;
+          }
+          const applied = applyPreferenceFeaturesFromFocusedAnswer(current, markerNames, featureFocus);
+          setPreferenceAiCollectedData(applied.data);
+          collectedDataRef.current = applied.data;
+          const reply = withPreferenceLocationOptions(
+            buildPreferenceInteractiveReply(applied.data, skippedFieldsRef.current, 0),
+            applied.data,
+          );
+          setPreferenceAiMessages((prev) => [
+            ...prev,
+            { role: "user", content: markerNames },
+            {
+              role: "assistant",
+              content: reply.content,
+              speakLine: reply.speakLine,
+              data: applied.data,
+              missingFields: reply.missingFields.length ? reply.missingFields : undefined,
+              focusedMissingField: reply.focusedMissingField,
+              remainingMissingCount: reply.remainingMissingCount,
+              quickOptions: reply.quickOptions,
+              locationAllOptions: reply.locationAllOptions,
+              locationOptionsOffset: reply.locationOptionsOffset,
+              locationOptionsLabel: reply.locationOptionsLabel,
+            },
+          ]);
+          setSelectedFeatureOptions([]);
+          return;
+        }
+      }
+
       if (SKIP_UTTERANCE_RE.test(userText)) {
         setLoading(true);
         try {
@@ -2003,6 +2302,79 @@ export default function PreferenceAiConversationFlow() {
         return;
       }
 
+      const lastAssistForBudget = [...preferenceAiMessages].reverse().find((m) => m.role === "assistant");
+      const budgetFocus = lastAssistForBudget?.focusedMissingField;
+      const localBudget = applyPreferenceBudgetFromFocusedAnswer(
+        {
+          ...(collectedDataRef.current || {}),
+          preferenceType: effectiveType,
+          preferenceMode: preferenceModeFromType(effectiveType),
+        },
+        userText,
+        budgetFocus,
+      );
+      if (localBudget.applied) {
+        setPreferenceAiCollectedData(localBudget.data);
+        const reply = withPreferenceLocationOptions(
+          buildPreferenceInteractiveReply(localBudget.data, skippedFieldsRef.current, 0),
+          localBudget.data,
+        );
+        setPreferenceAiMessages((prev) => [
+          ...prev,
+          { role: "user", content: userText },
+          {
+            role: "assistant",
+            content: reply.content,
+            speakLine: reply.speakLine,
+            data: localBudget.data,
+            missingFields: reply.missingFields.length ? reply.missingFields : undefined,
+            focusedMissingField: reply.focusedMissingField,
+            remainingMissingCount: reply.remainingMissingCount,
+            quickOptions: reply.quickOptions,
+            locationAllOptions: reply.locationAllOptions,
+            locationOptionsOffset: reply.locationOptionsOffset,
+            locationOptionsLabel: reply.locationOptionsLabel,
+          },
+        ]);
+        return;
+      }
+
+      const localChoice = applyPreferenceChoiceFromFocusedAnswer(
+        {
+          ...(collectedDataRef.current || {}),
+          preferenceType: effectiveType,
+          preferenceMode: preferenceModeFromType(effectiveType),
+        },
+        userText,
+        budgetFocus,
+      );
+      if (localChoice.applied) {
+        setPreferenceAiCollectedData(localChoice.data);
+        collectedDataRef.current = localChoice.data;
+        const reply = withPreferenceLocationOptions(
+          buildPreferenceInteractiveReply(localChoice.data, skippedFieldsRef.current, 0),
+          localChoice.data,
+        );
+        setPreferenceAiMessages((prev) => [
+          ...prev,
+          { role: "user", content: userText },
+          {
+            role: "assistant",
+            content: reply.content,
+            speakLine: reply.speakLine,
+            data: localChoice.data,
+            missingFields: reply.missingFields.length ? reply.missingFields : undefined,
+            focusedMissingField: reply.focusedMissingField,
+            remainingMissingCount: reply.remainingMissingCount,
+            quickOptions: reply.quickOptions,
+            locationAllOptions: reply.locationAllOptions,
+            locationOptionsOffset: reply.locationOptionsOffset,
+            locationOptionsLabel: reply.locationOptionsLabel,
+          },
+        ]);
+        return;
+      }
+
       setLoading(true);
       setPreferenceAiMessages((prev) => [...prev, { role: "user", content: userText }]);
 
@@ -2047,7 +2419,10 @@ export default function PreferenceAiConversationFlow() {
         data = applyPreferenceDocumentTypesFromFocusedAnswer(data, userText, lastFocusBeforeMerge);
         data = applyPreferenceBedroomsFromFocusedAnswer(data, userText, lastFocusBeforeMerge);
         data = applyPreferenceBuyResidentialCountFromFocusedAnswer(data, userText, lastFocusBeforeMerge);
+        data = applyPreferenceConditionBuildingFromFocusedAnswer(data, userText, lastFocusBeforeMerge).data;
+        data = applyPreferenceFeaturesFromFocusedAnswer(data, userText, lastFocusBeforeMerge).data;
         data = applyPreferenceOffPlanFieldsFromFocusedAnswer(data, userText, lastFocusBeforeMerge);
+        data = applyPreferenceBudgetFromFocusedAnswer(data, userText, lastFocusBeforeMerge).data;
 
         const fromUser = extractContactFromText(userText);
         const fromAccumulated = extractContactFromText(accumulated || userText);
@@ -2158,6 +2533,29 @@ export default function PreferenceAiConversationFlow() {
       msg: { focusedMissingField?: string; quickOptions?: string[] },
     ) => {
       const focus = normalizePreferenceFieldKey(msg.focusedMissingField || "");
+      const isFeatureMultiSelect =
+        (focus.includes("key features") || focus.includes("amenities")) &&
+        Array.isArray(msg.quickOptions) &&
+        msg.quickOptions.includes(DONE_SELECTING_FEATURES);
+      if (isFeatureMultiSelect) {
+        if (option === SKIP_FEATURES_OPTION) {
+          await handleSuggest("skip");
+          setSelectedFeatureOptions([]);
+          return;
+        }
+        if (option === DONE_SELECTING_FEATURES) {
+          const chips = selectedFeatureOptionsRef.current;
+          await handleSuggest(`${FEATURE_DONE_MARKER}${chips.join(", ")}`);
+          setSelectedFeatureOptions([]);
+          return;
+        }
+        setSelectedFeatureOptions((prev) =>
+          prev.some((x) => x.toLowerCase() === option.toLowerCase())
+            ? prev.filter((x) => x.toLowerCase() !== option.toLowerCase())
+            : [...prev, option],
+        );
+        return;
+      }
       const isAreaMultiSelect =
         focus.includes("preference location - area") &&
         Array.isArray(msg.quickOptions) &&
@@ -2203,13 +2601,15 @@ export default function PreferenceAiConversationFlow() {
   useEffect(() => {
     if (preferenceAiFlowStep !== "contactConfirm" || !preferenceAiCollectedData) return;
     const c = preferenceAiCollectedData.contactInfo as Record<string, unknown> | undefined;
-    setManualFullName("");
+    setManualFullName(String(c?.fullName || c?.contactPerson || "").trim());
     setManualEmail(String(c?.email || "").trim());
+    setManualPhone(String(c?.phoneNumber || "").trim());
   }, [preferenceAiFlowStep, preferenceAiCollectedData]);
 
   const handleContactConfirmContinue = useCallback(() => {
     const name = manualFullName.trim();
     const email = manualEmail.trim();
+    const phone = manualPhone.trim();
     if (!name || !email) {
       toast.error("Please enter your name and email.");
       return;
@@ -2228,12 +2628,14 @@ export default function PreferenceAiConversationFlow() {
           ...prevContact,
           contactPerson: name,
           email,
+          phoneNumber: phone,
         };
       } else {
         base.contactInfo = {
           ...prevContact,
           fullName: name,
           email,
+          phoneNumber: phone,
         };
       }
       return base;
@@ -2242,6 +2644,7 @@ export default function PreferenceAiConversationFlow() {
   }, [
     manualEmail,
     manualFullName,
+    manualPhone,
     setPreferenceAiCollectedData,
     setPreferenceAiFlowStep,
   ]);
@@ -2256,12 +2659,32 @@ export default function PreferenceAiConversationFlow() {
       );
       return;
     }
+    if (insureSearch && !getBuyerToken()) {
+      setShowBuyerAuth(true);
+      return;
+    }
     setSubmitting(true);
     try {
-      const payload = buildPreferencePayload(merged, type);
-      const response = await POST_REQUEST(PREFERENCE_SUBMIT_URL, payload);
+      const payload = {
+        ...buildPreferencePayload(merged, type),
+        insureSearch,
+      };
+      const buyerToken = getBuyerToken();
+      const response = await POST_REQUEST(PREFERENCE_SUBMIT_URL, payload, buyerToken || undefined);
       if (response?.success) {
-        toast.success("Preference submitted successfully!");
+        const preferenceId = (response.data as { _id?: string; id?: string })?._id
+          || (response.data as { id?: string })?.id;
+        if (insureSearch && preferenceId) {
+          const checkout = await checkoutSearchInsurance(String(preferenceId));
+          if (checkout.success && checkout.data?.paymentUrl) {
+            toast.success("Preference saved. Redirecting to insurance payment...");
+            window.location.href = checkout.data.paymentUrl;
+            return;
+          }
+          toast.error(checkout.message || "Search saved. Insurance payment could not start.");
+        } else {
+          toast.success("Preference submitted successfully!");
+        }
         resetForm();
         triggerSubmittedFromAi();
       } else {
@@ -2272,7 +2695,7 @@ export default function PreferenceAiConversationFlow() {
     } finally {
       setSubmitting(false);
     }
-  }, [preferenceAiCollectedData, resetForm, triggerSubmittedFromAi]);
+  }, [preferenceAiCollectedData, resetForm, triggerSubmittedFromAi, insureSearch]);
 
   const handleContinueToForm = useCallback(() => {
     if (preferenceAiCollectedData) {
@@ -2341,6 +2764,20 @@ export default function PreferenceAiConversationFlow() {
                 placeholder="you@example.com"
               />
             </div>
+            <div>
+              <label htmlFor="pref-ai-manual-phone" className="block text-sm font-medium text-[#09391C] mb-1">
+                Phone
+              </label>
+              <input
+                id="pref-ai-manual-phone"
+                type="tel"
+                autoComplete="tel"
+                value={manualPhone}
+                onChange={(e) => setManualPhone(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-[#8DDB90] focus:border-[#8DDB90]"
+                placeholder="08012345678"
+              />
+            </div>
           </div>
           <div className="flex flex-wrap gap-3 pt-2">
             <button
@@ -2402,6 +2839,9 @@ export default function PreferenceAiConversationFlow() {
               </tbody>
             </table>
           </div>
+          <div className="mb-6">
+            <SearchInsuranceCard optedIn={insureSearch} onToggle={setInsureSearch} />
+          </div>
           <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
             <button
               type="button"
@@ -2427,6 +2867,25 @@ export default function PreferenceAiConversationFlow() {
             </button>
           </div>
         </div>
+        <BuyerAuthModal
+          open={showBuyerAuth}
+          onClose={() => setShowBuyerAuth(false)}
+          defaultName={String(
+            (preferenceAiCollectedData?.contactInfo as Record<string, unknown> | undefined)?.fullName
+            || (preferenceAiCollectedData?.contactInfo as Record<string, unknown> | undefined)?.contactPerson
+            || "",
+          )}
+          defaultEmail={String(
+            (preferenceAiCollectedData?.contactInfo as Record<string, unknown> | undefined)?.email || "",
+          )}
+          defaultPhone={String(
+            (preferenceAiCollectedData?.contactInfo as Record<string, unknown> | undefined)?.phoneNumber || "",
+          )}
+          onAuthed={() => {
+            setShowBuyerAuth(false);
+            void handleSubmitFromSummary();
+          }}
+        />
       </div>
     );
   }
@@ -2596,9 +3055,10 @@ export default function PreferenceAiConversationFlow() {
                             }
                             disabled={loading}
                             className={`rounded-full border px-3 py-1 text-xs font-medium disabled:opacity-50 ${
-                              option === DONE_SELECTING_AREAS
+                              option === DONE_SELECTING_AREAS || option === DONE_SELECTING_FEATURES
                                 ? "border-[#09391C] bg-[#8DDB90] text-[#09391C] font-semibold shadow-sm hover:bg-[#7BC87F]"
                                 : selectedAreaOptions.some((x) => x.toLowerCase() === option.toLowerCase())
+                                  || selectedFeatureOptions.some((x) => x.toLowerCase() === option.toLowerCase())
                                   ? "border-[#09391C] bg-[#09391C] text-white"
                                   : "border-[#8DDB90] bg-white text-[#09391C] hover:bg-[#8DDB90]/15"
                             }`}

@@ -309,7 +309,7 @@ export default function AiFillBlock({
             toast.error("Please enter a numeric amount (or say skip).");
             return;
           }
-          toSend = digits;
+          toSend = formatAmountRunsInText(digits) || digits;
         }
       }
       const pageScrollY = typeof window !== "undefined" ? window.scrollY : 0;

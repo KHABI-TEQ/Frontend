@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { buyerFetch, setBuyerSession } from "@/lib/search-insurance";
 
 type Mode = "register" | "login" | "claim";
@@ -28,11 +28,45 @@ export default function BuyerAuthModal({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    if (!open) return;
+    setFullName(defaultName || "");
+    setEmail(defaultEmail || "");
+    setPhoneNumber(defaultPhone || "");
+    setPassword("");
+    setError("");
+  }, [open, defaultName, defaultEmail, defaultPhone]);
+
   if (!open) return null;
 
   const submit = async () => {
-    setBusy(true);
     setError("");
+    const name = fullName.trim();
+    const mail = email.trim();
+    const phone = phoneNumber.trim();
+    if (mode !== "login") {
+      if (!name) {
+        setError("Full name is required.");
+        return;
+      }
+      if (!phone) {
+        setError("Phone number is required.");
+        return;
+      }
+    }
+    if (!mail) {
+      setError("Email is required.");
+      return;
+    }
+    if (!password.trim()) {
+      setError("Password is required.");
+      return;
+    }
+    if (mode !== "login" && password.trim().length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+    setBusy(true);
     try {
       const path =
         mode === "login"
@@ -42,8 +76,8 @@ export default function BuyerAuthModal({
             : "/buyer/auth/register";
       const body =
         mode === "login"
-          ? { email, password }
-          : { fullName, email, phoneNumber, password };
+          ? { email: mail, password }
+          : { fullName: name, email: mail, phoneNumber: phone, password };
       const res = await buyerFetch<{ token: string; buyer: any }>(path, {
         method: "POST",
         body: JSON.stringify(body),

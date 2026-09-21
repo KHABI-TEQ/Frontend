@@ -1,4 +1,4 @@
-/** Shared “WHAT ARE YOU LOOKING TO DO?” paths — homepage block + navbar shortcut. */
+/** Shared “WHAT ARE YOU LOOKING TO DO?” paths — navbar shortcut. */
 
 export type LookingToDoIcon = "home" | "building" | "briefcase" | "compass" | "scale";
 
@@ -13,7 +13,7 @@ export interface LookingToDoPath {
 }
 
 export const LOOKING_TO_DO_HEADING = "WHAT ARE YOU LOOKING TO DO?";
-export const LOOKING_TO_DO_OVERVIEW_HREF = "/home#get-started";
+export const LOOKING_TO_DO_OVERVIEW_HREF = "/home";
 
 export const LOOKING_TO_DO_PATHS: LookingToDoPath[] = [
   {

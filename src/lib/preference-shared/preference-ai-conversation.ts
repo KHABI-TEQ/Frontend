@@ -1221,9 +1221,21 @@ function parseEnglishMagnitudeChunk(s: string): number | null {
 
 /**
  * Parse min/max budget from voice or typed text. Returns integer Naira amount or null.
+ * Accepts 12000000, 12,000,000, ₦12,000,000, and "12 million".
  */
 export function parseNairaAmountFromText(text: string): number | null {
   if (!text || typeof text !== "string") return null;
+  const compactNumeric = text
+    .replace(/₦/g, "")
+    .replace(/naira/gi, "")
+    .replace(/,/g, "")
+    .replace(/\s+/g, "")
+    .trim();
+  if (/^\d+$/.test(compactNumeric)) {
+    const n = Number(compactNumeric);
+    if (Number.isFinite(n) && n > 0) return Math.round(n);
+  }
+
   let t = text.toLowerCase().replace(/₦|naira/gi, "").replace(/,/g, " ").replace(/\s+/g, " ").trim();
   if (!t) return null;
 

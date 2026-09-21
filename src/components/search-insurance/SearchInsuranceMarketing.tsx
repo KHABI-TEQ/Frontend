@@ -39,12 +39,6 @@ export default function SearchInsuranceMarketing({
               </div>
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link
-                  href="/preference?insure=1"
-                  className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#09391C] px-5 text-sm font-semibold text-white"
-                >
-                  Add Insurance to Your Search
-                </Link>
-                <Link
                   href="/buyer/register"
                   className="inline-flex min-h-11 items-center justify-center rounded-full border border-black/10 bg-white px-5 text-sm font-semibold text-[#09391C]"
                 >

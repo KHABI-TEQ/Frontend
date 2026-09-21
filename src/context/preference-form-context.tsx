@@ -592,6 +592,21 @@ export const PreferenceFormProvider: React.FC<{ children: ReactNode }> = ({
                   message: "Number of bedrooms is required",
                 });
               }
+              if (!formData.propertyDetails?.bathrooms) {
+                errors.push({
+                  field: "propertyDetails.bathrooms",
+                  message: "Number of bathrooms is required",
+                });
+              }
+              if (
+                (formData.preferenceType === "rent" || formData.preferenceType === "buy") &&
+                !(formData.propertyDetails as { toilets?: unknown })?.toilets
+              ) {
+                errors.push({
+                  field: "propertyDetails.toilets",
+                  message: "Number of toilets is required",
+                });
+              }
             }
           }
 

@@ -124,26 +124,28 @@ export default function AgentSubscriptionsPage() {
   useEffect(() => {
     if (!token) return;
     const raw = (user as { userType?: string } | null)?.userType ?? "";
-    if (String(raw).toLowerCase() === "developer") {
+    const lower = String(raw).toLowerCase();
+    if (lower === "developer") {
       setAccountRoleLabel("Developer");
       return;
     }
-    if (String(raw).toLowerCase() === "landowners") {
+    if (lower === "landowners") {
       setAccountRoleLabel("Property Owner");
       return;
     }
-    if (["lawyer", "surveyor", "valuer"].includes(String(raw).toLowerCase())) {
+    if (["lawyer", "surveyor", "valuer"].includes(lower)) {
       setAccountRoleLabel(String(raw));
       return;
     }
-    GET_REQUEST(`${URLS.BASE}${URLS.propertyScoutStatus}`, token)
-      .then((res) => {
-        const scout = Boolean((res as any)?.data?.isPropertyScout);
-        setAccountRoleLabel(
-          scout ? "Property Scout" : "Licensed Agent"
-        );
-      })
-      .catch(() => setAccountRoleLabel(null));
+    if (lower === "propertyscout") {
+      setAccountRoleLabel("Property Scout");
+      return;
+    }
+    if (lower === "agent") {
+      setAccountRoleLabel("Licensed Agent");
+      return;
+    }
+    setAccountRoleLabel(raw || null);
   }, [token, user]);
 
   const fetchSubscriptions = async (page = 1) => {
@@ -434,8 +436,7 @@ export default function AgentSubscriptionsPage() {
   const isDeveloper = userTypeLower === 'developer';
   const isServiceProfessional = ['lawyer', 'surveyor', 'valuer'].includes(userTypeLower);
   const isPropertyOwner = userTypeLower === 'landowners';
-  const isScoutAccount =
-    eligibility?.isPropertyScout === true || accountRoleLabel === "Property Scout" || userTypeLower === "propertyscout";
+  const isScoutAccount = userTypeLower === "propertyscout";
   const rolePlanSummaries = dashboardPlanSummaries(userTypeRaw, isScoutAccount);
   const hasPaidSubscription = eligibility?.hasPaidSubscription === true;
 
@@ -483,7 +484,7 @@ export default function AgentSubscriptionsPage() {
                 ? "Developer"
                 : userTypeLower === "landowners"
                 ? "Property Owner"
-                : eligibility?.isPropertyScout || accountRoleLabel === "Property Scout"
+                : userTypeLower === "propertyscout" || accountRoleLabel === "Property Scout"
                 ? "Property Scout"
                 : eligibility?.displayRoleLabel ||
                   accountRoleLabel ||

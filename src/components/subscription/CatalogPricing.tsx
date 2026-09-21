@@ -284,8 +284,7 @@ export function groupKeyForUserType(userType?: string | null) {
   return null;
 }
 
-export function groupKeysForUserType(userType?: string | null, isPropertyScout?: boolean) {
-  if (isPropertyScout) return ["scout"];
+export function groupKeysForUserType(userType?: string | null, _isPropertyScout?: boolean) {
   const t = String(userType || "").trim();
   const lower = t.toLowerCase();
   if (t === "PropertyScout" || lower === "propertyscout") return ["scout"];
@@ -312,14 +311,14 @@ export function groupKeysForUserType(userType?: string | null, isPropertyScout?:
 function planMatchesDashboardUser(
   plan: CatalogPlan,
   userType?: string | null,
-  isPropertyScout?: boolean,
+  _isPropertyScout?: boolean,
 ) {
   const t = String(userType || "").trim();
   const lower = t.toLowerCase();
   const audience = String(plan.audience || "").toLowerCase();
   const key = resolvePlanGroupKey(plan);
 
-  if (isPropertyScout || t === "PropertyScout" || lower === "propertyscout") {
+  if (t === "PropertyScout" || lower === "propertyscout") {
     return key === "scout";
   }
   if (t === "Agent" || lower === "agent") return key === "licensed";
@@ -337,11 +336,11 @@ function planMatchesDashboardUser(
 
 export function dashboardPlanSummaries(
   userType?: string | null,
-  isPropertyScout?: boolean,
+  _isPropertyScout?: boolean,
 ) {
   const t = String(userType || "").trim();
   const lower = t.toLowerCase();
-  if (isPropertyScout || t === "PropertyScout" || lower === "propertyscout") {
+  if (t === "PropertyScout" || lower === "propertyscout") {
     return ["Property Scout — ₦23,500 / 3 months"];
   }
   if (t === "Agent" || lower === "agent") {

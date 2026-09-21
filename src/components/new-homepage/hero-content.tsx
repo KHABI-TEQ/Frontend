@@ -48,13 +48,6 @@ export default function HeroContent({ showTrustStrip = true, className = '' }: H
             SUBMIT YOUR PREFERENCE
           </Button>
         </Link>
-        <Link href="/preference?insure=1" className='w-full sm:w-auto'>
-          <Button
-            green={false}
-            className='w-full sm:w-auto h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base font-semibold text-white bg-white/10 hover:bg-white/20 border border-white/30 hover:border-white/50 transition-all duration-200 hover:-translate-y-0.5 text-center flex items-center justify-center whitespace-nowrap rounded-lg backdrop-blur-sm'>
-            INSURE YOUR SEARCH
-          </Button>
-        </Link>
         <Link href="/how-it-works" className='w-full sm:w-auto'>
           <Button
             green={false}

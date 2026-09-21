@@ -52,6 +52,22 @@ export default function Scout() {
           </p>
         </div>
 
+        <Link
+          href="/account/upgrade"
+          className="flex flex-col gap-2 rounded-2xl border border-[#8DDB90]/50 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-[#0F766E]">Upgrade account</p>
+            <h2 className="mt-1 text-lg font-bold text-[#09391C]">Become a verified professional</h2>
+            <p className="mt-1 text-sm text-[#5A5D63]">
+              Keep this same account and upgrade to Agent, Developer, Lawyer, Surveyor or Valuer after KYC.
+            </p>
+          </div>
+          <span className="inline-flex shrink-0 items-center justify-center rounded-xl bg-[#09391C] px-4 py-2.5 text-sm font-semibold text-white">
+            Upgrade account
+          </span>
+        </Link>
+
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
           <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">KYC Status</p>
           <p className="mt-1 text-lg font-bold text-[#09391C]">{kycLabel}</p>

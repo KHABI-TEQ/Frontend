@@ -25,6 +25,10 @@ function roleLabel(user: User) {
       return "Lawyer";
     case "Surveyor":
       return "Surveyor";
+    case "Valuer":
+      return "Valuer";
+    case "Agent":
+      return "Agent";
     default:
       return "Real estate professional";
   }

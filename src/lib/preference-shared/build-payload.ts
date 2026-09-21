@@ -202,6 +202,7 @@ export function buildPreferencePayload(
           buildingType: toStr(pd.buildingType),
           minBedrooms: minBedroomsStr(pd),
           minBathrooms: Number(pd.bathrooms ?? pd.minBathrooms) || 0,
+          toilets: pd.toilets ?? "",
           leaseTerm: toStr(pd.leaseTerm) || "",
           propertyCondition: toStr(pd.propertyCondition),
           purpose: toStr(pd.purpose) || "For living",
@@ -252,6 +253,7 @@ export function buildPreferencePayload(
           buildingType: toStr(pd.buildingType),
           minBedrooms: minBedroomsStr(pd),
           minBathrooms: Number(pd.bathrooms ?? pd.minBathrooms) || 0,
+          toilets: pd.toilets ?? "",
           leaseTerm: toStr(pd.leaseTerm) || "1 Year",
           propertyCondition: toStr(pd.propertyCondition),
           purpose: toStr(pd.purpose) || "Residential",
@@ -270,7 +272,15 @@ export function buildPreferencePayload(
         nearbyLandmark: toStr(
           (pd as Record<string, unknown>).nearbyLandmark ?? rentData.nearbyLandmark,
         ),
-        additionalNotes: toStr(rentData.additionalNotes),
+        additionalNotes: (() => {
+          const parts: string[] = [];
+          const baseNotes = toStr(rentData.additionalNotes);
+          if (baseNotes) parts.push(baseNotes);
+          if (pd.toilets != null && toStr(pd.toilets)) {
+            parts.push(`Preferred toilets: ${pd.toilets}`);
+          }
+          return parts.join(" ").trim();
+        })(),
       };
       ensurePreferencePayloadStrings(rentPayload as unknown as Record<string, unknown>);
       return compactPayload(rentPayload) as PreferencePayload;
@@ -322,6 +332,7 @@ export function buildPreferencePayload(
           buildingType: toStr(pd.buildingType),
           minBedrooms: minBedroomsStr(pd),
           minBathrooms: Number(pd.bathrooms ?? pd.minBathrooms) || 0,
+          toilets: pd.toilets ?? "",
           propertyCondition: toStr(pd.propertyCondition),
           purpose: toStr(pd.purpose) || "Investment",
           landSize: toStr(pd.landSize),

@@ -338,10 +338,10 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
       animate={{ y: 0, opacity: 1, scale: 1 }}
       exit={{ y: 10, opacity: 0, scale: 0.95 }}
       transition={{ type: "spring", damping: 20, stiffness: 300 }}
-      className="fixed top-20 right-4 md:absolute md:top-full md:right-0 z-50 md:mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden md:transform md:-translate-x-3/4"
+      className="fixed top-20 right-4 md:absolute md:top-full md:right-0 z-50 md:mt-2 w-80 max-w-[calc(100vw-2rem)] max-h-[calc(100dvh-6rem)] flex flex-col bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden md:transform md:-translate-x-3/4"
     >
       {/* Header with user info */}
-      <div className="bg-gradient-to-r from-[#8DDB90] to-[#09391C] p-4">
+      <div className="bg-gradient-to-r from-[#8DDB90] to-[#09391C] p-4 shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
             {userDetails?.profile_picture ? (
@@ -370,7 +370,7 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
       </div>
 
       {/* User Info */}
-      <div className="p-4 space-y-3 bg-gray-50 border-b border-gray-200">
+      <div className="p-4 space-y-3 bg-gray-50 border-b border-gray-200 shrink-0">
         <div className="grid grid-cols-2 gap-3 text-xs">
           <div>
             <span className="text-gray-500 block">Type</span>
@@ -392,7 +392,7 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
       </div>
 
       {/* Menu Items */}
-      <div className="p-2">
+      <div className="p-2 overflow-y-auto overscroll-contain min-h-0 flex-1">
         {menuItems.map((item, index) => (
           <motion.button
             key={index}
@@ -413,7 +413,7 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
       </div>
 
       {/* Logout Button */}
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t border-gray-200 shrink-0 bg-white">
         <motion.button
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}

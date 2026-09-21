@@ -11,6 +11,37 @@ import Scout from "./scout";
 import Valuer from "./valuer";
 import { DealSiteSetupOverlay } from "@/components/dashboard/DealSiteSetupOverlay";
 import { PractitionerWelcomeOverlay } from "@/components/dashboard/PractitionerWelcomeOverlay";
+import { PractitionerKycOverlay } from "@/components/dashboard/PractitionerKycOverlay";
+import Link from "next/link";
+import type { User } from "@/context/user-context";
+
+function hasActiveSubscription(user: User) {
+  return String(user.activeSubscription?.status || "").toLowerCase() === "active";
+}
+
+function DashboardSubscribeBanner({ user }: { user: User }) {
+  const type = String(user.userType || "");
+  if (!["Agent", "Developer", "Lawyer", "Surveyor", "Valuer"].includes(type)) {
+    return null;
+  }
+  if (hasActiveSubscription(user)) return null;
+  return (
+    <div className="mx-auto max-w-6xl px-4 pt-4">
+      <div className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-amber-950">
+          <span className="font-semibold">Subscribe to use your {type} dashboard.</span>{" "}
+          You keep this {type} account. Listing, inspections and professional tools stay locked until a paid plan is active.
+        </p>
+        <Link
+          href="/agent-subscriptions?tab=plans"
+          className="inline-flex shrink-0 items-center justify-center rounded-xl bg-[#09391C] px-4 py-2.5 text-sm font-semibold text-white"
+        >
+          Choose a plan
+        </Link>
+      </div>
+    </div>
+  );
+}
 
 function getEffectiveUserType(user: Record<string, unknown> | null): string | undefined {
   if (!user) return undefined;
@@ -37,10 +68,8 @@ function getEffectiveUserType(user: Record<string, unknown> | null): string | un
 
 export default function Dashboard() {
   const { user } = useUserContext();
-  const [welcomeOpen, setWelcomeOpen] = useState(true);
-
-  if (!user) return null;
-
+  const [welcomeOpen, setWelcomeOpen] = useState(false);
+  const [kycPromptOpen, setKycPromptOpen] = useState(true);
   const effectiveType = getEffectiveUserType(user as unknown as Record<string, unknown>);
   const typeLower = effectiveType?.toLowerCase() ?? "";
 
@@ -65,6 +94,8 @@ export default function Dashboard() {
       }
     } catch {}
   }, [effectiveType, typeLower]);
+
+  if (!user) return null;
 
   const showAgentDashboard = typeLower === "agent";
   const showDeveloperDashboard = typeLower === "developer";
@@ -97,15 +128,21 @@ export default function Dashboard() {
 
   const showProfessionalWelcome =
     showAgentDashboard || showDeveloper || showLawyer || showSurveyor || showValuer;
+  const showKycPrompt =
+    showAgentDashboard || showDeveloper || showLawyer || showSurveyor || showValuer;
 
   return (
     <>
-      {showProfessionalWelcome && (
+      {showKycPrompt && (
+        <PractitionerKycOverlay user={user} onOpenChange={setKycPromptOpen} />
+      )}
+      {showProfessionalWelcome && !kycPromptOpen && (
         <PractitionerWelcomeOverlay user={user} onOpenChange={setWelcomeOpen} />
       )}
-      {(showAgentDashboard || showDeveloper) && !welcomeOpen && (
+      {(showAgentDashboard || showDeveloper) && !welcomeOpen && !kycPromptOpen && (
         <DealSiteSetupOverlay user={user} />
       )}
+      <DashboardSubscribeBanner user={user} />
       {showAgentDashboard && <Agent />}
       {showDeveloper && <Developer />}
       {showLandlord && <Landlord />}

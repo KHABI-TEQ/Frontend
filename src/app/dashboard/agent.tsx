@@ -323,10 +323,7 @@ export default function AgentDashboard() {
         <div className="flex flex-col gap-4 mb-8">
           <div className="w-full">
             <h1 className="text-2xl sm:text-3xl font-bold text-[#09391C] font-display">
-              Welcome back,{" "}
-              {eligibility?.displayRoleLabel ||
-                (eligibility?.isPropertyScout ? "Property Scout" : "Agent")}{" "}
-              {user.firstName}!
+              Welcome back, Agent {user.firstName}!
             </h1>
             <p className="text-[#5A5D63] mt-2">
               Manage your briefs and track your real estate performance
