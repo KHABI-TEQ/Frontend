@@ -3,6 +3,8 @@
  * API returns: preferenceType, preferenceMode, location, budget, propertyDetails, features.
  */
 
+import { parseEnglishMoneyToNumber } from "@/utils/nairaAmountInput";
+
 function toStr(v: unknown): string {
   if (v === undefined || v === null) return "";
   if (typeof v === "number") return String(v);
@@ -11,8 +13,10 @@ function toStr(v: unknown): string {
 
 function toNum(v: unknown): number {
   if (v === undefined || v === null) return 0;
-  if (typeof v === "number") return v;
-  const n = Number(String(v).replace(/\D/g, ""));
+  if (typeof v === "number") return Number.isFinite(v) ? v : 0;
+  const parsed = parseEnglishMoneyToNumber(String(v));
+  if (parsed != null) return parsed;
+  const n = Number(String(v).replace(/,/g, "").trim());
   return Number.isFinite(n) ? n : 0;
 }
 

@@ -5,7 +5,6 @@ import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import { GET_REQUEST, POST_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
-import { formatSubscriptionBonusLabel, resolvePlanBonusDays } from "@/utils/subscription-bonus";
 import { STANDARD_LISTING_CAP } from "@/utils/subscription-plan-features";
 
 interface DiscountedPlanOption {
@@ -93,12 +92,10 @@ export default function PortfolioUnlimitedModal({
       code: plan.code,
       price: plan.price,
       durationInDays: plan.durationInDays,
-      bonusDays: plan.bonusDays ?? resolvePlanBonusDays(plan),
     };
     const discounted = (plan.discountedPlans || []).map((dp) => ({
       ...dp,
       name: dp.name || `${plan.name} — ${periodLabel(dp.durationInDays)}`,
-      bonusDays: dp.bonusDays ?? resolvePlanBonusDays(dp),
     }));
     return [base, ...discounted];
   }, [plan]);
@@ -216,11 +213,6 @@ export default function PortfolioUnlimitedModal({
                       <p className="font-semibold text-[#09391C]">
                         {option.name}
                       </p>
-                      {option.bonusDays ? (
-                        <p className="text-xs text-[#16a34a]">
-                          {formatSubscriptionBonusLabel(option.bonusDays)}
-                        </p>
-                      ) : null}
                     </div>
                   </div>
                   <p className="font-bold text-[#09391C]">

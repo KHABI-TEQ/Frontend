@@ -14,6 +14,17 @@ import {
 } from "./location-intelligence";
 import type { PreferenceType } from "./schema";
 import { isLongMultiFieldUtterance } from "./suggest-input";
+import {
+  extractAllEnglishMoneyAmounts,
+  formatNairaAmountNumber,
+  parseEnglishMoneyToNumber,
+} from "@/utils/nairaAmountInput";
+import { normalizePreferenceDocumentValues } from "@/data/preference-document-types";
+import {
+  normalizeJvDevelopmentTypes,
+  normalizeShortletPropertyType,
+  normalizeTravelType,
+} from "@/data/preference-choice-options";
 
 export {
   applySmartLocationFromNaturalText,
@@ -42,6 +53,7 @@ export type ConversationFieldId =
   | "building_type"
   | "bedrooms"
   | "bathrooms"
+  | "toilets"
   | "lease_term"
   | "purpose"
   | "min_budget"
@@ -81,6 +93,7 @@ const TOAST_LABEL: Record<ConversationFieldId, string> = {
   building_type: "building type",
   bedrooms: "number of bedrooms",
   bathrooms: "number of bathrooms",
+  toilets: "number of toilets",
   lease_term: "lease term",
   purpose: "purpose (residential or office)",
   min_budget: "minimum budget",
@@ -264,7 +277,10 @@ export function sanitizeSuggestPreferenceForAiConversation(
     delete pd.minBathrooms;
     delete pd.numBathrooms;
     delete pd.bathroomCount;
+    delete pd.toilets;
     delete pd.noOfCarPark;
+    delete pd.parkingSpaces;
+    delete pd.carParks;
     next.propertyDetails = pd;
   }
   if (next.features && typeof next.features === "object" && !Array.isArray(next.features)) {
@@ -667,18 +683,22 @@ export function normalizePropertyDetailsBathroomFields(data: Record<string, unkn
   return data;
 }
 
-function getFeaturesArrays(data: Record<string, unknown>): { basic: string[]; premium: string[] } {
+function getFeaturesArrays(data: Record<string, unknown>): { basic: string[]; premium: string[]; comfort: string[] } {
   const f = data.features as Record<string, unknown> | undefined;
-  if (!f || typeof f !== "object" || Array.isArray(f)) return { basic: [], premium: [] };
+  if (!f || typeof f !== "object" || Array.isArray(f)) return { basic: [], premium: [], comfort: [] };
   const basicRaw = f.basicFeatures ?? f.baseFeatures;
   const premRaw = f.premiumFeatures;
+  const comfortRaw = f.comfortFeatures;
   const basic = Array.isArray(basicRaw)
     ? basicRaw.map((x) => String(x).trim()).filter((s) => s !== "")
     : [];
   const premium = Array.isArray(premRaw)
     ? premRaw.map((x) => String(x).trim()).filter((s) => s !== "")
     : [];
-  return { basic, premium };
+  const comfort = Array.isArray(comfortRaw)
+    ? comfortRaw.map((x) => String(x).trim()).filter((s) => s !== "")
+    : [];
+  return { basic, premium, comfort };
 }
 
 /** Parse comma / "and"-separated amenity names into basic features (premium left empty unless clearly premium). */
@@ -732,43 +752,144 @@ export function mergeUserFeaturesReply(data: Record<string, unknown>, userText: 
   };
 }
 
+export function mergeUserToiletsReply(
+  data: Record<string, unknown>,
+  userText: string,
+): Record<string, unknown> {
+  const t = userText.trim().toLowerCase();
+  const pd = getPd(data) || {};
+  if (/\bmore\b/.test(t)) return { ...data, propertyDetails: { ...pd, toilets: "more" } };
+  const m = t.match(/\b(\d{1,2})\b/);
+  if (!m) return data;
+  const n = parseInt(m[1], 10);
+  if (!Number.isFinite(n) || n < 0) return data;
+  return { ...data, propertyDetails: { ...pd, toilets: n } };
+}
+
+function toiletsAnswerFilled(pd: Record<string, unknown>): boolean {
+  const v = pd.toilets;
+  if (v === undefined || v === null || v === "") return false;
+  if (String(v).trim().toLowerCase() === "more") return true;
+  const n = Number(String(v).replace(/,/g, ""));
+  return Number.isFinite(n) && n >= 0;
+}
+
 export function mergeUserCarParksReply(data: Record<string, unknown>, userText: string): Record<string, unknown> {
   const t = userText.trim().toLowerCase();
   const pd = getPd(data) || {};
+  const more = /\bmore\b/.test(t);
   const m = t.match(/\b(\d{1,2})\b/);
-  if (!m) return { ...data, propertyDetails: { ...pd } };
-  const n = parseInt(m[1], 10);
+  if (!more && !m) return { ...data, propertyDetails: { ...pd } };
+  const n = more ? 11 : parseInt(m![1], 10);
   if (!Number.isFinite(n) || n < 0 || n > 99) return { ...data, propertyDetails: { ...pd } };
-  return { ...data, propertyDetails: { ...pd, noOfCarPark: n } };
+  return { ...data, propertyDetails: { ...pd, noOfCarPark: n, parkingSpaces: n, carParks: n } };
+}
+
+function documentValuesFromUserText(userText: string): string[] {
+  const parts = userText
+    .replace(/\band\b/gi, ",")
+    .split(/[,;]/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (parts.length === 0) return [];
+  const normalized = normalizePreferenceDocumentValues(parts);
+  return normalized.length > 0 ? normalized : parts;
+}
+
+export function mergeUserDocumentTypesReply(
+  data: Record<string, unknown>,
+  userText: string,
+): Record<string, unknown> {
+  const stored = documentValuesFromUserText(userText);
+  if (stored.length === 0) return data;
+  const pd = getPd(data) || {};
+  return { ...data, propertyDetails: { ...pd, documentTypes: stored } };
 }
 
 export function mergeUserAdditionalNotesReply(data: Record<string, unknown>, userText: string): Record<string, unknown> {
   return { ...data, additionalNotes: userText.trim() };
 }
 
-const JV_DEV_TYPES = new Set(["residential", "commercial", "mixed-use", "industrial"]);
-
 export function mergeUserJvDevelopmentTypesReply(
   data: Record<string, unknown>,
   userText: string
 ): Record<string, unknown> {
-  const parts = userText
-    .split(/[,;]|\band\b/gi)
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean);
-  const matched: string[] = [];
-  for (const p of parts) {
-    if (/\bresiden/.test(p)) matched.push("residential");
-    else if (/\bcommerc/.test(p)) matched.push("commercial");
-    else if (/\bmixed/.test(p)) matched.push("mixed-use");
-    else if (/\bindustr/.test(p)) matched.push("industrial");
-    else if (JV_DEV_TYPES.has(p)) matched.push(p);
-  }
+  let matched = normalizeJvDevelopmentTypes(userText);
+  if (matched.length === 0 && userText.trim()) matched = [userText.trim().toLowerCase()];
   if (matched.length === 0) return data;
   const dd = getDd(data) || {};
-  const prev = Array.isArray(dd.developmentTypes) ? (dd.developmentTypes as string[]) : [];
-  const merged = [...new Set([...prev, ...matched])];
-  return { ...data, developmentDetails: { ...dd, developmentTypes: merged } };
+  return { ...data, developmentDetails: { ...dd, developmentTypes: matched } };
+}
+
+export function mergeUserTravelTypeReply(
+  data: Record<string, unknown>,
+  userText: string,
+): Record<string, unknown> {
+  const value = normalizeTravelType(userText) || userText.trim().toLowerCase();
+  if (!value) return data;
+  const pd = getPd(data) || {};
+  return { ...data, propertyDetails: { ...pd, travelType: value } };
+}
+
+export function mergeUserShortletPropertyTypeReply(
+  data: Record<string, unknown>,
+  userText: string,
+): Record<string, unknown> {
+  const value = normalizeShortletPropertyType(userText) || userText.trim().toLowerCase();
+  if (!value) return data;
+  const pd = getPd(data) || {};
+  return { ...data, propertyDetails: { ...pd, propertyType: value } };
+}
+
+export function mergeUserShortletGuestsReply(
+  data: Record<string, unknown>,
+  userText: string,
+): Record<string, unknown> {
+  const t = userText.trim().toLowerCase();
+  const more = /\bmore\b/.test(t);
+  const m = t.match(/\b(\d{1,2})\b/);
+  if (!more && !m) return data;
+  const n = more ? 11 : parseInt(m![1], 10);
+  if (!Number.isFinite(n) || n < 1) return data;
+  const pd = getPd(data) || {};
+  const bd = (data.bookingDetails as Record<string, unknown>) || {};
+  return {
+    ...data,
+    propertyDetails: { ...pd, maxGuests: n },
+    bookingDetails: { ...bd, maxGuests: n },
+  };
+}
+
+export function mergeUserCheckDatesReply(
+  data: Record<string, unknown>,
+  focus: "check_in" | "check_out",
+  userText: string,
+): Record<string, unknown> {
+  const t = userText.trim();
+  if (!t) return data;
+  const bd = (data.bookingDetails as Record<string, unknown>) || {};
+  if (focus === "check_in") return { ...data, bookingDetails: { ...bd, checkInDate: t } };
+  return { ...data, bookingDetails: { ...bd, checkOutDate: t } };
+}
+
+export function mergeUserLeaseTermReply(
+  data: Record<string, unknown>,
+  userText: string,
+): Record<string, unknown> {
+  const t = userText.trim();
+  if (!t) return data;
+  const pd = getPd(data) || {};
+  return { ...data, propertyDetails: { ...pd, leaseTerm: t } };
+}
+
+export function mergeUserPurposeReply(
+  data: Record<string, unknown>,
+  userText: string,
+): Record<string, unknown> {
+  const t = userText.trim();
+  if (!t) return data;
+  const pd = getPd(data) || {};
+  return { ...data, propertyDetails: { ...pd, purpose: t } };
 }
 
 export function mergeUserJvSharingRatioReply(
@@ -785,18 +906,12 @@ export function mergeUserJvTitleRequirementsReply(
   data: Record<string, unknown>,
   userText: string
 ): Record<string, unknown> {
-  const parts = userText
-    .split(/[,;]|\band\b/gi)
-    .map((s) => s.trim())
-    .filter(Boolean);
-  if (parts.length === 0) return data;
+  const stored = documentValuesFromUserText(userText);
+  if (stored.length === 0) return data;
   const dd = getDd(data) || {};
-  const prev = Array.isArray(dd.minimumTitleRequirements)
-    ? (dd.minimumTitleRequirements as string[])
-    : [];
   return {
     ...data,
-    developmentDetails: { ...dd, minimumTitleRequirements: [...new Set([...prev, ...parts])] },
+    developmentDetails: { ...dd, minimumTitleRequirements: stored },
   };
 }
 
@@ -982,22 +1097,7 @@ function parsePropertySubtypeFromText(text: string): "land" | "residential" | "c
 }
 
 function extractAllNairaAmountsFromText(text: string): number[] {
-  const amounts: number[] = [];
-  const re = /(?:₦|naira\s*)?(\d[\d,\s]*(?:\.\d+)?)\s*(k|m|million|b|billion|thousand)?/gi;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(text)) !== null) {
-    const base = parseFloat(m[1].replace(/[\s,]/g, ""));
-    if (!Number.isFinite(base) || base <= 0) continue;
-    const suf = m[2]?.toLowerCase();
-    let mult = 1;
-    if (suf === "k" || suf === "thousand") mult = 1_000;
-    else if (suf === "m" || suf === "million") mult = 1_000_000;
-    else if (suf === "b" || suf === "billion") mult = 1_000_000_000;
-    amounts.push(Math.round(base * mult));
-  }
-  const fromWords = parseNairaAmountFromText(text);
-  if (fromWords != null && fromWords > 0) amounts.push(fromWords);
-  return [...new Set(amounts)].filter((n) => n > 0);
+  return extractAllEnglishMoneyAmounts(text);
 }
 
 /**
@@ -1137,11 +1237,14 @@ export function keepCollectedDataProgress(
       "bedrooms",
       "minBedrooms",
       "bathrooms",
+      "toilets",
       "leaseTerm",
       "purpose",
       "maxGuests",
       "travelType",
       "noOfCarPark",
+      "parkingSpaces",
+      "carParks",
     ].forEach(carry);
     out = { ...out, propertyDetails: mergedPd };
   }
@@ -1159,132 +1262,45 @@ export function keepCollectedDataProgress(
     out = { ...out, preferenceType: previous.preferenceType };
   }
 
-  return out;
-}
-
-const WORD_NUM: Record<string, number> = {
-  zero: 0,
-  one: 1,
-  two: 2,
-  three: 3,
-  four: 4,
-  five: 5,
-  six: 6,
-  seven: 7,
-  eight: 8,
-  nine: 9,
-  ten: 10,
-  eleven: 11,
-  twelve: 12,
-  thirteen: 13,
-  fourteen: 14,
-  fifteen: 15,
-  sixteen: 16,
-  seventeen: 17,
-  eighteen: 18,
-  nineteen: 19,
-  twenty: 20,
-  thirty: 30,
-  forty: 40,
-  fifty: 50,
-  sixty: 60,
-  seventy: 70,
-  eighty: 80,
-  ninety: 90,
-  hundred: 100,
-};
-
-function parseEnglishMagnitudeChunk(s: string): number | null {
-  const parts = s
-    .toLowerCase()
-    .replace(/-/g, " ")
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
-  if (parts.length === 0) return null;
-  let total = 0;
-  let current = 0;
-  for (const w of parts) {
-    const n = WORD_NUM[w];
-    if (n === undefined) return null;
-    if (n === 100) {
-      current = (current || 1) * 100;
-    } else if (n >= 20) {
-      current += n;
-    } else {
-      current += n;
+  const prevContact = previous.contactInfo as Record<string, unknown> | undefined;
+  const nextContact = out.contactInfo as Record<string, unknown> | undefined;
+  if (prevContact) {
+    const mergedContact = { ...(nextContact || {}) };
+    for (const key of ["companyName", "fullName", "email", "phoneNumber", "contactPerson"]) {
+      if (isMeaningfulValue(prevContact[key]) && !isMeaningfulValue(mergedContact[key])) {
+        mergedContact[key] = prevContact[key];
+      }
     }
+    out = { ...out, contactInfo: mergedContact };
   }
-  total += current;
-  return total;
+
+  return out;
 }
 
 /**
  * Parse min/max budget from voice or typed text. Returns integer Naira amount or null.
- * Accepts 12000000, 12,000,000, ₦12,000,000, and "12 million".
+ * Accepts 12000000, 12,000,000, ₦12,000,000, "12 million", and "twenty million naira".
  */
 export function parseNairaAmountFromText(text: string): number | null {
-  if (!text || typeof text !== "string") return null;
-  const compactNumeric = text
-    .replace(/₦/g, "")
-    .replace(/naira/gi, "")
-    .replace(/,/g, "")
-    .replace(/\s+/g, "")
-    .trim();
-  if (/^\d+$/.test(compactNumeric)) {
-    const n = Number(compactNumeric);
-    if (Number.isFinite(n) && n > 0) return Math.round(n);
-  }
-
-  let t = text.toLowerCase().replace(/₦|naira/gi, "").replace(/,/g, " ").replace(/\s+/g, " ").trim();
-  if (!t) return null;
-
-  const digitMatch = t.match(/(\d[\d\s,]*)(?:\.(\d+))?\s*(k|m|million|b|billion|thousand)?/i);
-  if (digitMatch) {
-    const base = parseFloat(digitMatch[1].replace(/[\s,]/g, ""));
-    if (!Number.isFinite(base)) return null;
-    const suf = digitMatch[3]?.toLowerCase();
-    let mult = 1;
-    if (suf === "k" || suf === "thousand") mult = 1_000;
-    else if (suf === "m" || suf === "million") mult = 1_000_000;
-    else if (suf === "b" || suf === "billion") mult = 1_000_000_000;
-    return Math.round(base * mult);
-  }
-
-  const wm = t.match(
-    /([a-z\s-]+)\s+(thousand|k|million|m|billion|b)\b/i
-  );
-  if (wm) {
-    const chunk = parseEnglishMagnitudeChunk(wm[1].replace(/\s+and\s+/g, " "));
-    if (chunk == null || chunk < 0) return null;
-    const suf = wm[2].toLowerCase();
-    let mult = 1;
-    if (suf === "k" || suf === "thousand") mult = 1_000;
-    else if (suf === "m" || suf === "million") mult = 1_000_000;
-    else if (suf === "b" || suf === "billion") mult = 1_000_000_000;
-    return Math.round(chunk * mult);
-  }
-
-  const plainWords = parseEnglishMagnitudeChunk(t.replace(/\s+and\s+/g, " "));
-  if (plainWords != null && plainWords > 0 && plainWords < 1000) {
-    return null;
-  }
-  return null;
+  return parseEnglishMoneyToNumber(text);
 }
 
 export function formatNairaWithCommas(amount: number): string {
-  if (!Number.isFinite(amount) || amount < 0) return "";
-  return Math.round(amount).toLocaleString("en-US");
+  return formatNairaAmountNumber(amount);
 }
 
-/** Keep only digits for incremental typing; returns display string with commas. */
+/** Keep digits comma-formatted; convert a complete spoken amount when present. */
 export function formatNairaInputDisplay(raw: string): string {
+  const spoken = parseEnglishMoneyToNumber(raw);
+  if (spoken != null) return formatNairaAmountNumber(spoken);
   const digits = raw.replace(/\D/g, "");
   if (!digits) return "";
-  return BigInt(digits).toLocaleString("en-US");
+  return formatNairaAmountNumber(Number(digits));
 }
 
 export function parseDisplayNairaToNumber(display: string): number | null {
+  const spoken = parseEnglishMoneyToNumber(display);
+  if (spoken != null) return spoken;
   const digits = display.replace(/\D/g, "");
   if (!digits) return null;
   try {
@@ -1420,22 +1436,24 @@ function isConversationFieldMissing(data: Record<string, unknown>, id: Conversat
       if (!pd) return true;
       if (pt === "shortlet") return !bedroomsAnswerFilled(pd);
       if (pt === "buy" || pt === "rent" || pt === "off-plan") {
-        if (normSubtype(pd) !== "residential") return false;
+        if (normSubtype(pd) === "land") return false;
         return !bedroomsAnswerFilled(pd);
       }
       return false;
     case "bathrooms":
       if (!pd) return true;
-      if (pt === "shortlet") {
+      if (pt === "shortlet") return !bathroomsAnswerFilled(pd, pt);
+      if (pt === "buy" || pt === "rent" || pt === "off-plan") {
+        if (normSubtype(pd) === "land") return false;
         return !bathroomsAnswerFilled(pd, pt);
       }
-      if (pt === "buy" || pt === "off-plan") {
-        const st = normSubtype(pd);
-        if (st !== "residential" && st !== "commercial") return false;
-        return !bathroomsAnswerFilled(pd, pt);
-      }
-      if (pt === "rent") {
-        return !bathroomsAnswerFilled(pd, pt);
+      return false;
+    case "toilets":
+      if (!pd) return true;
+      if (pt === "shortlet") return !toiletsAnswerFilled(pd);
+      if (pt === "buy" || pt === "rent" || pt === "off-plan") {
+        if (normSubtype(pd) === "land") return false;
+        return !toiletsAnswerFilled(pd);
       }
       return false;
     case "lease_term":
@@ -1518,16 +1536,16 @@ function isConversationFieldMissing(data: Record<string, unknown>, id: Conversat
       if (pt !== "buy" && pt !== "rent" && pt !== "joint-venture" && pt !== "shortlet" && pt !== "off-plan") return false;
       const f = data.features as Record<string, unknown> | undefined;
       if (f?.featuresDeclared === true) return false;
-      const { basic, premium } = getFeaturesArrays(data);
-      return basic.length === 0 && premium.length === 0;
+      const { basic, premium, comfort } = getFeaturesArrays(data);
+      return basic.length === 0 && premium.length === 0 && comfort.length === 0;
     }
     case "car_parks": {
-      if (pt !== "buy" && pt !== "rent" && pt !== "off-plan") return false;
+      if (pt !== "buy" && pt !== "rent" && pt !== "off-plan" && pt !== "shortlet") return false;
       if (!pd) return true;
-      if (normSubtype(pd) === "land") return false;
-      const cp = pd.noOfCarPark;
-      if (cp === undefined || cp === null) return true;
-      if (typeof cp === "number" && Number.isFinite(cp)) return false;
+      if (pt !== "shortlet" && normSubtype(pd) === "land") return false;
+      const cp = pd.noOfCarPark ?? pd.parkingSpaces ?? pd.carParks;
+      if (cp === undefined || cp === null || cp === "") return true;
+      if (typeof cp === "number" && Number.isFinite(cp) && cp >= 0) return false;
       if (typeof cp === "string" && String(cp).trim() !== "") return false;
       return true;
     }
@@ -1561,10 +1579,11 @@ function baseOrderForType(pt: NormalizedPreferenceType): ConversationFieldId[] {
         "building_type",
         "bedrooms",
         "bathrooms",
+        "toilets",
+        "car_parks",
         "min_budget",
         "max_budget",
         "features",
-        "car_parks",
         "additional_notes",
         "phone",
       ];
@@ -1582,12 +1601,13 @@ function baseOrderForType(pt: NormalizedPreferenceType): ConversationFieldId[] {
         "property_condition",
         "bedrooms",
         "bathrooms",
+        "toilets",
+        "car_parks",
         "lease_term",
         "purpose",
         "min_budget",
         "max_budget",
         "features",
-        "car_parks",
         "additional_notes",
         "phone",
       ];
@@ -1599,6 +1619,8 @@ function baseOrderForType(pt: NormalizedPreferenceType): ConversationFieldId[] {
         "shortlet_property_type",
         "bedrooms",
         "bathrooms",
+        "toilets",
+        "car_parks",
         "shortlet_guests",
         "travel_type",
         "check_in",
@@ -1619,6 +1641,7 @@ function baseOrderForType(pt: NormalizedPreferenceType): ConversationFieldId[] {
         "jv_min_land_size",
         "jv_sharing_ratio",
         "jv_title_requirements",
+        "features",
         "jv_company_name",
         "phone",
       ];
@@ -1638,13 +1661,14 @@ function baseOrderForType(pt: NormalizedPreferenceType): ConversationFieldId[] {
         "building_type",
         "bedrooms",
         "bathrooms",
+        "toilets",
+        "car_parks",
         "off_plan_completion_date",
         "off_plan_development_stage",
         "off_plan_payment_plan",
         "min_budget",
         "max_budget",
         "features",
-        "car_parks",
         "additional_notes",
         "phone",
       ];
@@ -1757,8 +1781,8 @@ function getConversationFieldDisplayLines(
       };
     case "document_types":
       return {
-        screen: `Which documents do you need? (format: C of O)${suf}`,
-        speech: "Which documents do you need?",
+        screen: `Which documents do you need? Select all that apply, then tap Done.${suf}`,
+        speech: "Which documents do you need? You can choose more than one.",
       };
     case "land_conditions":
       return {
@@ -1784,6 +1808,11 @@ function getConversationFieldDisplayLines(
       return {
         screen: `How many bathrooms? Say 1 to 10, or more for more than ten. (format: 2)${suf}`,
         speech: "How many bathrooms?",
+      };
+    case "toilets":
+      return {
+        screen: `How many toilets? Say 1 to 10, or more for more than ten. (format: 2)${suf}`,
+        speech: "How many toilets?",
       };
     case "lease_term":
       return {
@@ -1812,7 +1841,7 @@ function getConversationFieldDisplayLines(
       };
     case "shortlet_property_type":
       return {
-        screen: `Shortlet property type? (format: studio)${suf}`,
+        screen: `Which shortlet property type? Select one from the list.${suf}`,
         speech: "Which shortlet property type?",
       };
     case "shortlet_guests":
@@ -1822,7 +1851,7 @@ function getConversationFieldDisplayLines(
       };
     case "travel_type":
       return {
-        screen: `Travel type: solo, couple, family, group, or business? (format: family)${suf}`,
+        screen: `What travel type? Select one: Solo, Couple, Family, Group, or Business.${suf}`,
         speech: "What is your travel type?",
       };
     case "check_in":
@@ -1847,8 +1876,8 @@ function getConversationFieldDisplayLines(
       };
     case "jv_development_types":
       return {
-        screen: `What development type(s)? residential, commercial, mixed-use, or industrial — comma-separated if more than one. (format: residential)${suf}`,
-        speech: "Which development types are you interested in for this joint venture?",
+        screen: `What are you developing? Select all that apply, then tap Done.${suf}`,
+        speech: "What are you developing? You can choose more than one.",
       };
     case "jv_sharing_ratio":
       return {
@@ -1857,8 +1886,8 @@ function getConversationFieldDisplayLines(
       };
     case "jv_title_requirements":
       return {
-        screen: `Minimum title documents required? e.g. certificate of occupancy, survey plan — comma-separated. (format: C of O)${suf}`,
-        speech: "Which title documents are required at minimum?",
+        screen: `Which title documents do you need? Select all that apply, then tap Done.${suf}`,
+        speech: "Which title documents do you need? You can choose more than one.",
       };
     case "jv_company_name":
       return {
@@ -1882,8 +1911,8 @@ function getConversationFieldDisplayLines(
       };
     case "features":
       return {
-        screen: `Any must-have amenities? List a few separated by commas (e.g. pool, gated estate, BQ), or say none or skip.${suf}`,
-        speech: "What amenities are must-haves?",
+        screen: `Which features do you want? Select all that apply from the list, then tap Done — or skip.${suf}`,
+        speech: "Which features do you want? You can choose more than one.",
       };
     case "car_parks":
       return {

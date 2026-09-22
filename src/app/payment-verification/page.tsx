@@ -7,10 +7,12 @@ import { GET_REQUEST } from '@/utils/requests';
 import { URLS } from '@/utils/URLS';
 import toast from 'react-hot-toast';
 import { REDIRECT_AFTER_SUBSCRIPTION_KEY } from '@/logic/combinedAuthGuard';
+import { useUserContext } from '@/context/user-context';
 
 const PaymentVerificationPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { refreshUser } = useUserContext();
   const [verificationStatus, setVerificationStatus] = useState<'verifying' | 'success' | 'failed'>('verifying');
   const [verificationData, setVerificationData] = useState<any>(null);
   const [countdown, setCountdown] = useState<number>(5);
@@ -50,6 +52,9 @@ const PaymentVerificationPage = () => {
         }
 
         if (trxType === 'subscription') {
+          try {
+            await refreshUser();
+          } catch {}
           let redirectPath = '/dashboard';
           if (typeof window !== 'undefined') {
             try {
@@ -102,7 +107,7 @@ const PaymentVerificationPage = () => {
       setVerificationStatus('failed');
       toast.error('Failed to verify payment. Please try again.');
     }
-  }, [reference, transactionId, router]);
+  }, [reference, transactionId, router, refreshUser]);
 
   useEffect(() => {
     if (!reference && !transactionId) {

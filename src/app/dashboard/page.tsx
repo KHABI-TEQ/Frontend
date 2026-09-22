@@ -14,9 +14,10 @@ import { PractitionerWelcomeOverlay } from "@/components/dashboard/PractitionerW
 import { PractitionerKycOverlay } from "@/components/dashboard/PractitionerKycOverlay";
 import Link from "next/link";
 import type { User } from "@/context/user-context";
+import { isLivePaidSubscription } from "@/utils/subscription-status";
 
 function hasActiveSubscription(user: User) {
-  return String(user.activeSubscription?.status || "").toLowerCase() === "active";
+  return isLivePaidSubscription(user.activeSubscription);
 }
 
 function DashboardSubscribeBanner({ user }: { user: User }) {

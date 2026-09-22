@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight, Globe, Sparkles, X } from "lucide-react";
 import { motion } from "framer-motion";
 import type { User } from "@/context/user-context";
+import { isLivePaidSubscription } from "@/utils/subscription-status";
 
 const STORAGE_PREFIX = "khabiteq-practitioner-welcome-";
 
@@ -13,8 +14,7 @@ function storageKey(user: User) {
 }
 
 function hasActiveSubscription(user: User) {
-  const status = String(user.activeSubscription?.status || "").toLowerCase();
-  return status === "active";
+  return isLivePaidSubscription(user.activeSubscription);
 }
 
 function roleLabel(user: User) {

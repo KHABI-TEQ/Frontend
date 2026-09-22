@@ -124,10 +124,24 @@ export function normalizeUser(partial: Partial<User> | Record<string, unknown> |
       : rawFlag === false || rawFlag === "false"
         ? false
         : undefined;
+  const snap = (p.activeSubscription ?? p.activeSnapshot) as Record<string, unknown> | null | undefined;
+  const activeSubscription = snap && typeof snap === "object"
+    ? {
+        ...snap,
+        _id: String(snap._id ?? ""),
+        user: String(snap.user ?? p.id ?? p._id ?? ""),
+        plan: String((snap.plan as { _id?: string })?._id ?? snap.plan ?? ""),
+        status: String(snap.status ?? ""),
+        startDate: String(snap.startDate ?? snap.startedAt ?? ""),
+        endDate: String(snap.endDate ?? snap.expiresAt ?? ""),
+      }
+    : (p.activeSubscription as User["activeSubscription"]);
+
   return {
     accountApproved: Boolean(p.accountApproved),
     ...p,
     userType,
+    activeSubscription,
     ...(mustChangePassword !== undefined ? { mustChangePassword } : {}),
   } as User;
 }
@@ -136,6 +150,7 @@ interface UserContextType {
   user: User | null;
   setUser: (user: User | null) => void;
   logout: (callback?: () => void) => void;
+  refreshUser: () => Promise<void>;
   isLoading: boolean;
   isInitialized: boolean;
 }
@@ -153,7 +168,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     setUserState(newUser);
   }, []);
 
-  const getUser = async () => {
+  const getUser = useCallback(async () => {
     const token = Cookies.get("token");
 
     setIsLoading(true);
@@ -227,7 +242,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(false);
       setIsInitialized(true);
     }
-  };
+  }, []);
 
   const logout = useCallback(
     async (callback?: () => void) => {
@@ -275,10 +290,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       user,
       setUser,
       logout,
+      refreshUser: getUser,
       isLoading,
       isInitialized,
     }),
-    [user, setUser, logout, isLoading, isInitialized],
+    [user, setUser, logout, getUser, isLoading, isInitialized],
   );
 
   return (

@@ -6,9 +6,13 @@ import toast from "react-hot-toast";
 import { playSpeechEndBeep } from "@/utils/playSpeechEndBeep";
 import {
   formatAmountRunsInText,
+  formatNairaAmountNumber,
+  formatSpokenMoneyPhrasesInText,
+  isCompleteSpokenNairaAmount,
   mergeVoiceTextWithSpokenAmount,
   normalizeNairaAmountTyping,
-  stripNairaAmountToDigits,
+  parseEnglishMoneyToNumber,
+  tryEnglishMoneyToFormattedDisplay,
 } from "@/utils/nairaAmountInput";
 import { useCancellableAutoSubmit } from "@/hooks/useCancellableAutoSubmit";
 import { correctTranscriptionLocationTypos } from "@/utils/preference-ai-conversation";
@@ -151,7 +155,11 @@ export default function AiFillBlock({
       const { display } = mergeVoiceTextWithSpokenAmount(voiceBaseRef.current, corrected);
       setInput(display);
     } else {
-      setInput(correctTranscriptionLocationTypos(combineBaseAndUtterance(voiceBaseRef.current, corrected)));
+      setInput(
+        formatSpokenMoneyPhrasesInText(
+          correctTranscriptionLocationTypos(combineBaseAndUtterance(voiceBaseRef.current, corrected)),
+        ),
+      );
     }
   }, [amountEntryMode]);
 
@@ -176,12 +184,21 @@ export default function AiFillBlock({
         .trim();
       const composed = amountEntryMode
         ? mergeVoiceTextWithSpokenAmount(voiceBaseRef.current, utterance).display
-        : combineBaseAndUtterance(voiceBaseRef.current, utterance);
+        : formatSpokenMoneyPhrasesInText(combineBaseAndUtterance(voiceBaseRef.current, utterance));
       const correctedComposed = correctTranscriptionLocationTypos(composed);
       if (correctedComposed.trim()) {
-        setInput(correctedComposed);
-        if (triggerAutoSubmit && hasSpokenInSessionRef.current) {
-          scheduleAutoSubmitRef.current(correctedComposed);
+        const formattedAmount =
+          amountEntryMode && isCompleteSpokenNairaAmount(correctedComposed)
+            ? tryEnglishMoneyToFormattedDisplay(correctedComposed)
+            : null;
+        const boxed = formattedAmount || correctedComposed;
+        setInput(boxed);
+        const canAutoSendAmount =
+          !amountEntryMode ||
+          SKIP_AMOUNT_UTTERANCE_RE.test(boxed) ||
+          isCompleteSpokenNairaAmount(boxed);
+        if (triggerAutoSubmit && hasSpokenInSessionRef.current && canAutoSendAmount) {
+          scheduleAutoSubmitRef.current(boxed);
         }
       } else {
         updateInputFromVoiceBuffers();
@@ -304,12 +321,14 @@ export default function AiFillBlock({
         if (SKIP_AMOUNT_UTTERANCE_RE.test(trimmed)) {
           toSend = trimmed;
         } else {
-          const digits = stripNairaAmountToDigits(trimmed);
-          if (!digits) {
-            toast.error("Please enter a numeric amount (or say skip).");
+          const parsed = parseEnglishMoneyToNumber(trimmed);
+          if (parsed == null) {
+            toast.error(
+              "Please say or type an amount in Naira, for example twenty million or 20,000,000.",
+            );
             return;
           }
-          toSend = formatAmountRunsInText(digits) || digits;
+          toSend = formatNairaAmountNumber(parsed);
         }
       }
       const pageScrollY = typeof window !== "undefined" ? window.scrollY : 0;

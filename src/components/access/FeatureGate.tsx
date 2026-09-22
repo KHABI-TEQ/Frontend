@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { useFeatureGate } from '@/hooks/useFeatureGate';
 import { useUserContext } from "@/context/user-context";
 import { useAgentEligibility } from "@/hooks/useAgentEligibility";
+import { usePublisherListingEligibility } from "@/hooks/usePublisherListingEligibility";
+import { isLivePaidSubscription } from "@/utils/subscription-status";
 import Loading from '../loading-component/loading';
  
 interface FeatureGateProps {
@@ -26,20 +28,28 @@ export default function FeatureGate({ featureKeys, children, fallback }: Feature
   const checks = featureKeys.map(k => useFeatureGate(k));
   const { user, isLoading, isInitialized } = useUserContext();
   const { eligibility, loading: eligibilityLoading } = useAgentEligibility();
+  const { eligibility: listingEligibility, loading: listingLoading } = usePublisherListingEligibility();
   const isAgent = user?.userType === "Agent";
   const isPublisher =
     isAgent ||
     user?.userType === "Developer" ||
     user?.userType === "Landowners" ||
     user?.userType === "PropertyScout";
-  const hasPaidSubscription = isAgent
-    ? eligibility?.hasPaidSubscription === true
-    : !!(user?.activeSubscription && user.activeSubscription.status === "active");
+  const snapshotPaid = isLivePaidSubscription(user?.activeSubscription);
+  const hasPaidSubscription =
+    listingEligibility?.hasPaidSubscription === true ||
+    (isAgent && eligibility?.hasPaidSubscription === true) ||
+    snapshotPaid;
   const listingBlocked =
     isPublisher && featureKeys.includes("LISTINGS") && !hasPaidSubscription;
   const allowed = !listingBlocked && checks.every(c => c.allowed);
 
-  if (isLoading || !isInitialized || (isAgent && eligibilityLoading)) {
+  if (
+    isLoading ||
+    !isInitialized ||
+    (isAgent && eligibilityLoading && !snapshotPaid) ||
+    (isPublisher && listingLoading && !snapshotPaid)
+  ) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#EEF1F1]">
         <Loading />

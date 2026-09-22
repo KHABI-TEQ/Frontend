@@ -28,11 +28,10 @@ const PUBLISHER_TYPES = new Set(["Agent", "Developer", "Landowners", "PropertySc
 
 export function usePublisherListingEligibility() {
   const { user, isInitialized } = useUserContext();
-  const [eligibility, setEligibility] = useState<PublisherListingEligibility | null>(null);
-  const [loading, setLoading] = useState(false);
-
   const isPublisher =
     !!user?.userType && PUBLISHER_TYPES.has(String(user.userType));
+  const [eligibility, setEligibility] = useState<PublisherListingEligibility | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     if (!isPublisher) {
@@ -61,7 +60,13 @@ export function usePublisherListingEligibility() {
   }, [isPublisher]);
 
   useEffect(() => {
-    if (!isInitialized || !isPublisher) return;
+    if (!isInitialized) return;
+    if (!isPublisher) {
+      setEligibility(null);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     void refresh();
   }, [isInitialized, isPublisher, refresh, user?._id, user?.id]);
 

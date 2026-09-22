@@ -4,11 +4,11 @@ import React, { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { useUserContext } from "@/context/user-context";
 import Loading from "@/components/loading-component/loading";
-import { motion } from "framer-motion";
 import { Shield, CreditCard, CheckCircle2 } from "lucide-react";
-import Link from "next/link";
 import Block from "@/components/access/Block";
 import { useAgentEligibility, resolveAgentKycStatus } from "@/hooks/useAgentEligibility";
+import { usePublisherListingEligibility } from "@/hooks/usePublisherListingEligibility";
+import { isLivePaidSubscription } from "@/utils/subscription-status";
 
 /** Key used to redirect user back after subscription payment (e.g. to /post-property/outright-sales). */
 export const REDIRECT_AFTER_SUBSCRIPTION_KEY = "redirectAfterSubscription";
@@ -42,6 +42,7 @@ export const CombinedAuthGuard: React.FC<CombinedAuthGuardProps> = ({
   const pathname = usePathname();
   const { user, isLoading, isInitialized } = useUserContext();
   const { eligibility, loading: eligibilityLoading } = useAgentEligibility();
+  const { eligibility: listingEligibility, loading: listingLoading } = usePublisherListingEligibility();
 
   const isAgent = user?.userType === "Agent";
   const isDeveloper = user?.userType === "Developer";
@@ -50,15 +51,19 @@ export const CombinedAuthGuard: React.FC<CombinedAuthGuardProps> = ({
   const isPublisher = isAgent || isDeveloper || isLandowner || isPropertyScout;
   const kycStatus = user && isAgent ? resolveAgentKycStatus(user) : undefined;
   const kycApproved = kycStatus === "approved";
-  const hasActiveSubscription = !!(
-    user?.activeSubscription && user.activeSubscription.status === "active"
-  );
-  const hasPaidSubscription = isAgent
-    ? eligibility?.hasPaidSubscription === true
-    : hasActiveSubscription;
+  const snapshotPaid = isLivePaidSubscription(user?.activeSubscription);
+  const hasPaidSubscription =
+    listingEligibility?.hasPaidSubscription === true ||
+    (isAgent && eligibility?.hasPaidSubscription === true) ||
+    snapshotPaid;
 
 
-  if (isLoading || !isInitialized || (isAgent && (requireKycApproved || requireActiveSubscription) && eligibilityLoading)) {
+  if (
+    isLoading ||
+    !isInitialized ||
+    (isAgent && (requireKycApproved || requireActiveSubscription) && eligibilityLoading && !snapshotPaid) ||
+    (isPublisher && requireActiveSubscription && listingLoading && !snapshotPaid)
+  ) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#EEF1F1]">
         <Loading />

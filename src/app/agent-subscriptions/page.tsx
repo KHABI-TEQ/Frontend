@@ -27,8 +27,9 @@ import Cookies from 'js-cookie';
 import Link from 'next/link';
 import AgentEligibilityBanner from '@/components/agent/AgentEligibilityBanner';
 import { useAgentEligibility, resolveAgentKycStatus } from '@/hooks/useAgentEligibility';
-import { formatSubscriptionBonusLabel, resolvePlanBonusDays } from '@/utils/subscription-bonus';
 import CatalogPricing, { CatalogHero, dashboardPlanSummaries, type CatalogBillingOption, type CatalogPlan } from '@/components/subscription/CatalogPricing';
+import { usePublisherListingEligibility } from '@/hooks/usePublisherListingEligibility';
+import { isLivePaidSubscription, resolveSubscriptionDisplayStatus } from '@/utils/subscription-status';
 
 /** Build a user-visible error from API JSON (500s often include message + details for ops). */
 function subscriptionErrorMessage(res: unknown): string {
@@ -59,6 +60,7 @@ export default function AgentSubscriptionsPage() {
   const router = useRouter();
   const { user } = useUserContext();
   const { eligibility, loading: eligibilityLoading } = useAgentEligibility();
+  const { eligibility: listingEligibility } = usePublisherListingEligibility();
   const [accountRoleLabel, setAccountRoleLabel] = useState<string | null>(null);
   const [subscriptions, setSubscriptions] = useState<AgentSubscription[]>([]);
   const [subscriptionsPage, setSubscriptionsPage] = useState(1);
@@ -189,18 +191,8 @@ export default function AgentSubscriptionsPage() {
             type: f?.type || 'boolean',
             value: f?.value ?? 0,
           }));
-          const bonusDays = resolvePlanBonusDays({
-            bonusDays: p.bonusDays,
-            durationInDays: p.durationInDays,
-            name: p.name,
-          });
           const discountedPlans = (p.discountedPlans || []).map((dp: any) => ({
             ...dp,
-            bonusDays: resolvePlanBonusDays({
-              bonusDays: dp.bonusDays,
-              durationInDays: dp.durationInDays,
-              name: dp.name ?? p.name,
-            }),
           }));
           const benefits = Array.isArray(p.benefits)
             ? p.benefits.map((b: any) => String(b || '').trim()).filter(Boolean)
@@ -220,7 +212,6 @@ export default function AgentSubscriptionsPage() {
             prices,
             discountedPlans,
             durationInDays: p.durationInDays,
-            bonusDays,
             basePrice: Number(p.price) || 0,
             isTrial: !!p.isTrial,
             raw: p,
@@ -438,7 +429,10 @@ export default function AgentSubscriptionsPage() {
   const isPropertyOwner = userTypeLower === 'landowners';
   const isScoutAccount = userTypeLower === "propertyscout";
   const rolePlanSummaries = dashboardPlanSummaries(userTypeRaw, isScoutAccount);
-  const hasPaidSubscription = eligibility?.hasPaidSubscription === true;
+  const hasPaidSubscription =
+    listingEligibility?.hasPaidSubscription === true ||
+    eligibility?.hasPaidSubscription === true ||
+    isLivePaidSubscription(user?.activeSubscription);
 
   if (loading) {
     return (
@@ -591,6 +585,7 @@ export default function AgentSubscriptionsPage() {
                         const planCode = planObj?.code || subscription.plan?.code || subscription.subscriptionType || subscription.meta?.planCode || subscription.meta?.planCode;
                         const startDateRaw = subscription.startedAt || subscription.startDate || subscription.startedAt || null;
                         const endDateRaw = subscription.expiresAt || subscription.endDate || subscription.endsAt || null;
+                        const displayStatus = resolveSubscriptionDisplayStatus(subscription.status, endDateRaw);
                         const amount = subscription.transaction?.amount || subscription.amount || 0;
                         const txnRef = subscription.transaction?._id || subscription.transaction?.reference || subscription.transaction?.id || '-';
                         const txnStatus = subscription.transaction?.status || subscription.status || '-';
@@ -608,9 +603,9 @@ export default function AgentSubscriptionsPage() {
                             <div className="flex items-center justify-between mb-4">
                               <h3 className="text-lg font-semibold text-gray-900">{planName}</h3>
                               <div className="flex items-center gap-2">
-                                {getStatusIcon(subscription.status)}
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(subscription.status)}`}>
-                                  {subscription.status}
+                                {getStatusIcon(displayStatus)}
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(displayStatus)}`}>
+                                  {displayStatus}
                                 </span>
                               </div>
                             </div>
@@ -625,14 +620,6 @@ export default function AgentSubscriptionsPage() {
                                 <span className="text-gray-500">End Date:</span>
                                 <span className="font-medium">{endDateRaw ? format(new Date(endDateRaw), 'MMM d, yyyy') : '-'}</span>
                               </div>
-                              {subscription.meta?.bonusDays > 0 && (
-                                <div className="flex justify-between text-sm">
-                                  <span className="text-gray-500">Bonus validity:</span>
-                                  <span className="font-medium text-emerald-700">
-                                    {formatSubscriptionBonusLabel(subscription.meta.bonusDays)}
-                                  </span>
-                                </div>
-                              )}
                               <div className="flex justify-between text-sm">
                                 <span className="text-gray-500">Amount:</span>
                                 <span className="font-medium">₦{Number(amount || 0).toLocaleString()}</span>
@@ -851,17 +838,6 @@ export default function AgentSubscriptionsPage() {
                 {selectedPlanPrice && (
                   <div className="text-sm text-gray-600">Price: ₦{Number(selectedPlanPrice).toLocaleString()}</div>
                 )}
-                {selectedPlanForSub && selectedDuration && (() => {
-                  const dp = (selectedPlanForSub.discountedPlans || []).find((x: any) => {
-                    const m = Math.max(1, Math.round((x.durationInDays || 30) / 30));
-                    return m === selectedDuration;
-                  });
-                  const bonus = dp?.bonusDays ?? selectedPlanForSub.bonusDays ?? 0;
-                  const label = formatSubscriptionBonusLabel(bonus);
-                  return label ? (
-                    <div className="text-sm text-emerald-700 font-medium">Includes {label} validity bonus</div>
-                  ) : null;
-                })()}
               </div>
  
               <div className="flex items-center gap-2 mb-6">

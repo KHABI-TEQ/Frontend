@@ -34,6 +34,15 @@ import {
   parseNairaAmountFromText,
   sanitizeConversationLocation,
   userTextMentionsPhrase,
+  mergeUserJvCompanyNameReply,
+  mergeUserJvDevelopmentTypesReply,
+  mergeUserJvSharingRatioReply,
+  mergeUserTravelTypeReply,
+  mergeUserShortletPropertyTypeReply,
+  mergeUserShortletGuestsReply,
+  mergeUserCheckDatesReply,
+  mergeUserLeaseTermReply,
+  mergeUserPurposeReply,
 } from "@/utils/preference-ai-conversation";
 import MatchingOutlookBanner, {
   outlookDraftFromCollected,
@@ -52,6 +61,18 @@ import {
   normalizePreferenceCondition,
 } from "@/data/preference-condition-building";
 import { FEATURE_CONFIGS } from "@/data/preference-configs";
+import {
+  PREFERENCE_DOCUMENT_TYPE_LABELS,
+  normalizePreferenceDocumentValues,
+} from "@/data/preference-document-types";
+import {
+  JV_DEVELOPMENT_TYPE_LABELS,
+  JV_SHARING_RATIO_LABELS,
+  RENT_LEASE_TERM_LABELS,
+  RENT_PURPOSE_LABELS,
+  SHORTLET_PROPERTY_TYPE_LABELS,
+  SHORTLET_TRAVEL_TYPE_LABELS,
+} from "@/data/preference-choice-options";
 import SearchInsuranceCard from "@/components/search-insurance/SearchInsuranceCard";
 import BuyerAuthModal from "@/components/search-insurance/BuyerAuthModal";
 import {
@@ -66,6 +87,10 @@ const AREA_DONE_MARKER = "__AREA_DONE__::";
 const DONE_SELECTING_FEATURES = "Done selecting features";
 const FEATURE_DONE_MARKER = "__FEATURE_DONE__::";
 const SKIP_FEATURES_OPTION = "Skip features";
+const DONE_SELECTING_DOCUMENTS = "Done selecting documents";
+const DOC_DONE_MARKER = "__DOC_DONE__::";
+const DONE_SELECTING_DEV_TYPES = "Done selecting development types";
+const DEV_DONE_MARKER = "__DEV_DONE__::";
 const ROOM_COUNT_CHIPS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "More than 10"];
 
 /** Lowercase names as in the location form dataset (keys of state-lga.json). */
@@ -221,9 +246,9 @@ function withPreferenceLocationOptions(
 ) {
   const focus = normalizePreferenceFieldKey(reply.focusedMissingField || "");
   const loc = getSanitizedPreferenceLocation(data);
-  if (!focus || !loc) return reply;
+  if (!focus) return withPreferenceChoiceQuickOptions(reply, data);
 
-  if (focus.includes("preference location - lga")) {
+  if (focus.includes("preference location - lga") && loc) {
     const state = resolveCanonicalStateName(String(loc.state || ""));
     const lgas = getLGAsByState(state);
     if (lgas.length > 0) {
@@ -232,7 +257,7 @@ function withPreferenceLocationOptions(
     return reply;
   }
 
-  if (focus.includes("preference location - area")) {
+  if (focus.includes("preference location - area") && loc) {
     const state = resolveCanonicalStateName(String(loc.state || ""));
     const selectedLga = resolveCanonicalLgaName(
       state,
@@ -260,28 +285,41 @@ function subtypeQuickOptions(
 }
 
 function getPreferenceFeatureLabels(data: Record<string, unknown>): string[] {
-  const type = normalizedPreferenceType(data);
-  const subtype = getPropertySubtype(data.propertyDetails as Record<string, unknown> | undefined) || "residential";
-  const key = type === "shortlet" ? "shortlet" : `${type}-${subtype}`;
-  const config = FEATURE_CONFIGS[key];
+  const config = getPreferenceFeatureConfig(data);
   if (!config) return [];
   return [
     ...config.basic.map((f) => f.name),
+    ...(config.comfort || []).map((f) => f.name),
     ...config.premium.map((f) => f.name),
   ];
+}
+
+function getPreferenceFeatureConfig(data: Record<string, unknown>) {
+  const type = normalizedPreferenceType(data);
+  const subtype = getPropertySubtype(data.propertyDetails as Record<string, unknown> | undefined) || "residential";
+  const key = type === "shortlet" ? "shortlet" : `${type}-${subtype}`;
+  let config = FEATURE_CONFIGS[key];
+  const empty =
+    !config ||
+    ((config.basic || []).length === 0 &&
+      (config.premium || []).length === 0 &&
+      ((config.comfort || []).length === 0));
+  if (empty && type === "joint-venture") {
+    config = FEATURE_CONFIGS["joint-venture-residential"];
+  }
+  return config;
 }
 
 function classifyPreferenceFeatures(
   names: string[],
   data: Record<string, unknown>,
-): { basic: string[]; premium: string[] } {
-  const type = normalizedPreferenceType(data);
-  const subtype = getPropertySubtype(data.propertyDetails as Record<string, unknown> | undefined) || "residential";
-  const key = type === "shortlet" ? "shortlet" : `${type}-${subtype}`;
-  const config = FEATURE_CONFIGS[key];
+): { basic: string[]; premium: string[]; comfort: string[] } {
+  const config = getPreferenceFeatureConfig(data);
   const premiumSet = new Set((config?.premium || []).map((f) => f.name.toLowerCase()));
+  const comfortSet = new Set((config?.comfort || []).map((f) => f.name.toLowerCase()));
   const basic: string[] = [];
   const premium: string[] = [];
+  const comfort: string[] = [];
   const seen = new Set<string>();
   for (const name of names) {
     const trimmed = name.trim();
@@ -290,9 +328,70 @@ function classifyPreferenceFeatures(
     if (seen.has(k)) continue;
     seen.add(k);
     if (premiumSet.has(k)) premium.push(trimmed);
+    else if (comfortSet.has(k)) comfort.push(trimmed);
     else basic.push(trimmed);
   }
-  return { basic, premium };
+  return { basic, premium, comfort };
+}
+
+function isDevTypeFieldFocus(focus: string | undefined): boolean {
+  const f = normalizePreferenceFieldKey(focus || "");
+  return f.includes("development type") && !f.includes("stage");
+}
+
+function isDocumentFieldFocus(focus: string | undefined): boolean {
+  const f = normalizePreferenceFieldKey(focus || "");
+  return (
+    f.includes("document type") ||
+    (f.includes("document") && (f.includes("need") || f.includes("least"))) ||
+    f.includes("title requirement") ||
+    f.includes("title document") ||
+    f.includes("minimum title")
+  );
+}
+
+function isCountFieldFocus(focus: string | undefined): boolean {
+  const f = normalizePreferenceFieldKey(focus || "");
+  return (
+    f.includes("number of bathrooms") ||
+    f.includes("number of toilets") ||
+    f.includes("number of car parks") ||
+    (f.includes("bathroom") && !f.includes("bedroom")) ||
+    f.includes("toilet") ||
+    f.includes("car park") ||
+    f.includes("parking")
+  );
+}
+
+function bathroomsAnswered(pd: Record<string, unknown> | undefined): boolean {
+  return buyResidentialBathroomsAnswered(pd) || bathroomsPositive(pd);
+}
+
+function toiletsAnswered(pd: Record<string, unknown> | undefined): boolean {
+  if (!pd || pd.toilets == null || pd.toilets === "") return false;
+  if (String(pd.toilets).trim().toLowerCase() === "more") return true;
+  return nonNegativeIntPresent(pd.toilets);
+}
+
+function carParksAnswered(pd: Record<string, unknown> | undefined): boolean {
+  if (!pd) return false;
+  const v = pd.noOfCarPark ?? pd.parkingSpaces ?? pd.carParks;
+  if (v == null || v === "") return false;
+  if (String(v).trim().toLowerCase() === "more") return true;
+  return nonNegativeIntPresent(v);
+}
+
+function featuresNotDeclared(data: Record<string, unknown>): boolean {
+  const feat = data.features as Record<string, unknown> | undefined;
+  if (feat?.featuresDeclared === true) return false;
+  const basic = (feat?.baseFeatures ?? feat?.basicFeatures) as unknown[] | undefined;
+  const premium = feat?.premiumFeatures as unknown[] | undefined;
+  const comfort = feat?.comfortFeatures as unknown[] | undefined;
+  return (
+    (!Array.isArray(basic) || basic.length === 0) &&
+    (!Array.isArray(premium) || premium.length === 0) &&
+    (!Array.isArray(comfort) || comfort.length === 0)
+  );
 }
 
 function withPreferenceChoiceQuickOptions<T extends { quickOptions?: string[] }>(
@@ -315,9 +414,40 @@ function withPreferenceChoiceQuickOptions<T extends { quickOptions?: string[] }>
   if (
     focus.includes("number of bedrooms") ||
     focus.includes("number of bathrooms") ||
-    focus.includes("number of toilets")
+    focus.includes("number of toilets") ||
+    focus.includes("car park") ||
+    focus.includes("parking") ||
+    focus.includes("maximum guests") ||
+    (focus.includes("guests") && focus.includes("shortlet"))
   ) {
     return { ...reply, quickOptions: [...ROOM_COUNT_CHIPS] };
+  }
+  if (isDevTypeFieldFocus(focus)) {
+    return {
+      ...reply,
+      quickOptions: [...JV_DEVELOPMENT_TYPE_LABELS, DONE_SELECTING_DEV_TYPES],
+    };
+  }
+  if (focus.includes("travel type")) {
+    return { ...reply, quickOptions: [...SHORTLET_TRAVEL_TYPE_LABELS] };
+  }
+  if (focus.includes("property type") && focus.includes("shortlet")) {
+    return { ...reply, quickOptions: [...SHORTLET_PROPERTY_TYPE_LABELS] };
+  }
+  if (focus.includes("sharing ratio") || focus.includes("preferred sharing")) {
+    return { ...reply, quickOptions: [...JV_SHARING_RATIO_LABELS] };
+  }
+  if (focus.includes("lease term")) {
+    return { ...reply, quickOptions: [...RENT_LEASE_TERM_LABELS] };
+  }
+  if (focus.includes("purpose") && (focus.includes("office") || focus.includes("rent") || focus.includes("residential"))) {
+    return { ...reply, quickOptions: [...RENT_PURPOSE_LABELS] };
+  }
+  if (isDocumentFieldFocus(focus)) {
+    return {
+      ...reply,
+      quickOptions: [...PREFERENCE_DOCUMENT_TYPE_LABELS, DONE_SELECTING_DOCUMENTS],
+    };
   }
   if (focus.includes("key features") || (focus.includes("features") && focus.includes("amenities"))) {
     const labels = getPreferenceFeatureLabels(data);
@@ -632,16 +762,17 @@ function applyPreferenceDocumentTypesFromFocusedAnswer(
   focusedField: string | undefined,
 ): Record<string, unknown> {
   if (!focusedField || !trimmed) return data;
-  const f = normalizePreferenceFieldKey(focusedField);
-  if (!f.includes("document type") && !f.includes("documents do you need")) return data;
-  const docs = parseDocumentTypesFromUserText(trimmed);
-  if (docs.length === 0) return data;
+  if (!isDocumentFieldFocus(focusedField)) return data;
+  const raw = parseDocumentTypesFromUserText(trimmed);
+  const docs = normalizePreferenceDocumentValues(raw);
+  const stored = docs.length > 0 ? docs : raw;
+  if (stored.length === 0) return data;
   if (normalizedPreferenceType(data) === "joint-venture") {
     const dev = { ...((data.developmentDetails || {}) as Record<string, unknown>) };
-    return { ...data, developmentDetails: { ...dev, minimumTitleRequirements: docs } };
+    return { ...data, developmentDetails: { ...dev, minimumTitleRequirements: stored } };
   }
   const pd = { ...((data.propertyDetails || {}) as Record<string, unknown>) };
-  return { ...data, propertyDetails: { ...pd, documentTypes: docs } };
+  return { ...data, propertyDetails: { ...pd, documentTypes: stored } };
 }
 
 function parseExpectedCompletionDateFromUserText(text: string): string | null {
@@ -791,33 +922,31 @@ function applyPreferenceBuyResidentialCountFromFocusedAnswer(
   focusedField: string | undefined,
 ): Record<string, unknown> {
   if (!focusedField || !trimmed) return data;
+  if (!isCountFieldFocus(focusedField)) return data;
   const type = normalizedPreferenceType(data);
-  if (type !== "buy" && type !== "off-plan" && type !== "rent") return data;
-  const pd = (data.propertyDetails || {}) as Record<string, unknown>;
-  if (getPropertySubtype(pd) !== "residential") return data;
+  const pd = { ...((data.propertyDetails || {}) as Record<string, unknown>) };
+  if (type !== "shortlet" && getPropertySubtype(pd) === "land") return data;
 
   const f = normalizePreferenceFieldKey(focusedField);
-  const nextPd = () => ({ ...pd });
-  const isCountField =
-    f.includes("residential buy") ||
-    f.includes("residential off-plan") ||
-    f.includes("residential rent") ||
-    (type === "rent" && (f.includes("number of bathrooms") || f.includes("number of toilets")));
-
-  if (f.includes("number of bathrooms") && isCountField) {
+  if (f.includes("bathroom") && !f.includes("bedroom")) {
     const b = parseBuyBathroomChoiceFromUserText(trimmed);
-    if (b) return { ...data, propertyDetails: { ...nextPd(), bathrooms: b } };
+    if (b) return { ...data, propertyDetails: { ...pd, bathrooms: b } };
   }
-  if (f.includes("number of toilets") && isCountField) {
+  if (f.includes("toilet")) {
     if (/\bmore\b/i.test(trimmed)) {
-      return { ...data, propertyDetails: { ...nextPd(), toilets: "more" } };
+      return { ...data, propertyDetails: { ...pd, toilets: "more" } };
     }
     const n = parseFirstCountFromUserText(trimmed);
-    if (n != null && n >= 0 && n <= 99) return { ...data, propertyDetails: { ...nextPd(), toilets: n } };
+    if (n != null && n >= 0 && n <= 99) return { ...data, propertyDetails: { ...pd, toilets: n } };
   }
-  if (f.includes("car park") && type === "buy") {
+  if (f.includes("car park") || f.includes("parking")) {
+    if (/\bmore\b/i.test(trimmed)) {
+      return { ...data, propertyDetails: { ...pd, noOfCarPark: 11, parkingSpaces: 11, carParks: 11 } };
+    }
     const n = parseFirstCountFromUserText(trimmed);
-    if (n != null && n >= 0 && n <= 99) return { ...data, propertyDetails: { ...nextPd(), parkingSpaces: n } };
+    if (n != null && n >= 0 && n <= 99) {
+      return { ...data, propertyDetails: { ...pd, noOfCarPark: n, parkingSpaces: n, carParks: n } };
+    }
   }
 
   return data;
@@ -861,6 +990,8 @@ function applyPreferenceFeaturesFromFocusedAnswer(
           baseFeatures: [],
           basicFeatures: [],
           premiumFeatures: [],
+          comfortFeatures: [],
+          featuresDeclared: true,
         },
       },
       applied: true,
@@ -868,7 +999,7 @@ function applyPreferenceFeaturesFromFocusedAnswer(
   }
   const names = parseDocumentTypesFromUserText(trimmed);
   if (names.length === 0) return { data, applied: false };
-  const { basic, premium } = classifyPreferenceFeatures(names, data);
+  const { basic, premium, comfort } = classifyPreferenceFeatures(names, data);
   return {
     data: {
       ...data,
@@ -877,10 +1008,40 @@ function applyPreferenceFeaturesFromFocusedAnswer(
         baseFeatures: basic,
         basicFeatures: basic,
         premiumFeatures: premium,
+        comfortFeatures: comfort,
+        featuresDeclared: true,
       },
     },
     applied: true,
   };
+}
+
+function applyPreferenceTextChoiceFromFocusedAnswer(
+  data: Record<string, unknown>,
+  trimmed: string,
+  focusedField: string | undefined,
+): Record<string, unknown> {
+  if (!focusedField || !trimmed) return data;
+  const f = normalizePreferenceFieldKey(focusedField);
+  if (f.includes("company name")) return mergeUserJvCompanyNameReply(data, trimmed);
+  if (f.includes("travel type")) return mergeUserTravelTypeReply(data, trimmed);
+  if ((f.includes("property type") && f.includes("shortlet")) || f.includes("shortlet property")) {
+    return mergeUserShortletPropertyTypeReply(data, trimmed);
+  }
+  if (isDevTypeFieldFocus(focusedField)) return mergeUserJvDevelopmentTypesReply(data, trimmed);
+  if (f.includes("sharing ratio") || f.includes("preferred sharing")) {
+    return mergeUserJvSharingRatioReply(data, trimmed);
+  }
+  if (f.includes("maximum guests") || (f.includes("guests") && f.includes("shortlet"))) {
+    return mergeUserShortletGuestsReply(data, trimmed);
+  }
+  if (f.includes("check-in")) return mergeUserCheckDatesReply(data, "check_in", trimmed);
+  if (f.includes("check-out")) return mergeUserCheckDatesReply(data, "check_out", trimmed);
+  if (f.includes("lease term")) return mergeUserLeaseTermReply(data, trimmed);
+  if (f.includes("purpose") && (f.includes("office") || f.includes("rent") || f.includes("residential"))) {
+    return mergeUserPurposeReply(data, trimmed);
+  }
+  return data;
 }
 
 function applyPreferenceChoiceFromFocusedAnswer(
@@ -888,6 +1049,8 @@ function applyPreferenceChoiceFromFocusedAnswer(
   trimmed: string,
   focusedField: string | undefined,
 ): { data: Record<string, unknown>; applied: boolean } {
+  const textChoice = applyPreferenceTextChoiceFromFocusedAnswer(data, trimmed, focusedField);
+  if (textChoice !== data) return { data: textChoice, applied: true };
   const condition = applyPreferenceConditionBuildingFromFocusedAnswer(data, trimmed, focusedField);
   if (condition.applied) return condition;
   const beforeBeds = applyPreferenceBedroomsFromFocusedAnswer(data, trimmed, focusedField);
@@ -1216,6 +1379,7 @@ function keepBestPreferencePropertyDetailsProgress(
   carry("minBedrooms");
   carry("bathrooms");
   carry("toilets");
+  carry("noOfCarPark");
   carry("parkingSpaces");
   carry("carParks");
   carry("maxGuests");
@@ -1454,9 +1618,12 @@ function getMissingFieldsFromPreferenceData(data: Record<string, unknown>): stri
     if (!dev || !Array.isArray(dev.minimumTitleRequirements) || (dev.minimumTitleRequirements as unknown[]).length === 0) {
       missing.push("minimum title requirements (required — at least one, e.g. C of O, as on title & documentation step)");
     }
+    if (featuresNotDeclared(data)) {
+      missing.push("key features and amenities (optional — select from the list or skip)");
+    }
     const contact = data.contactInfo as Record<string, unknown> | undefined;
     if (!contact || !isMeaningful(contact.companyName)) {
-      missing.push("company name (required for JV contact — full name and email are filled on the next screen only)");
+      missing.push("company name (required for JV contact)");
     }
   } else {
     pushLocs();
@@ -1505,16 +1672,16 @@ function getMissingFieldsFromPreferenceData(data: Record<string, unknown>): stri
           if (!isMeaningful(pd?.buildingType)) {
             missing.push("building type (required for buy when not land — same as form)");
           }
-          if (subtype === "residential") {
+          if (subtype === "residential" || subtype === "commercial") {
             const pdr = (pd || {}) as Record<string, unknown>;
             if (!bedroomsPresent(pd)) {
-              missing.push("number of bedrooms (required for residential buy — same as form)");
-            } else if (!buyResidentialBathroomsAnswered(pd)) {
-              missing.push("number of bathrooms (required for residential buy — after bedrooms)");
-            } else if (!nonNegativeIntPresent(pdr.toilets)) {
-              missing.push("number of toilets (required for residential buy — after bathrooms)");
-            } else if (!nonNegativeIntPresent(pdr.parkingSpaces ?? pdr.carParks)) {
-              missing.push("number of car parks (required for residential buy — after toilets)");
+              missing.push("number of bedrooms (required for buy — same as form)");
+            } else if (!bathroomsAnswered(pd)) {
+              missing.push("number of bathrooms (required for buy — after bedrooms)");
+            } else if (!toiletsAnswered(pdr)) {
+              missing.push("number of toilets (required for buy — after bathrooms)");
+            } else if (!carParksAnswered(pdr)) {
+              missing.push("number of car parks (required for buy — after toilets)");
             }
           }
         }
@@ -1547,11 +1714,16 @@ function getMissingFieldsFromPreferenceData(data: Record<string, unknown>): stri
           if (!isMeaningful(pd?.buildingType)) {
             missing.push("building type (required for off-plan when not land — same as form)");
           }
-          if (subtype === "residential") {
+          if (subtype === "residential" || subtype === "commercial") {
+            const pdr = (pd || {}) as Record<string, unknown>;
             if (!bedroomsPresent(pd)) {
               missing.push("number of bedrooms (required for residential off-plan — same as form)");
-            } else if (!bathroomsPositive(pd)) {
-              missing.push("number of bathrooms (required for residential off-plan — same as form)");
+            } else if (!bathroomsAnswered(pd)) {
+              missing.push("number of bathrooms (required for off-plan — after bedrooms)");
+            } else if (!toiletsAnswered(pdr)) {
+              missing.push("number of toilets (required for off-plan — after bathrooms)");
+            } else if (!carParksAnswered(pdr)) {
+              missing.push("number of car parks (required for off-plan — after toilets)");
             }
           }
         }
@@ -1581,21 +1753,17 @@ function getMissingFieldsFromPreferenceData(data: Record<string, unknown>): stri
           if (!isMeaningful(pd?.buildingType)) {
             missing.push("building type (required for rent when not land — same as form)");
           }
-          if (subtype === "residential") {
+          if (subtype === "residential" || subtype === "commercial") {
             const pdr = (pd || {}) as Record<string, unknown>;
             if (!bedroomsPresent(pd)) {
               missing.push("number of bedrooms (required for residential rent — same as form)");
-            } else if (!buyResidentialBathroomsAnswered(pd)) {
+            } else if (!bathroomsAnswered(pd)) {
               missing.push("number of bathrooms (required for residential rent — after bedrooms)");
-            } else if (!nonNegativeIntPresent(pdr.toilets) && String(pdr.toilets || "").toLowerCase() !== "more") {
+            } else if (!toiletsAnswered(pdr)) {
               missing.push("number of toilets (required for residential rent — after bathrooms)");
+            } else if (!carParksAnswered(pdr)) {
+              missing.push("number of car parks (required for residential rent — after toilets)");
             }
-          }
-          const feat = data.features as Record<string, unknown> | undefined;
-          const basic = (feat?.baseFeatures ?? feat?.basicFeatures) as unknown[] | undefined;
-          const premium = feat?.premiumFeatures as unknown[] | undefined;
-          if ((!Array.isArray(basic) || basic.length === 0) && (!Array.isArray(premium) || premium.length === 0)) {
-            missing.push("key features and amenities (optional — select from the list or skip)");
           }
         }
       }
@@ -1612,11 +1780,13 @@ function getMissingFieldsFromPreferenceData(data: Record<string, unknown>): stri
         }
         if (!bedroomsPresent(pd)) {
           missing.push("number of bedrooms (required for shortlet — same as form)");
-        }
-        if (!bathroomsPositive(pd)) {
-          missing.push("number of bathrooms (required for shortlet — same as form)");
-        }
-        if (!shortletMaxGuestsPresent(pd, bd)) {
+        } else if (!bathroomsAnswered(pd)) {
+          missing.push("number of bathrooms (required for shortlet — after bedrooms)");
+        } else if (!toiletsAnswered((pd || {}) as Record<string, unknown>)) {
+          missing.push("number of toilets (required for shortlet — after bathrooms)");
+        } else if (!carParksAnswered((pd || {}) as Record<string, unknown>)) {
+          missing.push("number of car parks (required for shortlet — after toilets)");
+        } else if (!shortletMaxGuestsPresent(pd, bd)) {
           missing.push("maximum guests (required for shortlet — same as max guests on Property details & Budget)");
         }
       }
@@ -1632,11 +1802,19 @@ function getMissingFieldsFromPreferenceData(data: Record<string, unknown>): stri
           missing.push("check-out date (required for shortlet — same as form)");
         }
       }
+
+      if (
+        (type === "buy" || type === "rent" || type === "off-plan") &&
+        getPropertySubtype(pd) !== "land" &&
+        featuresNotDeclared(data)
+      ) {
+        missing.push("key features and amenities (optional — select from the list or skip)");
+      }
+      if (type === "shortlet" && featuresNotDeclared(data)) {
+        missing.push("key features and amenities (optional — select from the list or skip)");
+      }
     }
   }
-
-  // Features, additionalNotes, nearbyLandmark: optional in API — `buildPreferencePayload` defaults
-  // empty feature arrays and omits empty optionals; do not prompt in AI flow.
 
   return missing;
 }
@@ -1678,7 +1856,7 @@ function flattenPreferenceData(data: Record<string, unknown>): { key: string; la
     if (pd.bedrooms != null || pd.minBedrooms != null) out.push({ key: "bedrooms", label: "Bedrooms", value: String(pd.bedrooms ?? pd.minBedrooms) });
     if (pd.bathrooms != null || pd.minBathrooms != null) out.push({ key: "bathrooms", label: "Bathrooms", value: String(pd.bathrooms ?? pd.minBathrooms) });
     if (pd.toilets != null && pd.toilets !== "") out.push({ key: "toilets", label: "Toilets", value: String(pd.toilets) });
-    const pk = (pd as Record<string, unknown>).parkingSpaces ?? (pd as Record<string, unknown>).carParks;
+    const pk = (pd as Record<string, unknown>).noOfCarPark ?? (pd as Record<string, unknown>).parkingSpaces ?? (pd as Record<string, unknown>).carParks;
     if (pk != null && pk !== "") out.push({ key: "parkingSpaces", label: "Car parks", value: String(pk) });
     if (pd.buildingType) out.push({ key: "buildingType", label: "Building type", value: String(pd.buildingType) });
     if (pd.propertyCondition) out.push({ key: "propertyCondition", label: "Condition", value: String(pd.propertyCondition) });
@@ -1745,7 +1923,9 @@ function flattenPreferenceData(data: Record<string, unknown>): { key: string; la
   if (features) {
     const base = (features.baseFeatures ?? features.basicFeatures) as string[] | undefined;
     const premium = features.premiumFeatures as string[] | undefined;
+    const comfort = features.comfortFeatures as string[] | undefined;
     if (Array.isArray(base) && base.length) out.push({ key: "baseFeatures", label: "Features", value: base.join(", ") });
+    if (Array.isArray(comfort) && comfort.length) out.push({ key: "comfortFeatures", label: "Comfort features", value: comfort.join(", ") });
     if (Array.isArray(premium) && premium.length) out.push({ key: "premiumFeatures", label: "Premium features", value: premium.join(", ") });
   }
   if (data.nearbyLandmark) out.push({ key: "nearbyLandmark", label: "Nearby landmark", value: String(data.nearbyLandmark) });
@@ -1780,6 +1960,10 @@ export default function PreferenceAiConversationFlow() {
   const [showBuyerAuth, setShowBuyerAuth] = useState(false);
   const [selectedFeatureOptions, setSelectedFeatureOptions] = useState<string[]>([]);
   const selectedFeatureOptionsRef = useRef<string[]>([]);
+  const [selectedDocumentOptions, setSelectedDocumentOptions] = useState<string[]>([]);
+  const selectedDocumentOptionsRef = useRef<string[]>([]);
+  const [selectedDevTypeOptions, setSelectedDevTypeOptions] = useState<string[]>([]);
+  const selectedDevTypeOptionsRef = useRef<string[]>([]);
   /** Fields the user skipped in the interactive AI flow (exact strings from getMissingFieldsFromPreferenceData). */
   const skippedFieldsRef = useRef<Set<string>>(new Set());
   const collectedDataRef = useRef<Record<string, unknown> | null>(null);
@@ -1801,7 +1985,13 @@ export default function PreferenceAiConversationFlow() {
     const f = (last?.focusedMissingField ?? "").toLowerCase();
     if (!f) return false;
     return (
-      (f.includes("budget") && (f.includes("naira") || f.includes("price"))) ||
+      f.includes("min_budget") ||
+      f.includes("max_budget") ||
+      (f.includes("budget") &&
+        (f.includes("naira") ||
+          f.includes("price") ||
+          f.includes("minimum") ||
+          f.includes("maximum"))) ||
       f.includes("minimum price") ||
       f.includes("maximum price")
     );
@@ -1820,6 +2010,14 @@ export default function PreferenceAiConversationFlow() {
   }, [selectedFeatureOptions]);
 
   useEffect(() => {
+    selectedDocumentOptionsRef.current = selectedDocumentOptions;
+  }, [selectedDocumentOptions]);
+
+  useEffect(() => {
+    selectedDevTypeOptionsRef.current = selectedDevTypeOptions;
+  }, [selectedDevTypeOptions]);
+
+  useEffect(() => {
     if (!preferenceAiCollectedData) return;
     const loc = (preferenceAiCollectedData.location || {}) as Record<string, unknown>;
     if (String(loc.state || "").trim() === PILOT_STATE) return;
@@ -1834,6 +2032,9 @@ export default function PreferenceAiConversationFlow() {
       skippedFieldsRef.current = new Set();
       preferenceQuestionVariantRef.current = 0;
       setSelectedAreaOptions([]);
+      setSelectedFeatureOptions([]);
+      setSelectedDocumentOptions([]);
+      setSelectedDevTypeOptions([]);
     }
   }, [preferenceAiMessages.length]);
 
@@ -1844,6 +2045,15 @@ export default function PreferenceAiConversationFlow() {
     const focus = normalizePreferenceFieldKey(lastAssistant?.focusedMissingField || "");
     if (!focus.includes("preference location - area")) {
       setSelectedAreaOptions([]);
+    }
+    if (!(focus.includes("key features") || focus.includes("amenities"))) {
+      setSelectedFeatureOptions([]);
+    }
+    if (!isDocumentFieldFocus(focus)) {
+      setSelectedDocumentOptions([]);
+    }
+    if (!isDevTypeFieldFocus(focus)) {
+      setSelectedDevTypeOptions([]);
     }
   }, [preferenceAiMessages]);
 
@@ -2154,6 +2364,88 @@ export default function PreferenceAiConversationFlow() {
         }
       }
 
+      if (rawInput.startsWith(DEV_DONE_MARKER) || /^\s*done(\s+selecting\s+development\s+types)?\s*$/i.test(userText)) {
+        const lastAssistDev = [...preferenceAiMessages].reverse().find((m) => m.role === "assistant");
+        const devFocus = lastAssistDev?.focusedMissingField;
+        if (isDevTypeFieldFocus(devFocus)) {
+          const markerNames = rawInput.startsWith(DEV_DONE_MARKER)
+            ? rawInput.slice(DEV_DONE_MARKER.length)
+            : selectedDevTypeOptionsRef.current.join(", ");
+          const current = { ...(collectedDataRef.current || {}) } as Record<string, unknown>;
+          if (!markerNames.trim()) {
+            toast.error("Select at least one development type, then tap Done.");
+            return;
+          }
+          const applied = mergeUserJvDevelopmentTypesReply(current, markerNames);
+          setPreferenceAiCollectedData(applied);
+          collectedDataRef.current = applied;
+          const reply = withPreferenceLocationOptions(
+            buildPreferenceInteractiveReply(applied, skippedFieldsRef.current, 0),
+            applied,
+          );
+          setPreferenceAiMessages((prev) => [
+            ...prev,
+            { role: "user", content: markerNames },
+            {
+              role: "assistant",
+              content: reply.content,
+              speakLine: reply.speakLine,
+              data: applied,
+              missingFields: reply.missingFields.length ? reply.missingFields : undefined,
+              focusedMissingField: reply.focusedMissingField,
+              remainingMissingCount: reply.remainingMissingCount,
+              quickOptions: reply.quickOptions,
+              locationAllOptions: reply.locationAllOptions,
+              locationOptionsOffset: reply.locationOptionsOffset,
+              locationOptionsLabel: reply.locationOptionsLabel,
+            },
+          ]);
+          setSelectedDevTypeOptions([]);
+          return;
+        }
+      }
+
+      if (rawInput.startsWith(DOC_DONE_MARKER) || /^\s*done(\s+selecting\s+documents)?\s*$/i.test(userText)) {
+        const lastAssistDocs = [...preferenceAiMessages].reverse().find((m) => m.role === "assistant");
+        const docFocus = lastAssistDocs?.focusedMissingField;
+        if (isDocumentFieldFocus(docFocus)) {
+          const markerNames = rawInput.startsWith(DOC_DONE_MARKER)
+            ? rawInput.slice(DOC_DONE_MARKER.length)
+            : selectedDocumentOptionsRef.current.join(", ");
+          const current = { ...(collectedDataRef.current || {}) } as Record<string, unknown>;
+          if (!markerNames.trim()) {
+            toast.error("Select at least one document, then tap Done.");
+            return;
+          }
+          const applied = applyPreferenceDocumentTypesFromFocusedAnswer(current, markerNames, docFocus);
+          setPreferenceAiCollectedData(applied);
+          collectedDataRef.current = applied;
+          const reply = withPreferenceLocationOptions(
+            buildPreferenceInteractiveReply(applied, skippedFieldsRef.current, 0),
+            applied,
+          );
+          setPreferenceAiMessages((prev) => [
+            ...prev,
+            { role: "user", content: markerNames },
+            {
+              role: "assistant",
+              content: reply.content,
+              speakLine: reply.speakLine,
+              data: applied,
+              missingFields: reply.missingFields.length ? reply.missingFields : undefined,
+              focusedMissingField: reply.focusedMissingField,
+              remainingMissingCount: reply.remainingMissingCount,
+              quickOptions: reply.quickOptions,
+              locationAllOptions: reply.locationAllOptions,
+              locationOptionsOffset: reply.locationOptionsOffset,
+              locationOptionsLabel: reply.locationOptionsLabel,
+            },
+          ]);
+          setSelectedDocumentOptions([]);
+          return;
+        }
+      }
+
       if (rawInput.startsWith(FEATURE_DONE_MARKER) || /^\s*done(\s+selecting\s+features)?\s*$/i.test(userText)) {
         const lastAssistFeatures = [...preferenceAiMessages].reverse().find((m) => m.role === "assistant");
         const featureFocus = lastAssistFeatures?.focusedMissingField;
@@ -2423,6 +2715,7 @@ export default function PreferenceAiConversationFlow() {
         data = applyPreferenceFeaturesFromFocusedAnswer(data, userText, lastFocusBeforeMerge).data;
         data = applyPreferenceOffPlanFieldsFromFocusedAnswer(data, userText, lastFocusBeforeMerge);
         data = applyPreferenceBudgetFromFocusedAnswer(data, userText, lastFocusBeforeMerge).data;
+        data = applyPreferenceTextChoiceFromFocusedAnswer(data, userText, lastFocusBeforeMerge);
 
         const fromUser = extractContactFromText(userText);
         const fromAccumulated = extractContactFromText(accumulated || userText);
@@ -2436,6 +2729,7 @@ export default function PreferenceAiConversationFlow() {
           ...existingContact,
           ...(parsedContact.email && { email: parsedContact.email }),
           ...(parsedContact.phoneNumber && { phoneNumber: parsedContact.phoneNumber }),
+          ...(parsedContact.fullName && !existingContact.companyName && { companyName: parsedContact.fullName }),
         };
         if (Object.keys(mergedContact).length > 0) {
           data = { ...data, contactInfo: mergedContact };
@@ -2533,6 +2827,50 @@ export default function PreferenceAiConversationFlow() {
       msg: { focusedMissingField?: string; quickOptions?: string[] },
     ) => {
       const focus = normalizePreferenceFieldKey(msg.focusedMissingField || "");
+      const isDevTypeMultiSelect =
+        isDevTypeFieldFocus(focus) &&
+        Array.isArray(msg.quickOptions) &&
+        msg.quickOptions.includes(DONE_SELECTING_DEV_TYPES);
+      if (isDevTypeMultiSelect) {
+        if (option === DONE_SELECTING_DEV_TYPES) {
+          const chips = selectedDevTypeOptionsRef.current;
+          if (chips.length === 0) {
+            toast.error("Select at least one development type, then tap Done.");
+            return;
+          }
+          await handleSuggest(`${DEV_DONE_MARKER}${chips.join(", ")}`);
+          setSelectedDevTypeOptions([]);
+          return;
+        }
+        setSelectedDevTypeOptions((prev) =>
+          prev.some((x) => x.toLowerCase() === option.toLowerCase())
+            ? prev.filter((x) => x.toLowerCase() !== option.toLowerCase())
+            : [...prev, option],
+        );
+        return;
+      }
+      const isDocumentMultiSelect =
+        isDocumentFieldFocus(focus) &&
+        Array.isArray(msg.quickOptions) &&
+        msg.quickOptions.includes(DONE_SELECTING_DOCUMENTS);
+      if (isDocumentMultiSelect) {
+        if (option === DONE_SELECTING_DOCUMENTS) {
+          const chips = selectedDocumentOptionsRef.current;
+          if (chips.length === 0) {
+            toast.error("Select at least one document, then tap Done.");
+            return;
+          }
+          await handleSuggest(`${DOC_DONE_MARKER}${chips.join(", ")}`);
+          setSelectedDocumentOptions([]);
+          return;
+        }
+        setSelectedDocumentOptions((prev) =>
+          prev.some((x) => x.toLowerCase() === option.toLowerCase())
+            ? prev.filter((x) => x.toLowerCase() !== option.toLowerCase())
+            : [...prev, option],
+        );
+        return;
+      }
       const isFeatureMultiSelect =
         (focus.includes("key features") || focus.includes("amenities")) &&
         Array.isArray(msg.quickOptions) &&
@@ -3055,10 +3393,15 @@ export default function PreferenceAiConversationFlow() {
                             }
                             disabled={loading}
                             className={`rounded-full border px-3 py-1 text-xs font-medium disabled:opacity-50 ${
-                              option === DONE_SELECTING_AREAS || option === DONE_SELECTING_FEATURES
+                              option === DONE_SELECTING_AREAS ||
+                              option === DONE_SELECTING_FEATURES ||
+                              option === DONE_SELECTING_DOCUMENTS ||
+                              option === DONE_SELECTING_DEV_TYPES
                                 ? "border-[#09391C] bg-[#8DDB90] text-[#09391C] font-semibold shadow-sm hover:bg-[#7BC87F]"
                                 : selectedAreaOptions.some((x) => x.toLowerCase() === option.toLowerCase())
                                   || selectedFeatureOptions.some((x) => x.toLowerCase() === option.toLowerCase())
+                                  || selectedDocumentOptions.some((x) => x.toLowerCase() === option.toLowerCase())
+                                  || selectedDevTypeOptions.some((x) => x.toLowerCase() === option.toLowerCase())
                                   ? "border-[#09391C] bg-[#09391C] text-white"
                                   : "border-[#8DDB90] bg-white text-[#09391C] hover:bg-[#8DDB90]/15"
                             }`}
@@ -3095,6 +3438,7 @@ export default function PreferenceAiConversationFlow() {
           disabled={loading}
           maxHeight="80px"
           amountEntryMode={preferenceAmountEntryMode}
+          formatAmountRunsInText={!preferenceAmountEntryMode}
         />
         <div className="flex flex-wrap gap-2 items-center">
           {preferenceAiMessages.some((m) => m.role === "assistant") && (

@@ -8,6 +8,16 @@
 
 import type { PreferencePayload } from "./schema";
 import { readStoredPropertyCode } from "@/utils/propertyCode";
+import { normalizePreferenceDocumentValues } from "@/data/preference-document-types";
+import {
+  normalizeJvDevelopmentTypes,
+  normalizeShortletPropertyType,
+  normalizeTravelType,
+} from "@/data/preference-choice-options";
+import {
+  normalizePreferenceBuildingType,
+  normalizePreferenceCondition,
+} from "@/data/preference-condition-building";
 
 type FormData = Record<string, unknown>;
 
@@ -19,6 +29,26 @@ function toStr(v: unknown): string {
 function filterStringArray(v: unknown): string[] {
   if (!Array.isArray(v)) return [];
   return v.map((x) => String(x).trim()).filter((s) => s.length > 0);
+}
+
+function canonicalDocumentTypes(v: unknown): string[] {
+  const raw = filterStringArray(v);
+  const normalized = normalizePreferenceDocumentValues(raw);
+  return normalized.length > 0 ? normalized : raw;
+}
+
+function canonicalDevelopmentTypes(v: unknown): string[] {
+  const raw = filterStringArray(v);
+  const fromList = normalizeJvDevelopmentTypes(raw.join(", "));
+  return fromList.length > 0 ? fromList : raw;
+}
+
+function canonicalBuildingType(v: unknown): string {
+  return normalizePreferenceBuildingType(v) || toStr(v);
+}
+
+function canonicalCondition(v: unknown): string {
+  return normalizePreferenceCondition(v) || toStr(v);
 }
 
 /** API stores measurement lowercased; accepts plot, sqm, acres, hectares (+ legacy hectare / ha). */
@@ -199,18 +229,18 @@ export function buildPreferencePayload(
         preferenceMode: "buy" as const,
         propertyDetails: {
           propertyType: toStr(pd.propertySubtype ?? pd.propertyType),
-          buildingType: toStr(pd.buildingType),
+          buildingType: canonicalBuildingType(pd.buildingType),
           minBedrooms: minBedroomsStr(pd),
           minBathrooms: Number(pd.bathrooms ?? pd.minBathrooms) || 0,
           toilets: pd.toilets ?? "",
           leaseTerm: toStr(pd.leaseTerm) || "",
-          propertyCondition: toStr(pd.propertyCondition),
+          propertyCondition: canonicalCondition(pd.propertyCondition),
           purpose: toStr(pd.purpose) || "For living",
           landSize: toStr(pd.landSize),
           minLandSize: toStr(pd.minLandSize),
           maxLandSize: toStr(pd.maxLandSize),
           measurementUnit: normalizeMeasurementUnitForApi(pd.measurementUnit),
-          documentTypes: filterStringArray(pd.documentTypes),
+          documentTypes: canonicalDocumentTypes(pd.documentTypes),
           landConditions: filterStringArray(pd.landConditions),
         },
         contactInfo: {
@@ -250,18 +280,18 @@ export function buildPreferencePayload(
         preferenceMode: "tenant" as const,
         propertyDetails: {
           propertyType: toStr(pd.propertySubtype ?? pd.propertyType),
-          buildingType: toStr(pd.buildingType),
+          buildingType: canonicalBuildingType(pd.buildingType),
           minBedrooms: minBedroomsStr(pd),
           minBathrooms: Number(pd.bathrooms ?? pd.minBathrooms) || 0,
           toilets: pd.toilets ?? "",
           leaseTerm: toStr(pd.leaseTerm) || "1 Year",
-          propertyCondition: toStr(pd.propertyCondition),
+          propertyCondition: canonicalCondition(pd.propertyCondition),
           purpose: toStr(pd.purpose) || "Residential",
           landSize: toStr(pd.landSize),
           minLandSize: toStr(pd.minLandSize),
           maxLandSize: toStr(pd.maxLandSize),
           measurementUnit: normalizeMeasurementUnitForApi(pd.measurementUnit),
-          documentTypes: filterStringArray(pd.documentTypes),
+          documentTypes: canonicalDocumentTypes(pd.documentTypes),
           landConditions: filterStringArray(pd.landConditions),
         },
         contactInfo: {
@@ -297,10 +327,10 @@ export function buildPreferencePayload(
           minLandSize: toStr(dev.minLandSize),
           maxLandSize: toStr(dev.maxLandSize),
           measurementUnit: normalizeMeasurementUnitForApi(dev.measurementUnit),
-          developmentTypes: filterStringArray(dev.developmentTypes),
+          developmentTypes: canonicalDevelopmentTypes(dev.developmentTypes),
           preferredSharingRatio: toStr(dev.preferredSharingRatio),
           proposalDetails: toStr(dev.proposalDetails),
-          minimumTitleRequirements: filterStringArray(dev.minimumTitleRequirements),
+          minimumTitleRequirements: canonicalDocumentTypes(dev.minimumTitleRequirements),
           willingToConsiderPendingTitle: Boolean(dev.willingToConsiderPendingTitle),
           additionalRequirements: toStr(dev.additionalRequirements),
         },
@@ -329,17 +359,17 @@ export function buildPreferencePayload(
         preferenceMode: "buy" as const,
         propertyDetails: {
           propertyType: toStr(pd.propertySubtype ?? pd.propertyType),
-          buildingType: toStr(pd.buildingType),
+          buildingType: canonicalBuildingType(pd.buildingType),
           minBedrooms: minBedroomsStr(pd),
           minBathrooms: Number(pd.bathrooms ?? pd.minBathrooms) || 0,
           toilets: pd.toilets ?? "",
-          propertyCondition: toStr(pd.propertyCondition),
+          propertyCondition: canonicalCondition(pd.propertyCondition),
           purpose: toStr(pd.purpose) || "Investment",
           landSize: toStr(pd.landSize),
           minLandSize: toStr(pd.minLandSize),
           maxLandSize: toStr(pd.maxLandSize),
           measurementUnit: normalizeMeasurementUnitForApi(pd.measurementUnit),
-          documentTypes: filterStringArray(pd.documentTypes),
+          documentTypes: canonicalDocumentTypes(pd.documentTypes),
           landConditions: filterStringArray(pd.landConditions),
           expectedCompletionDate: toStr(pd.expectedCompletionDate),
           developmentStage: toStr(pd.developmentStage),
@@ -364,21 +394,21 @@ export function buildPreferencePayload(
       const pd = (shortletData.propertyDetails || {}) as Record<string, unknown>;
       const bd = (shortletData.bookingDetails || {}) as Record<string, unknown>;
       const bookingDetails = {
-        propertyType: toStr(pd.propertyType),
-        buildingType: toStr(pd.buildingType ?? bd.buildingType),
+        propertyType: normalizeShortletPropertyType(toStr(pd.propertyType)) || toStr(pd.propertyType),
+        buildingType: canonicalBuildingType(pd.buildingType ?? bd.buildingType),
         minBedrooms: minBedroomsStr(pd),
         minBathrooms: Number(pd.bathrooms ?? bd.minBathrooms) || 0,
         numberOfGuests: Number(pd.maxGuests ?? bd.numberOfGuests) || 0,
         checkInDate: toStr(bd.checkInDate),
         checkOutDate: toStr(bd.checkOutDate),
-        travelType: toStr(pd.travelType ?? bd.travelType),
+        travelType: normalizeTravelType(toStr(pd.travelType ?? bd.travelType)) || toStr(pd.travelType ?? bd.travelType),
         preferredCheckInTime: toStr(
           bd.preferredCheckInTime ?? contact.preferredCheckInTime,
         ),
         preferredCheckOutTime: toStr(
           bd.preferredCheckOutTime ?? contact.preferredCheckOutTime,
         ),
-        propertyCondition: toStr(pd.propertyCondition ?? bd.propertyCondition),
+        propertyCondition: canonicalCondition(pd.propertyCondition ?? bd.propertyCondition),
         purpose: toStr(pd.purpose ?? bd.purpose),
         landSize: toStr(pd.landSize ?? bd.landSize),
         minLandSize: toStr(pd.minLandSize ?? bd.minLandSize),
@@ -386,7 +416,7 @@ export function buildPreferencePayload(
         measurementUnit: normalizeMeasurementUnitForApi(
           pd.measurementUnit ?? bd.measurementUnit,
         ),
-        documentTypes: filterStringArray(pd.documentTypes ?? bd.documentTypes),
+        documentTypes: canonicalDocumentTypes(pd.documentTypes ?? bd.documentTypes),
         landConditions: filterStringArray(pd.landConditions ?? bd.landConditions),
       };
       const shortletPayload = {
