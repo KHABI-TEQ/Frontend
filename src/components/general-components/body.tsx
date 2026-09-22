@@ -31,7 +31,7 @@ const Body = ({ children }: { children: ReactNode }) => {
               dashboard.approveBriefsTable.isApproveClicked ||
               dashboard.approveBriefsTable.isDeleteClicked ||
               dashboard.approveBriefsTable.isRejectClicked) &&
-            'filter brightness-[30%] bg-[#EEF1F1] transition-all duration-500 overflow-hidden'
+            'filter brightness-[30%] bg-[#EEF1F1] transition-all duration-500'
           } w-[100%]`}>
           {children}
         </section>

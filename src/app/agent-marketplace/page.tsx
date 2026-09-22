@@ -10,6 +10,7 @@ import { URLS } from '@/utils/URLS';
 import toast from 'react-hot-toast';
 import Loading from '@/components/loading-component/loading';
 import Cookies from 'js-cookie';
+import InsuredPreferenceTag from '@/components/agent-marketplace/InsuredPreferenceTag';
 
 interface Buyer {
   _id: string;
@@ -96,6 +97,8 @@ interface Preference {
   nearbyLandmark?: string;
   additionalNotes?: string;
   receiverMode?: ReceiverMode;
+  searchInsurance?: { optedIn?: boolean; status?: string };
+  isSearchInsured?: boolean;
   reviewSummary?: {
     reviewCount: number;
     budgetFit?: { too_low: number; moderate: number; too_high: number };
@@ -355,9 +358,10 @@ const AgentMarketplace = () => {
                preference.preferenceType === 'shortlet' ? 'Short-term Stay' :
                preference.preferenceType}
             </h3>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
               <span className="text-gray-500 text-xs">Active Request</span>
+              <InsuredPreferenceTag searchInsurance={preference.searchInsurance} />
             </div>
           </div>
         </div>

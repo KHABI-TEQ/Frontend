@@ -154,12 +154,22 @@ export default function MyRequestToMarketPage() {
 
   /** Parsed sale price from formatted input (for validation and commission calc). */
   const registerSalePriceNum = Number(registerSalePrice.replace(/\D/g, "")) || 0;
-  /** Commission %: fixed 5% for landlords and developers. */
-  const registerSaleCommissionPct = 5;
-  /** Calculated agent commission to show as publisher types (when price > 0 and valid %). */
+  const listingCommissionPercent = (() => {
+    const item = registerSaleModal;
+    if (!item) return 5;
+    const fromRequest = Number(item.agentCommissionPercent);
+    if (Number.isFinite(fromRequest) && fromRequest > 0) return fromRequest;
+    const prop = item.propertyId && typeof item.propertyId === "object"
+      ? (item.propertyId as { agentCommissionPercent?: number })
+      : null;
+    const fromListing = Number(prop?.agentCommissionPercent);
+    if (Number.isFinite(fromListing) && fromListing > 0) return fromListing;
+    return 5;
+  })();
+  /** Calculated agent commission from the listing rate × actual sale price. */
   const calculatedAgentCommission =
-    registerSalePriceNum > 0 && registerSaleCommissionPct >= 1 && registerSaleCommissionPct <= 5
-      ? (registerSalePriceNum * registerSaleCommissionPct) / 100
+    registerSalePriceNum > 0 && listingCommissionPercent > 0
+      ? (registerSalePriceNum * listingCommissionPercent) / 100
       : 0;
   const showCommissionPreview = registerSalePriceNum > 0;
 
@@ -212,9 +222,8 @@ export default function MyRequestToMarketPage() {
     setRegisterSalePaymentConfirmOpen(false);
     setRegisterSaleSubmitting(true);
     try {
-      const body: { actualSalePriceNaira: number; commissionPercent?: number; commissionReceiptUrl?: string } = {
+      const body: { actualSalePriceNaira: number; commissionReceiptUrl?: string } = {
         actualSalePriceNaira: priceNum,
-        commissionPercent: 5,
       };
       if (registerSaleReceiptUrl) body.commissionReceiptUrl = registerSaleReceiptUrl;
       const res = await requestToMarketService.registerSale(item._id, body);
@@ -548,12 +557,12 @@ export default function MyRequestToMarketPage() {
                   className="w-full border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#8DDB90] focus:border-[#8DDB90] mb-4"
                 />
                 <p className="text-sm text-[#5A5D63] mb-4">
-                  Agent commission is fixed at 5% of the actual sale price.
+                  Agent commission is the rate set on this listing ({listingCommissionPercent}%), applied to the actual sale price.
                 </p>
                 {showCommissionPreview && calculatedAgentCommission > 0 && (
                   <div className="mb-4 p-3 bg-[#EEF1F1] rounded-lg border border-[#E5E7EB]">
                     <p className="text-sm font-medium text-[#09391C]">
-                      Agent commission (5%): {formatPriceForDisplay(Math.round(calculatedAgentCommission))}
+                      Agent commission ({listingCommissionPercent}%): {formatPriceForDisplay(Math.round(calculatedAgentCommission))}
                     </p>
                   </div>
                 )}

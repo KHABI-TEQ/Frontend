@@ -424,19 +424,8 @@ export function getLocationSelectionHint(
   const state = String(loc.state ?? "").trim();
   if (!state) return "";
 
-  if (id === "lga") {
-    const lgas = getLGAsByState(state);
-    if (lgas.length === 0) return "";
-    return `Available LGAs in ${state}: ${lgas.join(", ")}. Reply with one (or up to 3 separated by commas).`;
-  }
-  if (id === "area") {
-    const lgasRaw = loc.localGovernmentAreas ?? loc.lgas;
-    const lgaList = Array.isArray(lgasRaw) ? lgasRaw.map(String).map((s) => s.trim()).filter(Boolean) : [];
-    if (lgaList.length !== 1) return "";
-    const lga = lgaList[0];
-    const areas = getAreasByLGA(state, lga);
-    if (areas.length === 0) return "";
-    return `Available areas in ${lga}, ${state}: ${areas.join(", ")}. Reply with one or more separated by commas.`;
+  if (id === "lga" || id === "area") {
+    return "";
   }
   return "";
 }
@@ -1713,10 +1702,8 @@ export function getConversationFieldSpeakPrompt(
 
 type DisplayLines = { screen: string; speech: string };
 
-function suffixRemaining(n: number): string {
-  if (n <= 0) return "";
-  if (n === 1) return " 1 more item after this (or say skip).";
-  return ` ${n} more items after this (or say skip).`;
+function suffixRemaining(_n: number): string {
+  return "";
 }
 
 function getConversationFieldDisplayLines(
@@ -1730,193 +1717,193 @@ function getConversationFieldDisplayLines(
   switch (id) {
     case "preference_type":
       return {
-        screen: `Start by saying your preference type: Buy, Rent, JV (joint venture), Shortlet, or Off-Plan. (format: buy)${suf}`,
+        screen: `Start by saying your preference type: Buy, Rent, JV (joint venture), Shortlet, or Off-Plan.${suf}`,
         speech: "Say whether this is buy, rent, joint venture, shortlet, or off-plan.",
       };
     case "state":
       return {
-        screen: `Khabiteq is piloting in Lagos State only. Which Lagos local government area next? (format: Ikeja)${suf}`,
+        screen: `Khabiteq is piloting in Lagos State only. Which Lagos local government area next?${suf}`,
         speech: "Khabiteq is piloting in Lagos. Which local government area?",
       };
     case "lga":
       return {
-        screen: `Which Lagos local government area (LGA)? (format: Ikeja)${suf}`,
+        screen: `Which Lagos local government area (LGA)?${suf}`,
         speech: "Which Lagos local government area?",
       };
     case "area":
       return {
-        screen: `Which area or neighbourhood within that LGA? You can also name an estate (format: Lekki Phase 1 or Banana Island)${suf}`,
+        screen: `Which area or neighbourhood?${suf}`,
         speech: "Which area, neighbourhood, or estate?",
       };
     case "property_subtype":
       if (pt === "rent") {
         return {
-          screen: `Residential or commercial? (format: residential)${suf}`,
+          screen: `Residential or commercial?${suf}`,
           speech: "Residential or commercial?",
         };
       }
       return {
-        screen: `Land, residential, or commercial? (format: residential)${suf}`,
+        screen: `Land, residential, or commercial?${suf}`,
         speech: "Land, residential, or commercial?",
       };
     case "measurement_unit":
       return {
-        screen: `Measurement unit for land size: plot, sqm, hectares, or acres? (format: plot)${suf}`,
+        screen: `Measurement unit for land size: plot, sqm, hectares, or acres?${suf}`,
         speech: "Which unit for land size: plot, square metres, hectares, or acres?",
       };
     case "land_size_single":
       return {
-        screen: `Total land size in that unit? (format: 500)${suf}`,
+        screen: `Total land size in that unit?${suf}`,
         speech: "What is the total land size in that unit?",
       };
     case "land_size_sqm_min":
       return {
-        screen: `Minimum land size in square metres (sqm)? (format: 300)${suf}`,
+        screen: `Minimum land size in square metres (sqm)?${suf}`,
         speech: "What is the minimum land size in square metres?",
       };
     case "land_size_sqm_max":
       return {
-        screen: `Maximum land size in square metres (sqm)? (format: 900)${suf}`,
+        screen: `Maximum land size in square metres (sqm)?${suf}`,
         speech: "What is the maximum land size in square metres?",
       };
     case "document_types":
       return {
-        screen: `Which documents do you need? Select all that apply, then tap Done.${suf}`,
+        screen: `Which documents do you need?${suf}`,
         speech: "Which documents do you need? You can choose more than one.",
       };
     case "land_conditions":
       return {
-        screen: `What land conditions apply? (format: dry land)${suf}`,
+        screen: `What land conditions apply?${suf}`,
         speech: "What land conditions should we note?",
       };
     case "property_condition":
       return {
-        screen: `What condition? (format: new)${suf}`,
+        screen: `What condition?${suf}`,
         speech: "What property condition?",
       };
     case "building_type":
       return {
-        screen: `What type of building? (format: duplex)${suf}`,
+        screen: `What type of building?${suf}`,
         speech: "What type of building?",
       };
     case "bedrooms":
       return {
-        screen: `How many bedrooms? (format: 3)${suf}`,
+        screen: `How many bedrooms?${suf}`,
         speech: "How many bedrooms?",
       };
     case "bathrooms":
       return {
-        screen: `How many bathrooms? Say 1 to 10, or more for more than ten. (format: 2)${suf}`,
+        screen: `How many bathrooms? Say 1 to 10, or more for more than ten.${suf}`,
         speech: "How many bathrooms?",
       };
     case "toilets":
       return {
-        screen: `How many toilets? Say 1 to 10, or more for more than ten. (format: 2)${suf}`,
+        screen: `How many toilets? Say 1 to 10, or more for more than ten.${suf}`,
         speech: "How many toilets?",
       };
     case "lease_term":
       return {
-        screen: `Preferred lease term? (format: 1 Year)${suf}`,
+        screen: `Preferred lease term?${suf}`,
         speech: "What lease term do you prefer?",
       };
     case "purpose":
       return {
-        screen: `Purpose: residential or office? (format: Residential)${suf}`,
+        screen: `Purpose: residential or office?${suf}`,
         speech: "Is the purpose residential or office?",
       };
     case "min_budget":
       return {
-        screen: `What's your minimum budget in Naira? Use comma-separated digits, e.g. 20,000,000. (format: 15,000,000)${suf}`,
+        screen: `What is your minimum budget in Naira?${suf}`,
         speech: "What is your minimum budget in Naira?",
       };
     case "max_budget":
       return {
-        screen: `What's your maximum budget in Naira? Use commas, e.g. 50,000,000. (format: 50,000,000)${suf}`,
+        screen: `What is your maximum budget in Naira?${suf}`,
         speech: "What is your maximum budget in Naira?",
       };
     case "phone":
       return {
-        screen: `What is your Nigerian phone number? (format: 08031234567)${suf}`,
+        screen: `What is your Nigerian phone number?${suf}`,
         speech: "What is your phone number?",
       };
     case "shortlet_property_type":
       return {
-        screen: `Which shortlet property type? Select one from the list.${suf}`,
+        screen: `Which shortlet property type?${suf}`,
         speech: "Which shortlet property type?",
       };
     case "shortlet_guests":
       return {
-        screen: `How many guests? (format: 4)${suf}`,
+        screen: `How many guests?${suf}`,
         speech: "How many guests?",
       };
     case "travel_type":
       return {
-        screen: `What travel type? Select one: Solo, Couple, Family, Group, or Business.${suf}`,
+        screen: `What travel type?${suf}`,
         speech: "What is your travel type?",
       };
     case "check_in":
       return {
-        screen: `Check-in date? (format: YYYY-MM-DD)${suf}`,
+        screen: `Check-in date?${suf}`,
         speech: "What is your check-in date?",
       };
     case "check_out":
       return {
-        screen: `Check-out date? (format: YYYY-MM-DD)${suf}`,
+        screen: `Check-out date?${suf}`,
         speech: "What is your check-out date?",
       };
     case "jv_measurement_unit":
       return {
-        screen: `Land measurement unit for the JV site? plot, sqm, hectares, or acres? (format: acres)${suf}`,
+        screen: `Land measurement unit for the JV site? plot, sqm, hectares, or acres?${suf}`,
         speech: "What unit for the joint venture land size?",
       };
     case "jv_min_land_size":
       return {
-        screen: `Minimum land size you are looking for? (format: 2 acres or 1000 sqm)${suf}`,
+        screen: `Minimum land size you are looking for?${suf}`,
         speech: "What minimum land size are you looking for?",
       };
     case "jv_development_types":
       return {
-        screen: `What are you developing? Select all that apply, then tap Done.${suf}`,
+        screen: `What are you developing?${suf}`,
         speech: "What are you developing? You can choose more than one.",
       };
     case "jv_sharing_ratio":
       return {
-        screen: `Preferred profit or equity sharing ratio? (format: 60-40)${suf}`,
+        screen: `Preferred profit or equity sharing ratio?${suf}`,
         speech: "What sharing ratio do you prefer?",
       };
     case "jv_title_requirements":
       return {
-        screen: `Which title documents do you need? Select all that apply, then tap Done.${suf}`,
+        screen: `Which title documents do you need?${suf}`,
         speech: "Which title documents do you need? You can choose more than one.",
       };
     case "jv_company_name":
       return {
-        screen: `Company or developer name for this JV? (format: Acme Developers Ltd)${suf}`,
+        screen: `Company or developer name for this JV?${suf}`,
         speech: "What is your company or developer name?",
       };
     case "off_plan_completion_date":
       return {
-        screen: `Expected completion date for the off-plan property? (format: 2027-06-30)${suf}`,
+        screen: `Expected completion date for the off-plan property?${suf}`,
         speech: "When do you expect the property to be completed?",
       };
     case "off_plan_development_stage":
       return {
-        screen: `Current development stage? planning, foundation, structural, finishing, or near-completion. (format: foundation)${suf}`,
+        screen: `What is the current development stage?${suf}`,
         speech: "What development stage is the project at?",
       };
     case "off_plan_payment_plan":
       return {
-        screen: `Preferred payment plan? outright or installment over 6, 12, 18, 24, or 36 months. (format: 12 months installment)${suf}`,
+        screen: `Which payment plan do you prefer?${suf}`,
         speech: "Which payment plan do you prefer?",
       };
     case "features":
       return {
-        screen: `Which features do you want? Select all that apply from the list, then tap Done — or skip.${suf}`,
+        screen: `Which features do you want?${suf}`,
         speech: "Which features do you want? You can choose more than one.",
       };
     case "car_parks":
       return {
-        screen: `How many car parking spaces do you need? (format: 2) Say skip if you do not care.${suf}`,
+        screen: `How many car parking spaces do you need? Say skip if you do not care.${suf}`,
         speech: "How many car parking spaces?",
       };
     case "additional_notes":

@@ -20,6 +20,8 @@ export interface RequestToMarketListItem {
   marketingFeeNaira?: number;
   /** Agent commission amount (Naira) for display; use DEFAULT_AGENT_COMMISSION_DISPLAY_NAIRA if not returned. */
   agentCommissionAmount?: number;
+  /** Listing commission % snapshotted on the request. Applied at sale registration. */
+  agentCommissionPercent?: number;
   rejectedReason?: string;
   acceptedAt?: string | null;
   rejectedAt?: string;

@@ -5,69 +5,12 @@ export function fieldPromptLabel(field: string): string {
   return field.replace(/\s*\([^)]*\)\s*$/g, "").trim() || field;
 }
 
-function preferenceSample(focusLower: string): string {
-  const f = focusLower.toLowerCase().replace(/\u2013|\u2014/g, "-");
-  if (f.includes("preference type")) return "Buy";
-  if (f.includes("expected completion date")) return "2027-06-30";
-  if (f.includes("development stage") && f.includes("off-plan")) return "Foundation Stage";
-  if (f.includes("payment plan") && f.includes("off-plan")) return "12 Months Installment";
-  if (f.includes("preference location - state")) return "Lagos";
-  if (f.includes("preference location - lga")) return "Ikeja";
-  if (f.includes("preference location - area")) return "Lekki Phase 1";
-  if (f.includes("location state") || (f.includes("state") && f.includes("location"))) return "Lagos";
-  if (f.includes("lga") || f.includes("area name") || f.includes("at least one lga")) return "Ikeja";
-  if (f.includes("custom location")) return "e.g. Banana Island";
-  if (f.includes("min price")) return "15,000,000";
-  if (f.includes("max price") && f.includes("greater")) return "50,000,000";
-  if (f.includes("max price")) return "50,000,000";
-  if (f.includes("min price")) return "10,000,000";
-  if (f.includes("company name")) return "Acme Developers Ltd";
-  if (f.includes("full name") && !f.includes("contact person")) return "Jane Doe";
-  if (f.includes("contact person")) return "Jane Doe";
-  if (f.includes("email")) return "you@example.com";
-  if (f.includes("phone")) return "08012345678";
-  if (f.includes("check-in")) return "2025-08-01";
-  if (f.includes("check-out")) return "2025-08-10";
-  if (f.includes("maximum guests")) return "4";
-  if (f.includes("guests")) return "4";
-  if (f.includes("travel type")) return "family";
-  if (f.includes("bedroom")) return "3";
-  if (f.includes("bathroom") && f.includes("residential buy")) return "2";
-  if (f.includes("toilet") && f.includes("residential buy")) return "2";
-  if (f.includes("car park") && f.includes("residential buy")) return "1";
-  if (f.includes("bathroom")) return "2";
-  if (f.includes("property subtype")) return "residential";
-  if (f.includes("property type") && f.includes("shortlet")) return "Studio";
-  if (f.includes("property type")) return "residential";
-  if (f.includes("building type")) return "Duplex";
-  if (f.includes("property condition")) return "Good Condition";
-  if (f.includes("document type") || f.includes("document")) return "C of O";
-  if (f.includes("lease term")) return "1 Year";
-  if (f.includes("landmark")) return "near Shoprite";
-  if (f.includes("notes") || f.includes("special requirements")) return "need borehole";
-  if (f.includes("features") || f.includes("amenities")) return "parking, security";
-  if (f.includes("jv type")) return "Equity Split";
-  if (f.includes("development type")) return "Residential";
-  if (f.includes("sharing")) return "60-40";
-  if (f.includes("title")) return "C of O";
-  if (f.includes("land size") && f.includes("jv")) return "500";
-  if (f.includes("minimum land size") && f.includes("sqm")) return "450";
-  if (f.includes("maximum land size") && f.includes("sqm")) return "900";
-  if (f.includes("minimum land size")) return "500";
-  if (f.includes("maximum land size")) return "800";
-  if (f.includes("land size") && f.includes("single")) return "500";
-  if (f.includes("land measurement unit")) return "plot";
-  if (f.includes("measurement unit for land")) return "plot";
-  if (f.includes("measurement unit")) return "plot";
-  return "…";
-}
-
 function pickVariant<T>(choices: T[], variant: number): T {
   return choices[Math.abs(variant) % choices.length] ?? choices[0];
 }
 
 /**
- * One display line with (format: sample) and a separate speak line (no format clause, no emoji).
+ * One display line (the question only) and a separate speak line.
  */
 export function getPreferenceFieldPrompt(
   focus: string,
@@ -76,7 +19,6 @@ export function getPreferenceFieldPrompt(
 ): { displayLine: string; speakLine: string } {
   const f = focus.toLowerCase().replace(/\u2013|\u2014/g, "-");
   const pt = String(preferenceType || "").toLowerCase().replace(/\s+/g, "-");
-  const sample = preferenceSample(focus);
   const lab = fieldPromptLabel(focus);
 
   if (f.includes("preference type")) {
@@ -88,31 +30,17 @@ export function getPreferenceFieldPrompt(
       ],
       variant,
     );
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("expected completion date")) {
-    const speak = pickVariant(
-      [
-        "When do you expect the off-plan property to be completed? Use a date like year-month-day, for example 2027-06-30.",
-        "What is your expected completion date for this off-plan project?",
-        "By when should the property be ready? Enter a date, for example 2027-12-01.",
-      ],
-      variant,
-    );
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    const speak = "What is your expected completion date?";
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("development stage") && f.includes("off-plan")) {
-    const speak = pickVariant(
-      [
-        "What development stage is the project at now? For example planning, foundation, structural, finishing, or near completion.",
-        "Which stage best describes the build: planning, foundation, structural, finishing, or near completion?",
-        "Current development stage for this off-plan property?",
-      ],
-      variant,
-    );
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    const speak = "What is the current development stage?";
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("payment plan") && f.includes("off-plan")) {
@@ -124,27 +52,27 @@ export function getPreferenceFieldPrompt(
       ],
       variant,
     );
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("preference location - state")) {
     const speak = "Khabiteq is piloting in Lagos. Which Lagos local government area?";
-    return { displayLine: `${speak} (format: Ikeja)`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("preference location - lga")) {
     const speak = "Which Lagos local government area?";
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("preference location - area")) {
     const speak = "Which area or neighbourhood within that local government area?";
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("location state") || (f.includes("state") && f.includes("required") && f.includes("location"))) {
     const speak = "Khabiteq is piloting in Lagos. Which Lagos local government area?";
-    return { displayLine: `${speak} (format: Ikeja)`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (
@@ -163,88 +91,67 @@ export function getPreferenceFieldPrompt(
       ],
       variant,
     );
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("area name") || f.includes("custom location")) {
     const speak = pickVariant(["Which area or custom location?", "What area are you targeting?", "Name the area."], variant);
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("min price")) {
-    const speak = pickVariant(
-      [
-        "What is your minimum budget in Naira? Use comma-separated digits, for example 20,000,000.",
-        "Minimum price in Naira, comma-separated thousands.",
-        "What is your budget floor in Naira?",
-      ],
-      variant,
-    );
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    const speak = "What is your minimum budget in Naira?";
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("max price must")) {
-    const speak = pickVariant(
-      [
-        "Maximum must be higher than minimum. Enter maximum price in Naira with commas.",
-        "Enter a maximum above your minimum, comma-separated.",
-        "What upper budget in Naira, comma-separated?",
-      ],
-      variant,
-    );
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    const speak = "What is your maximum budget in Naira?";
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("max price")) {
-    const speak = pickVariant(
-      [
-        "What is your maximum budget in Naira? Use commas, for example 50,000,000.",
-        "Top of your budget in Naira, comma-separated.",
-        "What is your maximum price in Naira with comma thousands separators?",
-      ],
-      variant,
-    );
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    const speak = "What is your maximum budget in Naira?";
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("company name")) {
     const speak = pickVariant(["What's the company name?", "Company legal name?", "Which company is this for?"], variant);
-    return { displayLine: `${speak} (format: Acme Developers Ltd)`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("contact person")) {
     const speak = pickVariant(["Who is the contact person?", "Contact person's full name?", "Name of your representative?"], variant);
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("full name") && !f.includes("contact person")) {
     const speak = pickVariant(["What's your full name?", "Your name?", "How should we address you?"], variant);
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("email")) {
     const speak = pickVariant(["What's your email?", "Your email address?", "Best email to reach you?"], variant);
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("phone")) {
     const speak = pickVariant(["What's your phone number?", "A phone we can call?", "Your mobile number?"], variant);
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("contact email or phone")) {
     const speak = pickVariant(["Share an email or phone number.", "What's your email or phone?", "How can we contact you?"], variant);
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("check-in")) {
     const speak = pickVariant(["Check-in date?", "When do you want to check in?", "Arrival date?"], variant);
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("check-out")) {
     const speak = pickVariant(["Check-out date?", "Departure date?", "When are you leaving?"], variant);
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("maximum guests")) {
@@ -252,92 +159,62 @@ export function getPreferenceFieldPrompt(
       ["Maximum guests the unit should allow?", "How many guests maximum?", "Max guest capacity?"],
       variant,
     );
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("guests")) {
     const speak = pickVariant(["How many guests?", "Number of guests?", "Headcount?"], variant);
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
-  }
-
-  if (f.includes("travel type")) {
-    const speak = pickVariant(
-      [
-        "What travel type? Select one from the list.",
-        "Who is traveling? Solo, couple, family, group, or business?",
-        "Select a travel type.",
-      ],
-      variant,
-    );
     return { displayLine: speak, speakLine: speak };
   }
 
-  if (f.includes("bedroom")) {
-    const speak = pickVariant(["How many bedrooms?", "Bedroom count?", "Minimum bedrooms?"], variant);
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
-  }
-
-  if (f.includes("bathroom") && f.includes("shortlet")) {
-    const speak = pickVariant(["How many bathrooms?", "Bathroom count?", "Bathrooms needed?"], variant);
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
-  }
-
-  if (f.includes("bathroom") && f.includes("residential buy")) {
-    const speak = "How many bathrooms?";
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
-  }
-
-  if (f.includes("toilet")) {
-    const speak = pickVariant(
-      ["How many toilets?", "Number of toilets?", "Toilet count?"],
-      variant,
-    );
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
-  }
-
-  if (f.includes("car park") || f.includes("parking")) {
-    const speak = pickVariant(
-      ["How many car parking spaces?", "Number of car parks?", "Parking spaces needed?"],
-      variant,
-    );
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+  if (f.includes("travel type")) {
+    const speak = "What travel type?";
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("bathroom")) {
-    const speak = pickVariant(["How many bathrooms?", "Bathroom count?", "Bathrooms needed?"], variant);
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    const speak = "How many bathrooms?";
+    return { displayLine: speak, speakLine: speak };
+  }
+
+  if (f.includes("toilet")) {
+    const speak = "How many toilets?";
+    return { displayLine: speak, speakLine: speak };
+  }
+
+  if (f.includes("car park") || f.includes("parking")) {
+    const speak = "How many car parks?";
+    return { displayLine: speak, speakLine: speak };
+  }
+
+  if (f.includes("bedroom") && !f.includes("bathroom")) {
+    const speak = "How many bedrooms?";
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("property subtype")) {
     if (pt === "rent" || f.includes("self-con") || f.includes("flat")) {
       const speak = "Residential or commercial?";
-      return { displayLine: `${speak} (format: residential)`, speakLine: speak };
+      return { displayLine: speak, speakLine: speak };
     }
     const speak = "Land, residential, or commercial?";
-    return { displayLine: `${speak} (format: residential)`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("property type") && f.includes("shortlet")) {
-    const speak = pickVariant(
-      [
-        "Which shortlet property type? Select one from the list.",
-        "Studio, apartment, duplex, or bungalow?",
-        "Which unit type? Select one.",
-      ],
-      variant,
-    );
+    const speak = "Which shortlet property type?";
     return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("property type")) {
     const speak = pickVariant(["Which property type?", "What type of property?", "Land, residential, or commercial?"], variant);
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("land measurement unit")) {
     const speak =
       "Measurement unit for land size: plot, square metres, hectares, or acres?";
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("minimum land size") && f.includes("sqm")) {
@@ -349,7 +226,7 @@ export function getPreferenceFieldPrompt(
       ],
       variant,
     );
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("minimum land size") && f.includes("land requirements")) {
@@ -361,7 +238,7 @@ export function getPreferenceFieldPrompt(
       ],
       variant,
     );
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("maximum land size") && f.includes("buy")) {
@@ -373,12 +250,12 @@ export function getPreferenceFieldPrompt(
       ],
       variant,
     );
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("land size") && f.includes("single")) {
     const speak = pickVariant(["Total land size in that unit?", "Single land size amount?", "Land size number?"], variant);
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("building type")) {
@@ -392,57 +269,43 @@ export function getPreferenceFieldPrompt(
   }
 
   if (f.includes("document type") || (f.includes("document") && (f.includes("least") || f.includes("need")))) {
-    const speak = pickVariant(
-      [
-        "Which documents do you need? Select all that apply, then tap Done.",
-        "Select every title document you need, then tap Done.",
-        "Which documents? You can choose more than one, then tap Done.",
-      ],
-      variant,
-    );
+    const speak = "Which documents do you need?";
     return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("lease term")) {
     const speak = pickVariant(["Preferred lease term?", "Six months or one year?", "Lease length?"], variant);
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("landmark")) {
     const speak = pickVariant(["Any nearby landmark?", "Landmark nearby?", "What's nearby?"], variant);
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("features") || f.includes("amenities")) {
-    const speak = pickVariant(
-      [
-        "Which features do you want? Select all that apply from the list, then tap Done — or skip.",
-        "Select the features you want, then tap Done. You can choose more than one.",
-        "Which amenities matter? Select all that apply, then tap Done — or skip.",
-      ],
-      variant,
-    );
+    const speak = "Which features do you want?";
     return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("additional notes") || f.includes("special requirements")) {
     const speak = pickVariant(["Any extra notes?", "Special requirements?", "Anything else to add?"], variant);
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("land size") && f.includes("jv")) {
     const speak = pickVariant(["Land size amount?", "How large is the plot?", "Land size number?"], variant);
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("measurement unit for land")) {
     const speak = "Which unit for land size: plot, square metres, hectares, or acres?";
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("measurement unit")) {
     const speak = "Which measurement unit: plot, square metres, hectares, or acres?";
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("jv type")) {
@@ -454,35 +317,21 @@ export function getPreferenceFieldPrompt(
       ],
       variant,
     );
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("development type")) {
-    const speak = pickVariant(
-      [
-        "What are you developing? Select all that apply, then tap Done.",
-        "Select development types: residential, commercial, mixed-use, or industrial.",
-        "Which development types? You can choose more than one, then tap Done.",
-      ],
-      variant,
-    );
+    const speak = "What are you developing?";
     return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("preferred sharing") || f.includes("sharing ratio")) {
-    const speak = pickVariant(["Preferred profit split?", "Sharing ratio?", "Example sixty-forty?"], variant);
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    const speak = "What sharing ratio do you prefer?";
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("minimum title") || f.includes("title requirement") || f.includes("title document")) {
-    const speak = pickVariant(
-      [
-        "Which title documents do you need? Select all that apply, then tap Done.",
-        "Select every title document required, then tap Done.",
-        "Which title documents? You can choose more than one, then tap Done.",
-      ],
-      variant,
-    );
+    const speak = "Which title documents do you need?";
     return { displayLine: speak, speakLine: speak };
   }
 
@@ -495,29 +344,7 @@ export function getPreferenceFieldPrompt(
     ],
     variant,
   );
-  return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
-}
-
-function propertySample(focusLower: string): string {
-  const f = focusLower;
-  if (f.includes("property type") && (f.includes("sale") || f.includes("listing") || f.includes("start"))) return "Sale";
-  if (f.includes("category")) return "Residential";
-  if (f.includes("location") && f.includes("state")) return "Lagos, Lekki, Ikeja";
-  if (f.includes("lga") || f.includes("local government")) return "Ikeja";
-  if (f.includes("price")) return "85,000,000";
-  if (f.includes("description")) return "3-bed with BQ";
-  if (f.includes("bedroom")) return "3";
-  if (f.includes("bathroom") && f.includes("toilet")) return "3 baths, 3 toilets";
-  if (f.includes("bathroom")) return "3";
-  if (f.includes("toilet")) return "3";
-  if (f.includes("condition")) return "new";
-  if (f.includes("building")) return "duplex";
-  if (f.includes("parking")) return "2";
-  if (f.includes("document") || f.includes("title")) return "C of O";
-  if (f.includes("measurement type")) return "Square Meter";
-  if (f.includes("land size")) return "450";
-  if (f.includes("features")) return "generator, water";
-  return "…";
+  return { displayLine: speak, speakLine: speak };
 }
 
 export function getPropertyFieldPrompt(
@@ -525,7 +352,6 @@ export function getPropertyFieldPrompt(
   variant: number,
 ): { displayLine: string; speakLine: string } {
   const f = focus.toLowerCase();
-  const sample = propertySample(f);
   const lab = fieldPromptLabel(focus);
 
   if (f.includes("property type") && (f.includes("sale") || f.includes("listing") || f.includes("start"))) {
@@ -537,12 +363,12 @@ export function getPropertyFieldPrompt(
       ],
       variant,
     );
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("category")) {
     const speak = pickVariant(["Residential, commercial, or land?", "Property category?", "Which category?"], variant);
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("location") && f.includes("state")) {
@@ -550,7 +376,7 @@ export function getPropertyFieldPrompt(
       ["Which Lagos local government area and neighbourhood?", "Where in Lagos is it?", "Name the Lagos LGA and area."],
       variant,
     );
-    return { displayLine: `${speak} (format: Ikeja, GRA)`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("lga") || f.includes("local government")) {
@@ -558,24 +384,17 @@ export function getPropertyFieldPrompt(
       ["Which local government area?", "Local government area name?", "Name the local government area."],
       variant,
     );
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("price")) {
-    const speak = pickVariant(
-      [
-        "Price in Naira with commas, for example 85,000,000?",
-        "Asking price in Naira, comma-separated digits?",
-        "How much in Naira? Use comma thousands separators.",
-      ],
-      variant,
-    );
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    const speak = "What is the price in Naira?";
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("description")) {
     const speak = pickVariant(["Short description?", "Describe the property.", "One-line summary?"], variant);
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("bedroom") && f.includes("bathroom") && f.includes("toilet")) {
@@ -587,37 +406,37 @@ export function getPropertyFieldPrompt(
       ],
       variant,
     );
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("bathroom") && f.includes("toilet")) {
     const speak = pickVariant(["How many bathrooms and toilets?", "Bath and toilet counts?", "Bathrooms and toilets?"], variant);
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("bathroom")) {
     const speak = pickVariant(["How many bathrooms?", "Bathroom count?", "Bathrooms?"], variant);
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("toilet")) {
     const speak = pickVariant(["How many toilets?", "Toilet count?", "Toilets?"], variant);
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("bedroom")) {
     const speak = pickVariant(["How many bedrooms?", "Bedroom count?", "Bedrooms?"], variant);
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("condition")) {
     const speak = pickVariant(["Property condition?", "New or used?", "Condition?"], variant);
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("building")) {
     const speak = pickVariant(["Type of building?", "Flat or duplex?", "Building type?"], variant);
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("parking")) {
@@ -629,38 +448,38 @@ export function getPropertyFieldPrompt(
       ],
       variant,
     );
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("document") || f.includes("title")) {
     const speak = pickVariant(["Which title documents?", "Documents on the property?", "List documents."], variant);
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("land size")) {
     const speak = pickVariant(
       [
-        "Land size: give the measurement unit and numeric size, e.g. 500 Square Meter or 2 Acres.",
-        "What is the land size and unit (Plot, Acres, Square Meter)?",
+        "What is the land size?",
+        "What is the land size and unit?",
         "Land size with unit?",
       ],
       variant,
     );
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("measurement type")) {
     const speak = pickVariant(["Land measured in what unit?", "Measurement type?", "Plot or square metres?"], variant);
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   if (f.includes("features")) {
     const speak = pickVariant(["Key features?", "List main features.", "What features?"], variant);
-    return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+    return { displayLine: speak, speakLine: speak };
   }
 
   const speak = pickVariant([`What ${lab}?`, `Which ${lab}?`, `Tell me the ${lab}.`, `Could you share ${lab}?`], variant);
-  return { displayLine: `${speak} (format: ${sample})`, speakLine: speak };
+  return { displayLine: speak, speakLine: speak };
 }
 
 export function preferenceAllDonePrompt(): { displayLine: string; speakLine: string } {

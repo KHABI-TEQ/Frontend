@@ -26,8 +26,9 @@ import { GET_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import Cookies from "js-cookie";
 import {
-  FLEXIBLE_AGENT_COMMISSION_PERCENT_MAX,
-  mandatoryAgentCommissionPercent,
+  defaultAgentCommissionPercent,
+  listingCommissionCap,
+  publisherCommissionPercentMin,
 } from "@/utils/listingCommission";
 
 
@@ -125,36 +126,31 @@ const Step4OwnershipDeclaration: React.FC<StepProps> = () => {
   const hasAgentCommission = ["sell", "off-plan", "rent", "jv", "shortlet"].includes(
     propertyData.propertyType,
   );
-  const mandatoryCommissionPercent = mandatoryAgentCommissionPercent(
+  const publisherType = user?.userType === "Developer" ? "Developer" : "Landowners";
+  const commissionMin = publisherCommissionPercentMin(publisherType);
+  const commissionMax = listingCommissionCap(propertyData.propertyType);
+  const defaultCommissionPercent = defaultAgentCommissionPercent(
     propertyData.propertyType,
   );
   const displayCommissionPercent =
-    mandatoryCommissionPercent ??
-    propertyData.agentCommissionPercent ??
-    FLEXIBLE_AGENT_COMMISSION_PERCENT_MAX;
+    propertyData.agentCommissionPercent ?? defaultCommissionPercent;
 
   useEffect(() => {
     if (!hasAgentCommission || (userType !== "landowner" && userType !== "developer")) {
       return;
     }
-    const next =
-      mandatoryCommissionPercent ?? FLEXIBLE_AGENT_COMMISSION_PERCENT_MAX;
-    if (propertyData.agentCommissionPercent !== next) {
-      if (mandatoryCommissionPercent != null) {
-        updatePropertyData("agentCommissionPercent", next);
-      } else if (
-        propertyData.agentCommissionPercent === undefined ||
-        propertyData.agentCommissionPercent === null
-      ) {
-        updatePropertyData("agentCommissionPercent", next);
-      }
+    if (
+      propertyData.agentCommissionPercent === undefined ||
+      propertyData.agentCommissionPercent === null
+    ) {
+      updatePropertyData("agentCommissionPercent", defaultCommissionPercent);
     }
   }, [
     propertyData.propertyType,
     userType,
     propertyData.agentCommissionPercent,
     hasAgentCommission,
-    mandatoryCommissionPercent,
+    defaultCommissionPercent,
     updatePropertyData,
   ]);
 
@@ -428,57 +424,42 @@ const Step4OwnershipDeclaration: React.FC<StepProps> = () => {
               </div>
             </div>
 
-            {/* Standard agent commission (Sale/off-plan 5%, rent 10%; JV/shortlet optional) */}
             {hasAgentCommission &&
               (userType === "landowner" || userType === "developer") && (
               <div className="bg-[#F8F9FA] border border-[#DEE2E6] rounded-lg p-4 mb-4">
                 <h4 className="font-semibold text-[#09391C] mb-2">
-                  Standard agent commission (payable to the Agent)
+                  Agent commission (payable to the Agent)
                 </h4>
-                {mandatoryCommissionPercent != null || userType === "landowner" ? (
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-[#5A5D63]">
+                    Commission % of {getPriceLabel(propertyData.propertyType)} (default{" "}
+                    {defaultCommissionPercent}%, you may reduce to {commissionMin}%)
+                  </label>
+                  <input
+                    type="number"
+                    min={commissionMin}
+                    max={commissionMax}
+                    step={0.5}
+                    value={displayCommissionPercent}
+                    onChange={(e) => {
+                      const raw = parseFloat(e.target.value);
+                      const clamped = Number.isNaN(raw)
+                        ? defaultCommissionPercent
+                        : Math.min(commissionMax, Math.max(commissionMin, raw));
+                      handleFieldChange("agentCommissionPercent", clamped);
+                    }}
+                    className="w-full max-w-[120px] p-2 border border-[#C7CAD0] rounded-md focus:ring-2 focus:ring-[#8DDB90] focus:border-[#8DDB90] text-[14px]"
+                  />
                   <p className="text-sm text-[#5A5D63]">
-                    Fixed at {displayCommissionPercent}% of{" "}
-                    {getPriceLabel(propertyData.propertyType)} ={" "}
+                    {displayCommissionPercent}% ={" "}
                     {formatPriceForDisplay(
                       (extractNumericValue(propertyData.price) *
                         displayCommissionPercent) /
                         100
-                    )}
+                    )}{" "}
+                    payable to the Agent. This listing rate is used when the transaction is registered.
                   </p>
-                ) : (
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-[#5A5D63]">
-                      Agent commission % (max {FLEXIBLE_AGENT_COMMISSION_PERCENT_MAX}%, you may set lower)
-                    </label>
-                    <input
-                      type="number"
-                      min={0}
-                      max={FLEXIBLE_AGENT_COMMISSION_PERCENT_MAX}
-                      step={0.5}
-                      value={displayCommissionPercent}
-                      onChange={(e) => {
-                        const raw = parseFloat(e.target.value);
-                        const clamped = Number.isNaN(raw)
-                          ? FLEXIBLE_AGENT_COMMISSION_PERCENT_MAX
-                          : Math.min(
-                              FLEXIBLE_AGENT_COMMISSION_PERCENT_MAX,
-                              Math.max(0, raw)
-                            );
-                        handleFieldChange("agentCommissionPercent", clamped);
-                      }}
-                      className="w-full max-w-[120px] p-2 border border-[#C7CAD0] rounded-md focus:ring-2 focus:ring-[#8DDB90] focus:border-[#8DDB90] text-[14px]"
-                    />
-                    <p className="text-sm text-[#5A5D63]">
-                      ={" "}
-                      {formatPriceForDisplay(
-                        (extractNumericValue(propertyData.price) *
-                          displayCommissionPercent) /
-                          100
-                      )}{" "}
-                      payable to the Agent
-                    </p>
-                  </div>
-                )}
+                </div>
               </div>
             )}
 

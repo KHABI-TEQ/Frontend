@@ -627,6 +627,7 @@ const SharedUpdatePropertyForm: React.FC<SharedUpdatePropertyFormProps> = ({
             propertyData.propertyType,
             extractNumericValue(propertyData.price),
             propertyData.agentCommissionPercent,
+            user?.userType,
           )
         : {};
 

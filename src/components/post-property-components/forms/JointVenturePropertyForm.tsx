@@ -411,6 +411,7 @@ const JointVenturePropertyForm: React.FC<JointVenturePropertyFormProps> = ({
           "jv",
           extractNumericValue(propertyData.price),
           propertyData.agentCommissionPercent,
+          user?.userType,
         ),
       };
 

@@ -570,6 +570,7 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
             propertyData.propertyType,
             extractNumericValue(propertyData.price),
             propertyData.agentCommissionPercent,
+            user?.userType,
           )
         : {};
 

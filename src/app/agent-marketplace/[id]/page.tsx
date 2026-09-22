@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 import Loading from '@/components/loading-component/loading';
 import Cookies from 'js-cookie';
 import MarketplacePreferenceReview from '@/components/agent-marketplace/MarketplacePreferenceReview';
+import InsuredPreferenceTag from '@/components/agent-marketplace/InsuredPreferenceTag';
 
 interface Buyer {
   _id: string;
@@ -97,6 +98,8 @@ interface Preference {
   nearbyLandmark?: string;
   additionalNotes?: string;
   receiverMode?: ReceiverMode;
+  searchInsurance?: { optedIn?: boolean; status?: string };
+  isSearchInsured?: boolean;
 }
 
 interface ApiResponse {
@@ -246,7 +249,10 @@ const PreferenceDetailPage = () => {
              preference.preferenceType === 'shortlet' ? 'Shortlet' :
              preference.preferenceType} Preference Details
           </h1>
-          <p className="text-gray-600 text-sm md:text-base">Complete buyer preference information</p>
+          <div className="flex items-center justify-center gap-2">
+            <p className="text-gray-600 text-sm md:text-base">Complete buyer preference information</p>
+            <InsuredPreferenceTag searchInsurance={preference.searchInsurance} />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
@@ -285,6 +291,13 @@ const PreferenceDetailPage = () => {
                     {preference.status}
                   </span>
                 </div>
+
+                {preference.searchInsurance?.optedIn ? (
+                  <div className="flex items-center space-x-2">
+                    <span className="text-gray-600">Search insurance:</span>
+                    <InsuredPreferenceTag searchInsurance={preference.searchInsurance} />
+                  </div>
+                ) : null}
               </div>
             </div>
 

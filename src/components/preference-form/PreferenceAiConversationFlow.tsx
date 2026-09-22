@@ -191,27 +191,21 @@ function buildLocationPagedReply(
   },
   label: string,
   allOptions: string[],
-  offset = 0,
+  _offset = 0,
 ) {
-  const start = Math.max(0, offset);
   const page = allOptions;
   const hasMore = false;
   const isAreaLabel = label.toLowerCase().includes("areas in ");
-  const range = page.length > 0 ? `${start + 1}-${start + page.length}` : "0";
   return {
     ...baseReply,
-    content: `${baseReply.content}\n\nAvailable ${label}:\n${page.join(", ")}${
-      hasMore
-        ? `\n\nShowing ${range} of ${allOptions.length}.`
-        : ""
-    }${isAreaLabel ? `\n\nYou can select multiple areas, then tap "${DONE_SELECTING_AREAS}".` : ""}`,
+    content: baseReply.content,
     quickOptions: [
       ...page,
       ...(hasMore ? [SHOW_MORE_LOCATION_OPTIONS] : []),
       ...(isAreaLabel ? [DONE_SELECTING_AREAS] : []),
     ],
     locationAllOptions: allOptions,
-    locationOptionsOffset: start,
+    locationOptionsOffset: 0,
     locationOptionsLabel: label,
   };
 }
@@ -294,20 +288,50 @@ function getPreferenceFeatureLabels(data: Record<string, unknown>): string[] {
   ];
 }
 
+function featureSubtypeBucket(raw: string): "land" | "residential" | "commercial" {
+  const s = raw.toLowerCase();
+  if (s.includes("land") || s.includes("plot")) return "land";
+  if (
+    s.includes("commercial") ||
+    s.includes("office") ||
+    s.includes("shop") ||
+    s.includes("warehouse") ||
+    s.includes("industrial")
+  ) {
+    return "commercial";
+  }
+  return "residential";
+}
+
 function getPreferenceFeatureConfig(data: Record<string, unknown>) {
   const type = normalizedPreferenceType(data);
-  const subtype = getPropertySubtype(data.propertyDetails as Record<string, unknown> | undefined) || "residential";
-  const key = type === "shortlet" ? "shortlet" : `${type}-${subtype}`;
-  let config = FEATURE_CONFIGS[key];
-  const empty =
-    !config ||
-    ((config.basic || []).length === 0 &&
-      (config.premium || []).length === 0 &&
-      ((config.comfort || []).length === 0));
-  if (empty && type === "joint-venture") {
-    config = FEATURE_CONFIGS["joint-venture-residential"];
+  const subtype = featureSubtypeBucket(
+    getPropertySubtype(data.propertyDetails as Record<string, unknown> | undefined) || "residential",
+  );
+  const candidates: string[] = [];
+  if (type === "shortlet") candidates.push("shortlet");
+  else if (type === "off-plan") {
+    candidates.push(`buy-${subtype === "land" ? "residential" : subtype}`, "buy-residential");
+  } else if (type === "joint-venture") {
+    candidates.push(
+      `joint-venture-${subtype === "land" ? "residential" : subtype}`,
+      "joint-venture-residential",
+    );
+  } else {
+    candidates.push(`${type}-${subtype}`, `${type}-residential`, "buy-residential");
   }
-  return config;
+  for (const key of candidates) {
+    const config = FEATURE_CONFIGS[key];
+    if (
+      config &&
+      ((config.basic || []).length > 0 ||
+        (config.premium || []).length > 0 ||
+        (config.comfort || []).length > 0)
+    ) {
+      return config;
+    }
+  }
+  return FEATURE_CONFIGS["buy-residential"];
 }
 
 function classifyPreferenceFeatures(
@@ -449,14 +473,16 @@ function withPreferenceChoiceQuickOptions<T extends { quickOptions?: string[] }>
       quickOptions: [...PREFERENCE_DOCUMENT_TYPE_LABELS, DONE_SELECTING_DOCUMENTS],
     };
   }
-  if (focus.includes("key features") || (focus.includes("features") && focus.includes("amenities"))) {
+  if (
+    focus === "features" ||
+    focus.includes("key features") ||
+    (focus.includes("features") && focus.includes("amenities"))
+  ) {
     const labels = getPreferenceFeatureLabels(data);
-    if (labels.length > 0) {
-      return {
-        ...reply,
-        quickOptions: [...labels, DONE_SELECTING_FEATURES, SKIP_FEATURES_OPTION],
-      };
-    }
+    return {
+      ...reply,
+      quickOptions: [...labels, DONE_SELECTING_FEATURES, SKIP_FEATURES_OPTION],
+    };
   }
   return withPreferenceOffPlanQuickOptions(reply, data);
 }
@@ -903,7 +929,10 @@ function applyPreferenceBedroomsFromFocusedAnswer(
 ): Record<string, unknown> {
   if (!focusedField || !trimmed) return data;
   const f = normalizePreferenceFieldKey(focusedField);
-  if (!f.includes("number of bedrooms")) return data;
+  const isBedroomFocus =
+    f.includes("number of bedrooms") ||
+    (f.includes("bedroom") && !f.includes("bathroom") && !f.includes("toilet") && !f.includes("car park"));
+  if (!isBedroomFocus) return data;
 
   const pd = { ...((data.propertyDetails || {}) as Record<string, unknown>) };
   if (/\bmore\b/i.test(trimmed)) {
@@ -928,7 +957,7 @@ function applyPreferenceBuyResidentialCountFromFocusedAnswer(
   if (type !== "shortlet" && getPropertySubtype(pd) === "land") return data;
 
   const f = normalizePreferenceFieldKey(focusedField);
-  if (f.includes("bathroom") && !f.includes("bedroom")) {
+  if (f.includes("number of bathrooms") || (f.includes("bathroom") && !f.includes("number of bedrooms"))) {
     const b = parseBuyBathroomChoiceFromUserText(trimmed);
     if (b) return { ...data, propertyDetails: { ...pd, bathrooms: b } };
   }
@@ -1677,11 +1706,11 @@ function getMissingFieldsFromPreferenceData(data: Record<string, unknown>): stri
             if (!bedroomsPresent(pd)) {
               missing.push("number of bedrooms (required for buy — same as form)");
             } else if (!bathroomsAnswered(pd)) {
-              missing.push("number of bathrooms (required for buy — after bedrooms)");
+              missing.push("number of bathrooms (required for buy — same as form)");
             } else if (!toiletsAnswered(pdr)) {
-              missing.push("number of toilets (required for buy — after bathrooms)");
+              missing.push("number of toilets (required for buy — same as form)");
             } else if (!carParksAnswered(pdr)) {
-              missing.push("number of car parks (required for buy — after toilets)");
+              missing.push("number of car parks (required for buy — same as form)");
             }
           }
         }
@@ -1719,11 +1748,11 @@ function getMissingFieldsFromPreferenceData(data: Record<string, unknown>): stri
             if (!bedroomsPresent(pd)) {
               missing.push("number of bedrooms (required for residential off-plan — same as form)");
             } else if (!bathroomsAnswered(pd)) {
-              missing.push("number of bathrooms (required for off-plan — after bedrooms)");
+              missing.push("number of bathrooms (required for off-plan — same as form)");
             } else if (!toiletsAnswered(pdr)) {
-              missing.push("number of toilets (required for off-plan — after bathrooms)");
+              missing.push("number of toilets (required for off-plan — same as form)");
             } else if (!carParksAnswered(pdr)) {
-              missing.push("number of car parks (required for off-plan — after toilets)");
+              missing.push("number of car parks (required for off-plan — same as form)");
             }
           }
         }
@@ -1758,11 +1787,11 @@ function getMissingFieldsFromPreferenceData(data: Record<string, unknown>): stri
             if (!bedroomsPresent(pd)) {
               missing.push("number of bedrooms (required for residential rent — same as form)");
             } else if (!bathroomsAnswered(pd)) {
-              missing.push("number of bathrooms (required for residential rent — after bedrooms)");
+              missing.push("number of bathrooms (required for residential rent — same as form)");
             } else if (!toiletsAnswered(pdr)) {
-              missing.push("number of toilets (required for residential rent — after bathrooms)");
+              missing.push("number of toilets (required for residential rent — same as form)");
             } else if (!carParksAnswered(pdr)) {
-              missing.push("number of car parks (required for residential rent — after toilets)");
+              missing.push("number of car parks (required for residential rent — same as form)");
             }
           }
         }
@@ -1781,11 +1810,11 @@ function getMissingFieldsFromPreferenceData(data: Record<string, unknown>): stri
         if (!bedroomsPresent(pd)) {
           missing.push("number of bedrooms (required for shortlet — same as form)");
         } else if (!bathroomsAnswered(pd)) {
-          missing.push("number of bathrooms (required for shortlet — after bedrooms)");
+          missing.push("number of bathrooms (required for shortlet — same as form)");
         } else if (!toiletsAnswered((pd || {}) as Record<string, unknown>)) {
-          missing.push("number of toilets (required for shortlet — after bathrooms)");
+          missing.push("number of toilets (required for shortlet — same as form)");
         } else if (!carParksAnswered((pd || {}) as Record<string, unknown>)) {
-          missing.push("number of car parks (required for shortlet — after toilets)");
+          missing.push("number of car parks (required for shortlet — same as form)");
         } else if (!shortletMaxGuestsPresent(pd, bd)) {
           missing.push("maximum guests (required for shortlet — same as max guests on Property details & Budget)");
         }
@@ -1975,6 +2004,7 @@ export default function PreferenceAiConversationFlow() {
   const prevMessageCountRef = useRef(0);
   const conversationScrollRef = useRef<HTMLDivElement | null>(null);
   const newestChipsRef = useRef<HTMLDivElement | null>(null);
+  const contactFormRef = useRef<HTMLDivElement | null>(null);
   const { speak, stop, speaking } = useSpeechSynthesis({ lang: "en-NG", rate: 0.95 });
 
   /** Budget min/max steps: format amounts with commas; send digits-only to the flow / backend. */
@@ -2944,6 +2974,23 @@ export default function PreferenceAiConversationFlow() {
     setManualPhone(String(c?.phoneNumber || "").trim());
   }, [preferenceAiFlowStep, preferenceAiCollectedData]);
 
+  useLayoutEffect(() => {
+    if (preferenceAiFlowStep !== "contactConfirm") return;
+    const el = contactFormRef.current;
+    if (!el) return;
+    const alignToForm = () => {
+      const headerOffset = 120;
+      const top = window.scrollY + el.getBoundingClientRect().top - headerOffset;
+      window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    };
+    const frame = window.requestAnimationFrame(alignToForm);
+    const timer = window.setTimeout(alignToForm, 80);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(timer);
+    };
+  }, [preferenceAiFlowStep]);
+
   const handleContactConfirmContinue = useCallback(() => {
     const name = manualFullName.trim();
     const email = manualEmail.trim();
@@ -3057,7 +3104,7 @@ export default function PreferenceAiConversationFlow() {
     const type = String(preferenceAiCollectedData?.preferenceType || "").toLowerCase();
     const nameLabel = type === "joint-venture" ? "Contact person name" : "Your full name";
     return (
-      <div className="space-y-4">
+      <div ref={contactFormRef} className="space-y-4">
         <button
           type="button"
           onClick={() => setPreferenceAiFlowStep("conversation")}
@@ -3368,20 +3415,38 @@ export default function PreferenceAiConversationFlow() {
                 }`}
               >
                 {msg.role === "assistant" &&
-                (msg as { focusedMissingField?: string }).focusedMissingField ? (
+                ((msg as { focusedMissingField?: string }).focusedMissingField ||
+                  (i === preferenceAiMessages.length - 1 &&
+                    /which features do you want/i.test(msg.content))) ? (
                   <>
                     <p className="mb-2 whitespace-pre-line">{msg.content}</p>
-                    {(msg as { quickOptions?: string[] }).quickOptions &&
-                    (msg as { quickOptions?: string[] }).quickOptions!.length > 0 ? (
+                    {(() => {
+                      const stored = (msg as { quickOptions?: string[] }).quickOptions || [];
+                      const focus = normalizePreferenceFieldKey(
+                        (msg as { focusedMissingField?: string }).focusedMissingField || "",
+                      );
+                      const needsFeatureChips =
+                        stored.length === 0 &&
+                        i === preferenceAiMessages.length - 1 &&
+                        (focus.includes("key features") ||
+                          (focus.includes("features") && focus.includes("amenities")) ||
+                          /which features do you want/i.test(msg.content));
+                      const chipOptions = needsFeatureChips
+                        ? [
+                            ...getPreferenceFeatureLabels(
+                              (preferenceAiCollectedData || {}) as Record<string, unknown>,
+                            ),
+                            DONE_SELECTING_FEATURES,
+                            SKIP_FEATURES_OPTION,
+                          ]
+                        : stored;
+                      return chipOptions.length > 0 ? (
                       <div
                         ref={i === preferenceAiMessages.length - 1 ? newestChipsRef : null}
                         className="mb-2"
                       >
-                        <p className="mb-1 text-[11px] font-medium text-[#5A5D63]">
-                          Tap to choose
-                        </p>
                         <div className="flex flex-wrap gap-2">
-                        {(msg as { quickOptions?: string[] }).quickOptions!.map((option) => (
+                        {chipOptions.map((option) => (
                           <button
                             key={option}
                             type="button"
@@ -3411,7 +3476,8 @@ export default function PreferenceAiConversationFlow() {
                         ))}
                         </div>
                       </div>
-                    ) : null}
+                    ) : null;
+                    })()}
                     {(msg as { remainingMissingCount?: number }).remainingMissingCount ? (
                       <p className="text-xs text-[#5A5D63] mt-2 pt-2 border-t border-gray-200">
                         {(msg as { remainingMissingCount: number }).remainingMissingCount} more after this.

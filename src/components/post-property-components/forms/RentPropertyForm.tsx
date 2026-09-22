@@ -402,6 +402,7 @@ const RentPropertyForm: React.FC<RentPropertyFormProps> = ({
           "rent",
           extractNumericValue(propertyData.price),
           propertyData.agentCommissionPercent,
+          user?.userType,
         ),
         // Rent specific fields
         rentalConditions: propertyData.rentalConditions,

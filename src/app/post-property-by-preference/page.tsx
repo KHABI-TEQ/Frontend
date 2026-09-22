@@ -728,6 +728,7 @@ const PostPropertyByPreference = () => {
             propertyData.propertyType,
             extractNumericValue(propertyData.price),
             propertyData.agentCommissionPercent,
+            user?.userType,
           )
         : {};
 

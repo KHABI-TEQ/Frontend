@@ -37,6 +37,8 @@ export interface LasreraMarketplaceProperty {
   currentUserHasRequested?: boolean;
   /** Agent commission amount (Naira) for this property; shown to Agents before requesting to market. */
   agentCommissionAmount?: number;
+  /** Listing commission % set by the publisher. */
+  agentCommissionPercent?: number;
 }
 
 export const lasreraMarketplaceService = {

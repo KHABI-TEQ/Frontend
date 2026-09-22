@@ -418,6 +418,7 @@ const ShortletPropertyForm: React.FC<ShortletPropertyFormProps> = ({
           "shortlet",
           extractNumericValue(propertyData.price),
           propertyData.agentCommissionPercent,
+          user?.userType,
         ),
         // Shortlet specific fields
         availability: propertyData.availability

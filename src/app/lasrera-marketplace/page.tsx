@@ -319,7 +319,11 @@ export default function LasreraMarketplacePage() {
                         </p>
                       )}
                       <p className="text-sm font-medium text-[#09391C] mb-2">
-                        Agent commission: ₦{typeof prop.agentCommissionAmount === "number" ? prop.agentCommissionAmount.toLocaleString() : "0"}
+                        Agent commission
+                        {typeof prop.agentCommissionPercent === "number"
+                          ? ` (${prop.agentCommissionPercent}%)`
+                          : ""}
+                        : ₦{typeof prop.agentCommissionAmount === "number" ? prop.agentCommissionAmount.toLocaleString() : "0"}
                       </p>
                       {isAgent ? (
                         prop.currentUserHasRequested ? (

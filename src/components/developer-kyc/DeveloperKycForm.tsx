@@ -188,7 +188,7 @@ export default function DeveloperKycForm() {
   }
 
   return (
-    <div className="min-h-screen bg-[#EEF1F1] py-8 px-4">
+    <div className="min-h-dvh w-full bg-[#EEF1F1] pt-24 pb-28 px-4 overflow-x-hidden overflow-y-visible">
       <ProcessingRequest isVisible={isSubmitting} title="Saving" message="Submitting your developer details..." />
       <div className="max-w-3xl mx-auto">
         <Link href="/dashboard" className="text-sm text-[#09391C] hover:underline">
@@ -273,7 +273,7 @@ export default function DeveloperKycForm() {
 
           <div>
             <label className="block text-sm font-medium text-[#09391C] mb-2">Lagos LGAs of operation</label>
-            <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
+            <div className="flex flex-wrap gap-2">
               {regionOptions.map((region) => (
                 <button
                   key={region}

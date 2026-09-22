@@ -407,7 +407,7 @@ To record the sale and optional proof of payment to the Agent, the Publisher mus
 
 ### 4.3.1 Register sale (Publisher only) — no in-app payment link
 
-After the Publisher has accepted a request and the property is sold, they register the **actual sale price** and (for Developer) the **commission percentage**. The backend computes the agent commission. **Payment to the Agent is made outside the app** (e.g. bank transfer, cash); the Publisher may optionally upload a **receipt** (proof of payment) so that admin can verify the developer/landlord has paid the Agent.
+After the Publisher has accepted a request and the property is sold, they register the **actual sale price**. The backend applies the **commission percentage set on the listing** (not a fixed 5%). **Payment to the Agent is made outside the app** (e.g. bank transfer, cash); the Publisher may optionally upload a **receipt** (proof of payment) so that admin can verify the developer/landlord has paid the Agent.
 
 **Endpoint:** `POST /account/request-to-market/:requestId/register-sale`  
 **Auth:** Bearer token (must be the Publisher of the property).
@@ -417,8 +417,9 @@ After the Publisher has accepted a request and the property is sold, they regist
 | Field                  | Type   | Required | Description |
 |------------------------|--------|----------|-------------|
 | actualSalePriceNaira   | number | Yes      | Actual price in Naira at which the property was sold. |
-| commissionPercent      | number | For Developer only | Commission percentage (1–5). **Landlord:** always 5% (omit or ignored). **Developer:** required, 1–5. |
 | commissionReceiptUrl   | string | No       | Optional. URL of uploaded receipt/proof of payment (e.g. from your upload endpoint). Used for admin verification that the Publisher paid the Agent. |
+
+The listing commission rate is used automatically: default 5% sale / 10% rent. Landlords may have reduced it to as low as **3%**; developers to as low as **1%**. Do not send a different `commissionPercent`.
 
 **Receipt upload flow:** If the frontend supports receipt upload, first call your file upload endpoint (e.g. `POST /upload-single-file` with `file` and optionally `for: "default"` or a dedicated type), then send the returned URL in **`commissionReceiptUrl`** when calling register-sale.
 
@@ -448,7 +449,7 @@ After the Publisher has accepted a request and the property is sold, they regist
 
 **Errors:**
 
-- 400 — `actualSalePriceNaira` missing/invalid; or (Developer) `commissionPercent` missing or not 1–5; or sale already registered for this request.
+- 400 — `actualSalePriceNaira` missing/invalid; or sale already registered for this request.
 - 403 — Only the property publisher can register the sale.
 - 404 — Request not found.
 
@@ -553,7 +554,7 @@ When the property is sold, the Publisher registers the actual sale in the app. *
 2. **On click:** open a **modal** (sale registration form).
 3. **Form fields:**
    - **Actual sale price (Naira)** — number, required. Label e.g. “Actual price at which the property was sold (₦)”.
-   - **Commission %** — only if user is **Developer**: number 1–5, required. If user is **Landlord**, do not show this field (backend uses 5%).
+   - **Commission %** — read-only. Show the listing rate from `agentCommissionPercent` (default 5% sale / 10% rent; landlords may have reduced to 3% min, developers to 1% min). Preview: actual price × listing %.
    - **Receipt (proof of payment)** — optional. File upload; after upload use the returned URL as `commissionReceiptUrl` in API 3. Lets admin confirm the Publisher has paid the Agent.
 4. **Modal actions:** “Cancel” (close modal), **“Submit”** (submit registration).
 5. **On Submit:** call **API 3** with the form values and the request’s `_id`.
@@ -572,8 +573,9 @@ Use the request’s **`_id`** as **`requestId`** in the URL.
 | Field                | Type   | Required | Description |
 |----------------------|--------|----------|-------------|
 | actualSalePriceNaira | number | Yes      | Actual price in Naira at which the property was sold. |
-| commissionPercent    | number | Developer only | 1–5. **Landlord:** omit (backend uses 5%). |
 | commissionReceiptUrl | string | No             | Optional. URL from upload endpoint (receipt/proof of payment). Visible to admin. |
+
+The backend applies `agentCommissionPercent` from the listing (snapshotted on the request). Do not send a different rate.
 
 **Success response (200):**
 
@@ -604,7 +606,7 @@ Use the request’s **`_id`** as **`requestId`** in the URL.
 
 **Errors:**
 
-- **400** — `actualSalePriceNaira` missing/invalid; (Developer) `commissionPercent` missing or not 1–5; or sale already registered for this request.
+- **400** — `actualSalePriceNaira` missing/invalid; or sale already registered for this request.
 - **403** — Only the property publisher can register the sale.
 - **404** — Request not found.
 
@@ -617,7 +619,7 @@ Use the request’s **`_id`** as **`requestId`** in the URL.
 | List requests     | GET    | `/account/request-to-market?role=publisher&status=pending` (or `accepted` / omit) | Returns requests + **Agent details** (`requestedByAgentId`), `saleRegisteredAt`. |
 | Accept request    | POST   | `/account/request-to-market/:requestId/respond` | `{ "action": "accept" }` |
 | Reject request    | POST   | `/account/request-to-market/:requestId/respond` | `{ "action": "reject", "rejectedReason": "..." }` |
-| Register sale     | POST   | `/account/request-to-market/:requestId/register-sale` | `{ "actualSalePriceNaira": number, "commissionPercent": number, "commissionReceiptUrl": string? }`. No payment link; optional receipt for admin verification. Returns **agent** details and **agentCommissionAmount**. |
+| Register sale     | POST   | `/account/request-to-market/:requestId/register-sale` | `{ "actualSalePriceNaira": number, "commissionReceiptUrl": string? }`. Uses listing commission %. No payment link; optional receipt. Returns **agent** details and **agentCommissionAmount**. |
 
 ### 4.5 Agent: verify property address on map (frontend-only)
 

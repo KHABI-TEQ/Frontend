@@ -443,6 +443,7 @@ const OutrightSalesPropertyForm: React.FC<OutrightSalesPropertyFormProps> = ({
           isOffPlan ? "off-plan" : "sell",
           extractNumericValue(propertyData.price),
           propertyData.agentCommissionPercent,
+          user?.userType,
         ),
       };
 

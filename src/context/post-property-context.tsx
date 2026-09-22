@@ -427,8 +427,8 @@ export function PostPropertyProvider({ children }: { children: ReactNode }) {
       ownershipDocuments: property.ownershipDocuments || [],
       isTenanted: property.isTenanted || "",
       agentCommissionPercent:
-        mandatoryAgentCommissionPercent(property.propertyType) ??
         property.agentCommissionPercent ??
+        mandatoryAgentCommissionPercent(property.propertyType) ??
         5,
       expectedCompletionDate: property.expectedCompletionDate || "",
       developmentStage: property.developmentStage || "",
