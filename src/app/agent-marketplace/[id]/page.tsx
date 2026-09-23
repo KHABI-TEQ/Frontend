@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faMapMarkerAlt, faFileAlt, faBed, faTag, faUser, faEnvelope, faPhone, faCalendarAlt, faClock, faUsers, faHome } from '@fortawesome/free-solid-svg-icons';
+import { faMapMarkerAlt, faFileAlt, faBed, faTag, faCalendarAlt, faClock, faUsers, faHome } from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
 import { GET_REQUEST } from '@/utils/requests';
 import { URLS } from '@/utils/URLS';
@@ -12,6 +12,7 @@ import Loading from '@/components/loading-component/loading';
 import Cookies from 'js-cookie';
 import MarketplacePreferenceReview from '@/components/agent-marketplace/MarketplacePreferenceReview';
 import InsuredPreferenceTag from '@/components/agent-marketplace/InsuredPreferenceTag';
+import BackToDashboard from '@/components/common/BackToDashboard';
 
 interface Buyer {
   _id: string;
@@ -228,13 +229,11 @@ const PreferenceDetailPage = () => {
       {/* Header */}
       <div className="border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center space-x-2 text-gray-600 mb-4">
-            <FontAwesomeIcon icon={faArrowLeft} className="w-5 h-5" />
-            <Link href="/" className="hover:text-gray-900">Home</Link>
-            <span>•</span>
-            <Link href="/agent-marketplace" className="hover:text-gray-900">agent marketplace</Link>
-            <span>•</span>
-            <span className="text-gray-900">preference details</span>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-gray-600 mb-4">
+            <BackToDashboard />
+            <Link href="/agent-marketplace" className="hover:text-gray-900 text-sm font-medium">
+              Back to marketplace
+            </Link>
           </div>
         </div>
       </div>
@@ -500,54 +499,6 @@ const PreferenceDetailPage = () => {
 
           {/* Sidebar */}
           <div className="space-y-4 md:space-y-6">
-            {/* Client name & contact */}
-            {(preference.contactInfo || preference.buyer) && (
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <h2 className="text-xl font-semibold text-[#09391C] mb-4">Client contact</h2>
-                <div className="space-y-3 text-sm">
-                  <div className="flex items-start gap-2">
-                    <FontAwesomeIcon icon={faUser} className="w-4 h-4 text-gray-500 mt-0.5" />
-                    <div>
-                      <span className="text-gray-600 block">Name</span>
-                      <span className="font-medium text-gray-900">
-                        {preference.contactInfo?.fullName ||
-                          preference.buyer?.fullName ||
-                          "—"}
-                      </span>
-                    </div>
-                  </div>
-                  {(preference.contactInfo?.email || preference.buyer?.email) && (
-                    <div className="flex items-start gap-2">
-                      <FontAwesomeIcon icon={faEnvelope} className="w-4 h-4 text-gray-500 mt-0.5" />
-                      <div>
-                        <span className="text-gray-600 block">Email</span>
-                        <a
-                          href={`mailto:${preference.contactInfo?.email || preference.buyer?.email}`}
-                          className="font-medium text-[#09391C] break-all hover:underline"
-                        >
-                          {preference.contactInfo?.email || preference.buyer?.email}
-                        </a>
-                      </div>
-                    </div>
-                  )}
-                  {(preference.contactInfo?.phoneNumber || preference.buyer?.phoneNumber) && (
-                    <div className="flex items-start gap-2">
-                      <FontAwesomeIcon icon={faPhone} className="w-4 h-4 text-gray-500 mt-0.5" />
-                      <div>
-                        <span className="text-gray-600 block">Phone</span>
-                        <a
-                          href={`tel:${preference.contactInfo?.phoneNumber || preference.buyer?.phoneNumber}`}
-                          className="font-medium text-gray-900"
-                        >
-                          {preference.contactInfo?.phoneNumber || preference.buyer?.phoneNumber}
-                        </a>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
             {/* Contact Information */}
             {preference.contactInfo &&
               (preference.contactInfo.petsAllowed !== undefined ||

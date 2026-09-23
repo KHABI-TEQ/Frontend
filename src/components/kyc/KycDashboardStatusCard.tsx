@@ -13,16 +13,49 @@ import {
   type CanonicalKycStatus,
 } from "@/lib/kyc-status";
 
+const APPROVED_BANNER_MS = 24 * 60 * 60 * 1000;
+
+function shouldShowApprovedBanner(user: User): boolean {
+  const id = String(user.id || user._id || user.accountId || "anon");
+  const key = `khabiteq-kyc-approved-shown-${id}`;
+  const fromApi = (user as User & { kycApprovedAt?: string }).kycApprovedAt;
+  const apiTime = fromApi ? new Date(fromApi).getTime() : NaN;
+  try {
+    if (Number.isFinite(apiTime)) {
+      return Date.now() - apiTime < APPROVED_BANNER_MS;
+    }
+    const stored = localStorage.getItem(key);
+    if (!stored) {
+      localStorage.setItem(key, new Date().toISOString());
+      return true;
+    }
+    const seen = new Date(stored).getTime();
+    return Number.isFinite(seen) && Date.now() - seen < APPROVED_BANNER_MS;
+  } catch {
+    return true;
+  }
+}
+
 type Props = {
   user: User;
   statusOverride?: CanonicalKycStatus | string;
 };
 
+export function shouldRenderKycDashboardStatus(
+  user: User,
+  statusOverride?: CanonicalKycStatus | string,
+): boolean {
+  if (!KYC_ACCOUNT_TYPES.has(String(user.userType || ""))) return false;
+  const status = resolveKycStatus(user, statusOverride ? { kycStatus: statusOverride } : null);
+  if (status === "none") return false;
+  if (isApprovedKyc(status)) return shouldShowApprovedBanner(user);
+  return true;
+}
+
 export default function KycDashboardStatusCard({ user, statusOverride }: Props) {
-  if (!KYC_ACCOUNT_TYPES.has(String(user.userType || ""))) return null;
+  if (!shouldRenderKycDashboardStatus(user, statusOverride)) return null;
 
   const status = resolveKycStatus(user, statusOverride ? { kycStatus: statusOverride } : null);
-  if (status === "none") return null;
 
   const role = kycRoleLabel(user.userType);
   const href = kycPathForUser(user.userType);
@@ -57,6 +90,7 @@ export default function KycDashboardStatusCard({ user, statusOverride }: Props) 
   }
 
   if (isApprovedKyc(status)) {
+    if (!shouldShowApprovedBanner(user)) return null;
     return (
       <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 sm:p-6">
         <div className="flex items-start gap-3">

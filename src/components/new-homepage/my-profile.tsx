@@ -4,7 +4,6 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import useClickOutside from "@/hooks/clickOutside";
-import Image from "next/image";
 import { User, useUserContext } from "@/context/user-context";
 import {
   LayoutDashboardIcon,
@@ -20,6 +19,7 @@ import {
 import { usePageContext } from "@/context/page-context";
 import { AgentNavData } from "@/enums";
 import { clientNavigate } from "@/utils/clientNavigate";
+import { userDisplayInitials } from "@/utils/userInitials";
 
 interface UserProfileModalProps {
   closeUserProfileModal: (type: boolean) => void;
@@ -344,19 +344,9 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
       <div className="bg-gradient-to-r from-[#8DDB90] to-[#09391C] p-4 shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
-            {userDetails?.profile_picture ? (
-              <Image
-                src={userDetails?.profile_picture}
-                width={40}
-                height={40}
-                alt="Profile"
-                className="w-full h-full rounded-full object-cover"
-              />
-            ) : (
-              <span className="text-white font-semibold">
-                {userDetails?.firstName?.charAt(0)?.toUpperCase() || "U"}
-              </span>
-            )}
+            <span className="text-white font-semibold text-sm tracking-wide">
+              {userDisplayInitials(userDetails)}
+            </span>
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-white font-semibold truncate">

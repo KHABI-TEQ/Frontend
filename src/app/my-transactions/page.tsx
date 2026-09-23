@@ -5,6 +5,7 @@ import Link from "next/link";
 import Cookies from "js-cookie";
 import { GET_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
+import BackToDashboard from "@/components/common/BackToDashboard";
 
 type TransactionRow = {
   id: string;
@@ -48,6 +49,7 @@ export default function MyTransactionsPage() {
   return (
     <main className="min-h-screen bg-[#F4F6F4] py-10 px-4">
       <div className="max-w-5xl mx-auto">
+        <BackToDashboard className="mb-6" />
         <h1 className="text-3xl font-bold text-[#09391C]">My Transactions</h1>
         <p className="text-sm text-[#4B5563] mt-2">
           Digital records of transaction journeys recorded through Khabiteq.

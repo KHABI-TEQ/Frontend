@@ -47,6 +47,7 @@ export interface User {
   professionalUpgradeStatus?: "none" | "pending" | "approved" | "rejected";
   /** Canonical publisher KYC status from GET /account/profile */
   kycStatus?: "none" | "pending" | "in_review" | "approved" | "rejected";
+  kycApprovedAt?: string;
   isAccountVerified?: boolean;
   activeSubscription?: {
     _id: string;

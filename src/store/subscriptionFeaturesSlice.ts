@@ -176,6 +176,18 @@ const slice = createSlice({
         byKey[item.key] = item;
       }
       state.catalog = { byId, byKey, loaded: true };
+      if (state.active) {
+        for (const k of Object.keys(state.active.featuresByKey)) {
+          const entry = state.active.featuresByKey[k];
+          if (!entry.key || entry.key === entry.featureId) {
+            const cat = byId[entry.featureId];
+            if (cat) {
+              delete state.active.featuresByKey[k];
+              state.active.featuresByKey[cat.key] = { ...entry, key: cat.key };
+            }
+          }
+        }
+      }
     });
   },
 });

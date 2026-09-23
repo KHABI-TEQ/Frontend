@@ -30,12 +30,12 @@ import {
   FileText,
 } from "lucide-react";
 import Loading from "@/components/loading-component/loading";
-import { SyndicationIntegrationSummary } from "@/components/dashboard/DashboardIntegrationSummaries";
 import AgentEligibilityBanner from "@/components/agent/AgentEligibilityBanner";
 import { useAgentEligibility } from "@/hooks/useAgentEligibility";
 import PublisherListingAllowanceCard from "@/components/publisher/PublisherListingAllowanceCard";
 import { usePublisherListingEligibility } from "@/hooks/usePublisherListingEligibility";
 import ListPropertyCta from "@/components/dashboard/ListPropertyCta";
+import ComingSoonPrompt from "@/components/common/ComingSoonPrompt";
 
 interface Brief {
   _id: string;
@@ -143,6 +143,7 @@ export default function AgentDashboard() {
   const [propertiesTotalFromApi, setPropertiesTotalFromApi] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [referral, setReferral] = useState({ code: "", totalReferred: 0, points: 0, earnings: 0 });
+  const [syndicationSoon, setSyndicationSoon] = useState(false);
 
   useEffect(() => {
     const preferred = (user as any)?.referralCode;
@@ -340,7 +341,7 @@ export default function AgentDashboard() {
               className="bg-[#8DDB90] hover:bg-[#7BC87F] text-white px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
             >
               <BriefcaseIcon size={20} />
-              <span className="hidden sm:inline">View </span>Briefs
+              My Listings
             </Link>
             <Link
               href="/my-inspection-requests"
@@ -386,14 +387,18 @@ export default function AgentDashboard() {
               <MailIcon size={20} />
               <span className="hidden sm:inline">Broadcast</span>
             </Link>
-            <Link
-              href="/dashboard/syndication"
+            <button
+              type="button"
+              onClick={() => setSyndicationSoon(true)}
               className="bg-white hover:bg-gray-50 text-[#09391C] border border-[#8DDB90] px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
-              title="Syndication integrations"
+              title="Syndication is coming soon"
             >
               <Globe2 size={20} />
               Syndication
-            </Link>
+              <span className="rounded-full bg-gradient-to-r from-fuchsia-500 to-amber-400 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                Soon
+              </span>
+            </button>
           </div>
         </div>
 
@@ -507,10 +512,6 @@ export default function AgentDashboard() {
               <div className="mt-2 text-xs text-[#5A5D63]">{referral.totalReferred} referred • ₦{(referral.earnings ?? 0).toLocaleString()}</div>
             </div>
           </div>
-        </div>
-
-        <div className="mb-8 max-w-3xl mx-auto sm:mx-0">
-          <SyndicationIntegrationSummary />
         </div>
 
         {/* Stats Cards */}
@@ -724,18 +725,19 @@ export default function AgentDashboard() {
                 </div>
               </Link>
 
-              <Link
-                href="/dashboard/syndication"
-                className="w-full bg-white hover:bg-gray-50 text-[#09391C] border border-[#8DDB90] p-4 rounded-lg font-medium flex items-center gap-3 transition-colors group"
+              <button
+                type="button"
+                onClick={() => setSyndicationSoon(true)}
+                className="w-full bg-white hover:bg-gray-50 text-[#09391C] border border-[#8DDB90] p-4 rounded-lg font-medium flex items-center gap-3 transition-colors text-left"
               >
                 <div className="p-2 bg-[#09391C]/10 rounded-lg">
                   <Globe2 size={20} className="text-[#09391C]" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold">Syndication integrations</h3>
-                  <p className="text-sm text-[#5A5D63]">Connect platforms and manage dispatch</p>
+                  <p className="text-sm text-[#5A5D63]">Coming soon — push listings to partner sites</p>
                 </div>
-              </Link>
+              </button>
 
               <Link
                 href="/notifications"
@@ -807,6 +809,12 @@ export default function AgentDashboard() {
           </div>
         </div>
       </div>
+      <ComingSoonPrompt
+        open={syndicationSoon}
+        onClose={() => setSyndicationSoon(false)}
+        title="Coming soon"
+        description="Syndication will let you push your Khabiteq listings to partner property sites from one place. We will notify you when it is ready."
+      />
     </div>
   );
 }

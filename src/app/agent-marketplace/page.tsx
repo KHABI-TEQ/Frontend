@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronDown, faMagnifyingGlass, faArrowLeft, faMapMarkerAlt, faFileAlt, faBed, faTag } from '@fortawesome/free-solid-svg-icons';
-import Link from 'next/link';
+import { faChevronDown, faMagnifyingGlass, faMapMarkerAlt, faFileAlt, faBed, faTag } from '@fortawesome/free-solid-svg-icons';
+import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { GET_REQUEST } from '@/utils/requests';
 import { URLS } from '@/utils/URLS';
@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 import Loading from '@/components/loading-component/loading';
 import Cookies from 'js-cookie';
 import InsuredPreferenceTag from '@/components/agent-marketplace/InsuredPreferenceTag';
+import BackToDashboard from '@/components/common/BackToDashboard';
 
 interface Buyer {
   _id: string;
@@ -308,80 +309,69 @@ const AgentMarketplace = () => {
 
   const getPreferenceRowId = (p: Preference) => p.preferenceId || p._id || "";
 
-  const PreferenceCard = ({ preference }: { preference: Preference }) => {
+  const PreferenceCard = ({ preference, index = 0 }: { preference: Preference; index?: number }) => {
     const rowId = getPreferenceRowId(preference);
     const inactive = isPreferenceInactive(preference.status);
     const isDealSitePref = isDealSiteReceiverMode(preference);
+    const type = preference.preferenceType;
+    const typeLabel =
+      type === 'buy' ? 'Property Purchase' :
+      type === 'rent' ? 'Property Rental' :
+      type === 'shortlet' ? 'Short-term Stay' :
+      type;
+    const typeEmoji =
+      type === 'buy' ? '🏠' :
+      type === 'rent' ? '🏘️' :
+      type === 'shortlet' ? '🏖️' : '🏢';
 
     return (
-    <div className={`group relative bg-white border border-gray-200/80 hover:border-gray-300 rounded-lg overflow-hidden flex flex-col h-full transition-all duration-500 hover:translate-y-[-2px] ${inactive ? 'select-none' : ''}`}>
-      {/* Watermark for closed / matched preferences */}
+    <motion.article
+      initial={{ opacity: 0, y: 18 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, delay: Math.min(index, 8) * 0.05, ease: [0.22, 1, 0.36, 1] }}
+      className={`group relative flex h-full flex-col overflow-hidden rounded-2xl border border-[#09391C]/10 bg-white shadow-[0_8px_24px_-18px_rgba(9,57,28,0.35)] transition-all duration-300 hover:-translate-y-1.5 hover:border-[#8DDB90] hover:shadow-[0_20px_40px_-18px_rgba(9,57,28,0.4)] ${inactive ? 'select-none' : ''}`}
+    >
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-br from-[#8DDB90]/25 via-[#EEF1F1] to-transparent" />
+      <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-[#8DDB90] via-[#7BC97F] to-[#09391C] transition-all duration-300 group-hover:w-1.5" />
+
       {inactive && (
         <>
-          <div className="absolute inset-0 bg-white/70 z-20 pointer-events-none"></div>
+          <div className="absolute inset-0 z-20 bg-white/70 pointer-events-none" />
           <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
-            <div className="px-6 py-2 text-3xl md:text-4xl font-extrabold tracking-widest text-red-600/50 border-4 border-red-600/40 rounded rotate-[-20deg] bg-white/60">
+            <div className="rotate-[-18deg] rounded-xl border-2 border-[#09391C]/25 bg-white/80 px-5 py-2 text-2xl font-extrabold tracking-[0.2em] text-[#09391C]/45">
               {preference.status?.toLowerCase() === "matched" ? "MATCHED" : "CLOSED"}
             </div>
           </div>
         </>
       )}
-      {/* Animated Top Border */}
-      <div className="absolute top-0 left-0 w-0 h-[2px] bg-[#8DDB90] group-hover:w-full transition-all duration-700 ease-out"></div>
 
-      {/* Status Indicator */}
-      <div className="absolute top-3 right-3 z-10">
-        <div className="relative">
-          <div className={`w-2 h-2 rounded-full ${inactive ? 'bg-red-500' : 'bg-green-500'}`}></div>
-          <div className={`absolute inset-0 w-2 h-2 rounded-full animate-ping opacity-75 ${inactive ? 'bg-red-500' : 'bg-green-500'}`}></div>
-        </div>
-      </div>
-
-      {/* Header */}
-      <div className="relative px-5 py-4 border-b border-gray-100">
-        <div className="flex items-center gap-3">
-          {/* Type Icon */}
-          <div className="relative w-12 h-12 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center group-hover:bg-gray-100 transition-colors duration-300">
-            <div className="text-gray-700 font-bold text-base">
-              {preference.preferenceType === 'buy' ? '🏠' :
-               preference.preferenceType === 'rent' ? '🏘️' :
-               preference.preferenceType === 'shortlet' ? '🏖️' : '🏢'}
-            </div>
-            {/* Hover animation circle */}
-            <div className="absolute inset-0 rounded-lg border-2 border-[#8DDB90] opacity-0 group-hover:opacity-100 scale-110 group-hover:scale-100 transition-all duration-300"></div>
+      <div className="relative z-10 flex items-start justify-between px-5 pt-5">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#09391C] to-[#0B572B] text-lg shadow-sm transition-transform duration-300 group-hover:scale-105">
+            {typeEmoji}
           </div>
-
-          <div className="flex-1">
-            <h3 className="text-gray-900 font-semibold text-sm mb-1 group-hover:text-[#09391C] transition-colors">
-              {preference.preferenceType === 'buy' ? 'Property Purchase' :
-               preference.preferenceType === 'rent' ? 'Property Rental' :
-               preference.preferenceType === 'shortlet' ? 'Short-term Stay' :
-               preference.preferenceType}
-            </h3>
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-              <span className="text-gray-500 text-xs">Active Request</span>
+          <div className="min-w-0">
+            <h3 className="truncate text-sm font-semibold text-[#09391C]">{typeLabel}</h3>
+            <div className="mt-1 flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center gap-1 rounded-full bg-[#8DDB90]/20 px-2 py-0.5 text-[11px] font-semibold text-[#09391C]">
+                <span className={`h-1.5 w-1.5 rounded-full ${inactive ? 'bg-red-500' : 'bg-[#8DDB90]'}`} />
+                {inactive ? 'Closed brief' : 'Active request'}
+              </span>
               <InsuredPreferenceTag searchInsurance={preference.searchInsurance} />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 p-5">
-        {/* Client identity is intentionally hidden on agent marketplace cards. */}
-        <div className="mb-3 pb-3 border-b border-gray-100">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Client</p>
-          <p className="text-sm font-medium text-gray-900">
-            Contact details are private
-          </p>
-          <p className="text-xs text-gray-600 mt-1">
-            Open details to review this brief for the market.
-          </p>
+      <div className="relative z-10 flex-1 px-5 py-4">
+        <div className="mb-4 rounded-xl border border-[#8DDB90]/20 bg-[#EEF1F1]/80 px-3 py-2.5">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-[#09391C]/70">Client</p>
+          <p className="mt-0.5 text-sm font-medium text-[#09391C]">Contact details are private</p>
+          <p className="mt-0.5 text-xs text-[#5A5D63]">Open details to review this brief.</p>
           {preference.myReview?.budgetFit ? (
-            <p className="text-xs font-medium text-emerald-700 mt-1">You reviewed this</p>
+            <p className="mt-1 text-xs font-semibold text-[#0B572B]">You reviewed this</p>
           ) : preference.reviewSummary?.reviewCount ? (
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="mt-1 text-xs text-[#5A5D63]">
               {preference.reviewSummary.reviewCount} agent review
               {preference.reviewSummary.reviewCount === 1 ? "" : "s"}
               {preference.reviewSummary.budgetFit?.too_low
@@ -390,65 +380,68 @@ const AgentMarketplace = () => {
             </p>
           ) : null}
         </div>
-        {/* Key Details Grid */}
-        <div className="space-y-3">
-          {/* Location */}
-          <div className="flex items-center justify-between py-2 border-b border-gray-50 group-hover:border-gray-100 transition-colors">
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between rounded-lg bg-[#FAFDFB] px-3 py-2">
             <div className="flex items-center gap-2">
-              <FontAwesomeIcon icon={faMapMarkerAlt} className="w-3 h-3 text-gray-400" />
-              <span className="text-gray-600 text-xs font-medium">Location</span>
+              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[#8DDB90]/20 text-[#09391C]">
+                <FontAwesomeIcon icon={faMapMarkerAlt} className="w-3 h-3" />
+              </span>
+              <span className="text-xs font-medium text-[#5A5D63]">Location</span>
             </div>
-            <span className="text-gray-900 text-sm font-medium text-right max-w-[60%] truncate">
+            <span className="max-w-[58%] truncate text-right text-sm font-semibold text-[#09391C]">
               {formatLocation(preference.location)}
             </span>
           </div>
 
-          {/* Budget */}
-          <div className="flex items-center justify-between py-2 border-b border-gray-50 group-hover:border-gray-100 transition-colors">
+          <div className="flex items-center justify-between rounded-lg bg-[#FAFDFB] px-3 py-2">
             <div className="flex items-center gap-2">
-              <FontAwesomeIcon icon={faTag} className="w-3 h-3 text-gray-400" />
-              <span className="text-gray-600 text-xs font-medium">Budget</span>
+              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[#09391C]/10 text-[#09391C]">
+                <FontAwesomeIcon icon={faTag} className="w-3 h-3" />
+              </span>
+              <span className="text-xs font-medium text-[#5A5D63]">Budget</span>
             </div>
-            <span className="text-gray-900 text-sm font-medium">
+            <span className="text-sm font-semibold text-[#09391C]">
               {formatPrice(preference.budget?.minPrice, preference.budget?.currency)} - {formatPrice(preference.budget?.maxPrice, preference.budget?.currency)}
             </span>
           </div>
 
-          {/* Bedrooms */}
           {(preference.propertyDetails?.minBedrooms || preference.bookingDetails?.minBedrooms) && (
-            <div className="flex items-center justify-between py-2 border-b border-gray-50 group-hover:border-gray-100 transition-colors">
+            <div className="flex items-center justify-between rounded-lg bg-[#FAFDFB] px-3 py-2">
               <div className="flex items-center gap-2">
-                <FontAwesomeIcon icon={faBed} className="w-3 h-3 text-gray-400" />
-                <span className="text-gray-600 text-xs font-medium">Bedrooms</span>
+                <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[#8DDB90]/20 text-[#09391C]">
+                  <FontAwesomeIcon icon={faBed} className="w-3 h-3" />
+                </span>
+                <span className="text-xs font-medium text-[#5A5D63]">Bedrooms</span>
               </div>
-              <span className="text-gray-900 text-sm font-medium">
+              <span className="text-sm font-semibold text-[#09391C]">
                 {preference.propertyDetails?.minBedrooms || preference.bookingDetails?.minBedrooms}+ BR
               </span>
             </div>
           )}
 
-          {/* Documents */}
           {preference.propertyDetails?.documentTypes && preference.propertyDetails.documentTypes.length > 0 && (
-            <div className="flex items-center justify-between py-2 border-b border-gray-50 group-hover:border-gray-100 transition-colors">
+            <div className="flex items-center justify-between rounded-lg bg-[#FAFDFB] px-3 py-2">
               <div className="flex items-center gap-2">
-                <FontAwesomeIcon icon={faFileAlt} className="w-3 h-3 text-gray-400" />
-                <span className="text-gray-600 text-xs font-medium">Documents</span>
+                <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[#09391C]/10 text-[#09391C]">
+                  <FontAwesomeIcon icon={faFileAlt} className="w-3 h-3" />
+                </span>
+                <span className="text-xs font-medium text-[#5A5D63]">Documents</span>
               </div>
-              <span className="text-gray-900 text-sm font-medium text-right max-w-[60%] truncate">
+              <span className="max-w-[58%] truncate text-right text-sm font-semibold capitalize text-[#09391C]">
                 {preference.propertyDetails.documentTypes.slice(0, 1).join(', ')}
-                {preference.propertyDetails.documentTypes.length > 1 && `+${preference.propertyDetails.documentTypes.length - 1}`}
+                {preference.propertyDetails.documentTypes.length > 1 && ` +${preference.propertyDetails.documentTypes.length - 1}`}
               </span>
             </div>
           )}
 
-          {/* Property Condition */}
           {preference.propertyDetails?.propertyCondition && (
-            <div className="flex items-center justify-between py-2">
+            <div className="flex items-center justify-between rounded-lg bg-[#FAFDFB] px-3 py-2">
               <div className="flex items-center gap-2">
-                <span className="text-gray-400 text-xs">✓</span>
-                <span className="text-gray-600 text-xs font-medium">Condition</span>
+                <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[#8DDB90]/20 text-[#09391C] text-[11px] font-bold">✓</span>
+                <span className="text-xs font-medium text-[#5A5D63]">Condition</span>
               </div>
-              <span className="text-gray-900 text-sm font-medium capitalize">
+              <span className="text-sm font-semibold capitalize text-[#09391C]">
                 {preference.propertyDetails.propertyCondition}
               </span>
             </div>
@@ -456,39 +449,37 @@ const AgentMarketplace = () => {
         </div>
       </div>
 
-      {/* Footer Actions */}
-      <div className="p-5 pt-0 space-y-3 border-t border-gray-50">
-        {/* View Details */}
-        {!inactive && !isDealSitePref && rowId && (
+      <div className="relative z-10 mt-auto space-y-2 border-t border-[#09391C]/10 px-5 py-4">
+        {!inactive && !isDealSitePref && rowId ? (
           <a
             href={`/agent-marketplace/${rowId}`}
-            className="w-full text-gray-600 hover:text-gray-900 text-xs font-medium py-2 flex items-center justify-center gap-1 group/btn transition-colors"
+            className="flex w-full items-center justify-center gap-1 py-1 text-xs font-semibold text-[#0B572B] transition-all duration-300 hover:gap-2 hover:text-[#09391C]"
           >
-            <span>View Details</span>
-            <svg className="w-3 h-3 group-hover/btn:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <span>View details</span>
+            <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </a>
-        )}
+        ) : null}
 
         {isDealSitePref ? (
-          <div className="w-full py-2.5 rounded bg-gray-100 text-gray-600 text-xs font-medium text-center">
+          <div className="w-full rounded-xl bg-[#EEF1F1] py-2.5 text-center text-xs font-medium text-[#5A5D63]">
             Submitted via an agent DealSite — not available here
           </div>
         ) : inactive ? (
-          <div className="w-full py-2.5 rounded bg-green-100 text-green-700 text-xs font-semibold text-center uppercase tracking-wide">
+          <div className="w-full rounded-xl bg-[#8DDB90]/20 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-[#09391C]">
             {preference.status?.toLowerCase() === "matched" ? "Matched" : "Closed"}
           </div>
         ) : (
           <a
             href={`/agent-marketplace/${rowId}`}
-            className="relative block w-full bg-gray-900 hover:bg-black text-white py-3 text-sm font-medium rounded text-center transition-all duration-300"
+            className="block w-full rounded-xl bg-gradient-to-r from-[#09391C] to-[#0B572B] py-3 text-center text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:from-[#0B572B] hover:to-[#09391C] hover:shadow-md"
           >
             Review this preference
           </a>
         )}
       </div>
-    </div>
+    </motion.article>
   );
   };
 
@@ -537,16 +528,11 @@ const AgentMarketplace = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#EEF1F1]">
       {/* Header */}
-      <div className="border-b border-gray-100">
+      <div className="border-b border-[#09391C]/10 bg-white/80 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center space-x-2 text-gray-600 mb-4">
-            <FontAwesomeIcon icon={faArrowLeft} className="w-5 h-5" />
-            <Link href="/" className="hover:text-gray-900">Home</Link>
-            <span>•</span>
-            <span className="text-gray-900">agent marketplace</span>
-          </div>
+          <BackToDashboard />
         </div>
       </div>
 
@@ -804,6 +790,7 @@ const AgentMarketplace = () => {
               <PreferenceCard
                 key={getPreferenceRowId(preference) || idx}
                 preference={preference}
+                index={idx}
               />
             ))
           ) : (

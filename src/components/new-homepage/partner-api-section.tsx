@@ -1,14 +1,25 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
 import { ArrowRight, BookOpen, Layers, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
+import ComingSoonPrompt from "@/components/common/ComingSoonPrompt";
 
 /**
  * Secondary CTA for external property listing platforms (B2B syndication).
  * Placed after core user journeys on the homepage — not primary for agents, buyers, etc.
  */
 export default function PartnerApiSection() {
+  const [soonOpen, setSoonOpen] = useState(false);
+  const [soonCopy, setSoonCopy] = useState(
+    "Partner onboarding will let listing platforms connect inventory and demand with Khabiteq from one place. We will notify you when it is ready.",
+  );
+
+  const openSoon = (description: string) => {
+    setSoonCopy(description);
+    setSoonOpen(true);
+  };
+
   return (
     <section
       className="relative w-full overflow-hidden border-t border-white/10"
@@ -76,24 +87,40 @@ export default function PartnerApiSection() {
             </div>
 
             <div className="lg:col-span-5 flex flex-col justify-center gap-3 sm:gap-4">
-              <Link
-                href="/partner-api"
+              <button
+                type="button"
+                onClick={() =>
+                  openSoon(
+                    "Partner onboarding will let listing platforms connect inventory and demand with Khabiteq from one place. We will notify you when it is ready.",
+                  )
+                }
                 className="group inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3.5 bg-[#8DDB90] text-[#09391C] font-semibold text-sm sm:text-base shadow-lg shadow-black/20 hover:bg-[#9ee4a1] hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300"
               >
                 PARTNER WITH KHABITEQ
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
-              </Link>
-              <Link
-                href="/syndication-integration-guide"
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  openSoon(
+                    "The integration guide will show platforms how to syndicate listings into Khabiteq. It will be published with partner onboarding.",
+                  )
+                }
                 className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3.5 border border-white/20 text-white/95 font-medium text-sm sm:text-base hover:bg-white/10 hover:border-white/30 transition-colors"
               >
                 <BookOpen className="h-4 w-4 opacity-90" aria-hidden />
                 Integration guide
-              </Link>
+              </button>
             </div>
           </div>
         </motion.div>
       </div>
+      <ComingSoonPrompt
+        open={soonOpen}
+        onClose={() => setSoonOpen(false)}
+        title="Coming soon"
+        description={soonCopy}
+      />
     </section>
   );
 }

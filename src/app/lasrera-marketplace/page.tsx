@@ -13,7 +13,6 @@ import toast from "react-hot-toast";
 import Loading from "@/components/loading-component/loading";
 import { ArrowLeft, MapPin, Tag, Handshake, CheckCircle, X, Play, Pause } from "lucide-react";
 import PropertyLocationMap from "@/components/property/PropertyLocationMap";
-import AgentEligibilityBanner from "@/components/agent/AgentEligibilityBanner";
 import { useAgentEligibility } from "@/hooks/useAgentEligibility";
 
 export default function LasreraMarketplacePage() {
@@ -28,7 +27,7 @@ export default function LasreraMarketplacePage() {
   const [propertyForMap, setPropertyForMap] = useState<LasreraMarketplaceProperty | null>(null);
 
   const isAgent = user?.userType === "Agent";
-  const { eligibility, loading: eligibilityLoading } = useAgentEligibility();
+  const { eligibility } = useAgentEligibility();
   const canRequestToMarket = !isAgent || eligibility?.canRequestToMarket !== false;
 
   const PropertyMediaPreview = ({ prop, title }: { prop: LasreraMarketplaceProperty; title: string }) => {
@@ -191,22 +190,18 @@ export default function LasreraMarketplacePage() {
           <h1 className="text-2xl md:text-3xl font-display font-bold text-[#09391C] mb-2">
             KHABITEQ Market Place
           </h1>
-          <p className="text-[#5A5D63] max-w-2xl">
-            Properties listed by Landlords and Developers. Contact details are not shown.
-            {isAgent
-              ? " As an Agent, you can request to market any listing below; the listing owner will accept or reject."
-              : " Sign in as an Agent to request to market a property."}
-          </p>
-        </div>
-
-        {isAgent && (
-          <div className="mb-6">
-            <AgentEligibilityBanner eligibility={eligibility} loading={eligibilityLoading} />
-            <p className="mt-2 text-xs text-[#5A5D63]">
-              Request To Market requires an eligible agent account (KYC and paid subscription rules apply after your trial).
+          {isAgent ? (
+            <ol className="text-[#5A5D63] max-w-2xl text-sm sm:text-base space-y-1.5 list-decimal list-inside">
+              <li>Send a request to market a listing.</li>
+              <li>The owner accepts or declines.</li>
+              <li>If accepted, you can represent and market the property.</li>
+            </ol>
+          ) : (
+            <p className="text-[#5A5D63] max-w-2xl">
+              Sign in as an Agent to request to market a listing. Contact details stay private.
             </p>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Simple filters */}
         <div className="bg-white rounded-xl p-4 mb-6 border border-gray-100 flex flex-wrap gap-4 items-end">

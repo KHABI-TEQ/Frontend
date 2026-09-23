@@ -5,9 +5,14 @@ import Link from "next/link";
 import { X, Sparkles, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import type { User } from "@/context/user-context";
+import { useUserContext } from "@/context/user-context";
+import { GET_REQUEST } from "@/utils/requests";
+import { URLS } from "@/utils/URLS";
+import Cookies from "js-cookie";
 
-/** Legacy key from when dismissal persisted in sessionStorage (cleared once so refresh shows overlay again). */
-const LEGACY_SESSION_DISMISSED_KEY = "dashboardDealSiteOverlayDismissed";
+function laterKey(user: User) {
+  return `khabiteq-dealsite-later-${user.id || user._id || user.accountId || "anon"}`;
+}
 
 function isLandownerUser(user: User | null): boolean {
   const t = (user?.userType ?? "").toLowerCase();
@@ -19,6 +24,14 @@ function isFieldAgentUser(user: User | null): boolean {
   return t === "fieldagent";
 }
 
+export function hasConfiguredPractitionerPage(dealSite: unknown): boolean {
+  if (dealSite == null || dealSite === false) return false;
+  if (typeof dealSite !== "object") return Boolean(dealSite);
+  const d = dealSite as Record<string, unknown>;
+  if (d.status === "deleted") return false;
+  return Boolean(d.publicSlug || d._id || d.id);
+}
+
 type Props = {
   user: User;
 };
@@ -28,22 +41,45 @@ const backdropTransition = { duration: 0.35, ease: [0.22, 1, 0.36, 1] as const }
 const cardTransition = { type: "spring" as const, damping: 26, stiffness: 320, mass: 0.85 };
 
 /**
- * Full-screen prompt when profile has no Practitioner Page yet (`dealSite` nullish).
- * Not shown for landowners or field agents. Dismissal is in-memory only: a full page refresh shows the overlay
- * again until `dealSite` is configured.
+ * Full-screen prompt when the agent/developer has no Practitioner Page yet.
+ * Hidden after setup, or when the user chooses "Set up later" (persisted per account).
  */
 export function DealSiteSetupOverlay({ user }: Props) {
-  const [dismissed, setDismissed] = useState(false);
+  const { setUser } = useUserContext();
+  const [dismissed, setDismissed] = useState(() => {
+    try {
+      return localStorage.getItem(laterKey(user)) === "1";
+    } catch {
+      return false;
+    }
+  });
+  const [resolvedSite, setResolvedSite] = useState(user.dealSite);
 
   useEffect(() => {
-    try {
-      sessionStorage.removeItem(LEGACY_SESSION_DISMISSED_KEY);
-    } catch {
-      /* ignore */
-    }
-  }, []);
+    setResolvedSite(user.dealSite);
+  }, [user.dealSite]);
 
-  const needsPractitionerPage = user.dealSite == null;
+  const userId = user.id || user._id;
+  useEffect(() => {
+    if (hasConfiguredPractitionerPage(user.dealSite) || dismissed) return;
+    const token = Cookies.get("token");
+    if (!token) return;
+    let cancelled = false;
+    void GET_REQUEST(`${URLS.BASE}${URLS.dealSiteDetails}`, token).then((res) => {
+      if (cancelled || !res?.success || !res.data) return;
+      const data = (Array.isArray(res.data) ? res.data[0] : res.data) as Record<string, unknown> | undefined;
+      if (!hasConfiguredPractitionerPage(data)) return;
+      setResolvedSite(data);
+      setUser({ ...user, dealSite: data });
+    });
+    return () => {
+      cancelled = true;
+    };
+    // Intentionally keyed by account + existing dealSite, not the whole user object.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dismissed, setUser, userId, user.dealSite]);
+
+  const needsPractitionerPage = !hasConfiguredPractitionerPage(resolvedSite ?? user.dealSite);
   const shouldShow =
     !dismissed &&
     !isLandownerUser(user) &&
@@ -61,7 +97,14 @@ export function DealSiteSetupOverlay({ user }: Props) {
 
   if (!shouldShow) return null;
 
-  const dismiss = () => setDismissed(true);
+  const dismiss = () => {
+    try {
+      localStorage.setItem(laterKey(user), "1");
+    } catch {
+      /* ignore */
+    }
+    setDismissed(true);
+  };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">

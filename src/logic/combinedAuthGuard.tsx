@@ -54,7 +54,11 @@ export const CombinedAuthGuard: React.FC<CombinedAuthGuardProps> = ({
   const snapshotPaid = isLivePaidSubscription(user?.activeSubscription);
   const hasPaidSubscription =
     listingEligibility?.hasPaidSubscription === true ||
-    (isAgent && eligibility?.hasPaidSubscription === true) ||
+    listingEligibility?.canListProperties === true ||
+    (isAgent &&
+      (eligibility?.hasPaidSubscription === true ||
+        eligibility?.canListProperties === true ||
+        eligibility?.gate?.ok === true)) ||
     snapshotPaid;
 
 

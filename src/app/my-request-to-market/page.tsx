@@ -8,6 +8,7 @@ import { requestToMarketService, DEFAULT_AGENT_COMMISSION_DISPLAY_NAIRA, type Re
 import { formatPriceForDisplay, formatNumberWithCommas } from "@/utils/price-helpers";
 import Loading from "@/components/loading-component/loading";
 import CombinedAuthGuard from "@/logic/combinedAuthGuard";
+import BackToDashboard from "@/components/common/BackToDashboard";
 import AgentEligibilityBanner from "@/components/agent/AgentEligibilityBanner";
 import { useAgentEligibility } from "@/hooks/useAgentEligibility";
 import { useDeveloperPlanEntitlement } from "@/hooks/useDeveloperPlanEntitlement";
@@ -256,6 +257,7 @@ export default function MyRequestToMarketPage() {
     >
       <div className="min-h-screen bg-[#EEF1F1] py-6 px-4">
         <div className="max-w-4xl mx-auto">
+          <BackToDashboard className="mb-3" />
           <Link
             href={isAgent ? "/lasrera-marketplace" : "/my-listings"}
             className="inline-flex items-center gap-2 text-[#09391C] hover:underline mb-6"

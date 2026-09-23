@@ -16,6 +16,7 @@ import { useAgentEligibility } from "@/hooks/useAgentEligibility";
 import { usePublisherListingEligibility } from "@/hooks/usePublisherListingEligibility";
 import { useDeveloperPlanEntitlement } from "@/hooks/useDeveloperPlanEntitlement";
 import { canUserListOffPlan } from "@/utils/listingAccess";
+import BackToDashboard from "@/components/common/BackToDashboard";
 
 interface PropertyTypeCard {
   type: "sell" | "off-plan" | "rent" | "shortlet" | "jv";
@@ -156,6 +157,7 @@ const PostPropertyPage = () => {
       <FeatureGate featureKeys={[FEATURE_KEYS.LISTINGS]}>
         <div className="min-h-screen bg-[#EEF1F1] py-4 md:py-8">
         <div className="container mx-auto px-4 md:px-6">
+          <BackToDashboard className="mb-4" />
           <Breadcrumb items={breadcrumbItems} />
 
           {isAgent && (

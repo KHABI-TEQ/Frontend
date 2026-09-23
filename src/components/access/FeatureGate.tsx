@@ -36,13 +36,23 @@ export default function FeatureGate({ featureKeys, children, fallback }: Feature
     user?.userType === "Landowners" ||
     user?.userType === "PropertyScout";
   const snapshotPaid = isLivePaidSubscription(user?.activeSubscription);
-  const hasPaidSubscription =
+  const listingPolicyAllows =
+    listingEligibility?.canListProperties === true ||
     listingEligibility?.hasPaidSubscription === true ||
-    (isAgent && eligibility?.hasPaidSubscription === true) ||
+    (isAgent &&
+      (eligibility?.canListProperties === true ||
+        eligibility?.hasPaidSubscription === true ||
+        eligibility?.gate?.ok === true)) ||
     snapshotPaid;
   const listingBlocked =
-    isPublisher && featureKeys.includes("LISTINGS") && !hasPaidSubscription;
-  const allowed = !listingBlocked && checks.every(c => c.allowed);
+    isPublisher && featureKeys.includes("LISTINGS") && !listingPolicyAllows;
+  const allowed =
+    !listingBlocked &&
+    checks.every((c, i) => {
+      const key = featureKeys[i];
+      if (key === "LISTINGS" && listingPolicyAllows) return true;
+      return c.allowed;
+    });
 
   if (
     isLoading ||

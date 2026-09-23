@@ -7,6 +7,11 @@ import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import { GET_REQUEST, PUT_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
+import { formatNairaAmountNumber, normalizeNairaAmountTyping } from "@/utils/nairaAmountInput";
+
+function parseBudgetInput(raw: string): number {
+  return Number(String(raw || "").replace(/,/g, ""));
+}
 
 type BudgetFit = "too_low" | "moderate";
 
@@ -36,8 +41,8 @@ export default function MarketplacePreferenceReview({
   const [saving, setSaving] = useState(false);
   const [summary, setSummary] = useState<ReviewSummary | null>(null);
   const [budgetFit, setBudgetFit] = useState<BudgetFit>("moderate");
-  const [suggestMin, setSuggestMin] = useState(String(defaultMin || ""));
-  const [suggestMax, setSuggestMax] = useState(String(defaultMax || ""));
+  const [suggestMin, setSuggestMin] = useState(defaultMin ? formatNairaAmountNumber(defaultMin) : "");
+  const [suggestMax, setSuggestMax] = useState(defaultMax ? formatNairaAmountNumber(defaultMax) : "");
 
   useEffect(() => {
     const load = async () => {
@@ -57,8 +62,8 @@ export default function MarketplacePreferenceReview({
           const mine = data.review;
           if (mine) {
             setBudgetFit(mine.budgetFit === "too_low" ? "too_low" : "moderate");
-            if (mine.suggestedBudget?.min) setSuggestMin(String(mine.suggestedBudget.min));
-            if (mine.suggestedBudget?.max) setSuggestMax(String(mine.suggestedBudget.max));
+            if (mine.suggestedBudget?.min) setSuggestMin(formatNairaAmountNumber(mine.suggestedBudget.min));
+            if (mine.suggestedBudget?.max) setSuggestMax(formatNairaAmountNumber(mine.suggestedBudget.max));
           }
         }
       } catch {
@@ -78,8 +83,8 @@ export default function MarketplacePreferenceReview({
     const body: Record<string, unknown> = { budgetFit };
     if (budgetFit === "too_low") {
       body.suggestedBudget = {
-        min: Number(suggestMin),
-        max: Number(suggestMax),
+        min: parseBudgetInput(suggestMin),
+        max: parseBudgetInput(suggestMax),
         currency: "NGN",
       };
     }
@@ -109,7 +114,7 @@ export default function MarketplacePreferenceReview({
     <div className="bg-white border border-gray-200 rounded-lg p-6">
       <h2 className="text-xl font-semibold text-[#09391C] mb-2">Market review</h2>
       <p className="text-xs text-gray-600 mb-4">
-        Tell the system if this brief is priced and specified realistically for this LGA, area, or estate. Buyers will not see your notes.
+        Tell the system if this brief is priced realistically for this market. The buyer receives this feedback and can adjust their preference.
       </p>
 
       {summary && summary.reviewCount > 0 ? (
@@ -155,20 +160,22 @@ export default function MarketplacePreferenceReview({
                 <label className="text-xs text-gray-600">
                   Suggested min (₦)
                   <input
-                    type="number"
-                    min={1}
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
                     value={suggestMin}
-                    onChange={(e) => setSuggestMin(e.target.value)}
+                    onChange={(e) => setSuggestMin(normalizeNairaAmountTyping(e.target.value))}
                     className="mt-1 w-full border rounded-md px-2 py-1.5 text-sm"
                   />
                 </label>
                 <label className="text-xs text-gray-600">
                   Suggested max (₦)
                   <input
-                    type="number"
-                    min={1}
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
                     value={suggestMax}
-                    onChange={(e) => setSuggestMax(e.target.value)}
+                    onChange={(e) => setSuggestMax(normalizeNairaAmountTyping(e.target.value))}
                     className="mt-1 w-full border rounded-md px-2 py-1.5 text-sm"
                   />
                 </label>

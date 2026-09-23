@@ -19,6 +19,7 @@ import { useUserContext } from "@/context/user-context";
 import dynamic from "next/dynamic";
 import KhabiteqHeaderLogo from "@/components/branding/KhabiteqHeaderLogo";
 import LookingToDoNav from "@/components/new-homepage/LookingToDoNav";
+import { userDisplayInitials } from "@/utils/userInitials";
 
 // Lazy load heavy components that are only shown on interaction
 const SideBar = dynamic(() => import("../general-components/sideBar"), { ssr: false });
@@ -280,19 +281,9 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
                     }}
                     className="w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-br from-[#8DDB90] to-[#6BC76F] shadow-sm hover:shadow-md transition-all duration-300 hover:scale-110 ring-2 ring-white/50 hover:ring-[#8DDB90]/30"
                   >
-                    {user?.profile_picture ? (
-                      <Image
-                        src={user?.profile_picture}
-                        width={40}
-                        height={40}
-                        alt="Profile"
-                        className="w-full h-full rounded-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-white font-semibold text-sm">
-                        {user.firstName?.charAt(0)?.toUpperCase() || "U"}
-                      </span>
-                    )}
+                    <span className="text-white font-semibold text-xs tracking-wide">
+                      {userDisplayInitials(user)}
+                    </span>
                   </button>
                   <AnimatePresence>
                     {isUserProfileModalOpened && (
