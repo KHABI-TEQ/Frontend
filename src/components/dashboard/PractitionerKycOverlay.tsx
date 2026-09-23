@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowRight, ShieldCheck, X } from "lucide-react";
 import { motion } from "framer-motion";
 import type { User } from "@/context/user-context";
-import { resolveAgentKycStatus } from "@/hooks/useAgentEligibility";
+import { isPendingKyc, kycPathForUser, kycRoleLabel, resolveKycStatus } from "@/lib/kyc-status";
 
 const STORAGE_PREFIX = "khabiteq-kyc-later-";
 
@@ -21,44 +21,17 @@ function storageKey(user: User) {
   return `${STORAGE_PREFIX}${user.id || user._id || user.accountId || "anon"}`;
 }
 
-function roleLabel(userType?: string) {
-  switch (userType) {
-    case "Agent":
-      return "Agent";
-    case "Developer":
-      return "Developer";
-    case "Lawyer":
-      return "Lawyer";
-    case "Surveyor":
-      return "Surveyor";
-    case "Valuer":
-      return "Valuer";
-    default:
-      return "professional";
-  }
-}
-
-export function kycPathForUser(userType?: string) {
-  switch (userType) {
-    case "Developer":
-      return "/developer-kyc";
-    case "Lawyer":
-      return "/lawyer-kyc";
-    case "Surveyor":
-      return "/surveyor-kyc";
-    case "Valuer":
-      return "/valuer-kyc";
-    default:
-      return "/agent-kyc";
-  }
-}
+export { kycPathForUser };
 
 function isKycApproved(user: User) {
-  return resolveAgentKycStatus(user) === "approved";
+  return resolveKycStatus(user) === "approved";
 }
 
 export function shouldPromptPractitionerKyc(user: User) {
-  return KYC_ROLES.has(String(user.userType || "")) && !isKycApproved(user);
+  if (!KYC_ROLES.has(String(user.userType || ""))) return false;
+  const status = resolveKycStatus(user);
+  if (isKycApproved(user) || isPendingKyc(status)) return false;
+  return true;
 }
 
 type Props = {
@@ -69,9 +42,9 @@ type Props = {
 export function PractitionerKycOverlay({ user, onOpenChange }: Props) {
   const [open, setOpen] = useState(false);
   const [deferred, setDeferred] = useState(false);
-  const role = roleLabel(user.userType);
+  const role = kycRoleLabel(user.userType);
   const kycHref = kycPathForUser(user.userType);
-  const kycStatus = resolveAgentKycStatus(user);
+  const kycStatus = resolveKycStatus(user);
   const copy = useMemo(() => {
     if (kycStatus === "rejected") {
       return {

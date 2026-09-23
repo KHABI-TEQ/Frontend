@@ -17,12 +17,14 @@ export default function Valuer() {
             Complete professional verification so seekers can request valuations from your profile.
           </p>
         </div>
-        <Link
-          href="/valuer-kyc"
-          className="inline-flex rounded-xl bg-[#09391C] px-4 py-2.5 text-sm font-semibold text-white"
-        >
-          Complete valuer KYC
-        </Link>
+        {user?.kycStatus === "none" || !user?.kycStatus ? (
+          <Link
+            href="/valuer-kyc"
+            className="inline-flex rounded-xl bg-[#09391C] px-4 py-2.5 text-sm font-semibold text-white"
+          >
+            Complete valuer KYC
+          </Link>
+        ) : null}
         <Link
           href="/agent-subscriptions?tab=plans"
           className="inline-flex rounded-xl border border-[#09391C]/15 bg-white px-4 py-2.5 text-sm font-semibold text-[#09391C]"

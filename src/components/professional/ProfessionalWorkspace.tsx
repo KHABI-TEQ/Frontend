@@ -6,6 +6,9 @@ import toast from "react-hot-toast";
 import api from "@/utils/axiosConfig";
 import { URLS } from "@/utils/URLS";
 import { POST_REQUEST_FILE_UPLOAD } from "@/utils/requests";
+import { useUserContext, normalizeUser } from "@/context/user-context";
+import KycSubmittedConfirmation from "@/components/kyc/KycSubmittedConfirmation";
+import { isApprovedKyc, isPendingKyc } from "@/lib/kyc-status";
 
 type Role = "Lawyer" | "Surveyor";
 type Tab = "overview" | "kyc" | "jobs" | "payout" | "page";
@@ -27,6 +30,7 @@ async function uploadAsset(file: File, fileFor: string) {
 }
 
 export default function ProfessionalWorkspace({ role }: { role: Role }) {
+  const { user, setUser } = useUserContext();
   const isLawyer = role === "Lawyer";
   const [tab, setTab] = useState<Tab>("overview");
   const [me, setMe] = useState<any>(null);
@@ -155,6 +159,7 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
           : { surveyFee: Number(form.fee) }),
       });
       toast.success("KYC submitted for review");
+      if (user) setUser(normalizeUser({ ...user, kycStatus: "pending" }));
       load();
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "KYC submit failed");
@@ -297,7 +302,15 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
           </div>
         )}
 
-        {tab === "kyc" && (
+        {tab === "kyc" && isPendingKyc(kyc) && (
+          <KycSubmittedConfirmation userType={role} embedded />
+        )}
+
+        {tab === "kyc" && isApprovedKyc(kyc) && (
+          <KycSubmittedConfirmation userType={role} variant="approved" embedded />
+        )}
+
+        {tab === "kyc" && !isPendingKyc(kyc) && !isApprovedKyc(kyc) && (
           <div className="bg-white rounded-2xl p-6 space-y-4">
             <p className="text-sm text-[#5A5D63]">
               Allowed fee: {formatNaira(bounds.min)} – {formatNaira(bounds.max)}

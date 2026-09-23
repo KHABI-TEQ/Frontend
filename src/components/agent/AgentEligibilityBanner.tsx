@@ -82,6 +82,9 @@ export default function AgentEligibilityBanner({
 
   if (!gate.ok) {
     const isKyc = gate.reason === "kyc";
+    const kycPending =
+      eligibility.kycStatus === "pending" || eligibility.kycStatus === "in_review";
+    if (isKyc && kycPending) return null;
     return (
       <BannerShell
         tone="red"
@@ -95,7 +98,7 @@ export default function AgentEligibilityBanner({
         }
         actions={
           <>
-            {isKyc ? cta("/agent-kyc", "Complete KYC") : null}
+            {isKyc ? cta("/agent-kyc", eligibility.kycStatus === "rejected" ? "Update KYC" : "Complete KYC") : null}
             {cta("/agent-subscriptions?tab=plans", isKyc ? "Choose a paid plan" : "View plans", !isKyc)}
           </>
         }

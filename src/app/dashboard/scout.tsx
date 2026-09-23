@@ -68,27 +68,21 @@ export default function Scout() {
           </span>
         </Link>
 
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
-          <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">KYC Status</p>
-          <p className="mt-1 text-lg font-bold text-[#09391C]">{kycLabel}</p>
-          {!kycVerified ? (
-            <>
-              <p className="mt-2 text-sm text-[#5A5D63]">
-                Complete your KYC verification to start submitting property opportunities.
-              </p>
-              <Link
-                href="/scout-kyc"
-                className="mt-4 inline-flex rounded-xl bg-[#09391C] px-4 py-2.5 text-sm font-semibold text-white"
-              >
-                Complete KYC
-              </Link>
-            </>
-          ) : (
+        {snapshot?.kycStatus === "none" || (!snapshot?.kycStatus && !user?.kycStatus) ? (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">KYC Status</p>
+            <p className="mt-1 text-lg font-bold text-[#09391C]">{kycLabel}</p>
             <p className="mt-2 text-sm text-[#5A5D63]">
-              Identity verified. Submit opportunities for Khabiteq review — they are not LIVE until approved.
+              Complete your KYC verification to start submitting property opportunities.
             </p>
-          )}
-        </div>
+            <Link
+              href="/scout-kyc"
+              className="mt-4 inline-flex rounded-xl bg-[#09391C] px-4 py-2.5 text-sm font-semibold text-white"
+            >
+              Complete KYC
+            </Link>
+          </div>
+        ) : null}
 
         {kycVerified ? (
           <Link

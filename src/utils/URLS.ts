@@ -45,6 +45,15 @@ export const URLS = {
   publisherListingEligibility: "/account/publisher/listing-eligibility",
   /** GET — Developer plan caps, Advanced KYC, remaining professional slots */
   developerPlanEntitlement: "/account/developer/plan-entitlement",
+  developerDashboardSummary: "/account/developer/dashboard-summary",
+  developerVerification: "/account/developer/verification",
+  developerProfile: "/account/developer/profile",
+  developerCompanyLookup: "/account/developer/verification/company/lookup",
+  developerCompany: "/account/developer/verification/company",
+  developerRepresentative: "/account/developer/verification/representative",
+  developerAddress: "/account/developer/verification/address",
+  developerVerificationSubmit: "/account/developer/verification/submit",
+  developerProjects: "/account/developer/projects",
   /** GET — Portfolio Unlimited offer (only when at standard cap) */
   publisherUnlimitedListingPlan: "/account/publisher/unlimited-listing-plan",
 

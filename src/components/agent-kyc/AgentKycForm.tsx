@@ -31,6 +31,7 @@ import { useUserContext, normalizeUser } from "@/context/user-context";
 import { resolveAgentKycStatus } from "@/hooks/useAgentEligibility";
 import { getStates, getLGAsByState, getAreasByStateLGA, isPilotState, PILOT_LOCATION_MESSAGE } from "@/utils/location-utils";
 import PendingKycReview from "@/components/agent-kyc/PendingKycReview";
+import KycSubmittedConfirmation from "@/components/kyc/KycSubmittedConfirmation";
 import ProcessingRequest from "../loading-component/ProcessingRequest";
 import { handleApiError } from "@/utils/handleApiError";
 
@@ -227,6 +228,7 @@ const AgentKycForm: React.FC = () => {
         selectedRegion: user?.selectedRegion,
         userType: user?.userType,
         accountApproved: user?.accountApproved ?? true,
+        kycStatus: "pending",
         agentData: {
           accountApproved: user?.agentData?.accountApproved ?? true,
           agentType: user?.agentData?.agentType ?? "Agent",
@@ -487,22 +489,7 @@ const AgentKycForm: React.FC = () => {
   }
 
   if (kycStatus === "approved") {
-    return (
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-3xl mx-auto px-4">
-          <div className="bg-white border border-gray-200 rounded-xl p-8 text-center">
-            <CheckCircle2 size={48} className="text-[#8DDB90] mx-auto mb-4" />
-            <h2 className="text-2xl font-semibold text-[#0C1E1B] mb-2">KYC Approved</h2>
-            <p className="text-[#4F5B57] mb-6">Your agent KYC has been approved. You can now proceed to your dashboard and access verified agent features.</p>
-            <div className="flex items-center justify-center gap-3">
-              <a href="/dashboard" className="px-6 py-2 bg-green-600 text-white rounded-lg">Go to Dashboard</a>
-              <a href="/pricing" className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg">View professional plans</a>
-              <a href="/agent-subscriptions" className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg">Manage Subscription</a>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <KycSubmittedConfirmation userType="Agent" variant="approved" />;
   }
 
   if (kycStatus === "rejected" || kycStatus === "reject") {

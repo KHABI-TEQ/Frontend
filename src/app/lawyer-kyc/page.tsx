@@ -7,11 +7,16 @@ import { PUT_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
+import { useUserContext, normalizeUser } from "@/context/user-context";
+import KycSubmittedConfirmation from "@/components/kyc/KycSubmittedConfirmation";
+import { isApprovedKyc, isPendingKyc, resolveKycStatus } from "@/lib/kyc-status";
 
 export default function LawyerKycUpgradePage() {
+  const { user, setUser } = useUserContext();
   const [licenseNumber, setLicenseNumber] = useState("");
   const [docUrl, setDocUrl] = useState("");
   const [busy, setBusy] = useState(false);
+  const kycStatus = resolveKycStatus(user);
 
   const submit = async () => {
     if (!docUrl) {
@@ -29,12 +34,29 @@ export default function LawyerKycUpgradePage() {
         },
         Cookies.get("token"),
       );
-      if (res?.success) toast.success("Lawyer KYC submitted for review");
-      else toast.error((res as { error?: string })?.error || "Submit failed");
+      if (res?.success) {
+        if (user) setUser(normalizeUser({ ...user, kycStatus: "pending" }));
+        toast.success("Lawyer KYC submitted for review");
+      } else toast.error((res as { error?: string })?.error || "Submit failed");
     } finally {
       setBusy(false);
     }
   };
+
+  if (isPendingKyc(kycStatus)) {
+    return (
+      <CombinedAuthGuard requireAuth allowedUserTypes={["PropertyScout", "Lawyer"]}>
+        <KycSubmittedConfirmation userType="Lawyer" />
+      </CombinedAuthGuard>
+    );
+  }
+  if (isApprovedKyc(kycStatus)) {
+    return (
+      <CombinedAuthGuard requireAuth allowedUserTypes={["PropertyScout", "Lawyer"]}>
+        <KycSubmittedConfirmation userType="Lawyer" variant="approved" />
+      </CombinedAuthGuard>
+    );
+  }
 
   return (
     <CombinedAuthGuard requireAuth allowedUserTypes={["PropertyScout", "Lawyer"]}>

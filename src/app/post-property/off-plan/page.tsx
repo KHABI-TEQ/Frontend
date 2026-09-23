@@ -1,17 +1,34 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import OutrightSalesPropertyForm from "@/components/post-property-components/forms/OutrightSalesPropertyForm";
 import FeatureGate from "@/components/access/FeatureGate";
 import { FEATURE_KEYS } from "@/hooks/useFeatureGate";
 import CombinedAuthGuard from "@/logic/combinedAuthGuard";
 import DeveloperOffPlanGate from "@/components/developer/DeveloperOffPlanGate";
+import { useUserContext } from "@/context/user-context";
+import Loading from "@/components/loading-component/loading";
 
 const OffPlanPage = () => {
+  const router = useRouter();
+  const { user, isInitialized } = useUserContext();
+
+  useEffect(() => {
+    if (!isInitialized) return;
+    if (user?.userType === "Developer") {
+      router.replace("/developer/projects/new");
+    }
+  }, [isInitialized, user, router]);
+
+  if (!isInitialized || user?.userType === "Developer") {
+    return <Loading />;
+  }
+
   return (
     <CombinedAuthGuard
       requireAuth={true}
-      allowedUserTypes={["Agent", "Developer"]}
+      allowedUserTypes={["Agent"]}
       requireAgentOnboarding={false}
       requireAgentApproval={false}
       requireKycApproved={true}

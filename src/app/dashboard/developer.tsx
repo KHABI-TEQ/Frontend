@@ -1,654 +1,319 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useUserContext } from "@/context/user-context";
+import Link from "next/link";
+import { useUserContext, normalizeUser, type User } from "@/context/user-context";
 import { GET_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import Cookies from "js-cookie";
-import toast from "react-hot-toast";
-import Link from "next/link";
-import { motion } from "framer-motion";
-import {
-  Plus as PlusIcon,
-  Eye as EyeIcon,
-  Building2 as BuildingIcon,
-  Calendar as CalendarIcon,
-  TrendingUp as TrendingUpIcon,
-  Briefcase as BriefcaseIcon,
-  MapPin as MapPinIcon,
-  Star as StarIcon,
-  CreditCard as CreditCardIcon,
-  Copy,
-  Link as LinkIcon,
-  Mail as MailIcon,
-  CheckCircle as CheckCircleIcon,
-  Users as UsersIcon,
-  Globe2,
-  UserCircle,
-  FileText,
-} from "lucide-react";
 import Loading from "@/components/loading-component/loading";
-import {
-  InspectionRepresentativesSummary,
-  SyndicationIntegrationSummary,
-} from "@/components/dashboard/DashboardIntegrationSummaries";
-import PublisherListingAllowanceCard from "@/components/publisher/PublisherListingAllowanceCard";
-import { usePublisherListingEligibility } from "@/hooks/usePublisherListingEligibility";
-import DeveloperOnboardingChecklist from "@/components/developer/DeveloperOnboardingChecklist";
-import { useDeveloperPlanEntitlement } from "@/hooks/useDeveloperPlanEntitlement";
-import ListPropertyCta from "@/components/dashboard/ListPropertyCta";
+import { ArrowRight, Shield } from "lucide-react";
 
-interface PendingBrief {
-  _id: string;
-  location: any;
-  briefType: string;
-  price: number;
-  pictures: string[];
-  isApproved?: boolean;
+type Summary = {
+  isVerifiedDeveloper: boolean;
+  canSubmitOffPlan: boolean;
+  verification: any;
+  properties: { total: number; active: number; pendingReview: number; drafts: number; requiresAttention: number };
+  projects: { total: number; draft: number; underReview: number; approved: number; live: number; requiresAttention: number };
+  inspections: { pending: number; upcoming: number; completed: number; cancelled: number };
+  transactions: { active: number; pending: number; completed: number };
+  distribution: { connected: number; pending: number; active: number };
+  unreadNotifications: number;
+  plan: any;
+  profile: any;
+};
+
+function StatusChip({ label, status }: { label: string; status?: string }) {
+  const s = status || "Pending";
+  const cls =
+    s === "Verified"
+      ? "text-emerald-800 bg-emerald-50"
+      : s === "Requires Attention"
+        ? "text-amber-800 bg-amber-50"
+        : "text-slate-700 bg-slate-100";
+  return (
+    <div className={`rounded-lg px-3 py-2 text-sm ${cls}`}>
+      <span className="font-medium">{label}:</span> {s === "Verified" ? "✓ Verified" : s}
+    </div>
+  );
 }
 
-interface DashboardData {
-  totalBriefs?: number;
-  totalActiveBriefs?: number;
-  totalInactiveBriefs?: number;
-  totalViews?: number;
-  totalInspectionRequests?: number;
-  totalCompletedInspectionRequests?: number;
-  newPendingBriefs?: PendingBrief[];
-  completedDeals?: number;
-  averageRating?: number;
-  totalCommission?: number;
+function Metric({ label, value }: { label: string; value: number }) {
+  return (
+    <div>
+      <p className="text-xl font-bold text-[#09391C]">{value}</p>
+      <p className="text-xs text-[#5A5D63]">{label}</p>
+    </div>
+  );
 }
 
-/** Recent property from /account/properties/fetchAll (all statuses, so approved listings appear). */
-interface RecentProperty {
-  _id: string;
-  location?: { state?: string; localGovernment?: string };
-  briefType?: string;
-  price?: number;
-  pictures?: string[];
-  isApproved?: boolean;
+function DashCard({
+  title,
+  helper,
+  href,
+  cta,
+  children,
+}: {
+  title: string;
+  helper?: string;
+  href: string;
+  cta: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col">
+      <h3 className="text-lg font-semibold text-[#09391C]">{title}</h3>
+      {helper && <p className="text-sm text-[#5A5D63] mt-1">{helper}</p>}
+      {children && <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">{children}</div>}
+      <Link href={href} className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[#09391C]">
+        {cta} <ArrowRight className="h-4 w-4" />
+      </Link>
+    </div>
+  );
 }
 
 export default function DeveloperDashboard() {
-  const router = useRouter();
-  const { user } = useUserContext();
-  const {
-    eligibility: listingEligibility,
-    loading: listingEligibilityLoading,
-  } = usePublisherListingEligibility();
-  const { entitlement: developerPlan } = useDeveloperPlanEntitlement();
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
-  const [recentProperties, setRecentProperties] = useState<RecentProperty[]>([]);
-  /** Total property count from /account/properties/fetchAll (used when dashboard stats are 0) */
-  const [propertiesTotalFromApi, setPropertiesTotalFromApi] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [referral, setReferral] = useState({ code: "", totalReferred: 0, points: 0, earnings: 0 });
+  const { user, setUser } = useUserContext();
+  const [summary, setSummary] = useState<Summary | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const preferred = (user as any)?.referralCode;
-    if (preferred) {
-      setReferral((prev) => ({ ...prev, code: preferred }));
-    }
-  }, [user]);
-
-  // Sync userType to localStorage so the header profile dropdown shows Developer menu (Inspection Requests, Agent Requests, etc.)
   useEffect(() => {
     if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem("userType", "Developer");
-      } catch {}
+      try { localStorage.setItem("userType", "Developer"); } catch {}
     }
   }, []);
 
   useEffect(() => {
-    if (!user?._id && !user?.id) return;
-    setIsLoading(true);
     const load = async () => {
       try {
-        await fetchDashboardData();
-        await fetchRecentProperties();
-        await fetchReferralData();
+        const res = await GET_REQUEST(`${URLS.BASE}${URLS.developerDashboardSummary}`, Cookies.get("token"));
+        if (res.success) {
+          const data = res.data as Summary;
+          setSummary(data);
+          const nextStatus = data.verification?.kycStatus as string | undefined;
+          if (user && nextStatus && user.kycStatus !== nextStatus) {
+            setUser(normalizeUser({ ...user, kycStatus: nextStatus as User["kycStatus"] }));
+          }
+        }
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
-    load();
-  }, [user?._id ?? user?.id]);
+    void load();
+  }, []);
 
-  const fetchDashboardData = async () => {
-    try {
-      const response = await GET_REQUEST(
-        `${URLS.BASE}${URLS.fetchDashboardStats}`,
-        Cookies.get("token"),
-      );
-      if (response?.success && response.data) {
-        const raw = response.data as Record<string, unknown>;
-        setDashboardData({
-          totalBriefs: Number(raw.totalBriefs ?? 0),
-          totalActiveBriefs: Number(raw.totalActiveBriefs ?? 0),
-          totalInactiveBriefs: Number(raw.totalInactiveBriefs ?? 0),
-          totalViews: Number(raw.totalViews ?? 0),
-          totalInspectionRequests: Number(raw.totalInspectionRequests ?? 0),
-          totalCompletedInspectionRequests: Number(raw.totalCompletedInspectionRequests ?? 0),
-          newPendingBriefs: Array.isArray(raw.newPendingBriefs) ? (raw.newPendingBriefs as PendingBrief[]) : [],
-          completedDeals: Number(raw.completedDeals ?? 0),
-          averageRating: Number(raw.averageRating ?? 0),
-          totalCommission: Number(raw.totalCommission ?? 0),
-        });
-      } else {
-        setDashboardData({
-          totalBriefs: 0,
-          totalActiveBriefs: 0,
-          totalInactiveBriefs: 0,
-          totalViews: 0,
-          totalInspectionRequests: 0,
-          totalCompletedInspectionRequests: 0,
-          newPendingBriefs: [],
-          completedDeals: 0,
-          averageRating: 0,
-          totalCommission: 0,
-        });
-      }
-    } catch (error) {
-      console.error("Failed to fetch dashboard data:", error);
-      toast.error("Failed to load dashboard data");
-      setDashboardData({
-        totalBriefs: 0,
-        totalActiveBriefs: 0,
-        totalInactiveBriefs: 0,
-        totalViews: 0,
-        totalInspectionRequests: 0,
-        totalCompletedInspectionRequests: 0,
-        newPendingBriefs: [],
-        completedDeals: 0,
-        averageRating: 0,
-        totalCommission: 0,
-      });
-    }
-  };
+  if (loading) return <Loading />;
+  if (!user) return null;
 
-  const fetchReferralData = async () => {
-    try {
-      const token = Cookies.get("token");
-      const response = await GET_REQUEST<any>(`${URLS.BASE}/account/referrals/stats`, token);
-      if (response?.success && response.data) {
-        const data = response.data as any;
-        const preferredCode = (user as any)?.referralCode;
-        setReferral({
-          code: (preferredCode || data.code || "").toString(),
-          totalReferred: Number(data.totalReferred || 0),
-          points: Number(data.points || 0),
-          earnings: Number(data.earnings || 0),
-        });
-        return;
-      }
-    } catch (e) {
-      // ignore
-    }
-    const preferredCode = (user as any)?.referralCode;
-    if (preferredCode) {
-      setReferral((prev) => ({ ...prev, code: preferredCode }));
-    } else {
-      const email = (user as any)?.email || "";
-      const fallbackCode = email
-        ? `${email.split("@")[0].toUpperCase()}2024`
-        : `${(user?.firstName || "USER").toUpperCase()}2024`;
-      setReferral((prev) => ({ ...prev, code: fallbackCode }));
-    }
-  };
-
-  /** Fetch recent properties (all statuses) and total count for accurate dashboard metrics. */
-  const fetchRecentProperties = async () => {
-    try {
-      const url = `${URLS.BASE}/account/properties/fetchAll?page=1&limit=5`;
-      const response = await GET_REQUEST(url, Cookies.get("token"));
-      console.log("[fetchAll /account/properties/fetchAll] response (Developer dashboard)", response);
-      const raw = response as { success?: boolean; data?: unknown[]; pagination?: { total?: number } };
-      if (raw?.success && Array.isArray(raw.data)) {
-        setRecentProperties((raw.data as RecentProperty[]).slice(0, 5));
-        const total = raw.pagination?.total ?? raw.data.length;
-        setPropertiesTotalFromApi(typeof total === "number" ? total : raw.data.length);
-      } else {
-        setRecentProperties([]);
-        setPropertiesTotalFromApi(null);
-      }
-    } catch (error) {
-      console.error("Failed to fetch recent properties:", error);
-      setRecentProperties([]);
-      setPropertiesTotalFromApi(null);
-    }
-  };
-
-  if (isLoading) {
-    return <Loading />;
-  }
-
-  if (!user) {
-    return null;
-  }
-
-  const totalBriefs = Math.max(dashboardData?.totalBriefs ?? 0, propertiesTotalFromApi ?? 0);
-  const totalActiveBriefs = Math.max(dashboardData?.totalActiveBriefs ?? 0, propertiesTotalFromApi ?? 0);
-  const totalViews = dashboardData?.totalViews ?? 0;
-  const totalInspectionRequests = dashboardData?.totalInspectionRequests ?? 0;
-  const completedDeals = dashboardData?.completedDeals ?? 0;
-  const displayProperties = recentProperties.length > 0 ? recentProperties : (dashboardData?.newPendingBriefs ?? []) as RecentProperty[];
-
-  const statCards = [
-    { title: "Total Properties", value: totalBriefs, icon: BuildingIcon, color: "bg-blue-500", textColor: "text-blue-600" },
-    { title: "Active Listings", value: totalActiveBriefs, icon: TrendingUpIcon, color: "bg-green-500", textColor: "text-green-600" },
-    { title: "Completed Deals", value: completedDeals, icon: CheckCircleIcon, color: "bg-yellow-500", textColor: "text-yellow-600" },
-    { title: "Total Views", value: `${totalViews}`, icon: EyeIcon, color: "bg-purple-500", textColor: "text-purple-600" },
-  ];
+  const name = `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Developer";
+  const companyName = summary?.verification?.company?.legalName || summary?.profile?.companyName;
+  const v = summary?.verification;
+  const isCompany = v?.practitionerType === "Company";
+  const verified = Boolean(summary?.isVerifiedDeveloper);
+  const canProject = Boolean(summary?.canSubmitOffPlan);
 
   return (
-    <div className="min-h-screen bg-[#EEF1F1] py-4 sm:py-8 overflow-x-hidden">
-      <div className="container mx-auto px-4 sm:px-6 max-w-full">
-        {/* Header: welcome on its own row so it always displays fully; buttons on next row(s) */}
-        <div className="flex flex-col gap-4 mb-8">
-          <div className="w-full">
-            <h1 className="text-2xl sm:text-3xl font-bold text-[#09391C] font-display">
-              Welcome back, Developer {user.firstName ?? ""}!
-            </h1>
-            <p className="text-[#5A5D63] mt-2">
-              Manage your developments, properties, and real estate activity
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 sm:items-center flex-wrap">
-            <Link
-              href="/my-listings"
-              className="bg-[#8DDB90] hover:bg-[#7BC87F] text-white px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
-            >
-              <BriefcaseIcon size={20} />
-              <span className="hidden sm:inline">View </span>Listings
-            </Link>
-            <Link
-              href="/my-transactions"
-              className="bg-white hover:bg-gray-50 text-[#09391C] border border-[#8DDB90] px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
-            >
-              <FileText size={20} />
-              My Transactions
-            </Link>
-            <Link
-              href="/my-inspection-requests"
-              className="bg-white hover:bg-gray-50 text-[#09391C] border border-[#8DDB90] px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
-            >
-              <CalendarIcon size={20} />
-              <span className="hidden sm:inline">Inspection</span> Requests
-            </Link>
-            <Link
-              href="/my-request-to-market"
-              className="bg-white hover:bg-gray-50 text-[#09391C] border border-[#8DDB90] px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
-            >
-              <BriefcaseIcon size={20} />
-              Agent Requests
-            </Link>
-            <Link
-              href="/agent-broadcast"
-              className="bg-white hover:bg-gray-50 text-[#09391C] border border-[#8DDB90] px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
-            >
-              <MailIcon size={20} />
-              <span className="hidden sm:inline">Broadcast</span>
-            </Link>
-            <Link
-              href="/dashboard/syndication"
-              className="bg-white hover:bg-gray-50 text-[#09391C] border border-[#8DDB90] px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
-              title="Syndication integrations"
-            >
-              <Globe2 size={20} />
-              Syndication
-            </Link>
-            <Link
-              href="/dashboard/inspection-representatives"
-              className="bg-white hover:bg-gray-50 text-[#09391C] border border-[#8DDB90] px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
-              title="Inspection representatives"
-            >
-              <UserCircle size={20} />
-              <span className="whitespace-nowrap">Inspection reps</span>
-            </Link>
-            <Link
-              href="/agent-subscriptions?tab=plans"
-              className="bg-white hover:bg-gray-50 text-[#09391C] border border-[#8DDB90] px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
-            >
-              <CreditCardIcon size={20} />
-              Subscription
-            </Link>
-            <ListPropertyCta listingEligibility={listingEligibility} variant="hero" />
-          </div>
-        </div>
+    <div className="min-h-screen bg-[#EEF1F1] py-6 sm:py-10">
+      <div className="container mx-auto px-4 sm:px-6 max-w-6xl space-y-8">
+        <header>
+          <h1 className="text-3xl font-bold text-[#09391C]">Welcome back, {name}</h1>
+          {isCompany && companyName && (
+            <p className="text-lg font-medium text-[#09391C] mt-1">{companyName}</p>
+          )}
+          <p className="text-[#5A5D63] mt-2">
+            Manage your properties, projects, professional profile, inspections and transactions from one place.
+          </p>
+        </header>
 
-        <div className="mb-4 space-y-2">
-          <div
-            className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${
-              (user as any)?.isAccountVerified ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-700"
-            }`}
-          >
-            <span
-              className={`w-1.5 h-1.5 rounded-full ${
-                (user as any)?.isAccountVerified ? "bg-blue-600" : "bg-gray-400"
-              }`}
+        <section className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-4">
+            <Shield className="h-5 w-5 text-[#09391C]" />
+            <h2 className="text-lg font-semibold text-[#09391C]">Developer Verification</h2>
+          </div>
+          <div className="grid sm:grid-cols-3 gap-3">
+            <StatusChip
+              label={isCompany ? "Company" : "Individual"}
+              status={isCompany ? v?.company?.status : v?.individual?.status || v?.representative?.status}
             />
-            {(user as any)?.isAccountVerified ? "Verified account" : "Unverified account"}
+            <StatusChip
+              label={isCompany ? "Authorized Representative" : "Identity"}
+              status={v?.representative?.status}
+            />
+            <StatusChip label="Address" status={v?.address?.status} />
           </div>
-        </div>
+          {!verified && (
+            <div className="mt-4">
+              <Link
+                href="/developer-kyc"
+                className="inline-flex items-center gap-1 text-sm font-semibold text-[#09391C]"
+              >
+                {user?.kycStatus === "pending" || user?.kycStatus === "in_review"
+                  ? "View submission details →"
+                  : "Complete Verification →"}
+              </Link>
+            </div>
+          )}
+        </section>
 
-        <DeveloperOnboardingChecklist />
-
-        {developerPlan && (
-          <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800">
-            <p className="font-semibold text-[#09391C]">Professional distribution</p>
-            <p className="mt-1">
-              {developerPlan.hasActivePlan
-                ? `${developerPlan.acceptedCount} of ${developerPlan.maxProfessionals} professionals accepted on ${developerPlan.planName}. ${developerPlan.remainingProfessionals} slot${developerPlan.remainingProfessionals === 1 ? "" : "s"} remaining.`
-                : "Subscribe to Developer Property Distribution to accept professionals. You can still list completed properties."}
+        <section className="grid md:grid-cols-2 gap-4">
+          <div className="bg-[#09391C] text-white rounded-2xl p-5">
+            <h3 className="text-xl font-semibold">List a Property</h3>
+            <p className="text-sm text-white/80 mt-2">
+              List a completed, existing, or otherwise eligible property through the standard Khabiteq property-listing process.
             </p>
-            <Link href="/my-request-to-market" className="text-emerald-700 hover:underline font-medium text-xs">
-              Review agent requests
+            <Link href="/post-property" className="mt-4 inline-flex items-center gap-1 font-semibold">
+              List a Property →
             </Link>
           </div>
-        )}
+          <div className="bg-white border border-slate-200 rounded-2xl p-5">
+            <h3 className="text-xl font-semibold text-[#09391C]">List Off-Plan Project</h3>
+            {canProject ? (
+              <>
+                <p className="text-sm text-[#5A5D63] mt-2">
+                  Submit an off-plan or under-construction development for project review.
+                </p>
+                <Link href="/developer/projects/new" className="mt-4 inline-flex items-center gap-1 font-semibold text-[#09391C]">
+                  List Off-Plan Project →
+                </Link>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-[#5A5D63] mt-2">
+                  Additional requirements are required before you can submit an off-plan project.
+                </p>
+                <Link href="/developer/requirements" className="mt-4 inline-flex items-center gap-1 font-semibold text-[#09391C]">
+                  View Requirements →
+                </Link>
+              </>
+            )}
+          </div>
+        </section>
 
-        <PublisherListingAllowanceCard
-          eligibility={listingEligibility}
-          loading={listingEligibilityLoading}
-        />
-
-        {/* Performance Overview + Referral (same as Agent) */}
-        <div className="bg-white rounded-lg p-4 sm:p-6 mb-8 shadow-sm">
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 sm:gap-6">
-            <div className="text-center">
-              <div className="text-2xl sm:text-3xl font-bold text-[#8DDB90] mb-2">
-                ₦{(dashboardData?.totalCommission ?? 0).toLocaleString()}
-              </div>
-              <p className="text-sm sm:text-base text-[#5A5D63]">Total Commission</p>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center mb-2">
-                <StarIcon size={20} className="text-yellow-500 fill-current sm:w-6 sm:h-6" />
-                <span className="text-2xl sm:text-3xl font-bold text-[#09391C] ml-2">{dashboardData?.averageRating ?? 0}</span>
-              </div>
-              <p className="text-sm sm:text-base text-[#5A5D63]">Average Rating</p>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl sm:text-3xl font-bold text-[#09391C] mb-2">
-                {totalBriefs > 0 ? Math.round(((completedDeals ?? 0) / totalBriefs) * 100) : 0}%
-              </div>
-              <p className="text-sm sm:text-base text-[#5A5D63]">Success Rate</p>
-            </div>
-            <div className="text-center">
-              <div className="text-xs text-gray-500 mb-1">Referral</div>
-              <div className="flex items-center justify-center gap-3">
-                <code className="font-mono text-[#09391C] text-sm">{referral.code || "—"}</code>
-                <button
-                  onClick={async () => {
-                    try {
-                      const url = `${typeof window !== "undefined" ? window.location.origin : ""}/auth/register?ref=${referral.code}`;
-                      await navigator.clipboard.writeText(url);
-                      toast.success("Referral link copied");
-                    } catch {
-                      toast.error("Copy failed");
-                    }
-                  }}
-                  className="p-1.5 rounded bg-gray-50 hover:bg-gray-100"
-                  aria-label="Copy referral link"
-                >
-                  <Copy size={14} />
-                </button>
-              </div>
-              <div className="mt-2 text-xs text-[#5A5D63]">{referral.totalReferred} referred • ₦{(referral.earnings ?? 0).toLocaleString()}</div>
-            </div>
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#5A5D63] mb-3">Business</p>
+          <div className="grid md:grid-cols-2 gap-4">
+            <DashCard title="My Properties" href="/my-listings" cta="View All Properties →">
+              <Metric label="Total Properties" value={summary?.properties.total ?? 0} />
+              <Metric label="Active Listings" value={summary?.properties.active ?? 0} />
+              <Metric label="Pending Review" value={summary?.properties.pendingReview ?? 0} />
+              <Metric label="Drafts" value={summary?.properties.drafts ?? 0} />
+              <Metric label="Requires Attention" value={summary?.properties.requiresAttention ?? 0} />
+            </DashCard>
+            <DashCard title="My Projects" href="/developer/projects" cta="View All Projects →">
+              {(summary?.projects.total ?? 0) === 0 ? (
+                <div className="col-span-3">
+                  <p className="text-sm text-[#5A5D63]">You haven&apos;t submitted an off-plan project yet.</p>
+                  <Link
+                    href={canProject ? "/developer/projects/new" : "/developer/requirements"}
+                    className="text-sm font-semibold text-[#09391C]"
+                  >
+                    {canProject ? "List Off-Plan Project →" : "View Requirements →"}
+                  </Link>
+                </div>
+              ) : (
+                <>
+                  <Metric label="Total Projects" value={summary?.projects.total ?? 0} />
+                  <Metric label="Draft" value={summary?.projects.draft ?? 0} />
+                  <Metric label="Under Review" value={summary?.projects.underReview ?? 0} />
+                  <Metric label="Approved" value={summary?.projects.approved ?? 0} />
+                  <Metric label="Live" value={summary?.projects.live ?? 0} />
+                  <Metric label="Requires Attention" value={summary?.projects.requiresAttention ?? 0} />
+                </>
+              )}
+            </DashCard>
+            <DashCard
+              title="My Transactions"
+              helper="Track transactions associated with your properties and projects."
+              href="/my-transactions"
+              cta="View Transactions →"
+            >
+              <Metric label="Active Transactions" value={summary?.transactions.active ?? 0} />
+              <Metric label="Pending Transactions" value={summary?.transactions.pending ?? 0} />
+              <Metric label="Completed Transactions" value={summary?.transactions.completed ?? 0} />
+            </DashCard>
+            <DashCard title="Inspection Requests" href="/my-inspection-requests" cta="Manage Inspections →">
+              <Metric label="Pending" value={summary?.inspections.pending ?? 0} />
+              <Metric label="Upcoming" value={summary?.inspections.upcoming ?? 0} />
+              <Metric label="Completed" value={summary?.inspections.completed ?? 0} />
+              <Metric label="Cancelled" value={summary?.inspections.cancelled ?? 0} />
+            </DashCard>
           </div>
         </div>
 
-        {/* At-a-glance metrics; full forms live on /dashboard/syndication and /dashboard/inspection-representatives */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-8">
-          <SyndicationIntegrationSummary />
-          <InspectionRepresentativesSummary developerPropertyScoped />
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#5A5D63] mb-3">Professional presence</p>
+          <div className="grid md:grid-cols-3 gap-4">
+            <DashCard
+              title="Practitioner Page"
+              helper="Manage your public professional profile and the information property seekers can view."
+              href="/public-access-page"
+              cta="Manage Practitioner Page →"
+            />
+            <DashCard
+              title="Professional Distribution"
+              helper="Manage participating real estate professionals and distribute eligible listings to your approved professional network."
+              href="/my-request-to-market"
+              cta="Manage Distribution →"
+            >
+              <Metric label="Professionals connected" value={summary?.distribution.connected ?? 0} />
+              <Metric label="Pending requests" value={summary?.distribution.pending ?? 0} />
+              <Metric label="Active connections" value={summary?.distribution.active ?? 0} />
+            </DashCard>
+            <DashCard
+              title="Inspection Representatives"
+              helper="Manage the people responsible for handling inspection requests for your approved listings."
+              href="/dashboard/inspection-representatives"
+              cta="Manage Representatives →"
+            />
+          </div>
         </div>
 
-        {/* Stats Cards (same style as Agent) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-          {statCards.map((card, index) => {
-            const IconComponent = card.icon;
-            return (
-              <motion.div
-                key={card.title}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="bg-white rounded-lg p-4 sm:p-6 shadow-sm"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-[#5A5D63] mb-1">{card.title}</p>
-                    <p className={`text-2xl font-bold ${card.textColor}`}>
-                      {typeof card.value === "number" ? card.value.toLocaleString() : card.value}
-                    </p>
-                  </div>
-                  <div className={`p-3 rounded-lg ${card.color} bg-opacity-10`}>
-                    <IconComponent size={24} className={card.textColor} />
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })}
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#5A5D63] mb-3">Platform connections</p>
+          <div className="grid md:grid-cols-2 gap-4">
+            <DashCard
+              title="Syndication"
+              helper="Manage connections with approved external property platforms."
+              href="/dashboard/syndication"
+              cta="Manage Syndication →"
+            />
+            <DashCard title="Notifications" href="/notifications" cta="View Notifications →">
+              <Metric label="Unread" value={summary?.unreadNotifications ?? 0} />
+            </DashCard>
+          </div>
         </div>
 
-        {/* My Properties + Quick Actions (same layout as Agent: Recent Briefs + Quick Actions) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
-          {/* My Properties */}
-          <div className="bg-white rounded-lg shadow-sm">
-            <div className="p-4 sm:p-6 border-b border-gray-200">
-              <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold text-[#09391C]">My Properties</h2>
-                <Link href="/my-listings" className="text-[#8DDB90] hover:text-[#7BC87F] font-medium">
-                  View All
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#5A5D63] mb-3">Account</p>
+          <div className="grid md:grid-cols-3 gap-4">
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+              <h3 className="text-lg font-semibold text-[#09391C]">Developer Profile</h3>
+              <p className="text-sm text-[#5A5D63] mt-2">
+                {isCompany ? "Company" : "Individual"} · {name}
+              </p>
+              {summary?.profile?.bio && <p className="text-sm text-[#5A5D63] mt-2 line-clamp-3">{summary.profile.bio}</p>}
+              <Link href="/developer-kyc" className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[#09391C]">
+                Edit Developer Profile →
+              </Link>
+            </div>
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+              <h3 className="text-lg font-semibold text-[#09391C]">Plans & Subscription</h3>
+              <p className="text-sm text-[#09391C] mt-2 font-medium">
+                Current Plan: {summary?.plan?.planName || "No active plan"}
+              </p>
+              <p className="text-xs text-[#5A5D63] mt-2">
+                Off-plan projects may require additional verification and an applicable plan.
+              </p>
+              <div className="flex flex-col gap-1 mt-3">
+                <Link href="/agent-subscriptions?tab=plans" className="text-sm font-semibold text-[#09391C]">
+                  Manage Subscription →
+                </Link>
+                <Link href="/developer/requirements" className="text-sm font-semibold text-[#09391C]">
+                  View Off-Plan Requirements →
                 </Link>
               </div>
             </div>
-            {displayProperties.length === 0 ? (
-              <div className="p-8 text-center">
-                <BriefcaseIcon size={32} className="mx-auto text-gray-400 mb-3" />
-                <h3 className="text-base font-medium text-gray-600 mb-2">No Properties Listed Yet</h3>
-                <p className="text-sm text-gray-500 mb-4">List your first development or property</p>
-                <ListPropertyCta listingEligibility={listingEligibility} variant="inline" />
-              </div>
-            ) : (
-              <div className="divide-y divide-gray-200">
-                {displayProperties.slice(0, 5).map((brief, index) => (
-                  <motion.div
-                    key={`property-${brief._id}`}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="px-4 sm:px-6 py-4 sm:py-5 hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex items-center justify-between gap-3 min-h-[4.5rem] sm:min-h-[5rem]">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-12 h-12 sm:w-14 sm:h-14 bg-[#8DDB90] bg-opacity-10 rounded-lg flex items-center justify-center overflow-hidden shrink-0">
-                          {brief.pictures?.[0] ? (
-                            <img src={brief.pictures[0]} alt={brief.briefType ?? "Property"} className="w-full h-full object-cover" />
-                          ) : (
-                            <BriefcaseIcon size={16} className="text-[#8DDB90]" />
-                          )}
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-[#09391C] capitalize text-sm">{brief.briefType ?? "Property"}</h3>
-                          <div className="flex items-center gap-1 text-xs text-[#5A5D63]">
-                            <MapPinIcon size={10} />
-                            {((brief as { location?: { state?: string; localGovernment?: string; area?: string } }).location?.area ?? `${brief.location?.state ?? ""} ${brief.location?.localGovernment ?? ""}`.trim()) || "—"}
-                          </div>
-                          {typeof brief.price === "number" && (
-                            <p className="text-xs text-[#8DDB90] font-medium">₦{brief.price.toLocaleString()}</p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${brief.isApproved ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>
-                          {brief.isApproved ? "Approved" : "Pending Review"}
-                        </span>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Quick Actions (same as Agent: all actions Developer can use) */}
-          <div className="bg-white rounded-lg shadow-sm">
-            <div className="p-4 sm:p-6 border-b border-gray-200">
-              <h2 className="text-lg sm:text-xl font-semibold text-[#09391C]">Quick Actions</h2>
-            </div>
-            <div className="p-4 sm:p-6 space-y-4">
-              <Link
-                href="/agent-broadcast"
-                className="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 p-4 rounded-lg font-medium flex items-center gap-3 transition-colors group"
-              >
-                <div className="p-2 bg-indigo-500 bg-opacity-20 rounded-lg">
-                  <MailIcon size={20} className="text-indigo-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold">Broadcast to Subscribers</h3>
-                  <p className="text-sm text-indigo-700/90">Send an email to all your Practitioner subscribers</p>
-                </div>
-              </Link>
-              <ListPropertyCta listingEligibility={listingEligibility} variant="quick" />
-              <Link
-                href="/agent-marketplace"
-                className="w-full bg-white hover:bg-gray-50 text-[#09391C] border border-[#8DDB90] p-4 rounded-lg font-medium flex items-center gap-3 transition-colors group"
-              >
-                <div className="p-2 bg-[#8DDB90] bg-opacity-10 rounded-lg">
-                  <BriefcaseIcon size={20} className="text-[#8DDB90]" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold">Browse Marketplace</h3>
-                  <p className="text-sm text-[#5A5D63]">Find new opportunities</p>
-                </div>
-              </Link>
-              <Link
-                href="/my-transactions"
-                className="w-full bg-white hover:bg-gray-50 text-[#09391C] border border-gray-200 p-4 rounded-lg font-medium flex items-center gap-3 transition-colors group"
-              >
-                <div className="p-2 bg-[#09391C]/10 rounded-lg">
-                  <FileText size={20} className="text-[#09391C]" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold">My Transactions</h3>
-                  <p className="text-sm text-[#5A5D63]">View certificates and journey records</p>
-                </div>
-              </Link>
-              <Link
-                href="/my-inspection-requests"
-                className="w-full bg-white hover:bg-gray-50 text-[#09391C] border border-gray-200 p-4 rounded-lg font-medium flex items-center gap-3 transition-colors group"
-              >
-                <div className="p-2 bg-purple-500 bg-opacity-10 rounded-lg">
-                  <CalendarIcon size={20} className="text-purple-500" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold">Inspection Requests</h3>
-                  <p className="text-sm text-[#5A5D63]">Manage inspections</p>
-                </div>
-              </Link>
-              <Link
-                href="/dashboard/syndication"
-                className="w-full bg-white hover:bg-gray-50 text-[#09391C] border border-[#8DDB90] p-4 rounded-lg font-medium flex items-center gap-3 transition-colors group"
-              >
-                <div className="p-2 bg-[#09391C]/10 rounded-lg">
-                  <Globe2 size={20} className="text-[#09391C]" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold">Syndication integrations</h3>
-                  <p className="text-sm text-[#5A5D63]">Connect platforms and manage dispatch</p>
-                </div>
-              </Link>
-              <Link
-                href="/dashboard/inspection-representatives"
-                className="w-full bg-white hover:bg-gray-50 text-[#09391C] border border-[#8DDB90] p-4 rounded-lg font-medium flex items-center gap-3 transition-colors group"
-              >
-                <div className="p-2 bg-[#8DDB90]/20 rounded-lg">
-                  <UserCircle size={20} className="text-[#09391C]" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold">Inspection representatives</h3>
-                  <p className="text-sm text-[#5A5D63]">Per-listing contacts for inspection notifications</p>
-                </div>
-              </Link>
-              <Link
-                href="/notifications"
-                className="w-full bg-white hover:bg-gray-50 text-[#09391C] border border-gray-200 p-4 rounded-lg font-medium flex items-center gap-3 transition-colors group"
-              >
-                <div className="p-2 bg-purple-500 bg-opacity-10 rounded-lg">
-                  <UsersIcon size={20} className="text-purple-500" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold">Notifications</h3>
-                  <p className="text-sm text-[#5A5D63]">View notifications</p>
-                </div>
-              </Link>
-              <Link
-                href="/developer-kyc"
-                className="w-full bg-white hover:bg-gray-50 text-[#09391C] border border-gray-200 p-4 rounded-lg font-medium flex items-center gap-3 transition-colors group"
-              >
-                <div className="p-2 bg-blue-500 bg-opacity-10 rounded-lg">
-                  <CheckCircleIcon size={20} className="text-blue-500" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold">Developer KYC</h3>
-                  <p className="text-sm text-[#5A5D63]">Basic profile now, Advanced KYC to unlock off-plan</p>
-                </div>
-              </Link>
-              <Link
-                href="/agent-subscriptions?tab=plans"
-                className="w-full bg-white hover:bg-gray-50 text-[#09391C] border border-gray-200 p-4 rounded-lg font-medium flex items-center gap-3 transition-colors group"
-              >
-                <div className="p-2 bg-emerald-500 bg-opacity-10 rounded-lg">
-                  <CreditCardIcon size={20} className="text-emerald-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold">Developer plans</h3>
-                  <p className="text-sm text-[#5A5D63]">Distribution ₦50k, Off-Plan ₦130k, Annual ₦390k</p>
-                </div>
-              </Link>
-              <Link
-                href="/my-listings"
-                className="w-full bg-white hover:bg-gray-50 text-[#09391C] border border-gray-200 p-4 rounded-lg font-medium flex items-center gap-3 transition-colors group"
-              >
-                <div className="p-2 bg-blue-500 bg-opacity-10 rounded-lg">
-                  <UsersIcon size={20} className="text-blue-500" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold">My Listings</h3>
-                  <p className="text-sm text-[#5A5D63]">Manage properties</p>
-                </div>
-              </Link>
-              <Link
-                href="/profile-settings"
-                className="w-full bg-white hover:bg-gray-50 text-[#09391C] border border-gray-200 p-4 rounded-lg font-medium flex items-center gap-3 transition-colors group"
-              >
-                <div className="p-2 bg-gray-500 bg-opacity-10 rounded-lg">
-                  <UsersIcon size={20} className="text-gray-500" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold">Profile Settings</h3>
-                  <p className="text-sm text-[#5A5D63]">Manage account settings</p>
-                </div>
-              </Link>
-              <Link
-                href="/public-access-page"
-                className="w-full bg-white hover:bg-gray-50 text-[#09391C] border border-gray-200 p-4 rounded-lg font-medium flex items-center gap-3 transition-colors group"
-              >
-                <div className="p-2 bg-emerald-500 bg-opacity-10 rounded-lg">
-                  <LinkIcon size={20} className="text-emerald-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold">Practitioner Page</h3>
-                  <p className="text-sm text-[#5A5D63]">Set up and manage your Practitioner page</p>
-                </div>
-              </Link>
-            </div>
+            <DashCard title="Settings" helper="Account settings, login/security, password, notification preferences, contact information, and privacy settings." href="/profile-settings" cta="Settings →" />
           </div>
         </div>
       </div>

@@ -1,457 +1,618 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useFormik } from "formik";
-import * as Yup from "yup";
-import { PUT_REQUEST } from "@/utils/requests";
+import { useUserContext, normalizeUser } from "@/context/user-context";
+import KycSubmittedConfirmation from "@/components/kyc/KycSubmittedConfirmation";
+import { isApprovedKyc, isPendingKyc, normalizeKycStatus } from "@/lib/kyc-status";
+import { GET_REQUEST, POST_REQUEST, PUT_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import AttachFile from "@/components/general-components/attach_file";
-import { CheckCircle2, Clock, FileText, Plus, X } from "lucide-react";
 import { getCookie } from "cookies-next";
-import { getLGAsByState, PILOT_STATE, isPilotState, PILOT_LOCATION_MESSAGE } from "@/utils/location-utils";
+import { getLGAsByState, PILOT_STATE } from "@/utils/location-utils";
 import ProcessingRequest from "@/components/loading-component/ProcessingRequest";
 import { handleApiError } from "@/utils/handleApiError";
-import { useDeveloperPlanEntitlement } from "@/hooks/useDeveloperPlanEntitlement";
 import toast from "react-hot-toast";
+import { ArrowLeft, ArrowRight, CheckCircle2, Shield } from "lucide-react";
 
-type KycTier = "basic" | "advanced";
+type AccountType = "Individual" | "Company";
 
-const basicSchema = Yup.object({
-  practitionerType: Yup.string().oneOf(["Individual", "Company"]).required("Choose individual or company"),
-  profileBio: Yup.string().required("Tell buyers who you are").max(800),
-  regionOfOperation: Yup.array().of(Yup.string()).min(1, "Select at least one region"),
-  companyName: Yup.string().when("practitionerType", {
-    is: "Company",
-    then: (schema) => schema.required("Company name is required"),
-    otherwise: (schema) => schema.optional(),
-  }),
-});
+function Field({
+  label,
+  why,
+  children,
+}: {
+  label: string;
+  why: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="block space-y-1.5">
+      <span className="text-sm font-semibold text-[#09391C]">{label}</span>
+      <p className="text-xs text-[#5A5D63] leading-relaxed">{why}</p>
+      {children}
+    </label>
+  );
+}
 
-const advancedSchema = basicSchema.concat(
-  Yup.object({
-    companyName: Yup.string().required("Company name is required"),
-    cacNumber: Yup.string().required("CAC number is required"),
-    street: Yup.string().required("Street is required"),
-    homeNo: Yup.string().required("House number is required"),
-    state: Yup.string()
-      .required("State is required")
-      .test("pilot-state", PILOT_LOCATION_MESSAGE, (value) => isPilotState(value)),
-    localGovtArea: Yup.string().required("Local government is required"),
-    idType: Yup.string().required("ID type is required"),
-    idUrl: Yup.string().required("Upload at least one ID"),
-    projectName: Yup.string().required("Project name is required"),
-    projectLocation: Yup.string().required("Project location is required"),
-    projectStage: Yup.string().required("Project stage is required"),
-    expectedCompletion: Yup.string().required("Expected completion is required"),
-    supportingDocs: Yup.array().of(Yup.string()).min(1, "Upload at least one supporting document"),
-  })
-);
+const inputClass =
+  "w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-[#09391C] outline-none focus:border-[#8DDB90] focus:ring-2 focus:ring-[#8DDB90]/20";
 
 export default function DeveloperKycForm() {
-  const { entitlement, loading, refresh } = useDeveloperPlanEntitlement();
-  const [tier, setTier] = useState<KycTier>("basic");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submittedTier, setSubmittedTier] = useState<KycTier | null>(null);
-  const regionOptions = useMemo(() => getLGAsByState(PILOT_STATE), []);
+  const { user, setUser } = useUserContext();
+  const token = getCookie("token") as string;
+  const lgas = useMemo(() => getLGAsByState(PILOT_STATE), []);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [step, setStep] = useState(0);
+  const [verification, setVerification] = useState<any>(null);
 
-  const formik = useFormik({
-    initialValues: {
-      practitionerType: "Company" as "Individual" | "Company",
-      profileBio: "",
-      regionOfOperation: [] as string[],
-      companyName: "",
-      cacNumber: "",
-      street: "",
-      homeNo: "",
-      state: PILOT_STATE,
-      localGovtArea: "",
-      idType: "",
-      idUrl: "",
-      projectName: "",
-      projectLocation: "",
-      projectStage: "",
-      expectedCompletion: "",
-      supportingDocs: [] as string[],
-    },
-    validationSchema: tier === "advanced" ? advancedSchema : basicSchema,
-    enableReinitialize: false,
-    onSubmit: async (values) => {
-      setIsSubmitting(true);
-      try {
-        const token = getCookie("token") as string;
-        const payload: Record<string, unknown> = {
-          kycTier: tier,
-          practitionerType: values.practitionerType,
-          agentType: values.practitionerType,
-          profileBio: values.profileBio,
-          regionOfOperation: values.regionOfOperation,
-          companyDetails: {
-            companyName: values.companyName,
-            cacNumber: values.cacNumber,
-          },
-        };
-        if (tier === "advanced") {
-          payload.address = {
-            street: values.street,
-            homeNo: values.homeNo,
-            state: values.state,
-            localGovtArea: values.localGovtArea,
-          };
-          payload.meansOfId = [{ name: values.idType, docImg: [values.idUrl] }];
-          payload.advancedKyc = {
-            companyName: values.companyName,
-            cacNumber: values.cacNumber,
-            projectName: values.projectName,
-            projectLocation: values.projectLocation,
-            projectStage: values.projectStage,
-            expectedCompletion: values.expectedCompletion,
-            supportingDocs: values.supportingDocs,
-          };
-        }
-        const response = await PUT_REQUEST(`${URLS.BASE}${URLS.submitKyc}`, payload, token);
-        if (!response.success) {
-          handleApiError(response);
-          return;
-        }
-        setSubmittedTier(tier);
-        toast.success(
-          tier === "advanced"
-            ? "Advanced KYC submitted for review."
-            : "Developer profile saved. You can now list completed properties."
-        );
-        await refresh();
-      } finally {
-        setIsSubmitting(false);
-      }
-    },
+  const [accountType, setAccountType] = useState<AccountType>("Individual");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [bio, setBio] = useState("");
+  const [regions, setRegions] = useState<string[]>([]);
+  const [companyName, setCompanyName] = useState("");
+  const [businessPhone, setBusinessPhone] = useState("");
+  const [businessEmail, setBusinessEmail] = useState("");
+
+  const [cacNumber, setCacNumber] = useState("");
+  const [companyType, setCompanyType] = useState("limited_liability");
+  const [cacDoc, setCacDoc] = useState<string | null>(null);
+  const [lookup, setLookup] = useState<any>(null);
+  const [office, setOffice] = useState({
+    homeNo: "",
+    street: "",
+    localGovtArea: "",
+    state: PILOT_STATE,
   });
 
-  const lgas = formik.values.state ? getLGAsByState(formik.values.state) : [];
+  const [repName, setRepName] = useState("");
+  const [repRole, setRepRole] = useState("");
+  const [repPhone, setRepPhone] = useState("");
+  const [repEmail, setRepEmail] = useState("");
+  const [idType, setIdType] = useState("NIN");
+  const [idNumber, setIdNumber] = useState("");
+  const [idDoc, setIdDoc] = useState<string | null>(null);
+  const [consent, setConsent] = useState(false);
+  const [idLookup, setIdLookup] = useState<any>(null);
 
-  const toggleRegion = (value: string) => {
-    const current = formik.values.regionOfOperation;
-    formik.setFieldValue(
-      "regionOfOperation",
-      current.includes(value) ? current.filter((r) => r !== value) : [...current, value]
+  const steps = useMemo(() => {
+    const base = [
+      { key: "profile", label: "Profile" },
+      ...(accountType === "Company" ? [{ key: "company", label: "Company registration" }] : []),
+      { key: "identity", label: accountType === "Company" ? "Authorized representative" : "Your identity" },
+      { key: "address", label: "Address" },
+    ];
+    return base;
+  }, [accountType]);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await GET_REQUEST(`${URLS.BASE}${URLS.developerVerification}`, token);
+        if (res.success && res.data) {
+          const d = res.data as any;
+          setVerification(d);
+          setAccountType(d.practitionerType === "Company" ? "Company" : "Individual");
+          setFirstName(d.profile?.firstName || user?.firstName || "");
+          setLastName(d.profile?.lastName || user?.lastName || "");
+          setPhone(d.profile?.phoneNumber || (user as any)?.phoneNumber || "");
+          setEmail(d.profile?.email || user?.email || "");
+          setBio(d.profile?.bio || "");
+          setRegions(d.profile?.regionOfOperation || []);
+          setCompanyName(d.profile?.companyName || d.company?.legalName || "");
+          setBusinessPhone(d.profile?.businessPhone || "");
+          setBusinessEmail(d.profile?.businessEmail || "");
+          setCacNumber(d.company?.cacNumber || "");
+          setOffice({
+            homeNo: d.address?.homeNo || "",
+            street: d.address?.street || "",
+            localGovtArea: d.address?.localGovtArea || "",
+            state: d.address?.state || PILOT_STATE,
+          });
+          setRepName(d.representative?.fullName || `${user?.firstName || ""} ${user?.lastName || ""}`.trim());
+          setRepPhone(d.profile?.phoneNumber || (user as any)?.phoneNumber || "");
+          setRepEmail(d.profile?.email || user?.email || "");
+        } else {
+          setFirstName(user?.firstName || "");
+          setLastName(user?.lastName || "");
+          setPhone((user as any)?.phoneNumber || "");
+          setEmail(user?.email || "");
+          setRepName(`${user?.firstName || ""} ${user?.lastName || ""}`.trim());
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (token) void load();
+    else setLoading(false);
+  }, [token, user]);
+
+  const saveProfile = async () => {
+    const res = await PUT_REQUEST(
+      `${URLS.BASE}${URLS.developerProfile}`,
+      {
+        practitionerType: accountType,
+        firstName,
+        lastName,
+        phoneNumber: phone,
+        email,
+        profileBio: bio,
+        regionOfOperation: regions,
+        companyName,
+        businessPhone,
+        businessEmail,
+        address: office,
+      },
+      token,
     );
+    if (!res.success) {
+      handleApiError(res);
+      return false;
+    }
+    setVerification(res.data);
+    return true;
   };
 
-  if (loading && !entitlement) {
+  const lookupCompany = async () => {
+    setSaving(true);
+    try {
+      const res = await POST_REQUEST(`${URLS.BASE}${URLS.developerCompanyLookup}`, { cacNumber }, token);
+      if (!res.success) {
+        handleApiError(res);
+        return;
+      }
+      setLookup(res.data);
+      const d = res.data as any;
+      if (d.legalName) setCompanyName(d.legalName);
+      if (d.registeredAddress) {
+        setOffice((prev) => ({
+          ...prev,
+          homeNo: d.registeredAddress.homeNo || prev.homeNo,
+          street: d.registeredAddress.street || prev.street,
+          localGovtArea: d.registeredAddress.localGovtArea || prev.localGovtArea,
+          state: d.registeredAddress.state || prev.state,
+        }));
+      }
+      if (d.found) toast.success("Company record found. Confirm the details below.");
+      else toast.error("We could not match this CAC number. Check the RC prefix or upload the certificate for review.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveCompany = async () => {
+    const res = await PUT_REQUEST(
+      `${URLS.BASE}${URLS.developerCompany}`,
+      {
+        legalName: companyName,
+        cacNumber,
+        companyType,
+        cacCertificateUrls: cacDoc ? [cacDoc] : [],
+        registeredAddress: office,
+        confirmProviderData: Boolean(lookup?.found),
+      },
+      token,
+    );
+    if (!res.success) {
+      handleApiError(res);
+      return false;
+    }
+    setVerification(res.data);
+    return true;
+  };
+
+  const saveIdentity = async () => {
+    const res = await PUT_REQUEST(
+      `${URLS.BASE}${URLS.developerRepresentative}`,
+      {
+        fullName: accountType === "Company" ? repName : `${firstName} ${lastName}`.trim(),
+        position: accountType === "Company" ? repRole : "Account holder",
+        phone: accountType === "Company" ? repPhone : phone,
+        email: accountType === "Company" ? repEmail : email,
+        idType,
+        idNumber,
+        idDocumentUrls: idDoc ? [idDoc] : [],
+        consent,
+      },
+      token,
+    );
+    if (!res.success) {
+      handleApiError(res);
+      return false;
+    }
+    setVerification((res.data as any)?.status ? res.data : (res.data as any));
+    setIdLookup((res.data as any)?.lookup);
+    return true;
+  };
+
+  const saveAddress = async () => {
+    const res = await PUT_REQUEST(`${URLS.BASE}${URLS.developerAddress}`, office, token);
+    if (!res.success) {
+      handleApiError(res);
+      return false;
+    }
+    setVerification(res.data);
+    return true;
+  };
+
+  const next = async () => {
+    setSaving(true);
+    try {
+      const key = steps[step]?.key;
+      let ok = true;
+      if (key === "profile") ok = await saveProfile();
+      if (key === "company") ok = await saveCompany();
+      if (key === "identity") ok = await saveIdentity();
+      if (key === "address") {
+        ok = await saveAddress();
+        if (ok) {
+          const submitted = await POST_REQUEST(
+            `${URLS.BASE}${URLS.developerVerificationSubmit}`,
+            {},
+            token,
+          );
+          if (submitted.success && submitted.data) {
+            setVerification(submitted.data);
+          }
+          const nextStatus =
+            (submitted.data as { isVerifiedDeveloper?: boolean; kycStatus?: string } | undefined)
+              ?.isVerifiedDeveloper
+              ? "approved"
+              : "pending";
+          if (user) {
+            setUser(normalizeUser({ ...user, kycStatus: nextStatus }));
+          }
+          toast.success(
+            nextStatus === "approved"
+              ? "Verification approved."
+              : "KYC submitted successfully.",
+          );
+        }
+      }
+      if (ok && step < steps.length - 1) setStep((s) => s + 1);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#EEF1F1]">
-        <ProcessingRequest isVisible title="Loading" message="Fetching your developer profile..." />
+        <ProcessingRequest
+          isVisible
+          title="Loading verification"
+          message="Please wait while we load your developer profile..."
+        />
       </div>
     );
   }
 
-  if (entitlement?.advancedKycApproved) {
-    return (
-      <div className="min-h-screen bg-[#EEF1F1] py-10 px-4">
-        <div className="max-w-xl mx-auto bg-white rounded-xl border border-gray-200 p-8 text-center">
-          <CheckCircle2 className="mx-auto text-[#8DDB90] mb-4" size={48} />
-          <h1 className="text-2xl font-semibold text-[#09391C]">Advanced KYC approved</h1>
-          <p className="text-[#5A5D63] mt-2">
-            Your developer verification is complete. Subscribe to Off-Plan to list off-plan projects.
-          </p>
-          <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/dashboard" className="px-5 py-2 rounded-lg bg-[#8DDB90] text-white font-medium">
-              Dashboard
-            </Link>
-            <Link href="/agent-subscriptions?tab=plans" className="px-5 py-2 rounded-lg border border-[#8DDB90] text-[#09391C] font-medium">
-              Subscribe
-            </Link>
-            <Link href="/pricing" className="px-5 py-2 rounded-lg border border-gray-200 text-[#09391C] font-medium">
-              View professional plans
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
+  const verified = Boolean(verification?.isVerifiedDeveloper);
+  const kycStatus = normalizeKycStatus(verification?.kycStatus || user?.kycStatus);
+  const needsAttention = [
+    verification?.company?.rawStatus,
+    verification?.representative?.rawStatus,
+    verification?.address?.rawStatus,
+  ].some((s) => s === "requires_attention");
+
+  if (!loading && verified) {
+    return <KycSubmittedConfirmation userType="Developer" variant="approved" />;
   }
 
-  if (entitlement?.advancedKycStatus === "pending" || entitlement?.advancedKycStatus === "in_review" || submittedTier === "advanced") {
-    return (
-      <div className="min-h-screen bg-[#EEF1F1] py-10 px-4">
-        <div className="max-w-xl mx-auto bg-white rounded-xl border border-gray-200 p-8 text-center">
-          <Clock className="mx-auto text-[#8DDB90] mb-4" size={48} />
-          <h1 className="text-2xl font-semibold text-[#09391C]">Advanced KYC pending review</h1>
-          <p className="text-[#5A5D63] mt-2">
-            We are reviewing your business and project information. You can still list completed properties and accept professionals on an active Distribution plan.
-          </p>
-          <Link href="/dashboard" className="inline-block mt-6 px-5 py-2 rounded-lg bg-[#8DDB90] text-white font-medium">
-            Back to dashboard
-          </Link>
-        </div>
-      </div>
-    );
+  if (!loading && isPendingKyc(kycStatus) && !needsAttention) {
+    return <KycSubmittedConfirmation userType="Developer" />;
+  }
+
+  if (!loading && isApprovedKyc(kycStatus)) {
+    return <KycSubmittedConfirmation userType="Developer" variant="approved" />;
   }
 
   return (
-    <div className="min-h-dvh w-full bg-[#EEF1F1] pt-24 pb-28 px-4 overflow-x-hidden overflow-y-visible">
-      <ProcessingRequest isVisible={isSubmitting} title="Saving" message="Submitting your developer details..." />
-      <div className="max-w-3xl mx-auto">
-        <Link href="/dashboard" className="text-sm text-[#09391C] hover:underline">
-          ← Back to dashboard
-        </Link>
-        <h1 className="text-3xl font-bold text-[#09391C] mt-3">Developer verification</h1>
-        <p className="text-[#5A5D63] mt-2">
-          Start with a basic profile to establish presence. Advanced KYC unlocks off-plan listing after approval.
-        </p>
+    <div className="min-h-screen bg-[#EEF1F1] py-8 px-4">
+      <ProcessingRequest
+        isVisible={saving}
+        title="Saving verification"
+        message="Please wait while we save this step..."
+      />
+      <div className="max-w-3xl mx-auto space-y-6">
+        <div>
+          <p className="text-xs font-semibold tracking-wide text-[#5A5D63] uppercase">Developer account</p>
+          <h1 className="text-3xl font-bold text-[#09391C] mt-1">Set up your Developer Profile</h1>
+          <p className="text-[#5A5D63] mt-2">
+            Tell us about your business. Verification helps establish your identity and build trust with property seekers.
+          </p>
+        </div>
 
-        <div className="mt-6 grid grid-cols-2 gap-3">
-          {(["basic", "advanced"] as const).map((option) => (
+        <div className="flex flex-wrap gap-2">
+          {steps.map((s, i) => (
             <button
-              key={option}
+              key={s.key}
               type="button"
-              onClick={() => setTier(option)}
-              className={`rounded-lg border px-4 py-3 text-left ${
-                tier === option ? "border-[#8DDB90] bg-white" : "border-gray-200 bg-white/70"
+              onClick={() => setStep(i)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium ${
+                i === step ? "bg-[#09391C] text-white" : "bg-white text-[#5A5D63] border border-slate-200"
               }`}
             >
-              <p className="font-semibold text-[#09391C]">
-                {option === "basic" ? "Basic profile" : "Advanced KYC"}
-              </p>
-              <p className="text-xs text-[#5A5D63] mt-1">
-                {option === "basic"
-                  ? "Company or individual, bio, and regions."
-                  : "Business IDs plus project details for off-plan."}
-              </p>
+              {i + 1}. {s.label}
             </button>
           ))}
         </div>
 
-        <form onSubmit={formik.handleSubmit} className="mt-6 bg-white rounded-xl border border-gray-200 p-6 space-y-5">
-          <div>
-            <label className="block text-sm font-medium text-[#09391C] mb-2">Account type</label>
-            <div className="flex gap-3">
-              {(["Individual", "Company"] as const).map((type) => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => formik.setFieldValue("practitionerType", type)}
-                  className={`px-4 py-2 rounded-lg border text-sm ${
-                    formik.values.practitionerType === type
-                      ? "bg-[#09391C] text-white border-[#09391C]"
-                      : "bg-white text-[#09391C] border-gray-200"
-                  }`}
-                >
-                  {type}
-                </button>
-              ))}
-            </div>
+        {verified && (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4" />
+            Verified Developer — you can still update profile details below.
           </div>
+        )}
 
-          <div>
-            <label className="block text-sm font-medium text-[#09391C] mb-1">Company name</label>
-            <input
-              name="companyName"
-              value={formik.values.companyName}
-              onChange={formik.handleChange}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2"
-              placeholder="Registered company or trading name"
-            />
-            {formik.touched.companyName && formik.errors.companyName && (
-              <p className="text-xs text-red-600 mt-1">{formik.errors.companyName}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-[#09391C] mb-1">Profile bio</label>
-            <textarea
-              name="profileBio"
-              value={formik.values.profileBio}
-              onChange={formik.handleChange}
-              rows={4}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2"
-              placeholder="Whether you sell completed properties or develop off-plan projects, introduce your work."
-            />
-            {formik.touched.profileBio && formik.errors.profileBio && (
-              <p className="text-xs text-red-600 mt-1">{formik.errors.profileBio}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-[#09391C] mb-2">Lagos LGAs of operation</label>
-            <div className="flex flex-wrap gap-2">
-              {regionOptions.map((region) => (
-                <button
-                  key={region}
-                  type="button"
-                  onClick={() => toggleRegion(region)}
-                  className={`px-3 py-1 rounded-full text-xs border ${
-                    formik.values.regionOfOperation.includes(region)
-                      ? "bg-[#09391C] text-white border-[#09391C]"
-                      : "bg-white text-[#09391C] border-gray-200"
-                  }`}
-                >
-                  {region}
-                </button>
-              ))}
-            </div>
-            {formik.touched.regionOfOperation && formik.errors.regionOfOperation && (
-              <p className="text-xs text-red-600 mt-1">{String(formik.errors.regionOfOperation)}</p>
-            )}
-          </div>
-
-          {tier === "advanced" && (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-8 space-y-6">
+          {steps[step]?.key === "profile" && (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-[#09391C] mb-1">CAC number</label>
-                  <input
-                    name="cacNumber"
-                    value={formik.values.cacNumber}
-                    onChange={formik.handleChange}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2"
-                  />
-                  {formik.touched.cacNumber && formik.errors.cacNumber && (
-                    <p className="text-xs text-red-600 mt-1">{formik.errors.cacNumber}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#09391C] mb-1">House / office number</label>
-                  <input
-                    name="homeNo"
-                    value={formik.values.homeNo}
-                    onChange={formik.handleChange}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2"
-                  />
-                </div>
-              </div>
               <div>
-                <label className="block text-sm font-medium text-[#09391C] mb-1">Street address</label>
-                <input
-                  name="street"
-                  value={formik.values.street}
-                  onChange={formik.handleChange}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2"
-                />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-[#09391C] mb-1">State</label>
-                  <select
-                    name="state"
-                    value={formik.values.state || PILOT_STATE}
-                    disabled
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 bg-gray-50 cursor-not-allowed"
-                  >
-                    <option value={PILOT_STATE}>{PILOT_STATE}</option>
-                  </select>
-                  <p className="text-xs text-[#5A5D63] mt-1">Lagos State only (pilot location)</p>
+                <p className="text-sm font-semibold text-[#09391C] mb-2">Account type</p>
+                <p className="text-xs text-[#5A5D63] mb-3">
+                  Choose whether you operate as an individual developer or a registered company.
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  {(["Individual", "Company"] as AccountType[]).map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setAccountType(type)}
+                      className={`rounded-xl border px-4 py-3 text-sm font-semibold ${
+                        accountType === type
+                          ? "border-[#09391C] bg-[#09391C] text-white"
+                          : "border-slate-200 text-[#09391C]"
+                      }`}
+                    >
+                      {type}
+                    </button>
+                  ))}
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#09391C] mb-1">Local government</label>
-                  <select
-                    name="localGovtArea"
-                    value={formik.values.localGovtArea}
-                    onChange={formik.handleChange}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2"
-                  >
+              </div>
+
+              {accountType === "Individual" ? (
+                <div className="grid gap-4">
+                  <Field label="Full name" why="This is the legal name of the person operating this developer account.">
+                    <div className="grid grid-cols-2 gap-2">
+                      <input className={inputClass} value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First name" />
+                      <input className={inputClass} value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Last name" />
+                    </div>
+                  </Field>
+                  <Field label="Phone number" why="Property seekers and Khabiteq will use this number to reach you about listings and inspections.">
+                    <input className={inputClass} value={phone} onChange={(e) => setPhone(e.target.value)} />
+                  </Field>
+                  <Field label="Email address" why="Official account email for verification updates and listing activity.">
+                    <input className={inputClass} type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                  </Field>
+                  <Field label="Profile bio" why="A short description of your development work. This can appear on your public practitioner page.">
+                    <textarea className={inputClass} rows={4} value={bio} onChange={(e) => setBio(e.target.value)} />
+                  </Field>
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  <Field label="Registered company name" why="This must match the name on the company's CAC registration record.">
+                    <input className={inputClass} value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
+                  </Field>
+                  <Field label="Company bio" why="Describe the company so property seekers understand who is delivering the development.">
+                    <textarea className={inputClass} rows={4} value={bio} onChange={(e) => setBio(e.target.value)} />
+                  </Field>
+                  <Field label="Business phone number" why="The official phone number for this company on Khabiteq.">
+                    <input className={inputClass} value={businessPhone} onChange={(e) => setBusinessPhone(e.target.value)} />
+                  </Field>
+                  <Field label="Business email address" why="The official email for company correspondence and verification updates.">
+                    <input className={inputClass} type="email" value={businessEmail} onChange={(e) => setBusinessEmail(e.target.value)} />
+                  </Field>
+                </div>
+              )}
+
+              <Field label="Areas / LGAs of operation" why="Select the Lagos local governments where you currently develop or intend to list.">
+                <div className="flex flex-wrap gap-2">
+                  {lgas.map((lga) => {
+                    const on = regions.includes(lga);
+                    return (
+                      <button
+                        key={lga}
+                        type="button"
+                        onClick={() =>
+                          setRegions((prev) => (on ? prev.filter((x) => x !== lga) : [...prev, lga]))
+                        }
+                        className={`rounded-full px-3 py-1 text-xs font-medium ${
+                          on ? "bg-[#09391C] text-white" : "bg-slate-100 text-[#5A5D63]"
+                        }`}
+                      >
+                        {lga}
+                      </button>
+                    );
+                  })}
+                </div>
+              </Field>
+            </>
+          )}
+
+          {steps[step]?.key === "company" && (
+            <>
+              <div>
+                <h2 className="text-xl font-bold text-[#09391C]">Company Registration Details</h2>
+                <p className="text-sm text-[#5A5D63] mt-1">
+                  We verify the company through CAC / KYB. This is separate from the person who manages the account.
+                </p>
+              </div>
+              <Field
+                label="CAC registration number"
+                why="This is the company's registration number issued by the Corporate Affairs Commission. Use the prefix, for example RC1234567."
+              >
+                <div className="flex gap-2">
+                  <input className={inputClass} value={cacNumber} onChange={(e) => setCacNumber(e.target.value)} placeholder="RC0000000" />
+                  <button type="button" onClick={lookupCompany} className="shrink-0 rounded-lg bg-[#09391C] text-white px-4 text-sm font-semibold">
+                    Look up
+                  </button>
+                </div>
+              </Field>
+              {lookup?.found && (
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm">
+                  <p className="font-semibold text-emerald-900 mb-2">Returned from the verification provider</p>
+                  <p>Registered name: {lookup.legalName || "—"}</p>
+                  <p>Registration number: {lookup.registrationNumber || cacNumber}</p>
+                  <p>Status: {lookup.companyStatus || lookup.status}</p>
+                  <p className="mt-2 text-emerald-800">Confirm these details rather than retyping them.</p>
+                </div>
+              )}
+              <Field label="Registered company name" why="This must correspond with the company's CAC registration record.">
+                <input className={inputClass} value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
+              </Field>
+              <Field label="Company type" why="Identify the registered entity type on the CAC record.">
+                <select className={inputClass} value={companyType} onChange={(e) => setCompanyType(e.target.value)}>
+                  <option value="business_name">Business Name</option>
+                  <option value="limited_liability">Limited Liability Company</option>
+                  <option value="other">Other CAC-registered entity</option>
+                </select>
+              </Field>
+              <Field label="CAC registration document" why="Upload the CAC certificate or registration document so Khabiteq can review it if automatic lookup is incomplete.">
+                <AttachFile id="cac-doc" heading="Upload CAC document" setFileUrl={setCacDoc} acceptedFileTypes="image/*,.pdf" />
+                {cacDoc && <p className="text-xs text-emerald-700">Document uploaded</p>}
+              </Field>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <Field label="House / office number" why="The number of the registered office on the CAC record.">
+                  <input className={inputClass} value={office.homeNo} onChange={(e) => setOffice({ ...office, homeNo: e.target.value })} />
+                </Field>
+                <Field label="Street address" why="The street of the registered office.">
+                  <input className={inputClass} value={office.street} onChange={(e) => setOffice({ ...office, street: e.target.value })} />
+                </Field>
+                <Field label="LGA" why="The local government of the registered office.">
+                  <select className={inputClass} value={office.localGovtArea} onChange={(e) => setOffice({ ...office, localGovtArea: e.target.value })}>
                     <option value="">Select LGA</option>
                     {lgas.map((lga) => (
-                      <option key={lga} value={lga}>
-                        {lga}
-                      </option>
+                      <option key={lga} value={lga}>{lga}</option>
                     ))}
                   </select>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[#09391C] mb-1">Means of ID</label>
-                <input
-                  name="idType"
-                  value={formik.values.idType}
-                  onChange={formik.handleChange}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 mb-2"
-                  placeholder="NIN, driver’s licence, or international passport"
-                />
-                <AttachFile
-                  id="developer-id"
-                  heading={formik.values.idUrl ? "Replace ID document" : "Upload ID document"}
-                  acceptedFileTypes="image/*,.pdf"
-                  setFileUrl={(url: string | null) => formik.setFieldValue("idUrl", url || "")}
-                />
-                {formik.values.idUrl && (
-                  <p className="text-xs text-emerald-700 mt-1 flex items-center gap-1">
-                    <FileText size={12} /> Document attached
-                  </p>
-                )}
-              </div>
-              <div className="border-t border-gray-100 pt-4">
-                <h2 className="font-semibold text-[#09391C] mb-3">Project information</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <input
-                    name="projectName"
-                    value={formik.values.projectName}
-                    onChange={formik.handleChange}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2"
-                    placeholder="Project name"
-                  />
-                  <input
-                    name="projectLocation"
-                    value={formik.values.projectLocation}
-                    onChange={formik.handleChange}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2"
-                    placeholder="Project location"
-                  />
-                  <input
-                    name="projectStage"
-                    value={formik.values.projectStage}
-                    onChange={formik.handleChange}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2"
-                    placeholder="Stage (e.g. foundation, finishing)"
-                  />
-                  <input
-                    name="expectedCompletion"
-                    value={formik.values.expectedCompletion}
-                    onChange={formik.handleChange}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2"
-                    placeholder="Expected completion (e.g. Q4 2027)"
-                  />
-                </div>
-                <div className="mt-4">
-                  <AttachFile
-                    id="developer-project-doc"
-                    heading="Upload supporting project document"
-                    acceptedFileTypes="image/*,.pdf"
-                    setFileUrl={(url: string | null) => {
-                      if (!url) return;
-                      formik.setFieldValue("supportingDocs", [...formik.values.supportingDocs, url]);
-                    }}
-                  />
-                  <div className="mt-2 space-y-1">
-                    {formik.values.supportingDocs.map((doc, index) => (
-                      <div key={`${doc}-${index}`} className="flex items-center justify-between text-xs bg-gray-50 px-3 py-2 rounded">
-                        <span className="truncate mr-2">{doc}</span>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            formik.setFieldValue(
-                              "supportingDocs",
-                              formik.values.supportingDocs.filter((_, i) => i !== index)
-                            )
-                          }
-                        >
-                          <X size={14} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                </Field>
+                <Field label="State" why="Registered office state. Khabiteq currently onboards Lagos developments.">
+                  <input className={inputClass} value={office.state} readOnly />
+                </Field>
               </div>
             </>
           )}
 
-          <button
-            type="submit"
-            className="w-full bg-[#8DDB90] hover:bg-[#7BC87F] text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2"
-          >
-            <Plus size={16} />
-            {tier === "advanced" ? "Submit Advanced KYC" : "Save developer profile"}
-          </button>
-        </form>
+          {steps[step]?.key === "identity" && (
+            <>
+              <div>
+                <h2 className="text-xl font-bold text-[#09391C]">
+                  {accountType === "Company" ? "Authorized Representative" : "Your identity"}
+                </h2>
+                <p className="text-sm text-[#5A5D63] mt-1">
+                  {accountType === "Company"
+                    ? "Tell us about the person authorized to manage this developer account. The company is verified separately through company registration."
+                    : "Verify the person who will manage this developer account."}
+                </p>
+              </div>
+              {accountType === "Company" && (
+                <>
+                  <Field label="Full legal name" why="The legal name of the person authorized to operate this company account.">
+                    <input className={inputClass} value={repName} onChange={(e) => setRepName(e.target.value)} />
+                  </Field>
+                  <Field label="Position / role in the company" why="For example Director, Authorized signatory, or Company secretary.">
+                    <input className={inputClass} value={repRole} onChange={(e) => setRepRole(e.target.value)} />
+                  </Field>
+                  <Field label="Phone number" why="Direct phone number for the authorized representative.">
+                    <input className={inputClass} value={repPhone} onChange={(e) => setRepPhone(e.target.value)} />
+                  </Field>
+                  <Field label="Email address" why="Direct email for the authorized representative.">
+                    <input className={inputClass} value={repEmail} onChange={(e) => setRepEmail(e.target.value)} />
+                  </Field>
+                </>
+              )}
+              <Field label="Means of identification" why="Choose the government ID we should verify. Your ID document stays private and is never shown on your practitioner page.">
+                <select className={inputClass} value={idType} onChange={(e) => setIdType(e.target.value)}>
+                  <option value="NIN">NIN</option>
+                  <option value="International Passport">International Passport</option>
+                  <option value="Driver’s Licence">Driver’s Licence</option>
+                </select>
+              </Field>
+              <Field label="ID number" why="The number printed on the selected identification document.">
+                <input className={inputClass} value={idNumber} onChange={(e) => setIdNumber(e.target.value)} />
+              </Field>
+              <Field label="Upload ID document" why="A clear photo or scan of the selected ID. This is used only for verification.">
+                <AttachFile id="id-doc" heading="Upload ID" setFileUrl={setIdDoc} acceptedFileTypes="image/*,.pdf" />
+              </Field>
+              <label className="flex items-start gap-2 text-sm text-[#09391C]">
+                <input type="checkbox" className="mt-1" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
+                I consent to Khabiteq verifying this identity with our verification provider.
+              </label>
+              {idLookup?.found && (
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm">
+                  <p className="font-semibold text-emerald-900">Returned identity</p>
+                  <p>{idLookup.fullName || "Name matched"}</p>
+                  {idLookup.dateOfBirth && <p>Date of birth: {idLookup.dateOfBirth}</p>}
+                </div>
+              )}
+            </>
+          )}
+
+          {steps[step]?.key === "address" && (
+            <>
+              <div>
+                <h2 className="text-xl font-bold text-[#09391C]">Address verification</h2>
+                <p className="text-sm text-[#5A5D63] mt-1">
+                  Address is verified separately from the company and from the authorized representative.
+                </p>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <Field label="House / office number" why="The number of the address we should verify.">
+                  <input className={inputClass} value={office.homeNo} onChange={(e) => setOffice({ ...office, homeNo: e.target.value })} />
+                </Field>
+                <Field label="Street address" why="The street we should verify.">
+                  <input className={inputClass} value={office.street} onChange={(e) => setOffice({ ...office, street: e.target.value })} />
+                </Field>
+                <Field label="LGA" why="Local government of this address.">
+                  <select className={inputClass} value={office.localGovtArea} onChange={(e) => setOffice({ ...office, localGovtArea: e.target.value })}>
+                    <option value="">Select LGA</option>
+                    {lgas.map((lga) => (
+                      <option key={lga} value={lga}>{lga}</option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="State" why="Address state.">
+                  <input className={inputClass} value={office.state} readOnly />
+                </Field>
+              </div>
+            </>
+          )}
+
+          <div className="flex justify-between pt-2">
+            <button
+              type="button"
+              disabled={step === 0}
+              onClick={() => setStep((s) => Math.max(0, s - 1))}
+              className="inline-flex items-center gap-2 text-sm font-semibold text-[#5A5D63] disabled:opacity-40"
+            >
+              <ArrowLeft className="h-4 w-4" /> Back
+            </button>
+            <button
+              type="button"
+              onClick={() => void next()}
+              className="inline-flex items-center gap-2 rounded-lg bg-[#09391C] text-white px-5 py-2.5 text-sm font-semibold"
+            >
+              {step === steps.length - 1 ? (
+                <>
+                  <Shield className="h-4 w-4" /> Submit verification
+                </>
+              ) : (
+                <>
+                  Continue <ArrowRight className="h-4 w-4" />
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        <Link href="/dashboard" className="text-sm text-[#09391C] font-medium hover:underline">
+          Return to dashboard
+        </Link>
       </div>
     </div>
   );

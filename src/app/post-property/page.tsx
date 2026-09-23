@@ -80,7 +80,9 @@ const PostPropertyPage = () => {
   const offPlanLocked =
     landlordCannotListOffPlan ||
     (user?.userType === "Developer" && !developerPlan?.canListOffPlan);
-  const visiblePropertyTypes = landlordCannotListOffPlan
+  const hideOffPlanCard =
+    landlordCannotListOffPlan || user?.userType === "Developer";
+  const visiblePropertyTypes = hideOffPlanCard
     ? propertyTypes.filter((item) => item.type !== "off-plan")
     : propertyTypes;
   const listingsEntry = useAppSelector(selectFeatureEntry(FEATURE_KEYS.LISTINGS));

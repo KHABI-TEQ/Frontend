@@ -59,6 +59,11 @@ export function normalizeMeasurementUnitForApi(v: unknown): string {
   return s;
 }
 
+/** Omit the field when the user did not pick a land unit (apartments, houses, etc.). */
+function measurementUnitForPayload(v: unknown): string | undefined {
+  return normalizeMeasurementUnitForApi(v) || undefined;
+}
+
 function minBedroomsStr(pd: Record<string, unknown> | undefined): string {
   if (!pd) return "";
   const v = pd.bedrooms ?? pd.minBedrooms;
@@ -239,7 +244,7 @@ export function buildPreferencePayload(
           landSize: toStr(pd.landSize),
           minLandSize: toStr(pd.minLandSize),
           maxLandSize: toStr(pd.maxLandSize),
-          measurementUnit: normalizeMeasurementUnitForApi(pd.measurementUnit),
+          measurementUnit: measurementUnitForPayload(pd.measurementUnit),
           documentTypes: canonicalDocumentTypes(pd.documentTypes),
           landConditions: filterStringArray(pd.landConditions),
         },
@@ -290,7 +295,7 @@ export function buildPreferencePayload(
           landSize: toStr(pd.landSize),
           minLandSize: toStr(pd.minLandSize),
           maxLandSize: toStr(pd.maxLandSize),
-          measurementUnit: normalizeMeasurementUnitForApi(pd.measurementUnit),
+          measurementUnit: measurementUnitForPayload(pd.measurementUnit),
           documentTypes: canonicalDocumentTypes(pd.documentTypes),
           landConditions: filterStringArray(pd.landConditions),
         },
@@ -326,7 +331,7 @@ export function buildPreferencePayload(
         developmentDetails: {
           minLandSize: toStr(dev.minLandSize),
           maxLandSize: toStr(dev.maxLandSize),
-          measurementUnit: normalizeMeasurementUnitForApi(dev.measurementUnit),
+          measurementUnit: measurementUnitForPayload(dev.measurementUnit),
           developmentTypes: canonicalDevelopmentTypes(dev.developmentTypes),
           preferredSharingRatio: toStr(dev.preferredSharingRatio),
           proposalDetails: toStr(dev.proposalDetails),
@@ -368,7 +373,7 @@ export function buildPreferencePayload(
           landSize: toStr(pd.landSize),
           minLandSize: toStr(pd.minLandSize),
           maxLandSize: toStr(pd.maxLandSize),
-          measurementUnit: normalizeMeasurementUnitForApi(pd.measurementUnit),
+          measurementUnit: measurementUnitForPayload(pd.measurementUnit),
           documentTypes: canonicalDocumentTypes(pd.documentTypes),
           landConditions: filterStringArray(pd.landConditions),
           expectedCompletionDate: toStr(pd.expectedCompletionDate),
@@ -413,7 +418,7 @@ export function buildPreferencePayload(
         landSize: toStr(pd.landSize ?? bd.landSize),
         minLandSize: toStr(pd.minLandSize ?? bd.minLandSize),
         maxLandSize: toStr(pd.maxLandSize ?? bd.maxLandSize),
-        measurementUnit: normalizeMeasurementUnitForApi(
+        measurementUnit: measurementUnitForPayload(
           pd.measurementUnit ?? bd.measurementUnit,
         ),
         documentTypes: canonicalDocumentTypes(pd.documentTypes ?? bd.documentTypes),

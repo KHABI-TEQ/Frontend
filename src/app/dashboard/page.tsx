@@ -12,6 +12,8 @@ import Valuer from "./valuer";
 import { DealSiteSetupOverlay } from "@/components/dashboard/DealSiteSetupOverlay";
 import { PractitionerWelcomeOverlay } from "@/components/dashboard/PractitionerWelcomeOverlay";
 import { PractitionerKycOverlay } from "@/components/dashboard/PractitionerKycOverlay";
+import KycDashboardStatusCard from "@/components/kyc/KycDashboardStatusCard";
+import { resolveKycStatus } from "@/lib/kyc-status";
 import Link from "next/link";
 import type { User } from "@/context/user-context";
 import { isLivePaidSubscription } from "@/utils/subscription-status";
@@ -144,6 +146,11 @@ export default function Dashboard() {
         <DealSiteSetupOverlay user={user} />
       )}
       <DashboardSubscribeBanner user={user} />
+      {resolveKycStatus(user) !== "none" && (
+        <div className="mx-auto max-w-6xl px-4 pt-4">
+          <KycDashboardStatusCard user={user} />
+        </div>
+      )}
       {showAgentDashboard && <Agent />}
       {showDeveloper && <Developer />}
       {showLandlord && <Landlord />}
