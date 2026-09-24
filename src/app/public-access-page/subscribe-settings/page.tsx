@@ -48,6 +48,10 @@ export default function SubscribeSettingsPage() {
           enableEmailSubscription: formData.enableEmailSubscription,
           subscriptionPlaceholder: formData.subscriptionPlaceholder,
           confirmationMessage: formData.confirmationMessage,
+          cta: {
+            text: settings.subscribeSettings?.cta?.text || "",
+            color: settings.subscribeSettings?.cta?.color || "",
+          },
         },
       };
 
@@ -70,7 +74,7 @@ export default function SubscribeSettingsPage() {
     } finally {
       setPreloader(false);
     }
-  }, [formData, updateSettings, router]);
+  }, [formData, settings.subscribeSettings, updateSettings, router]);
 
   return (
     <div className="space-y-8">
