@@ -15,6 +15,7 @@ import { PractitionerKycOverlay } from "@/components/dashboard/PractitionerKycOv
 import KycDashboardStatusCard, {
   shouldRenderKycDashboardStatus,
 } from "@/components/kyc/KycDashboardStatusCard";
+import CompletePractitionerPageBanner from "@/components/dashboard/CompletePractitionerPageBanner";
 import Link from "next/link";
 import type { User } from "@/context/user-context";
 import { isLivePaidSubscription } from "@/utils/subscription-status";
@@ -147,6 +148,7 @@ export default function Dashboard() {
         <DealSiteSetupOverlay user={user} />
       )}
       <DashboardSubscribeBanner user={user} />
+      <CompletePractitionerPageBanner user={user} />
       {shouldRenderKycDashboardStatus(user) && (
         <div className="mx-auto max-w-6xl px-4 pt-4">
           <KycDashboardStatusCard user={user} />

@@ -241,7 +241,9 @@ const Setup = () => {
 
       if (res?.success) {
         updateSettings({ ...values, ...payload } as DealSiteSettings);
-        markSetupComplete();
+        markSetupComplete(
+          String((res as { data?: { status?: string } }).data?.status || "running"),
+        );
         if (user) {
           setUser({
             ...user,

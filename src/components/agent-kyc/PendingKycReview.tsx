@@ -85,7 +85,7 @@ const PendingKycReview: React.FC = () => {
 
             <div className="col-span-1 md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-sm">
-                <div className="text-[#6A716E]">Agent Type</div>
+                <div className="text-[#6A716E]">Practitioner Type</div>
                 <div className="font-medium text-[#0C1E1B]">{agentType || "-"}</div>
               </div>
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-sm">
@@ -122,7 +122,7 @@ const PendingKycReview: React.FC = () => {
             {/* Professional */}
             <Section title={<span className="inline-flex items-center gap-2"><Briefcase size={18} className="text-[#0B572B]"/> Professional Information</span>}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-[#3A3F3D]">
-                <div><span className="font-medium text-[#0C1E1B]">Agent Type:</span> {agentType || "-"}</div>
+                <div><span className="font-medium text-[#0C1E1B]">Practitioner Type:</span> {agentType || "-"}</div>
                 <div><span className="font-medium text-[#0C1E1B]">License No.:</span> {kyc?.agentLicenseNumber || "-"}</div>
                 <div className="md:col-span-2">
                   <span className="block font-medium text-[#0C1E1B] mb-1">Bio</span>

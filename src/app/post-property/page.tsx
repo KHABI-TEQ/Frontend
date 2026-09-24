@@ -88,13 +88,11 @@ const PostPropertyPage = () => {
     : propertyTypes;
   const listingsEntry = useAppSelector(selectFeatureEntry(FEATURE_KEYS.LISTINGS));
   const quotaText =
-    publisherListing?.unlimitedListings || eligibility?.unlimitedListings
-      ? "Unlimited (Portfolio Unlimited)"
-      : publisherListing?.listingsRemaining != null
-        ? `${publisherListing.listingsRemaining} of ${publisherListing.listingLimit ?? 25} remaining`
-        : eligibility?.listingsRemaining != null
-          ? `${eligibility.listingsRemaining} of ${eligibility.listingLimit ?? 25} remaining`
-          : "Up to 25 listings";
+    publisherListing?.listingsRemaining != null
+      ? `${publisherListing.listingsRemaining} of ${publisherListing.listingLimit ?? 25} remaining`
+      : eligibility?.listingsRemaining != null
+        ? `${eligibility.listingsRemaining} of ${eligibility.listingLimit ?? 25} remaining`
+        : "Up to 25 listings on the 3-month plan, or 50 on the annual plan";
 
   // Scroll to top on page load
   useEffect(() => {

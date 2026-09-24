@@ -259,7 +259,7 @@ interface DealSiteContextType {
   // Methods
   loadSettings: () => Promise<void>;
   saveSettings: () => Promise<void>;
-  markSetupComplete: () => Promise<void>;
+  markSetupComplete: (status?: string) => Promise<void>;
   pauseDealSite: () => Promise<void>;
   resumeDealSite: () => Promise<void>;
   deleteDealSite: () => Promise<void>;
@@ -417,11 +417,12 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const markSetupComplete = useCallback(async () => {
+  const markSetupComplete = useCallback(async (status?: string) => {
     setSlugLocked(true);
     setIsSetupComplete(true);
-    setIsPaused(true);
-    setDealSiteStatus("paused");
+    const running = !status || status === "running";
+    setIsPaused(!running);
+    setDealSiteStatus(running ? "running" : status);
   }, []);
 
   const pauseDealSite = useCallback(async () => {

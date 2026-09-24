@@ -32,6 +32,7 @@ export type CatalogBillingOption = {
   billingInterval?: string;
   billingIntervalLabel?: string;
   label?: string;
+  listingLimit?: number;
 };
 
 export type CatalogPlan = {
@@ -55,6 +56,7 @@ export type CatalogPlan = {
   discountedPlans?: CatalogBillingOption[];
   maxProfessionals?: number;
   allowsOffPlan?: boolean;
+  listingLimit?: number;
 };
 
 export type CatalogGroupMeta = {
@@ -249,6 +251,7 @@ function billingOptionsFor(plan: CatalogPlan, extras: CatalogPlan[] = []): Catal
       durationInDays: plan.durationInDays,
       billingInterval: periodLabel(plan.durationInDays) === "per year" ? "yearly" : "quarterly",
       label: periodLabel(plan.durationInDays),
+      listingLimit: plan.listingLimit,
     },
   ];
   for (const dp of plan.discountedPlans || []) {
@@ -344,7 +347,7 @@ export function dashboardPlanSummaries(
     return ["Property Scout — ₦23,500 / 3 months"];
   }
   if (t === "Agent" || lower === "agent") {
-    return ["Licensed Agent — ₦50,000 / 3 months"];
+    return ["Licensed Agent — ₦40,000 / 3 months or ₦140,000 / year (up to 50 listings)"];
   }
   if (t === "Developer" || lower === "developer") {
     return [
@@ -812,11 +815,17 @@ function PlanCard({
         >
           <p className="text-3xl font-black tracking-tight" style={{ color: theme.ink }}>{naira(primary?.price)}</p>
           <p className="text-sm text-[#5A5D63]">{primary?.label || "per 3 months"}</p>
+          {primary?.listingLimit ? (
+            <p className="text-xs text-[#5A5D63]">Up to {primary.listingLimit} listings</p>
+          ) : null}
         </motion.div>
         {secondary.map((opt) => (
           <div key={opt.code} className="rounded-2xl bg-white/80 px-3 py-2 shadow-sm ring-1 ring-black/5">
             <p className="text-lg font-bold" style={{ color: theme.ink }}>{naira(opt.price)}</p>
             <p className="text-xs text-[#5A5D63]">{opt.label || "per year"}</p>
+            {opt.listingLimit ? (
+              <p className="text-[11px] text-[#5A5D63]">Up to {opt.listingLimit} listings</p>
+            ) : null}
           </div>
         ))}
       </div>

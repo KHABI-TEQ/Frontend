@@ -63,9 +63,10 @@ export default function AgentEligibilityBanner({
 
   const {
     hasPaidSubscription,
-    unlimitedListings,
+    listingLimit,
     gate,
   } = eligibility;
+  const cap = listingLimit || STANDARD_LISTING_CAP;
 
   const cta = (href: string, label: string, primary = true) => (
     <Link
@@ -112,23 +113,7 @@ export default function AgentEligibilityBanner({
         tone="emerald"
         icon={<CheckCircle2 size={18} />}
         title="Paid subscription active"
-        body={
-          unlimitedListings
-            ? "Portfolio Unlimited is active — unlimited listings plus full practitioner tools."
-            : `Practitioner tools are enabled. Listings stay within the standard ${STANDARD_LISTING_CAP}-property cap unless you upgrade to Portfolio Unlimited.`
-        }
-      />
-    );
-  }
-
-  if (hasPaidSubscription && unlimitedListings) {
-    return (
-      <BannerShell
-        tone="emerald"
-        icon={<CheckCircle2 size={18} />}
-        title="Portfolio Unlimited active"
-        body="Unlimited listings, public practitioner page, and preference matching are enabled."
-        actions={cta("/agent-subscriptions", "Manage subscription", false)}
+        body={`Practitioner tools are enabled. You can list up to ${cap} properties on this plan.`}
       />
     );
   }
@@ -139,7 +124,7 @@ export default function AgentEligibilityBanner({
         tone="emerald"
         icon={<CheckCircle2 size={18} />}
         title="Practitioner subscription active"
-        body={`Public page and matching tools are enabled. Listings remain capped at ${STANDARD_LISTING_CAP} — upgrade to Portfolio Unlimited when you need more.`}
+        body={`Public page and matching tools are enabled. This plan allows up to ${cap} listings. The annual Licensed Agent plan increases that to 50.`}
         actions={cta("/agent-subscriptions", "Manage subscription", false)}
       />
     );

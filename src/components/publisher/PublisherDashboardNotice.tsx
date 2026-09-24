@@ -14,10 +14,7 @@ export default function PublisherDashboardNotice({ userType }: PublisherDashboar
     <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800">
       <p className="font-semibold text-[#09391C]">Developer listing access</p>
       <p className="mt-1 leading-relaxed text-slate-700">
-        You can list up to <strong>25 properties</strong> on Khabi-Teq without Portfolio Unlimited.
-        Developer Distribution and Off-Plan plans do <strong>not</strong> raise that cap. Need more? Use{" "}
-        <strong>View plans</strong> on your listing allowance to open{" "}
-        <strong>Portfolio Unlimited</strong>.
+        Developer Distribution and Off-plan plans allow up to <strong>25 properties</strong> on Khabiteq.
       </p>
     </div>
   );

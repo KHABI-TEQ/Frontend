@@ -1,5 +1,6 @@
 /** Shared listing-cap copy aligned with server publisherListingLimits. */
 export const STANDARD_LISTING_CAP = 25;
+export const ANNUAL_LISTING_CAP = 50;
 /** @deprecated Unpaid trial listings are retired. */
 export const FREE_TRIAL_LISTING_CAP = 0;
 /** @deprecated Time-boxed free trial is retired. */
@@ -16,7 +17,7 @@ export function isListingsFeature(feature: {
 
 /**
  * Correct LISTINGS display for catalog plans.
- * Free/trial → 10; Premium → 25; Portfolio Unlimited → unlimited.
+ * Quarterly / default → 25; Licensed Agent annual → 50.
  */
 export function formatCatalogListingsFeature(plan: {
   isFree?: boolean;
@@ -24,6 +25,7 @@ export function formatCatalogListingsFeature(plan: {
   basePrice?: number;
   name?: string;
   code?: string;
+  listingLimit?: number;
   unlimitedListings?: boolean;
 }, feature: {
   key?: string;
@@ -37,10 +39,9 @@ export function formatCatalogListingsFeature(plan: {
     !!plan.isTrial ||
     Number(plan.basePrice) === 0 ||
     /free/i.test(String(plan.name || ""));
-
-  if (plan.unlimitedListings || /portfolio\s*unlimited/i.test(String(plan.name || ""))) {
-    return { label: baseLabel, valueText: ": Unlimited", isOn: true };
-  }
+  const isAnnual =
+    /YEARLY|ANNUAL/i.test(String(plan.code || "")) ||
+    /year/i.test(String(plan.name || ""));
 
   if (isFree) {
     return {
@@ -51,9 +52,13 @@ export function formatCatalogListingsFeature(plan: {
   }
 
   const capped =
-    feature.type === "count" && Number(feature.value) > 0
-      ? Number(feature.value)
-      : STANDARD_LISTING_CAP;
+    Number(plan.listingLimit) > 0
+      ? Number(plan.listingLimit)
+      : feature.type === "count" && Number(feature.value) > 0
+        ? Number(feature.value)
+        : isAnnual
+          ? ANNUAL_LISTING_CAP
+          : STANDARD_LISTING_CAP;
 
   return {
     label: baseLabel,

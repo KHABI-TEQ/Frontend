@@ -285,7 +285,7 @@ export default function DeveloperKycForm() {
         <ProcessingRequest
           isVisible
           title="Loading verification"
-          message="Please wait while we load your developer profile..."
+          message="Please wait while we load your practitioner profile..."
         />
       </div>
     );
@@ -320,8 +320,8 @@ export default function DeveloperKycForm() {
       />
       <div className="max-w-3xl mx-auto space-y-6">
         <div>
-          <p className="text-xs font-semibold tracking-wide text-[#5A5D63] uppercase">Developer account</p>
-          <h1 className="text-3xl font-bold text-[#09391C] mt-1">Set up your Developer Profile</h1>
+          <p className="text-xs font-semibold tracking-wide text-[#5A5D63] uppercase">Practitioner account</p>
+          <h1 className="text-3xl font-bold text-[#09391C] mt-1">Set up your Practitioner Profile</h1>
           <p className="text-[#5A5D63] mt-2">
             Tell us about your business. Verification helps establish your identity and build trust with property seekers.
           </p>
@@ -345,7 +345,7 @@ export default function DeveloperKycForm() {
         {verified && (
           <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4" />
-            Verified Developer — you can still update profile details below.
+            Verified practitioner — you can still update profile details below.
           </div>
         )}
 
@@ -355,7 +355,7 @@ export default function DeveloperKycForm() {
               <div>
                 <p className="text-sm font-semibold text-[#09391C] mb-2">Account type</p>
                 <p className="text-xs text-[#5A5D63] mb-3">
-                  Choose whether you operate as an individual developer or a registered company.
+                  Choose whether you operate as an individual practitioner or a registered company.
                 </p>
                 <div className="grid grid-cols-2 gap-3">
                   {(["Individual", "Company"] as AccountType[]).map((type) => (
@@ -377,7 +377,7 @@ export default function DeveloperKycForm() {
 
               {accountType === "Individual" ? (
                 <div className="grid gap-4">
-                  <Field label="Full name" why="This is the legal name of the person operating this developer account.">
+                  <Field label="Full name" why="This is the legal name of the person operating this practitioner account.">
                     <div className="grid grid-cols-2 gap-2">
                       <input className={inputClass} value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First name" />
                       <input className={inputClass} value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Last name" />
@@ -506,8 +506,8 @@ export default function DeveloperKycForm() {
                 </h2>
                 <p className="text-sm text-[#5A5D63] mt-1">
                   {accountType === "Company"
-                    ? "Tell us about the person authorized to manage this developer account. The company is verified separately through company registration."
-                    : "Verify the person who will manage this developer account."}
+                    ? "Tell us about the person authorized to manage this practitioner account. The company is verified separately through company registration."
+                    : "Verify the person who will manage this practitioner account."}
                 </p>
               </div>
               {accountType === "Company" && (

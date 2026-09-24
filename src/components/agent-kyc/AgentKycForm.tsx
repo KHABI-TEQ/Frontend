@@ -551,8 +551,8 @@ const AgentKycForm: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Agent KYC Verification</h1>
-          <p className="text-gray-600 mt-1">Complete your verification to enhance your public agent profile</p>
+          <h1 className="text-3xl font-bold text-gray-900">Practitioner KYC Verification</h1>
+          <p className="text-gray-600 mt-1">Complete your verification to enhance your public practitioner profile</p>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
@@ -693,7 +693,7 @@ const AgentKycForm: React.FC = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-[#0C1E1B] mb-2">Agent License Number (Optional)</label>
+                    <label className="block text-sm font-medium text-[#0C1E1B] mb-2">Practitioner License Number (Optional)</label>
                     <input type="text" {...formik.getFieldProps("agentLicenseNumber")} className={inputClass("agentLicenseNumber")} placeholder="AGT-12345-XYZ" />
                     {formik.touched.agentLicenseNumber && formik.errors.agentLicenseNumber && (
                       <p className="text-red-500 text-sm mt-2">{formik.errors.agentLicenseNumber as string}</p>
@@ -701,7 +701,7 @@ const AgentKycForm: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-[#0C1E1B] mb-2">Agent Type (Optional)</label>
+                    <label className="block text-sm font-medium text-[#0C1E1B] mb-2">Practitioner Type (Optional)</label>
                     <Select
                       styles={customStyles}
                       options={[
@@ -712,7 +712,7 @@ const AgentKycForm: React.FC = () => {
                       onChange={(opt: any) => {
                         formik.setFieldValue("agentType", opt?.value || "Individual");
                       }}
-                      placeholder="Select agent type"
+                      placeholder="Select practitioner type"
                       isSearchable={false}
                     />
                   </div>
@@ -724,7 +724,7 @@ const AgentKycForm: React.FC = () => {
                     {...formik.getFieldProps("profileBio")}
                     rows={5}
                     className={inputClass("profileBio")}
-                    placeholder="Describe your experience, expertise, and what makes you unique as a real estate agent..."
+                    placeholder="Describe your experience, expertise, and what makes you unique as a real estate practitioner..."
                   />
                   <div className="flex justify-between text-sm text-gray-500 mt-2">
                     <span>{formik.values.profileBio.length}/500 characters</span>

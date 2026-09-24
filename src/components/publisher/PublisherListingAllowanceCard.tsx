@@ -27,7 +27,6 @@ export default function PublisherListingAllowanceCard({
     ownedProperties,
     listingLimit,
     listingsRemaining,
-    unlimitedListings,
     canListProperties,
     requiresSpecialPlan,
   } = eligibility;
@@ -38,19 +37,14 @@ export default function PublisherListingAllowanceCard({
     listingsRemaining != null
       ? listingsRemaining
       : Math.max(0, limit - used);
-  const progress =
-    unlimitedListings || limit <= 0
-      ? 1
-      : Math.min(1, Math.max(0, used / limit));
+  const progress = limit <= 0 ? 1 : Math.min(1, Math.max(0, used / limit));
 
   return (
     <div
       className={`mb-4 rounded-lg border px-4 py-3 ${
-        unlimitedListings
-          ? "border-emerald-200 bg-emerald-50 text-emerald-950"
-          : requiresSpecialPlan || !canListProperties
-            ? "border-amber-200 bg-amber-50 text-amber-950"
-            : "border-slate-200 bg-slate-50 text-slate-900"
+        requiresSpecialPlan || !canListProperties
+          ? "border-amber-200 bg-amber-50 text-amber-950"
+          : "border-slate-200 bg-slate-50 text-slate-900"
       }`}
     >
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
@@ -58,37 +52,29 @@ export default function PublisherListingAllowanceCard({
           <p className="text-sm font-semibold text-[#09391C]">
             Your listing allowance
           </p>
-          {unlimitedListings ? (
-            <p className="mt-1 text-sm leading-relaxed">
-              You currently have {used} listing{used === 1 ? "" : "s"} on an unlimited allowance.
+          <p className="mt-1 text-sm leading-relaxed">
+            {eligibility.hasPaidSubscription
+              ? <>This plan is capped at <strong>{limit} listings</strong>.</>
+              : <>An active paid subscription is required to list. Plans are capped at <strong>{limit} listings</strong> (50 on the annual Licensed Agent plan).</>}
+            {requiresSpecialPlan
+              ? " You have reached that cap."
+              : eligibility.hasPaidSubscription
+                ? ` ${remaining} slot${remaining === 1 ? "" : "s"} remaining.`
+                : " Subscribe to start listing."}
+          </p>
+          <div className="mt-3">
+            <div className="h-2 rounded-full bg-white/80 overflow-hidden border border-black/5">
+              <div
+                className={`h-full rounded-full ${
+                  requiresSpecialPlan ? "bg-amber-500" : "bg-emerald-600"
+                }`}
+                style={{ width: `${Math.round(progress * 100)}%` }}
+              />
+            </div>
+            <p className="mt-1 text-xs font-medium opacity-80">
+              {used}/{limit} used
             </p>
-          ) : (
-            <>
-              <p className="mt-1 text-sm leading-relaxed">
-                {eligibility.hasPaidSubscription
-                  ? <>Paid plans are capped at <strong>{limit} listings</strong>.</>
-                  : <>An active paid subscription is required to list. Paid plans are capped at <strong>{limit} listings</strong>.</>}
-                {requiresSpecialPlan
-                  ? " You have reached that cap."
-                  : eligibility.hasPaidSubscription
-                    ? ` ${remaining} slot${remaining === 1 ? "" : "s"} remaining.`
-                    : " Subscribe to start listing."}
-              </p>
-              <div className="mt-3">
-                <div className="h-2 rounded-full bg-white/80 overflow-hidden border border-black/5">
-                  <div
-                    className={`h-full rounded-full ${
-                      requiresSpecialPlan ? "bg-amber-500" : "bg-emerald-600"
-                    }`}
-                    style={{ width: `${Math.round(progress * 100)}%` }}
-                  />
-                </div>
-                <p className="mt-1 text-xs font-medium opacity-80">
-                  {used}/{limit} used
-                </p>
-              </div>
-            </>
-          )}
+          </div>
         </div>
 
         <Link

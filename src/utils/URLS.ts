@@ -54,7 +54,7 @@ export const URLS = {
   developerAddress: "/account/developer/verification/address",
   developerVerificationSubmit: "/account/developer/verification/submit",
   developerProjects: "/account/developer/projects",
-  /** GET — Portfolio Unlimited offer (only when at standard cap) */
+  /** GET — retired Portfolio Unlimited offer. Returns a retired payload. */
   publisherUnlimitedListingPlan: "/account/publisher/unlimited-listing-plan",
 
   /**

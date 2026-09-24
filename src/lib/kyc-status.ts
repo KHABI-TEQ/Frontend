@@ -42,7 +42,7 @@ export function kycRoleLabel(userType?: string) {
     case "Lawyer":
     case "Surveyor":
     case "Valuer":
-      return userType;
+      return "practitioner";
     default:
       return "professional";
   }

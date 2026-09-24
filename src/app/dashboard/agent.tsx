@@ -442,7 +442,7 @@ export default function AgentDashboard() {
                       <p className="text-sm font-semibold text-[#09391C]">Subscription</p>
                       <p className="mt-1 text-xs text-emerald-900/90 leading-relaxed">
                         {eligibility?.hasPaidSubscription
-                          ? "Paid practitioner subscription active — full page access and matching tools. Listings stay capped at 25 unless you upgrade to Portfolio Unlimited."
+                          ? "Paid practitioner subscription active — full page access and matching tools. The 3-month plan lists up to 25 properties; the annual plan lists up to 50."
                           : "Subscribe to a paid plan to list properties. Listing is only available with an active subscription."}
                       </p>
                     </div>
