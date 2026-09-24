@@ -236,6 +236,18 @@ export interface DealSiteSettings {
   status?: string;
 }
 
+type DealSiteStatus = "pending" | "running" | "paused" | "on-hold" | "deleted" | null;
+
+const DEAL_SITE_STATUSES = ["pending", "running", "paused", "on-hold", "deleted"] as const;
+
+function toDealSiteStatus(status?: string | null): DealSiteStatus {
+  if (!status || status === "running") return "running";
+  if ((DEAL_SITE_STATUSES as readonly string[]).includes(status)) {
+    return status as Exclude<DealSiteStatus, null>;
+  }
+  return "paused";
+}
+
 interface DealSiteContextType {
   // Settings state
   settings: DealSiteSettings;
@@ -247,7 +259,7 @@ interface DealSiteContextType {
   isOnHold: boolean;
   slugLocked: boolean;
   pausedByPolicy?: "kyc" | "subscription" | null;
-  dealSiteStatus: "pending" | "running" | "paused" | "on-hold" | "deleted" | null;
+  dealSiteStatus: DealSiteStatus;
 
   // Loading state
   isLoading: boolean;
@@ -259,7 +271,7 @@ interface DealSiteContextType {
   // Methods
   loadSettings: () => Promise<void>;
   saveSettings: () => Promise<void>;
-  markSetupComplete: (status?: string) => Promise<void>;
+  markSetupComplete: (status?: string | null) => Promise<void>;
   pauseDealSite: () => Promise<void>;
   resumeDealSite: () => Promise<void>;
   deleteDealSite: () => Promise<void>;
@@ -313,7 +325,7 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
   const [isPaused, setIsPaused] = useState(false);
   const [isOnHold, setIsOnHold] = useState(false);
   const [slugLocked, setSlugLocked] = useState(false);
-  const [dealSiteStatus, setDealSiteStatus] = useState<"pending" | "running" | "paused" | "on-hold" | "deleted" | null>(null);
+  const [dealSiteStatus, setDealSiteStatus] = useState<DealSiteStatus>(null);
   const [pausedByPolicy, setPausedByPolicy] = useState<"kyc" | "subscription" | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -371,10 +383,11 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
           }));
           if (nextSlug) setSlugLocked(true);
           if (data.status) {
-            setDealSiteStatus(data.status);
-            if (data.status === "on-hold") setIsOnHold(true);
-            if (data.status === "paused") setIsPaused(true);
-            if (data.status === "running") setIsPaused(false);
+            const nextStatus = toDealSiteStatus(data.status);
+            setDealSiteStatus(nextStatus);
+            if (nextStatus === "on-hold") setIsOnHold(true);
+            if (nextStatus === "paused") setIsPaused(true);
+            if (nextStatus === "running") setIsPaused(false);
           }
           setPausedByPolicy(
             data.pausedByPolicy === "kyc" || data.pausedByPolicy === "subscription"
@@ -417,12 +430,12 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const markSetupComplete = useCallback(async (status?: string) => {
+  const markSetupComplete = useCallback(async (status?: string | null) => {
     setSlugLocked(true);
     setIsSetupComplete(true);
-    const running = !status || status === "running";
-    setIsPaused(!running);
-    setDealSiteStatus(running ? "running" : status);
+    const next = toDealSiteStatus(status);
+    setIsPaused(next !== "running");
+    setDealSiteStatus(next);
   }, []);
 
   const pauseDealSite = useCallback(async () => {
