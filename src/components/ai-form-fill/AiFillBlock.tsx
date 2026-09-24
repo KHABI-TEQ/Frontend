@@ -439,6 +439,13 @@ export default function AiFillBlock({
           <textarea
             value={input}
             onChange={(e) => {
+              if (listening) {
+                manualStopRequestedRef.current = true;
+                sessionActiveRef.current = false;
+                stopSpeechRecognition(recognitionRef.current);
+                recognitionRef.current = null;
+                setListening(false);
+              }
               cancelAutoSubmit();
               const v = e.target.value;
               if (amountEntryMode) {
@@ -450,7 +457,7 @@ export default function AiFillBlock({
               }
             }}
             placeholder={placeholder}
-            disabled={disabled || listening}
+            disabled={disabled || loading}
             rows={3}
             className="w-full resize-y rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-[#09391C] placeholder-gray-400 focus:border-[#8DDB90] focus:outline-none focus:ring-2 focus:ring-[#8DDB90]/20 disabled:bg-gray-100 disabled:opacity-70"
             style={{ maxHeight }}

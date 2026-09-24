@@ -104,6 +104,13 @@ interface Preference {
     reviewCount: number;
     budgetFit?: { too_low: number; moderate: number; too_high: number };
   };
+  reviewCapacity?: {
+    maxReviews: number;
+    reviewCount: number;
+    remaining: number;
+    canSubmit: boolean;
+    slotsFull: boolean;
+  };
   myReview?: { budgetFit?: string } | null;
 }
 
@@ -355,7 +362,7 @@ const AgentMarketplace = () => {
             <div className="mt-1 flex items-center gap-2 flex-wrap">
               <span className="inline-flex items-center gap-1 rounded-full bg-[#8DDB90]/20 px-2 py-0.5 text-[11px] font-semibold text-[#09391C]">
                 <span className={`h-1.5 w-1.5 rounded-full ${inactive ? 'bg-red-500' : 'bg-[#8DDB90]'}`} />
-                {inactive ? 'Closed brief' : 'Active request'}
+                {inactive ? 'Closed preference' : 'Active request'}
               </span>
               <InsuredPreferenceTag searchInsurance={preference.searchInsurance} />
             </div>
@@ -367,13 +374,16 @@ const AgentMarketplace = () => {
         <div className="mb-4 rounded-xl border border-[#8DDB90]/20 bg-[#EEF1F1]/80 px-3 py-2.5">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-[#09391C]/70">Client</p>
           <p className="mt-0.5 text-sm font-medium text-[#09391C]">Contact details are private</p>
-          <p className="mt-0.5 text-xs text-[#5A5D63]">Open details to review this brief.</p>
+          <p className="mt-0.5 text-xs text-[#5A5D63]">Open details to review this preference.</p>
           {preference.myReview?.budgetFit ? (
             <p className="mt-1 text-xs font-semibold text-[#0B572B]">You reviewed this</p>
+          ) : preference.reviewCapacity?.slotsFull ? (
+            <p className="mt-1 text-xs font-semibold text-amber-800">
+              Review slots full ({preference.reviewCapacity.reviewCount} of {preference.reviewCapacity.maxReviews})
+            </p>
           ) : preference.reviewSummary?.reviewCount ? (
             <p className="mt-1 text-xs text-[#5A5D63]">
-              {preference.reviewSummary.reviewCount} agent review
-              {preference.reviewSummary.reviewCount === 1 ? "" : "s"}
+              {preference.reviewSummary.reviewCount} of {preference.reviewCapacity?.maxReviews || 5} agent reviews
               {preference.reviewSummary.budgetFit?.too_low
                 ? ` · ${preference.reviewSummary.budgetFit.too_low} say budget too low`
                 : ""}
@@ -470,6 +480,10 @@ const AgentMarketplace = () => {
           <div className="w-full rounded-xl bg-[#8DDB90]/20 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-[#09391C]">
             {preference.status?.toLowerCase() === "matched" ? "Matched" : "Closed"}
           </div>
+        ) : preference.reviewCapacity?.slotsFull && !preference.myReview ? (
+          <div className="w-full rounded-xl bg-amber-50 py-2.5 text-center text-xs font-semibold text-amber-900">
+            Review closed — 5 of 5 agents have reviewed
+          </div>
         ) : (
           <a
             href={`/agent-marketplace/${rowId}`}
@@ -538,37 +552,21 @@ const AgentMarketplace = () => {
 
       {/* Main Content */}
       <div className="max-w-[1400px] mx-auto px-2 md:px-4 py-6 md:py-8">
-        {/* Title Section */}
-        <div className="text-center mb-6 md:mb-8 px-4">
-          <h1 className="font-display text-2xl md:text-4xl font-extrabold text-[#09391C] mb-2">Agent Marketplace</h1>
-          <p className="text-gray-600 text-sm md:text-base">Review buyer briefs for this market.</p>
-        </div>
-
-        {/* Featured Matched Buyers Section */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-[#8DDB90]/10 via-[#8DDB90]/5 to-transparent rounded-xl md:rounded-2xl p-4 md:p-8 mb-8 md:mb-12 border border-[#8DDB90]/20 mx-2 md:mx-0">
-          {/* Background Pattern */}
-          <div className="absolute inset-0 opacity-5">
-            <div className="absolute top-0 left-0 w-32 h-32 bg-[#8DDB90] rounded-full -translate-x-16 -translate-y-16"></div>
-            <div className="absolute bottom-0 right-0 w-24 h-24 bg-[#09391C] rounded-full translate-x-12 translate-y-12"></div>
-            <div className="absolute top-1/2 left-1/4 w-16 h-16 bg-[#8DDB90] rounded-full opacity-30"></div>
-          </div>
-
-          <div className="relative z-10">
-            {/* Header */}
-            <div className="text-center mb-6 md:mb-8">
-              <div className="inline-flex items-center gap-2 px-3 md:px-4 py-2 bg-[#8DDB90]/10 rounded-full text-[#09391C] text-xs md:text-sm font-medium mb-3 md:mb-4">
-                <div className="w-2 h-2 bg-[#8DDB90] rounded-full animate-pulse"></div>
-                Hot Opportunities
-              </div>
-              <h2 className="font-display text-xl md:text-2xl lg:text-3xl font-bold text-[#09391C] mb-2 md:mb-3">
-                Buyer briefs waiting for review
-              </h2>
-              <p className="text-gray-600 text-sm md:text-lg max-w-2xl mx-auto px-2">
-                Tell the system if a brief is priced and specified realistically for this market.
-                <span className="text-[#8DDB90] font-semibold"> Matching happens when the buyer submits.</span>
-              </p>
-            </div>
-
+        <div className="mb-6 px-2 md:px-0">
+          <h1 className="font-display text-2xl md:text-3xl font-extrabold text-[#09391C]">
+            Agent Marketplace
+          </h1>
+          <p className="mt-1 text-sm text-gray-600">
+            Review buyer preferences for this market. Matching starts when the buyer submits.
+          </p>
+          <div className="mt-3 flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5">
+            <span className="mt-0.5 shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">
+              Insured
+            </span>
+            <p className="text-xs leading-relaxed text-[#09391C] md:text-sm">
+              An Insured badge means this preference has legal backing. If that client is scammed
+              on a match, the case can carry stronger legal implications. Review insured preferences carefully.
+            </p>
           </div>
         </div>
 

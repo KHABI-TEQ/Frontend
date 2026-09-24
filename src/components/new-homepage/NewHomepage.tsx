@@ -30,22 +30,38 @@ const NewHomepage = ({
   showOverlayOnLoad = true,
 }: NewHomepageProps) => {
   const isLoading = useLoading();
-  const { loading: settingsLoading } = useHomePageSettings();
-  const [showUserTypeOverlay, setShowUserTypeOverlay] = useState(false);
+  useHomePageSettings();
+  const [showUserTypeOverlay, setShowUserTypeOverlay] = useState(showOverlayOnLoad);
 
   useEffect(() => {
-    if (!showOverlayOnLoad) return;
-    if (typeof window !== "undefined" && window.location.pathname === "/home") {
+    if (!showOverlayOnLoad) {
+      setShowUserTypeOverlay(false);
       return;
     }
-    if (isLoading || settingsLoading) return;
-    const timer = setTimeout(() => {
-      setShowUserTypeOverlay(true);
-    }, 800);
-    return () => clearTimeout(timer);
-  }, [isLoading, settingsLoading, showOverlayOnLoad]);
+    if (typeof window === "undefined") return;
+    if (window.location.pathname === "/home") {
+      setShowUserTypeOverlay(false);
+      return;
+    }
+    try {
+      if (sessionStorage.getItem("khabiteq_user_type_overlay_dismissed") === "1") {
+        setShowUserTypeOverlay(false);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [showOverlayOnLoad]);
 
-  if (isLoading || settingsLoading) return <Loading />;
+  const closeOverlay = () => {
+    setShowUserTypeOverlay(false);
+    try {
+      sessionStorage.setItem("khabiteq_user_type_overlay_dismissed", "1");
+    } catch {
+      /* ignore */
+    }
+  };
+
+  if (isLoading) return <Loading />;
 
   return (
     <Fragment>
@@ -86,7 +102,7 @@ const NewHomepage = ({
 
       <UserTypeOverlay
         isOpen={showUserTypeOverlay}
-        onClose={() => setShowUserTypeOverlay(false)}
+        onClose={closeOverlay}
       />
       <UserTypeFloatingButton
         onClick={() => setShowUserTypeOverlay(true)}

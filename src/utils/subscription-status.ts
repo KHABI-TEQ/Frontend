@@ -6,7 +6,7 @@ export function resolveSubscriptionDisplayStatus(
   if (end && !Number.isNaN(end.getTime()) && end.getTime() < Date.now()) {
     return "expired";
   }
-  return String(status || "").trim() || "unknown";
+  return String(status || "").trim().toLowerCase() || "unknown";
 }
 
 export function isLivePaidSubscription(
@@ -24,14 +24,15 @@ export function isLivePaidSubscription(
     sub.endDate ?? sub.expiresAt,
   );
   if (display !== "active") return false;
-
-  const planType = String(sub.meta?.planType || "");
-  const planName =
-    typeof sub.plan === "object" && sub.plan
-      ? String(sub.plan.name || "")
-      : String(sub.meta?.appliedPlanName || "");
-  if (/free|trial/i.test(planType) || /free|trial/i.test(planName)) return false;
-  if (typeof sub.plan === "object" && sub.plan?.isTrial) return false;
-  if (typeof sub.plan === "object" && sub.plan?.price === 0) return false;
   return true;
+}
+
+export function isLiveSubscription(
+  sub?: {
+    status?: string | null;
+    endDate?: string | Date | null;
+    expiresAt?: string | Date | null;
+  } | null,
+): boolean {
+  return isLivePaidSubscription(sub);
 }

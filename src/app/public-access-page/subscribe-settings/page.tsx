@@ -11,6 +11,8 @@ import { useDealSite } from "@/context/deal-site-context";
 import OverlayPreloader from "@/components/general-components/OverlayPreloader";
 import SubscribersTab from "@/components/public-access-components/SubscribersTab";
 import { goToNextPractitionerSetup } from "@/lib/practitioner-setup-flow";
+import { useSetupFormDirty } from "@/hooks/useSetupFormDirty";
+import { OptionalFieldsHint, OptionalMark, SetupSaveOrSkipButton } from "@/components/public-access-page/SetupSaveOrSkipButton";
 
 export default function SubscribeSettingsPage() {
   const router = useRouter();
@@ -29,6 +31,7 @@ export default function SubscribeSettingsPage() {
       settings.subscribeSettings?.confirmationMessage ||
       "Thank you for subscribing! Check your email for confirmation.",
   });
+  const dirty = useSetupFormDirty(formData);
 
   const handleInputChange = useCallback((field: string, value: string | boolean) => {
     setFormData((prev) => ({
@@ -88,6 +91,7 @@ export default function SubscribeSettingsPage() {
         <p className="text-gray-600 mt-2">
           Manage your email subscription settings and view subscribers
         </p>
+        <OptionalFieldsHint />
       </div>
 
       {/* Tabs */}
@@ -131,6 +135,7 @@ export default function SubscribeSettingsPage() {
           />
           <label htmlFor="enable-subscription" className="text-sm font-medium text-gray-700">
             Enable email subscription form
+            <OptionalMark />
           </label>
         </div>
 
@@ -139,6 +144,7 @@ export default function SubscribeSettingsPage() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Section Title
+                <OptionalMark />
               </label>
               <input
                 type="text"
@@ -154,6 +160,7 @@ export default function SubscribeSettingsPage() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Description
+                <OptionalMark />
               </label>
               <textarea
                 value={formData.subscriptionDescription}
@@ -169,6 +176,7 @@ export default function SubscribeSettingsPage() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Email Input Placeholder
+                <OptionalMark />
               </label>
               <input
                 type="text"
@@ -184,6 +192,7 @@ export default function SubscribeSettingsPage() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Confirmation Message
+                <OptionalMark />
               </label>
               <textarea
                 value={formData.confirmationMessage}
@@ -208,13 +217,12 @@ export default function SubscribeSettingsPage() {
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-          <button
-            onClick={handleSave}
-            className="inline-flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-all"
-          >
-            <Save size={18} />
-            Save Changes
-          </button>
+          <SetupSaveOrSkipButton
+            dirty={dirty}
+            saving={preloader}
+            onSave={() => void handleSave()}
+            onSkip={() => goToNextPractitionerSetup(router, "/public-access-page/subscribe-settings")}
+          />
         </div>
       </div>
       )}

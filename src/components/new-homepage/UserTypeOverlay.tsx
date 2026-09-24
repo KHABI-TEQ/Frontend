@@ -100,53 +100,48 @@ const overlayVariants = {
   visible: {
     opacity: 1,
     transition: {
-      duration: 0.5,
-      ease: [0.25, 0.1, 0.25, 1],
+      duration: 0.18,
+      ease: "easeOut",
     },
   },
   exit: {
     opacity: 0,
     transition: {
-      duration: 0.4,
-      ease: [0.25, 0.1, 0.25, 1],
+      duration: 0.15,
+      ease: "easeOut",
     },
   },
 };
 
 const backdropVariants = {
-  hidden: { opacity: 0, backdropFilter: "blur(0px)" },
+  hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    backdropFilter: "blur(12px)",
     transition: {
-      duration: 0.6,
-      ease: [0.25, 0.1, 0.25, 1],
+      duration: 0.18,
+      ease: "easeOut",
     },
   },
   exit: {
     opacity: 0,
-    backdropFilter: "blur(0px)",
     transition: {
-      duration: 0.4,
-      ease: [0.25, 0.1, 0.25, 1],
+      duration: 0.15,
+      ease: "easeOut",
     },
   },
 };
 
 const containerVariants = {
-  hidden: { opacity: 0, scale: 0.95 },
+  hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    scale: 1,
     transition: {
-      duration: 0.5,
-      delay: 0.2,
-      ease: [0.25, 0.1, 0.25, 1],
+      duration: 0.18,
+      ease: "easeOut",
     },
   },
   exit: {
     opacity: 0,
-    scale: 0.95,
     transition: {
       duration: 0.3,
       ease: [0.25, 0.1, 0.25, 1],
@@ -155,14 +150,12 @@ const containerVariants = {
 };
 
 const headerVariants = {
-  hidden: { opacity: 0, y: -30 },
+  hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    y: 0,
     transition: {
-      duration: 0.6,
-      delay: 0.3,
-      ease: [0.25, 0.1, 0.25, 1],
+      duration: 0.18,
+      ease: "easeOut",
     },
   },
 };
@@ -172,8 +165,7 @@ const cardContainerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.5,
+      duration: 0.18,
     },
   },
 };
@@ -194,25 +186,6 @@ const cardVariants = {
       duration: 0.7,
       ease: [0.25, 0.1, 0.25, 1],
     },
-  },
-};
-
-const floatingAnimation = {
-  y: [-8, 8, -8],
-  transition: {
-    duration: 5,
-    repeat: Infinity,
-    ease: "easeInOut",
-  },
-};
-
-const pulseAnimation = {
-  scale: [1, 1.05, 1],
-  opacity: [0.8, 1, 0.8],
-  transition: {
-    duration: 3,
-    repeat: Infinity,
-    ease: "easeInOut",
   },
 };
 
@@ -289,40 +262,9 @@ export default function UserTypeOverlay({ isOpen, onClose }: UserTypeOverlayProp
             aria-hidden
           />
 
-          {/* Decorative Background Elements */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            {/* Animated gradient orbs */}
-            <motion.div
-              className="absolute top-20 left-20 w-72 h-72 bg-[#8DDB90]/20 rounded-full blur-[100px]"
-              animate={{
-                x: [0, 50, 0],
-                y: [0, 30, 0],
-                scale: [1, 1.2, 1],
-              }}
-              transition={{
-                duration: 10,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            />
-            <motion.div
-              className="absolute bottom-20 right-20 w-96 h-96 bg-emerald-500/15 rounded-full blur-[120px]"
-              animate={{
-                x: [0, -40, 0],
-                y: [0, -50, 0],
-                scale: [1, 1.3, 1],
-              }}
-              transition={{
-                duration: 12,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: 2,
-              }}
-            />
-            <motion.div
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-[#8DDB90]/10 to-emerald-500/10 rounded-full blur-[150px]"
-              animate={pulseAnimation}
-            />
+            <div className="absolute top-20 left-20 w-72 h-72 bg-[#8DDB90]/15 rounded-full" />
+            <div className="absolute bottom-20 right-20 w-96 h-96 bg-emerald-500/10 rounded-full" />
           </div>
 
           {/* Always-visible dismiss control (previous absolute -top placement was often clipped) */}
@@ -334,11 +276,9 @@ export default function UserTypeOverlay({ isOpen, onClose }: UserTypeOverlayProp
             }}
             className="fixed z-[10000] flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-white/20 bg-[#0B423D]/90 text-white shadow-lg backdrop-blur-md transition-colors hover:bg-[#09391C] hover:border-white/35 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8DDB90] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B423D] top-[max(1rem,env(safe-area-inset-top))] right-[max(1rem,env(safe-area-inset-right))] sm:top-[max(1.5rem,env(safe-area-inset-top))] sm:right-[max(1.5rem,env(safe-area-inset-right))]"
             aria-label="Close and continue to homepage"
-            initial={{ opacity: 0, scale: 0.85 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.35, duration: 0.25 }}
-            whileHover={{ scale: 1.06 }}
-            whileTap={{ scale: 0.94 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.15 }}
           >
             <X className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2.25} aria-hidden />
           </motion.button>
@@ -447,7 +387,7 @@ export default function UserTypeOverlay({ isOpen, onClose }: UserTypeOverlayProp
                                   relative mb-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl sm:mb-3 sm:flex sm:h-12 sm:w-12
                                   ${userType.iconBg} shadow-lg ${userType.shadowColor}
                                 `}
-                                animate={isHovered ? floatingAnimation : {}}
+                                animate={{}}
                               >
                                 <Icon className={`relative z-10 h-5 w-5 sm:h-6 sm:w-6 ${userType.iconColor}`} />
                               </motion.div>

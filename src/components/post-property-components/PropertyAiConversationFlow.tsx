@@ -1132,14 +1132,21 @@ export default function PropertyAiConversationFlow({
           <ArrowLeft className="h-4 w-4" /> Change to manual form
         </button>
       </div>
-      <p className="text-sm text-[#5A5D63]">
-        The AI asks for <strong>one form field at a time</strong> (category, location, price, rooms, parking, documents, etc.) based on your{" "}
-        <strong>{briefTypeLabel}</strong> listing type and property category — same fields as the manual form. Use comma-separated Naira amounts (e.g.{" "}
-        <span className="whitespace-nowrap">85,000,000</span>). Say <strong>skip</strong> only for optional key features. When ready, use <strong>I&apos;m done</strong> for the summary and image upload.
-      </p>
-      <p className="text-xs text-[#5A5D63] italic">
-        Tip: If voice input fails (e.g. network), type instead.
-      </p>
+      <div className="border border-[#8DDB90]/30 rounded-lg overflow-hidden bg-white">
+        <details className="group">
+          <summary className="flex items-center justify-between px-4 py-3 text-sm font-medium text-[#09391C] bg-[#8DDB90]/10 hover:bg-[#8DDB90]/20 cursor-pointer transition-colors list-none select-none">
+            <span>How to use</span>
+          </summary>
+          <div className="px-4 py-3 space-y-3 text-sm text-[#5A5D63]">
+            <p>
+              The AI asks for one form field at a time based on your <strong>{briefTypeLabel}</strong> listing — same fields as the manual form. You can type or speak. Typing always works, even if the microphone is on.
+            </p>
+            <p className="text-xs italic pt-2 border-t border-gray-100">
+              Tip: Say &quot;Skip&quot; for optional details. Say &quot;I&apos;m done&quot; when you&apos;re ready to review.
+            </p>
+          </div>
+        </details>
+      </div>
 
       <label className="flex items-start gap-2 text-sm text-[#5A5D63] cursor-pointer">
         <input
@@ -1267,7 +1274,9 @@ export default function PropertyAiConversationFlow({
 
       <div ref={inputSectionRef} className="flex flex-col gap-3 scroll-mt-4">
         <AiFillBlock
-          title=""
+          title="Describe your property"
+          description="Tell us what you are listing, and we'll guide you step-by-step."
+          showVoiceInstructions={false}
           placeholder={
             propertyAmountEntryMode
               ? "e.g. 85,000,000"

@@ -16,6 +16,8 @@ import { POST_REQUEST, POST_REQUEST_FILE_UPLOAD } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import StandardPreloader from "@/components/new-marketplace/StandardPreloader";
 import { goToNextPractitionerSetup } from "@/lib/practitioner-setup-flow";
+import { useSetupFormDirty } from "@/hooks/useSetupFormDirty";
+import { OptionalFieldsHint, OptionalMark, SetupSaveOrSkipButton } from "@/components/public-access-page/SetupSaveOrSkipButton";
 
 export default function BrandingPage() {
   const router = useRouter();
@@ -24,6 +26,14 @@ export default function BrandingPage() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [keywordInput, setKeywordInput] = useState(settings.keywords.join(", "));
+  const dirty = useSetupFormDirty({
+    title: settings.title,
+    keywords: settings.keywords,
+    description: settings.description,
+    logoUrl: settings.logoUrl,
+    footer: settings.footer,
+    keywordInput,
+  });
 
   const handleUploadLogo = useCallback(async (file: File) => {
     const formData = new FormData();
@@ -111,6 +121,7 @@ export default function BrandingPage() {
         <p className="text-gray-600 mt-2">
           Customize your page branding for SEO and visitor experience
         </p>
+        <OptionalFieldsHint />
       </div>
 
       {/* Page Title */}
@@ -118,6 +129,7 @@ export default function BrandingPage() {
         <div className="mb-6">
           <label className="block text-sm font-semibold text-gray-900 mb-2">
             Page Title
+            <OptionalMark />
           </label>
           <p className="text-sm text-gray-600 mb-3">
             This appears in search results and browser tabs
@@ -135,6 +147,7 @@ export default function BrandingPage() {
         <div className="mb-6">
           <label className="block text-sm font-semibold text-gray-900 mb-2">
             Keywords (comma separated)
+            <OptionalMark />
           </label>
           <p className="text-sm text-gray-600 mb-3">
             Help search engines understand your page content
@@ -190,6 +203,7 @@ export default function BrandingPage() {
         <div className="mb-6">
           <label className="block text-sm font-semibold text-gray-900 mb-2">
             Company description
+            <OptionalMark />
           </label>
           <p className="text-sm text-gray-600 mb-3">
             Published on the public homepage under the hero, and used as the search-result snippet.
@@ -211,6 +225,7 @@ export default function BrandingPage() {
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <label className="block text-sm font-semibold text-gray-900 mb-4">
           Logo
+          <OptionalMark />
         </label>
 
         {settings.logoUrl ? (
@@ -282,6 +297,7 @@ export default function BrandingPage() {
           <div>
             <label className="block text-sm font-semibold text-gray-900 mb-2">
               Short Description
+              <OptionalMark />
             </label>
             <p className="text-sm text-gray-600 mb-3">
               A brief description that appears in the footer
@@ -306,6 +322,7 @@ export default function BrandingPage() {
           <div>
             <label className="block text-sm font-semibold text-gray-900 mb-2">
               Copyright Text
+              <OptionalMark />
             </label>
             <p className="text-sm text-gray-600 mb-3">
               Display in the footer (e.g., "© 2024 My Real Estate Business. All rights reserved.")
@@ -328,16 +345,13 @@ export default function BrandingPage() {
         </div>
       </div>
 
-      {/* Save Button */}
       <div className="flex justify-end">
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="inline-flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-        >
-          <Save size={18} />
-          {saving ? "Saving..." : "Save Changes"}
-        </button>
+        <SetupSaveOrSkipButton
+          dirty={dirty}
+          saving={saving}
+          onSave={() => void handleSave()}
+          onSkip={() => goToNextPractitionerSetup(router, "/public-access-page/branding")}
+        />
       </div>
     </div>
   );

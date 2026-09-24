@@ -21,6 +21,7 @@ import AgentEligibilityBanner from "@/components/agent/AgentEligibilityBanner";
 import { useAgentEligibility } from "@/hooks/useAgentEligibility";
 import { useUserContext } from "@/context/user-context";
 import PublicPageSetupComplete from "@/components/public-access-page/PublicPageSetupComplete";
+import SetupProgressPanel from "@/components/public-access-page/SetupProgressPanel";
 
 interface DashboardStats {
   viewsByDay: Array<{ date: string; count: number }>;
@@ -197,6 +198,8 @@ export default function OverviewPage() {
         </h1>
         <p className="text-gray-600 mt-2">Monitor your Practitioner page performance and activity</p>
       </div>
+
+      <SetupProgressPanel />
 
       {showSetupComplete && (
         <PublicPageSetupComplete

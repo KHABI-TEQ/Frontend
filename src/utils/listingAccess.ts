@@ -1,5 +1,5 @@
 export const LANDLORD_CANNOT_LIST_OFF_PLAN =
-  "Landlords cannot list off-plan properties. Off-plan listings are available to developers only.";
+  "Off-plan projects are available to developers only. Agents and landlords list completed properties from this page.";
 
 export function isLandlordUserType(userType?: string | null): boolean {
   const t = String(userType || "").trim().toLowerCase();
@@ -14,6 +14,10 @@ export function isOffPlanListingType(propertyType?: string | null): boolean {
   return t === "off-plan" || t === "offplan";
 }
 
+export function isDeveloperUserType(userType?: string | null): boolean {
+  return String(userType || "").trim().toLowerCase() === "developer";
+}
+
 export function canUserListOffPlan(userType?: string | null): boolean {
-  return !isLandlordUserType(userType);
+  return isDeveloperUserType(userType);
 }

@@ -16,6 +16,10 @@ import { handleApiError } from "@/utils/handleApiError";
 import toast from "react-hot-toast";
 import { ArrowLeft, ArrowRight, CheckCircle2, Shield } from "lucide-react";
 import { PRACTITIONER_SETUP_PATH } from "@/lib/practitioner-setup-flow";
+import {
+  RegistrationCertificateFields,
+  type RegistrationCertificateKind,
+} from "@/components/kyc/RegistrationCertificateFields";
 
 type AccountType = "Individual" | "Company";
 
@@ -62,6 +66,9 @@ export default function DeveloperKycForm() {
   const [businessEmail, setBusinessEmail] = useState("");
 
   const [cacNumber, setCacNumber] = useState("");
+  const [certificateKind, setCertificateKind] = useState<RegistrationCertificateKind>("cac");
+  const [lasreraNumber, setLasreraNumber] = useState("");
+  const [lasreraDoc, setLasreraDoc] = useState("");
   const [companyType, setCompanyType] = useState("limited_liability");
   const [cacDoc, setCacDoc] = useState<string | null>(null);
   const [lookup, setLookup] = useState<any>(null);
@@ -110,6 +117,14 @@ export default function DeveloperKycForm() {
           setBusinessPhone(d.profile?.businessPhone || "");
           setBusinessEmail(d.profile?.businessEmail || "");
           setCacNumber(d.company?.cacNumber || "");
+          setCertificateKind(d.company?.certificateKind === "lasrera" ? "lasrera" : "cac");
+          setLasreraNumber(d.company?.lasreraNumber || "");
+          if (Array.isArray(d.company?.cacCertificateUrls) && d.company.cacCertificateUrls[0]) {
+            setCacDoc(d.company.cacCertificateUrls[0]);
+          }
+          if (Array.isArray(d.company?.lasreraCertificateUrls) && d.company.lasreraCertificateUrls[0]) {
+            setLasreraDoc(d.company.lasreraCertificateUrls[0]);
+          }
           setOffice({
             homeNo: d.address?.homeNo || "",
             street: d.address?.street || "",
@@ -193,13 +208,26 @@ export default function DeveloperKycForm() {
   };
 
   const saveCompany = async () => {
+    const certNumber = certificateKind === "lasrera" ? lasreraNumber : cacNumber;
+    const certUrl = certificateKind === "lasrera" ? lasreraDoc : cacDoc;
+    if (!certNumber.trim()) {
+      toast.error(certificateKind === "lasrera" ? "Enter the LASRERA certificate number." : "Enter the CAC registration number.");
+      return false;
+    }
+    if (!certUrl) {
+      toast.error(`Upload the ${certificateKind === "lasrera" ? "LASRERA" : "CAC"} certificate for admin review.`);
+      return false;
+    }
     const res = await PUT_REQUEST(
       `${URLS.BASE}${URLS.developerCompany}`,
       {
         legalName: companyName,
+        certificateKind,
         cacNumber,
+        lasreraNumber,
         companyType,
         cacCertificateUrls: cacDoc ? [cacDoc] : [],
+        lasreraCertificateUrls: lasreraDoc ? [lasreraDoc] : [],
         registeredAddress: office,
         confirmProviderData: Boolean(lookup?.found),
       },
@@ -460,18 +488,24 @@ export default function DeveloperKycForm() {
                   We verify the company through CAC / KYB. This is separate from the person who manages the account.
                 </p>
               </div>
-              <Field
-                label="CAC registration number"
-                why="This is the company's registration number issued by the Corporate Affairs Commission. Use the prefix, for example RC1234567."
-              >
-                <div className="flex gap-2">
-                  <input className={inputClass} value={cacNumber} onChange={(e) => setCacNumber(e.target.value)} placeholder="RC0000000" />
-                  <button type="button" onClick={lookupCompany} className="shrink-0 rounded-lg bg-[#09391C] text-white px-4 text-sm font-semibold">
-                    Look up
-                  </button>
-                </div>
-              </Field>
-              {lookup?.found && (
+              <RegistrationCertificateFields
+                kind={certificateKind}
+                onKindChange={setCertificateKind}
+                certificateNumber={certificateKind === "lasrera" ? lasreraNumber : cacNumber}
+                onCertificateNumberChange={(value) => {
+                  if (certificateKind === "lasrera") setLasreraNumber(value);
+                  else setCacNumber(value);
+                }}
+                fileUrl={certificateKind === "lasrera" ? lasreraDoc : cacDoc || ""}
+                onFileUrlChange={(url) => {
+                  if (certificateKind === "lasrera") setLasreraDoc(url);
+                  else setCacDoc(url);
+                }}
+                uploadId="company-reg-doc"
+                showLookup
+                onLookup={() => void lookupCompany()}
+              />
+              {lookup?.found && certificateKind === "cac" && (
                 <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm">
                   <p className="font-semibold text-emerald-900 mb-2">Returned from the verification provider</p>
                   <p>Registered name: {lookup.legalName || "—"}</p>
@@ -480,19 +514,15 @@ export default function DeveloperKycForm() {
                   <p className="mt-2 text-emerald-800">Confirm these details rather than retyping them.</p>
                 </div>
               )}
-              <Field label="Registered company name" why="This must correspond with the company's CAC registration record.">
+              <Field label="Registered company name" why="This must correspond with the company's registration record.">
                 <input className={inputClass} value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
               </Field>
-              <Field label="Company type" why="Identify the registered entity type on the CAC record.">
+              <Field label="Company type" why="Identify the registered entity type.">
                 <select className={inputClass} value={companyType} onChange={(e) => setCompanyType(e.target.value)}>
                   <option value="business_name">Business Name</option>
                   <option value="limited_liability">Limited Liability Company</option>
-                  <option value="other">Other CAC-registered entity</option>
+                  <option value="other">Other registered entity</option>
                 </select>
-              </Field>
-              <Field label="CAC registration document" why="Upload the CAC certificate or registration document so Khabiteq can review it if automatic lookup is incomplete.">
-                <AttachFile id="cac-doc" heading="Upload CAC document" setFileUrl={setCacDoc} acceptedFileTypes="image/*,.pdf" />
-                {cacDoc && <p className="text-xs text-emerald-700">Document uploaded</p>}
               </Field>
               <div className="grid sm:grid-cols-2 gap-4">
                 <Field label="House / office number" why="The number of the registered office on the CAC record.">

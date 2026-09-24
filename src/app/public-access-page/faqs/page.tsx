@@ -9,10 +9,13 @@ import { POST_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import { useDealSite } from "@/context/deal-site-context";
 import { goToNextPractitionerSetup } from "@/lib/practitioner-setup-flow";
+import { useSetupFormDirty } from "@/hooks/useSetupFormDirty";
+import { OptionalFieldsHint, SetupSaveOrSkipButton } from "@/components/public-access-page/SetupSaveOrSkipButton";
 
 export default function FaqsSettingsPage() {
   const router = useRouter();
   const { settings, updateSettings } = useDealSite();
+  const dirty = useSetupFormDirty(settings.faqs);
   const [saving, setSaving] = useState(false);
   const faqs = settings.faqs || { title: "Frequently asked questions", items: [] };
   const items = faqs.items || [];
@@ -47,6 +50,7 @@ export default function FaqsSettingsPage() {
       <div>
         <h1 className="text-2xl font-bold text-[#09391C]">FAQs</h1>
         <p className="mt-1 text-sm text-gray-600">These questions publish on the public /faq page when the FAQ nav item is enabled.</p>
+        <OptionalFieldsHint />
       </div>
       <input
         className="w-full rounded-lg border border-gray-300 px-3 py-2"
@@ -98,14 +102,12 @@ export default function FaqsSettingsPage() {
         <Plus className="h-4 w-4" /> Add question
       </button>
       <div>
-        <button
-          type="button"
-          onClick={save}
-          disabled={saving}
-          className="rounded-lg bg-[#8DDB90] px-4 py-2.5 text-sm font-semibold text-[#09391C] disabled:opacity-60"
-        >
-          {saving ? "Saving…" : "Save FAQs"}
-        </button>
+        <SetupSaveOrSkipButton
+          dirty={dirty}
+          saving={saving}
+          onSave={() => void save()}
+          onSkip={() => goToNextPractitionerSetup(router, "/public-access-page/faqs")}
+        />
       </div>
     </div>
   );

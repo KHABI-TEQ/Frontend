@@ -37,6 +37,10 @@ import PendingKycReview from "@/components/agent-kyc/PendingKycReview";
 import KycSubmittedConfirmation from "@/components/kyc/KycSubmittedConfirmation";
 import ProcessingRequest from "../loading-component/ProcessingRequest";
 import { handleApiError } from "@/utils/handleApiError";
+import {
+  RegistrationCertificateFields,
+  type RegistrationCertificateKind,
+} from "@/components/kyc/RegistrationCertificateFields";
 
 const kycValidationSchema = Yup.object({
   meansOfId: Yup.array().of(
@@ -89,6 +93,10 @@ const AgentKycForm: React.FC = () => {
     initialValues: {
       meansOfId: [{ name: "", docImg: [] }],
       agentLicenseNumber: "",
+      certificateKind: "cac",
+      certificateNumber: "",
+      cacCertificateUrls: [],
+      lasreraCertificateUrls: [],
       profileBio: "",
       specializations: [],
       languagesSpoken: [],
@@ -215,7 +223,24 @@ const AgentKycForm: React.FC = () => {
     setIsSubmitting(true);
     try {
       const token = getCookie("token") as string;
-      const response = await PUT_REQUEST(`${URLS.BASE}${URLS.submitKyc}`, values, token as string);
+      const certificateKind: RegistrationCertificateKind =
+        values.certificateKind === "lasrera" ? "lasrera" : "cac";
+      const certificateNumber = String(values.certificateNumber || "").trim();
+      const certUrl =
+        certificateKind === "lasrera"
+          ? values.lasreraCertificateUrls?.[0]
+          : values.cacCertificateUrls?.[0];
+      const response = await PUT_REQUEST(
+        `${URLS.BASE}${URLS.submitKyc}`,
+        {
+          ...values,
+          certificateKind,
+          certificateNumber,
+          cacCertificateUrls: certificateKind === "cac" && certUrl ? [certUrl] : [],
+          lasreraCertificateUrls: certificateKind === "lasrera" && certUrl ? [certUrl] : [],
+        },
+        token as string,
+      );
 
       if (!response.success) {
         handleApiError(response);
@@ -730,6 +755,32 @@ const AgentKycForm: React.FC = () => {
                     />
                   </div>
                 </div>
+
+                <RegistrationCertificateFields
+                  kind={formik.values.certificateKind === "lasrera" ? "lasrera" : "cac"}
+                  onKindChange={(kind) => {
+                    formik.setFieldValue("certificateKind", kind);
+                    formik.setFieldValue(
+                      kind === "cac" ? "lasreraCertificateUrls" : "cacCertificateUrls",
+                      [],
+                    );
+                  }}
+                  certificateNumber={formik.values.certificateNumber || ""}
+                  onCertificateNumberChange={(value) => formik.setFieldValue("certificateNumber", value)}
+                  fileUrl={
+                    formik.values.certificateKind === "lasrera"
+                      ? formik.values.lasreraCertificateUrls?.[0] || ""
+                      : formik.values.cacCertificateUrls?.[0] || ""
+                  }
+                  onFileUrlChange={(url) => {
+                    const kind = formik.values.certificateKind === "lasrera" ? "lasrera" : "cac";
+                    formik.setFieldValue(
+                      kind === "lasrera" ? "lasreraCertificateUrls" : "cacCertificateUrls",
+                      url ? [url] : [],
+                    );
+                  }}
+                  uploadId="agent-registration-certificate"
+                />
 
                 <div>
                   <label className="block text-sm font-medium text-[#0C1E1B] mb-2">Profile Bio (Optional)</label>

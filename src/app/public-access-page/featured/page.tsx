@@ -4,12 +4,14 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
-import { Star, Save, ChevronRight } from "lucide-react";
+import { Star } from "lucide-react";
 import api from "@/utils/axiosConfig";
 import { useDealSite } from "@/context/deal-site-context";
 import OverlayPreloader from "@/components/general-components/OverlayPreloader";
 import { Property } from "@/types/my-listings.types";
 import { goToNextPractitionerSetup } from "@/lib/practitioner-setup-flow";
+import { useSetupFormDirty } from "@/hooks/useSetupFormDirty";
+import { OptionalFieldsHint, SetupSaveOrSkipButton } from "@/components/public-access-page/SetupSaveOrSkipButton";
 
 export default function FeaturedPage() {
   const router = useRouter();
@@ -127,7 +129,7 @@ export default function FeaturedPage() {
     }
   }, [featuredIds, settings, updateSettings, router]);
 
-  const continueLabel = properties.length > 0 ? "Save & continue" : "Continue setup";
+  const dirty = useSetupFormDirty(Array.from(featuredIds).sort(), !isLoading);
 
   // Filter properties based on search term
   const filteredProperties = properties.filter((prop) => {
@@ -158,18 +160,16 @@ export default function FeaturedPage() {
             Featured Listings
           </h1>
           <p className="text-gray-600 mt-2">
-            Optional. Select properties to feature, or continue if you have none yet.
+            Select properties to feature, or skip if you have none yet.
           </p>
+          <OptionalFieldsHint />
         </div>
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={isSaving}
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-        >
-          {continueLabel}
-          <ChevronRight size={18} />
-        </button>
+        <SetupSaveOrSkipButton
+          dirty={dirty}
+          saving={isSaving}
+          onSave={() => void handleSave()}
+          onSkip={() => goToNextPractitionerSetup(router, "/public-access-page/featured")}
+        />
       </div>
 
       {/* Stats Card */}
@@ -208,15 +208,12 @@ export default function FeaturedPage() {
             <p className="text-sm text-gray-500">
               You can list properties later. Featured listings are optional for finishing your practitioner page.
             </p>
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={isSaving}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-            >
-              Continue setup
-              <ChevronRight size={18} />
-            </button>
+            <SetupSaveOrSkipButton
+              dirty={dirty}
+              saving={isSaving}
+              onSave={() => void handleSave()}
+              onSkip={() => goToNextPractitionerSetup(router, "/public-access-page/featured")}
+            />
           </div>
         ) : filteredProperties.length === 0 ? (
           <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
@@ -322,15 +319,12 @@ export default function FeaturedPage() {
 
       <div className="sticky bottom-0 z-10 -mx-6 border-t border-gray-200 bg-white/95 px-6 py-3 backdrop-blur lg:-mx-8 lg:px-8">
         <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={isSaving}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
-          >
-            <Save size={18} />
-            {continueLabel}
-          </button>
+          <SetupSaveOrSkipButton
+            dirty={dirty}
+            saving={isSaving}
+            onSave={() => void handleSave()}
+            onSkip={() => goToNextPractitionerSetup(router, "/public-access-page/featured")}
+          />
         </div>
       </div>
 

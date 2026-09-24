@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { BookOpen, Mail, Share2, HelpCircle, Compass, Eye, MapPin, FileText } from "lucide-react";
 import { useDealSite } from "@/context/deal-site-context";
 import { nextPractitionerSetupPath } from "@/lib/practitioner-setup-flow";
+import { OptionalFieldsHint } from "@/components/public-access-page/SetupSaveOrSkipButton";
 
 const LINKS = [
   { href: "/public-access-page/about", label: "About Us", hint: "Who we are, mission, services, offices, team", icon: BookOpen },
@@ -34,15 +35,16 @@ export default function WebsiteContentHubPage() {
         <div>
           <h1 className="text-2xl font-bold text-[#09391C]">Website content</h1>
           <p className="mt-1 text-sm text-gray-600">
-            Optional overview. Continue to fill About, Contact, and the rest of your page.
+            Optional overview. Skip to About, or open a section to add content.
           </p>
+          <OptionalFieldsHint />
         </div>
         <button
           type="button"
           onClick={() => router.push(nextPractitionerSetupPath("/public-access-page/website-content"))}
           className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
         >
-          Continue to About Us
+          Skip
         </button>
       </div>
 
@@ -86,7 +88,7 @@ export default function WebsiteContentHubPage() {
           onClick={() => router.push(nextPractitionerSetupPath("/public-access-page/website-content"))}
           className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
         >
-          Continue to About Us
+          Skip
         </button>
       </div>
     </div>

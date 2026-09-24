@@ -22,6 +22,7 @@ export default function InsuredPreferenceTag({
   if (!label) return null;
   return (
     <span
+      title="Insured preferences have legal backing. A scam on a match may carry stronger legal implications."
       className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold bg-emerald-100 text-emerald-800 ${className}`}
     >
       {label}

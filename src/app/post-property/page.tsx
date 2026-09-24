@@ -81,11 +81,7 @@ const PostPropertyPage = () => {
   const offPlanLocked =
     landlordCannotListOffPlan ||
     (user?.userType === "Developer" && !developerPlan?.canListOffPlan);
-  const hideOffPlanCard =
-    landlordCannotListOffPlan || user?.userType === "Developer";
-  const visiblePropertyTypes = hideOffPlanCard
-    ? propertyTypes.filter((item) => item.type !== "off-plan")
-    : propertyTypes;
+  const visiblePropertyTypes = propertyTypes.filter((item) => item.type !== "off-plan");
   const listingsEntry = useAppSelector(selectFeatureEntry(FEATURE_KEYS.LISTINGS));
   const quotaText =
     publisherListing?.listingsRemaining != null

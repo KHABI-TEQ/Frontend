@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import CombinedAuthGuard from "@/logic/combinedAuthGuard";
-import AttachFile from "@/components/general-components/attach_file";
 import { PUT_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import Cookies from "js-cookie";
@@ -10,18 +9,25 @@ import toast from "react-hot-toast";
 import { useUserContext, normalizeUser } from "@/context/user-context";
 import KycSubmittedConfirmation from "@/components/kyc/KycSubmittedConfirmation";
 import { isApprovedKyc, isPendingKyc, resolveKycStatus } from "@/lib/kyc-status";
+import {
+  RegistrationCertificateFields,
+  certificateDocName,
+  type RegistrationCertificateKind,
+} from "@/components/kyc/RegistrationCertificateFields";
 
 export default function ValuerKycPage() {
   const { user, setUser } = useUserContext();
   const [licenseNumber, setLicenseNumber] = useState("");
   const [firmName, setFirmName] = useState("");
+  const [certificateKind, setCertificateKind] = useState<RegistrationCertificateKind>("cac");
+  const [certificateNumber, setCertificateNumber] = useState("");
   const [docUrl, setDocUrl] = useState("");
   const [busy, setBusy] = useState(false);
   const kycStatus = resolveKycStatus(user);
 
   const submit = async () => {
-    if (!docUrl) {
-      toast.error("Upload at least one supporting document");
+    if (!certificateNumber.trim() || !docUrl) {
+      toast.error("Enter the certificate number and upload the CAC or LASRERA certificate");
       return;
     }
     setBusy(true);
@@ -31,7 +37,9 @@ export default function ValuerKycPage() {
         {
           licenseNumber,
           firmName,
-          kycDocuments: [{ name: "Valuer credential", url: docUrl }],
+          certificateKind,
+          certificateNumber,
+          kycDocuments: [{ name: certificateDocName(certificateKind), url: docUrl }],
         },
         Cookies.get("token"),
       );
@@ -77,10 +85,14 @@ export default function ValuerKycPage() {
             value={licenseNumber}
             onChange={(e) => setLicenseNumber(e.target.value)}
           />
-          <AttachFile
-            id="valuer-kyc-doc"
-            heading="Upload credential"
-            setFileUrl={(url: string | null) => setDocUrl(url || "")}
+          <RegistrationCertificateFields
+            kind={certificateKind}
+            onKindChange={setCertificateKind}
+            certificateNumber={certificateNumber}
+            onCertificateNumberChange={setCertificateNumber}
+            fileUrl={docUrl}
+            onFileUrlChange={setDocUrl}
+            uploadId="valuer-kyc-doc"
           />
           <button
             type="button"

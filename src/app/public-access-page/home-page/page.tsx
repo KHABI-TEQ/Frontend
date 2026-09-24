@@ -6,6 +6,8 @@ import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import { Home, Save, ImageIcon, Trash2, Plus, X, Star } from "lucide-react";
 import { goToNextPractitionerSetup } from "@/lib/practitioner-setup-flow";
+import { useSetupFormDirty } from "@/hooks/useSetupFormDirty";
+import { OptionalFieldsHint, SetupSaveOrSkipButton } from "@/components/public-access-page/SetupSaveOrSkipButton";
 import * as LucideIcons from "lucide-react";
 import { POST_REQUEST, POST_REQUEST_FILE_UPLOAD } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
@@ -132,6 +134,15 @@ export default function HomePageSettings() {
     showHeroCtaButtons: settings.homeSettings?.support?.showHeroCtaButtons || false,
   });
 
+  const dirty = useSetupFormDirty({
+    formData,
+    testimonials,
+    testimonialsSection,
+    whyChooseUs,
+    whyChooseUsSection,
+    supportCards,
+    supportSection,
+  });
   const [uploadingTestimonialId, setUploadingTestimonialId] = useState<string>("");
   const [showIconPicker, setShowIconPicker] = useState<Record<string, boolean>>({});
   const [iconSearchTerms, setIconSearchTerms] = useState<Record<string, string>>({});
@@ -405,6 +416,7 @@ export default function HomePageSettings() {
           Home Page Settings
         </h1>
         <p className="text-gray-600 mt-2">Customize your homepage appearance, testimonials, and why choose us section</p>
+        <OptionalFieldsHint />
       </div>
 
       {/* Tab Navigation */}
@@ -1121,16 +1133,14 @@ export default function HomePageSettings() {
         </div>
       )}
 
-      {/* Save Button */}
       <div className="flex justify-end gap-3 pt-4">
-        <button
-          onClick={handleSave}
-          disabled={uploading || uploadingTestimonialId !== "" || preloader}
-          className="inline-flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-        >
-          <Save size={18} />
-          Save Changes
-        </button>
+        <SetupSaveOrSkipButton
+          dirty={dirty}
+          saving={preloader}
+          disabled={uploading || uploadingTestimonialId !== ""}
+          onSave={() => void handleSave()}
+          onSkip={() => goToNextPractitionerSetup(router, "/public-access-page/home-page")}
+        />
       </div>
     </div>
   );

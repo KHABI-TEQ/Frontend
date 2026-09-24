@@ -426,6 +426,10 @@ export interface AgentKycAddress {
 export interface AgentKycSubmissionPayload {
   meansOfId: AgentKycMeansOfId[];
   agentLicenseNumber?: string;
+  certificateKind?: "cac" | "lasrera";
+  certificateNumber?: string;
+  cacCertificateUrls?: string[];
+  lasreraCertificateUrls?: string[];
   profileBio: string;
   specializations: string[];
   languagesSpoken: string[];

@@ -8,6 +8,8 @@ import { POST_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import { useDealSite } from "@/context/deal-site-context";
 import { goToNextPractitionerSetup } from "@/lib/practitioner-setup-flow";
+import { useSetupFormDirty } from "@/hooks/useSetupFormDirty";
+import { OptionalFieldsHint, SetupSaveOrSkipButton } from "@/components/public-access-page/SetupSaveOrSkipButton";
 
 const DEFAULT_ITEMS = [
   { key: "home", label: "Home", href: "/", enabled: true },
@@ -23,6 +25,7 @@ const DEFAULT_ITEMS = [
 export default function NavigationSettingsPage() {
   const router = useRouter();
   const { settings, updateSettings } = useDealSite();
+  const dirty = useSetupFormDirty(settings.navigation);
   const [saving, setSaving] = useState(false);
   const items = useMemo(() => {
     const current = settings.navigation?.items;
@@ -55,6 +58,7 @@ export default function NavigationSettingsPage() {
         <p className="mt-1 text-sm text-gray-600">
           Choose which tabs appear on your white-label site. Disabled items stay off the published menu.
         </p>
+        <OptionalFieldsHint />
       </div>
       <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-4">
         {items.map((item, index) => (
@@ -74,14 +78,12 @@ export default function NavigationSettingsPage() {
           </label>
         ))}
       </div>
-      <button
-        type="button"
-        onClick={save}
-        disabled={saving}
-        className="rounded-lg bg-[#8DDB90] px-4 py-2.5 text-sm font-semibold text-[#09391C] disabled:opacity-60"
-      >
-        {saving ? "Saving…" : "Save navigation"}
-      </button>
+      <SetupSaveOrSkipButton
+        dirty={dirty}
+        saving={saving}
+        onSave={() => void save()}
+        onSkip={() => goToNextPractitionerSetup(router, "/public-access-page/navigation")}
+      />
     </div>
   );
 }

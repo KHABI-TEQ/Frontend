@@ -11,6 +11,8 @@ import { useDealSite } from "@/context/deal-site-context";
 import OverlayPreloader from "@/components/general-components/OverlayPreloader";
 import ContactMessagesTab from "@/components/public-access-components/ContactMessagesTab";
 import { goToNextPractitionerSetup } from "@/lib/practitioner-setup-flow";
+import { useSetupFormDirty } from "@/hooks/useSetupFormDirty";
+import { OptionalFieldsHint, SetupSaveOrSkipButton } from "@/components/public-access-page/SetupSaveOrSkipButton";
  
 export default function ContactUsPage() {
   const router = useRouter();
@@ -31,6 +33,7 @@ export default function ContactUsPage() {
     locationLatitude: settings.contactUs?.location?.coordinates?.[0]?.toString() || "",
     locationLongitude: settings.contactUs?.location?.coordinates?.[1]?.toString() || "",
   });
+  const dirty = useSetupFormDirty(formData);
 
   const handleInputChange = useCallback((field: string, value: string | boolean) => {
     setFormData((prev) => ({
@@ -110,6 +113,7 @@ export default function ContactUsPage() {
           Contact Us Page
         </h1>
         <p className="text-gray-600 mt-2">Manage your contact page settings and view messages</p>
+        <OptionalFieldsHint />
       </div>
 
       {/* Tabs */}
@@ -362,13 +366,12 @@ export default function ContactUsPage() {
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-          <button
-            onClick={handleSave}
-            className="inline-flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-all"
-          >
-            <Save size={18} />
-            Save Changes
-          </button>
+          <SetupSaveOrSkipButton
+            dirty={dirty}
+            saving={preloader}
+            onSave={() => void handleSave()}
+            onSkip={() => goToNextPractitionerSetup(router, "/public-access-page/contact-us")}
+          />
         </div>
       </div>
       </>

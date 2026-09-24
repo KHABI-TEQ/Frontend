@@ -9,16 +9,19 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
-import { Palette, Save } from "lucide-react";
+import { Palette } from "lucide-react";
 import { useDealSite } from "@/context/deal-site-context";
 import { PUT_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import { goToNextPractitionerSetup } from "@/lib/practitioner-setup-flow";
+import { useSetupFormDirty } from "@/hooks/useSetupFormDirty";
+import { OptionalFieldsHint, OptionalMark, SetupSaveOrSkipButton } from "@/components/public-access-page/SetupSaveOrSkipButton";
 
 export default function ThemePage() {
   const router = useRouter();
   const { settings, updateSettings, publicSlug } = useDealSite();
   const [saving, setSaving] = React.useState(false);
+  const dirty = useSetupFormDirty(settings.theme);
 
   const COLOR_PALETTE = [
     "#09391C",
@@ -37,6 +40,7 @@ export default function ThemePage() {
           <Palette size={32} />
           Theme & Colors
         </h1>
+        <OptionalFieldsHint />
         <p className="text-gray-600 mt-2">
           Customize your page colors to match your brand
         </p>
@@ -47,6 +51,7 @@ export default function ThemePage() {
         <div>
           <label className="block text-sm font-semibold text-gray-900 mb-4">
             Primary Color
+            <OptionalMark />
           </label>
           <div className="flex items-center gap-4">
             <input
@@ -92,6 +97,7 @@ export default function ThemePage() {
         <div>
           <label className="block text-sm font-semibold text-gray-900 mb-4">
             Secondary Color
+            <OptionalMark />
           </label>
           <div className="flex items-center gap-4">
             <input
@@ -155,10 +161,12 @@ export default function ThemePage() {
         </div>
       </div>
 
-      {/* Save Button */}
       <div className="flex justify-end">
-        <button
-          onClick={async () => {
+        <SetupSaveOrSkipButton
+          dirty={dirty}
+          saving={saving}
+          onSkip={() => goToNextPractitionerSetup(router, "/public-access-page/theme")}
+          onSave={async () => {
             const slug = String(publicSlug || settings.publicSlug || "").trim();
             if (!slug) {
               toast.error("Set up your practitioner page slug first before saving the theme.");
@@ -192,12 +200,7 @@ export default function ThemePage() {
               setSaving(false);
             }
           }}
-          disabled={saving}
-          className="inline-flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-        >
-          <Save size={18} />
-          {saving ? "Saving..." : "Save Theme"}
-        </button>
+        />
       </div>
     </div>
   );

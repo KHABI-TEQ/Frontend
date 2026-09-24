@@ -9,6 +9,8 @@ import { POST_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import { useDealSite } from "@/context/deal-site-context";
 import { goToNextPractitionerSetup } from "@/lib/practitioner-setup-flow";
+import { useSetupFormDirty } from "@/hooks/useSetupFormDirty";
+import { OptionalFieldsHint, SetupSaveOrSkipButton } from "@/components/public-access-page/SetupSaveOrSkipButton";
 
 function slugify(value: string) {
   return value
@@ -23,6 +25,7 @@ function slugify(value: string) {
 export default function CustomPagesSettingsPage() {
   const router = useRouter();
   const { settings, updateSettings } = useDealSite();
+  const dirty = useSetupFormDirty(settings.customPages);
   const [saving, setSaving] = useState(false);
   const pages = settings.customPages || [];
 
@@ -61,6 +64,7 @@ export default function CustomPagesSettingsPage() {
         <p className="mt-1 text-sm text-gray-600">
           Optional branded pages such as Terms, Careers or Office directory. Enabled pages publish at /p/your-slug and appear in the public navigation.
         </p>
+        <OptionalFieldsHint />
       </div>
       <div className="space-y-4">
         {pages.map((page, index) => (
@@ -131,14 +135,12 @@ export default function CustomPagesSettingsPage() {
         <Plus className="h-4 w-4" /> Add page
       </button>
       <div>
-        <button
-          type="button"
-          onClick={save}
-          disabled={saving}
-          className="rounded-lg bg-[#8DDB90] px-4 py-2.5 text-sm font-semibold text-[#09391C] disabled:opacity-60"
-        >
-          {saving ? "Saving…" : "Save custom pages"}
-        </button>
+        <SetupSaveOrSkipButton
+          dirty={dirty}
+          saving={saving}
+          onSave={() => void save()}
+          onSkip={() => goToNextPractitionerSetup(router, "/public-access-page/custom-pages")}
+        />
       </div>
     </div>
   );

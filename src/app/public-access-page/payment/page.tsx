@@ -14,11 +14,14 @@ import { useDealSite } from "@/context/deal-site-context";
 import { PUT_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import { goToNextPractitionerSetup } from "@/lib/practitioner-setup-flow";
+import { useSetupFormDirty } from "@/hooks/useSetupFormDirty";
+import { OptionalFieldsHint, OptionalMark, SetupSaveOrSkipButton } from "@/components/public-access-page/SetupSaveOrSkipButton";
 
 export default function PaymentPage() {
   const router = useRouter();
   const { settings, updateSettings } = useDealSite();
   const [saving, setSaving] = useState(false);
+  const dirty = useSetupFormDirty(settings.paymentDetails);
   const paymentDetailsAny = (settings.paymentDetails || {}) as Record<string, any>;
 
   const handleSave = useCallback(async () => {
@@ -94,6 +97,7 @@ export default function PaymentPage() {
         <p className="text-gray-600 mt-2">
           Manage your bank account for commission payments
         </p>
+        <OptionalFieldsHint />
       </div>
 
       {/* Security Notice */}
@@ -111,7 +115,8 @@ export default function PaymentPage() {
       <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
         <div>
           <label className="block text-sm font-semibold text-gray-900 mb-2">
-            Business Name *
+            Business Name
+            <OptionalMark />
           </label>
           <input
             type="text"
@@ -131,7 +136,8 @@ export default function PaymentPage() {
 
         <div>
           <label className="block text-sm font-semibold text-gray-900 mb-2">
-            Account Number *
+            Account Number
+            <OptionalMark />
           </label>
           <input
             type="text"
@@ -151,7 +157,8 @@ export default function PaymentPage() {
 
         <div>
           <label className="block text-sm font-semibold text-gray-900 mb-2">
-            Bank Code / Sort Code *
+            Bank Code / Sort Code
+            <OptionalMark />
           </label>
           <input
             type="text"
@@ -173,6 +180,7 @@ export default function PaymentPage() {
           <div>
             <label className="block text-sm font-semibold text-gray-900 mb-2">
               Primary Contact Name
+              <OptionalMark />
             </label>
             <input
               type="text"
@@ -193,6 +201,7 @@ export default function PaymentPage() {
           <div>
             <label className="block text-sm font-semibold text-gray-900 mb-2">
               Primary Contact Email
+              <OptionalMark />
             </label>
             <input
               type="email"
@@ -214,6 +223,7 @@ export default function PaymentPage() {
         <div>
           <label className="block text-sm font-semibold text-gray-900 mb-2">
             Primary Contact Phone
+            <OptionalMark />
           </label>
           <input
             type="tel"
@@ -232,16 +242,13 @@ export default function PaymentPage() {
         </div>
       </div>
 
-      {/* Save Button */}
       <div className="flex justify-end">
-        <button
-          onClick={handleSave}
-          disabled={saving || !settings.practitionerPage}
-          className="inline-flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-        >
-          <Save size={18} />
-          {saving ? "Saving..." : "Save Payment Details"}
-        </button>
+        <SetupSaveOrSkipButton
+          dirty={dirty}
+          saving={saving}
+          onSave={() => void handleSave()}
+          onSkip={() => goToNextPractitionerSetup(router, "/public-access-page/payment")}
+        />
       </div>
 
       {!!paymentDetailsAny.subAccountCode && (

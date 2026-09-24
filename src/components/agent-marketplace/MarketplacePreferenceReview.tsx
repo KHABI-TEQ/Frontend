@@ -20,6 +20,14 @@ type ReviewSummary = {
   budgetFit: Partial<Record<BudgetFit | "too_high", number>>;
 };
 
+type ReviewCapacity = {
+  maxReviews: number;
+  reviewCount: number;
+  remaining: number;
+  canSubmit: boolean;
+  slotsFull: boolean;
+};
+
 type OwnReview = {
   budgetFit: BudgetFit;
   suggestedBudget?: { min: number; max: number; currency?: string } | null;
@@ -40,6 +48,8 @@ export default function MarketplacePreferenceReview({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [summary, setSummary] = useState<ReviewSummary | null>(null);
+  const [capacity, setCapacity] = useState<ReviewCapacity | null>(null);
+  const [hasOwnReview, setHasOwnReview] = useState(false);
   const [budgetFit, setBudgetFit] = useState<BudgetFit>("moderate");
   const [suggestMin, setSuggestMin] = useState(defaultMin ? formatNairaAmountNumber(defaultMin) : "");
   const [suggestMax, setSuggestMax] = useState(defaultMax ? formatNairaAmountNumber(defaultMax) : "");
@@ -57,9 +67,15 @@ export default function MarketplacePreferenceReview({
           token
         );
         if (res?.success && res.data) {
-          const data = res.data as { review?: OwnReview | null; summary?: ReviewSummary };
+          const data = res.data as {
+            review?: OwnReview | null;
+            summary?: ReviewSummary;
+            capacity?: ReviewCapacity;
+          };
           setSummary(data.summary || null);
+          setCapacity(data.capacity || null);
           const mine = data.review;
+          setHasOwnReview(Boolean(mine));
           if (mine) {
             setBudgetFit(mine.budgetFit === "too_low" ? "too_low" : "moderate");
             if (mine.suggestedBudget?.min) setSuggestMin(formatNairaAmountNumber(mine.suggestedBudget.min));
@@ -75,9 +91,15 @@ export default function MarketplacePreferenceReview({
     load();
   }, [preferenceId, token]);
 
+  const slotsFull = Boolean(capacity?.slotsFull && !hasOwnReview);
+
   const save = async () => {
     if (!token) {
       toast.error("Log in as an agent to review this preference.");
+      return;
+    }
+    if (slotsFull) {
+      toast.error(`This preference already has ${capacity?.maxReviews || 5} agent reviews.`);
       return;
     }
     const body: Record<string, unknown> = { budgetFit };
@@ -100,6 +122,8 @@ export default function MarketplacePreferenceReview({
         toast.success("Review saved");
         const data = (res as any).data;
         if (data?.summary) setSummary(data.summary);
+        if (data?.capacity) setCapacity(data.capacity);
+        setHasOwnReview(true);
       } else {
         toast.error((res as any)?.message || "Could not save review");
       }
@@ -114,12 +138,13 @@ export default function MarketplacePreferenceReview({
     <div className="bg-white border border-gray-200 rounded-lg p-6">
       <h2 className="text-xl font-semibold text-[#09391C] mb-2">Market review</h2>
       <p className="text-xs text-gray-600 mb-4">
-        Tell the system if this brief is priced realistically for this market. The buyer receives this feedback and can adjust their preference.
+        Tell the system if this preference is priced realistically for this market. The buyer receives this feedback and can adjust.
       </p>
 
       {summary && summary.reviewCount > 0 ? (
         <p className="text-xs text-emerald-800 bg-emerald-50 border border-emerald-100 rounded-md px-3 py-2 mb-4">
-          {summary.reviewCount} agent{summary.reviewCount === 1 ? "" : "s"} reviewed this brief
+          {summary.reviewCount} of {capacity?.maxReviews || 5} agent
+          {summary.reviewCount === 1 ? "" : "s"} reviewed this preference
           {summary.budgetFit?.too_low
             ? ` · ${summary.budgetFit.too_low} say budget is too low`
             : ""}
@@ -127,12 +152,21 @@ export default function MarketplacePreferenceReview({
             ? ` · ${summary.budgetFit.too_high} say too high`
             : ""}
         </p>
-      ) : null}
+      ) : (
+        <p className="text-xs text-gray-500 mb-4">
+          Up to {capacity?.maxReviews || 5} agents can review this preference.
+        </p>
+      )}
 
       {!token ? (
         <p className="text-sm text-gray-600">Log in as an agent to submit a review.</p>
       ) : loading ? (
         <p className="text-sm text-gray-500">Loading review…</p>
+      ) : slotsFull ? (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-900">
+          This preference already has {capacity?.maxReviews || 5} agent reviews. Further reviews
+          are closed. You can still view the preference details.
+        </div>
       ) : (
         <div className="space-y-4">
           <fieldset>
@@ -189,7 +223,7 @@ export default function MarketplacePreferenceReview({
             disabled={saving}
             className="w-full bg-[#8DDB90] hover:bg-[#7BC97F] disabled:opacity-50 text-white py-3 px-4 rounded-lg font-medium"
           >
-            {saving ? "Saving…" : "Save review"}
+            {saving ? "Saving…" : hasOwnReview ? "Update review" : "Save review"}
           </button>
         </div>
       )}

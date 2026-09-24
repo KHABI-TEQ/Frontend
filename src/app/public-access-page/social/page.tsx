@@ -14,11 +14,14 @@ import { PUT_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import toast from "react-hot-toast";
 import { goToNextPractitionerSetup } from "@/lib/practitioner-setup-flow";
+import { useSetupFormDirty } from "@/hooks/useSetupFormDirty";
+import { OptionalFieldsHint, OptionalMark, SetupSaveOrSkipButton } from "@/components/public-access-page/SetupSaveOrSkipButton";
 
 export default function SocialPage() {
   const router = useRouter();
   const { settings, updateSettings } = useDealSite();
   const [saving, setSaving] = useState(false);
+  const dirty = useSetupFormDirty(settings.socialLinks);
 
   const socialLinks = [
     {
@@ -93,6 +96,7 @@ export default function SocialPage() {
         <p className="text-gray-600 mt-2">
           Connect your social media profiles to your practitioner page
         </p>
+        <OptionalFieldsHint />
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
@@ -100,6 +104,7 @@ export default function SocialPage() {
           <div key={link.key}>
             <label className="block text-sm font-semibold text-gray-900 mb-2">
               {link.label}
+              <OptionalMark />
             </label>
             <input
               type="url"
@@ -121,16 +126,13 @@ export default function SocialPage() {
         ))}
       </div>
 
-      {/* Save Button */}
       <div className="flex justify-end">
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="inline-flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-all"
-        >
-          <Save size={18} />
-          {saving ? "Saving..." : "Save Links"}
-        </button>
+        <SetupSaveOrSkipButton
+          dirty={dirty}
+          saving={saving}
+          onSave={() => void handleSave()}
+          onSkip={() => goToNextPractitionerSetup(router, "/public-access-page/social")}
+        />
       </div>
     </div>
   );
