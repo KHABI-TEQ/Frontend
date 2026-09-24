@@ -93,7 +93,13 @@ export default function FeaturedPage() {
         featuredListings: Array.from(featuredIds),
       };
 
-      const res = await api.put(`/account/dealSite/${settings.practitionerPage}/featureSelection/update`, payload);
+      const slug = String(settings.publicSlug || "").trim();
+      if (!slug) {
+        toast.error("Set up your practitioner page slug first before saving featured listings.");
+        return;
+      }
+
+      const res = await api.put(`/account/dealSite/${encodeURIComponent(slug)}/featureSelection/update`, payload);
 
       if (res?.data?.success) {
         updateSettings({

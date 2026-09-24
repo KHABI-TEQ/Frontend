@@ -6,6 +6,7 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import { Palette, Save } from "lucide-react";
@@ -13,8 +14,11 @@ import { useDealSite } from "@/context/deal-site-context";
 import { PUT_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 
+const NEXT_SETUP_HREF = "/public-access-page/home-page";
+
 export default function ThemePage() {
-  const { settings, updateSettings } = useDealSite();
+  const router = useRouter();
+  const { settings, updateSettings, publicSlug } = useDealSite();
   const [saving, setSaving] = React.useState(false);
 
   const COLOR_PALETTE = [
@@ -156,6 +160,11 @@ export default function ThemePage() {
       <div className="flex justify-end">
         <button
           onClick={async () => {
+            const slug = String(publicSlug || settings.publicSlug || "").trim();
+            if (!slug) {
+              toast.error("Set up your practitioner page slug first before saving the theme.");
+              return;
+            }
             setSaving(true);
             try {
               const token = Cookies.get("token");
@@ -165,13 +174,15 @@ export default function ThemePage() {
               };
 
               const res = await PUT_REQUEST(
-                `${URLS.BASE}/account/dealSite/${settings.practitionerPage}/theme/update`,
+                `${URLS.BASE}/account/dealSite/${encodeURIComponent(slug)}/theme/update`,
                 payload,
                 token
               );
 
               if (res?.success) {
                 toast.success("Theme saved successfully");
+                router.push(NEXT_SETUP_HREF);
+                return;
               } else {
                 toast.error(res?.message || "Failed to save theme");
               }

@@ -267,6 +267,8 @@ interface DealSiteContextType {
 
   // UI helpers
   previewUrl: string | null;
+  /** Canonical deal-site slug for API paths. Never use settings.practitionerPage (that is design data). */
+  publicSlug: string;
 
   // Methods
   loadSettings: () => Promise<void>;
@@ -508,6 +510,7 @@ export function DealSiteProvider({ children }: { children: ReactNode }) {
     isLoading,
     isSaving,
     previewUrl,
+    publicSlug: resolvedPublicSlug,
     loadSettings,
     saveSettings,
     markSetupComplete,

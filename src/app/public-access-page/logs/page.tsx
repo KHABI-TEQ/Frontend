@@ -23,12 +23,11 @@ export default function LogsPage() {
     try {
       const token = Cookies.get("token");
 
-      if (!token || !settings.practitionerPage) {
+      const slug = String(settings.publicSlug || "").trim();
+      if (!token || !slug) {
         setLogs([]);
         return;
       }
-
-      const slug = typeof settings.practitionerPage === "string" ? settings.practitionerPage : (settings.practitionerPage as { slug?: string }).slug || "";
       let url = `${URLS.BASE}${URLS.dealSiteLogs}`.replace(":slug", slug) + `?limit=${limit}&page=${page}`;
 
       if (filter !== "all") {
@@ -45,13 +44,13 @@ export default function LogsPage() {
     } finally {
       setLoading(false);
     }
-  }, [settings.practitionerPage, filter, page, limit]);
+  }, [settings.publicSlug, filter, page, limit]);
 
   useEffect(() => {
-    if (settings.practitionerPage) {
+    if (settings.publicSlug) {
       fetchLogs();
     }
-  }, [fetchLogs, settings.practitionerPage]);
+  }, [fetchLogs, settings.publicSlug]);
 
   const cleanLogText = (text: string | undefined) => {
     if (!text) return "";
