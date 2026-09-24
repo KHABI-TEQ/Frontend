@@ -47,14 +47,14 @@ export default function ValuerKycPage() {
   if (isPendingKyc(kycStatus)) {
     return (
       <CombinedAuthGuard requireAuth allowedUserTypes={["PropertyScout", "Valuer"]}>
-        <KycSubmittedConfirmation userType="Valuer" />
+        <KycSubmittedConfirmation userType="Valuer" continueHref="/dashboard" continueLabel="Go to Dashboard" />
       </CombinedAuthGuard>
     );
   }
   if (isApprovedKyc(kycStatus)) {
     return (
       <CombinedAuthGuard requireAuth allowedUserTypes={["PropertyScout", "Valuer"]}>
-        <KycSubmittedConfirmation userType="Valuer" variant="approved" />
+        <KycSubmittedConfirmation userType="Valuer" variant="approved" continueHref="/dashboard" continueLabel="Go to Dashboard" />
       </CombinedAuthGuard>
     );
   }

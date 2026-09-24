@@ -254,11 +254,8 @@ const Setup = () => {
             },
           });
         }
-        try {
-          sessionStorage.setItem("khabiteq-public-page-just-saved", "1");
-        } catch {}
-        toast.success("Public page setup complete");
-        router.replace("/public-access-page?setup=complete");
+        toast.success("Public page created. Continue with branding.");
+        router.replace("/public-access-page/branding");
       } else {
         const msg =
           (res as any)?.message ||

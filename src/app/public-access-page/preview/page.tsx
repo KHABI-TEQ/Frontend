@@ -1,8 +1,11 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useDealSite } from "@/context/deal-site-context";
+import { nextPractitionerSetupPath } from "@/lib/practitioner-setup-flow";
 
 export default function PublicPagePreviewPage() {
+  const router = useRouter();
   const { settings, previewUrl } = useDealSite();
   const fields = [
     { label: "Company description", value: settings.description, where: "Homepage intro" },
@@ -60,6 +63,15 @@ export default function PublicPagePreviewPage() {
           <p className="mt-2 text-gray-700">{settings.description}</p>
         </section>
       ) : null}
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => router.push(nextPractitionerSetupPath("/public-access-page/preview"))}
+          className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+        >
+          Continue to Inspection Settings
+        </button>
+      </div>
     </div>
   );
 }

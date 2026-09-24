@@ -6,14 +6,17 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import { Save, DollarSign, Lock } from "lucide-react";
 import { useDealSite } from "@/context/deal-site-context";
 import { PUT_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
+import { goToNextPractitionerSetup } from "@/lib/practitioner-setup-flow";
 
 export default function PaymentPage() {
+  const router = useRouter();
   const { settings, updateSettings } = useDealSite();
   const [saving, setSaving] = useState(false);
   const paymentDetailsAny = (settings.paymentDetails || {}) as Record<string, any>;
@@ -60,6 +63,8 @@ export default function PaymentPage() {
           });
         }
         toast.success("Payment details saved and verified successfully");
+        goToNextPractitionerSetup(router, "/public-access-page/payment");
+        return;
       } else {
         const msg = String(res?.message || res?.error || "Failed to save payment details");
         if (/on hold|under review/i.test(msg)) {
@@ -74,7 +79,7 @@ export default function PaymentPage() {
     } finally {
       setSaving(false);
     }
-  }, [settings.publicSlug, settings.paymentDetails, updateSettings]);
+  }, [settings.publicSlug, settings.paymentDetails, updateSettings, router]);
 
   const inputBase =
     "w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400 text-gray-900";

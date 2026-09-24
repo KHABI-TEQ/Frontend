@@ -160,6 +160,7 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
       });
       toast.success("KYC submitted for review");
       if (user) setUser(normalizeUser({ ...user, kycStatus: "pending" }));
+      setTab("payout");
       load();
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "KYC submit failed");
@@ -177,6 +178,7 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
         accountNumber: form.accountNumber,
       });
       toast.success("Settlement account connected");
+      setTab("page");
       load();
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Bank setup failed");
@@ -194,7 +196,8 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
         tagline: form.tagline,
         about: form.about,
       });
-      toast.success("Public page updated");
+      toast.success("Practitioner page setup complete");
+      setTab("overview");
       load();
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Page update failed");

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import { CheckSquare, Save } from "lucide-react";
@@ -8,8 +9,10 @@ import { POST_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import { useDealSite } from "@/context/deal-site-context";
 import OverlayPreloader from "@/components/general-components/OverlayPreloader";
+import { goToNextPractitionerSetup } from "@/lib/practitioner-setup-flow";
 
 export default function InspectionPage() {
+  const router = useRouter();
   const { settings, updateSettings } = useDealSite();
   const [preloader, setPreloader] = useState(false);
   const [formData, setFormData] = useState({
@@ -42,6 +45,8 @@ export default function InspectionPage() {
       if (res?.success) {
         updateSettings(payload as any);
         toast.success("Inspection settings saved");
+        goToNextPractitionerSetup(router, "/public-access-page/inspection");
+        return;
       } else {
         toast.error(res?.message || "Failed to save settings");
       }
@@ -50,7 +55,7 @@ export default function InspectionPage() {
     } finally {
       setPreloader(false);
     }
-  }, [formData, updateSettings]);
+  }, [formData, updateSettings, router]);
 
   return (
     <div className="space-y-8">

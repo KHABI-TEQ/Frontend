@@ -13,8 +13,7 @@ import { Palette, Save } from "lucide-react";
 import { useDealSite } from "@/context/deal-site-context";
 import { PUT_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
-
-const NEXT_SETUP_HREF = "/public-access-page/home-page";
+import { goToNextPractitionerSetup } from "@/lib/practitioner-setup-flow";
 
 export default function ThemePage() {
   const router = useRouter();
@@ -181,7 +180,7 @@ export default function ThemePage() {
 
               if (res?.success) {
                 toast.success("Theme saved successfully");
-                router.push(NEXT_SETUP_HREF);
+                goToNextPractitionerSetup(router, "/public-access-page/theme");
                 return;
               } else {
                 toast.error(res?.message || "Failed to save theme");

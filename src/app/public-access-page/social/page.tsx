@@ -6,14 +6,17 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { Share2, Save } from "lucide-react";
 import { useDealSite } from "@/context/deal-site-context";
 import { PUT_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import toast from "react-hot-toast";
+import { goToNextPractitionerSetup } from "@/lib/practitioner-setup-flow";
 
 export default function SocialPage() {
+  const router = useRouter();
   const { settings, updateSettings } = useDealSite();
   const [saving, setSaving] = useState(false);
 
@@ -64,6 +67,8 @@ export default function SocialPage() {
 
       if (res?.success) {
         toast.success("Social links saved successfully");
+        goToNextPractitionerSetup(router, "/public-access-page/social");
+        return;
       } else {
         toast.error(res?.message || "Failed to save social links");
       }
@@ -73,7 +78,7 @@ export default function SocialPage() {
     } finally {
       setSaving(false);
     }
-  }, [settings.socialLinks, settings.publicSlug]);
+  }, [settings.socialLinks, settings.publicSlug, router]);
 
   const inputBase =
     "w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200 text-gray-900";

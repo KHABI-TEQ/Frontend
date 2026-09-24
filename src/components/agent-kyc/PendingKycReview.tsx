@@ -49,7 +49,11 @@ const PendingKycReview: React.FC = () => {
   const agentType: string | undefined = agent?.agentType || kyc?.agentType;
 
   return (
-    <KycSubmittedConfirmation userType={user?.userType}>
+    <KycSubmittedConfirmation
+      userType={user?.userType}
+      continueHref="/public-access-page/setup"
+      continueLabel="Set up your practitioner page"
+    >
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
         <div className="mx-6 mt-4 mb-2 rounded-xl border border-slate-200 bg-slate-50 p-4">
           <p className="text-sm font-semibold text-[#09391C]">What you can do while waiting</p>

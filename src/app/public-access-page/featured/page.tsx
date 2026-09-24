@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import { Star, Save } from "lucide-react";
@@ -8,8 +9,10 @@ import api from "@/utils/axiosConfig";
 import { useDealSite } from "@/context/deal-site-context";
 import OverlayPreloader from "@/components/general-components/OverlayPreloader";
 import { Property } from "@/types/my-listings.types";
+import { goToNextPractitionerSetup } from "@/lib/practitioner-setup-flow";
 
 export default function FeaturedPage() {
+  const router = useRouter();
   const { settings, updateSettings } = useDealSite();
   const [properties, setProperties] = useState<Property[]>([]);
   const [featuredIds, setFeaturedIds] = useState<Set<string>>(new Set());
@@ -106,6 +109,8 @@ export default function FeaturedPage() {
           featureSelection: payload,
         });
         toast.success("Featured listings updated successfully");
+        goToNextPractitionerSetup(router, "/public-access-page/featured");
+        return;
       } else {
         toast.error(res?.data?.message || "Failed to save featured listings");
       }
@@ -115,7 +120,7 @@ export default function FeaturedPage() {
     } finally {
       setIsSaving(false);
     }
-  }, [featuredIds, settings, updateSettings]);
+  }, [featuredIds, settings, updateSettings, router]);
 
   // Filter properties based on search term
   const filteredProperties = properties.filter((prop) => {

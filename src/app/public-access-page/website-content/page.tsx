@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { BookOpen, Mail, Share2, HelpCircle, Compass, Eye, MapPin, FileText } from "lucide-react";
 import { useDealSite } from "@/context/deal-site-context";
+import { nextPractitionerSetupPath } from "@/lib/practitioner-setup-flow";
 
 const LINKS = [
   { href: "/public-access-page/about", label: "About Us", hint: "Who we are, mission, services, offices, team", icon: BookOpen },
@@ -15,6 +17,7 @@ const LINKS = [
 ];
 
 export default function WebsiteContentHubPage() {
+  const router = useRouter();
   const { settings } = useDealSite();
   const aboutReady = Boolean(settings.about?.whoWeAre?.description);
   const contactReady = Boolean(settings.contactUs?.title || settings.contactUs?.description);
@@ -66,6 +69,16 @@ export default function WebsiteContentHubPage() {
           <MapPin className="mt-0.5 h-5 w-5 text-emerald-700" />
           <span>Office addresses are edited in About Us (Where we operate) and Contact Us (map location).</span>
         </div>
+      </div>
+
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => router.push(nextPractitionerSetupPath("/public-access-page/website-content"))}
+          className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+        >
+          Continue to About Us
+        </button>
       </div>
     </div>
   );

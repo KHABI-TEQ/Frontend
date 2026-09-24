@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import { Plus, Trash2 } from "lucide-react";
 import { POST_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import { useDealSite } from "@/context/deal-site-context";
+import { goToNextPractitionerSetup } from "@/lib/practitioner-setup-flow";
 
 function slugify(value: string) {
   return value
@@ -19,6 +21,7 @@ function slugify(value: string) {
 }
 
 export default function CustomPagesSettingsPage() {
+  const router = useRouter();
   const { settings, updateSettings } = useDealSite();
   const [saving, setSaving] = useState(false);
   const pages = settings.customPages || [];
@@ -39,6 +42,8 @@ export default function CustomPagesSettingsPage() {
       if (res?.success) {
         updateSettings({ customPages: cleaned });
         toast.success("Custom pages saved. Enabled pages appear in the live navigation.");
+        goToNextPractitionerSetup(router, "/public-access-page/custom-pages");
+        return;
       } else {
         toast.error(res?.message || "Could not save custom pages");
       }

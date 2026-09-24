@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import { Mail, Save } from "lucide-react";
@@ -9,8 +10,10 @@ import { URLS } from "@/utils/URLS";
 import { useDealSite } from "@/context/deal-site-context";
 import OverlayPreloader from "@/components/general-components/OverlayPreloader";
 import SubscribersTab from "@/components/public-access-components/SubscribersTab";
+import { goToNextPractitionerSetup } from "@/lib/practitioner-setup-flow";
 
 export default function SubscribeSettingsPage() {
+  const router = useRouter();
   const { settings, updateSettings } = useDealSite();
   const [preloader, setPreloader] = useState(false);
   const [activeTab, setActiveTab] = useState<"settings" | "subscribers">("settings");
@@ -56,7 +59,9 @@ export default function SubscribeSettingsPage() {
 
       if (res?.success) {
         updateSettings(payload as any);
-        toast.success("Subscribe settings saved");
+        toast.success("Practitioner page setup complete");
+        goToNextPractitionerSetup(router, "/public-access-page/subscribe-settings");
+        return;
       } else {
         toast.error(res?.message || "Failed to save settings");
       }
@@ -65,7 +70,7 @@ export default function SubscribeSettingsPage() {
     } finally {
       setPreloader(false);
     }
-  }, [formData, updateSettings]);
+  }, [formData, updateSettings, router]);
 
   return (
     <div className="space-y-8">

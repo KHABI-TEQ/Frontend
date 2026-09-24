@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import { Mail, Save } from "lucide-react";
@@ -9,8 +10,10 @@ import { URLS } from "@/utils/URLS";
 import { useDealSite } from "@/context/deal-site-context";
 import OverlayPreloader from "@/components/general-components/OverlayPreloader";
 import ContactMessagesTab from "@/components/public-access-components/ContactMessagesTab";
+import { goToNextPractitionerSetup } from "@/lib/practitioner-setup-flow";
  
 export default function ContactUsPage() {
+  const router = useRouter();
   const { settings, updateSettings } = useDealSite();
   const [preloader, setPreloader] = useState(false);
   const [activeTab, setActiveTab] = useState<"settings" | "messages">("settings");
@@ -85,6 +88,8 @@ export default function ContactUsPage() {
       if (res?.success) {
         updateSettings(payload as any);
         toast.success("Contact settings saved");
+        goToNextPractitionerSetup(router, "/public-access-page/contact-us");
+        return;
       } else {
         toast.error(res?.message || "Failed to save settings");
       }
@@ -93,7 +98,7 @@ export default function ContactUsPage() {
     } finally {
       setPreloader(false);
     }
-  }, [formData, settings, updateSettings]);
+  }, [formData, settings, updateSettings, router]);
 
   return (
     <div className="space-y-8">

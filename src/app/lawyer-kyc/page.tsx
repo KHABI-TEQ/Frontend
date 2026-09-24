@@ -46,14 +46,14 @@ export default function LawyerKycUpgradePage() {
   if (isPendingKyc(kycStatus)) {
     return (
       <CombinedAuthGuard requireAuth allowedUserTypes={["PropertyScout", "Lawyer"]}>
-        <KycSubmittedConfirmation userType="Lawyer" />
+        <KycSubmittedConfirmation userType="Lawyer" continueHref="/dashboard" continueLabel="Continue to workspace" />
       </CombinedAuthGuard>
     );
   }
   if (isApprovedKyc(kycStatus)) {
     return (
       <CombinedAuthGuard requireAuth allowedUserTypes={["PropertyScout", "Lawyer"]}>
-        <KycSubmittedConfirmation userType="Lawyer" variant="approved" />
+        <KycSubmittedConfirmation userType="Lawyer" variant="approved" continueHref="/dashboard" continueLabel="Continue to workspace" />
       </CombinedAuthGuard>
     );
   }

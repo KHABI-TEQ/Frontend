@@ -45,14 +45,14 @@ export default function SurveyorKycUpgradePage() {
   if (isPendingKyc(kycStatus)) {
     return (
       <CombinedAuthGuard requireAuth allowedUserTypes={["PropertyScout", "Surveyor"]}>
-        <KycSubmittedConfirmation userType="Surveyor" />
+        <KycSubmittedConfirmation userType="Surveyor" continueHref="/dashboard" continueLabel="Continue to workspace" />
       </CombinedAuthGuard>
     );
   }
   if (isApprovedKyc(kycStatus)) {
     return (
       <CombinedAuthGuard requireAuth allowedUserTypes={["PropertyScout", "Surveyor"]}>
-        <KycSubmittedConfirmation userType="Surveyor" variant="approved" />
+        <KycSubmittedConfirmation userType="Surveyor" variant="approved" continueHref="/dashboard" continueLabel="Continue to workspace" />
       </CombinedAuthGuard>
     );
   }

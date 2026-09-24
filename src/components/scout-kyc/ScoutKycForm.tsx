@@ -12,6 +12,7 @@ import { getStates, getLGAsByState, isPilotState, PILOT_LOCATION_MESSAGE } from 
 import KycSubmittedConfirmation from "@/components/kyc/KycSubmittedConfirmation";
 import ProcessingRequest from "@/components/loading-component/ProcessingRequest";
 import { handleApiError } from "@/utils/handleApiError";
+import toast from "react-hot-toast";
 
 const schema = Yup.object({
   meansOfId: Yup.array()
@@ -71,6 +72,7 @@ export default function ScoutKycForm() {
             kycStatus: "pending",
           }),
         );
+        toast.success("KYC submitted successfully.");
       } finally {
         setIsSubmitting(false);
       }
@@ -83,11 +85,11 @@ export default function ScoutKycForm() {
   );
 
   if (kycStatus === "pending" || kycStatus === "in_review") {
-    return <KycSubmittedConfirmation userType="PropertyScout" />;
+    return <KycSubmittedConfirmation userType="PropertyScout" continueHref="/dashboard" continueLabel="Go to Dashboard" />;
   }
 
   if (kycStatus === "approved") {
-    return <KycSubmittedConfirmation userType="PropertyScout" variant="approved" />;
+    return <KycSubmittedConfirmation userType="PropertyScout" variant="approved" continueHref="/dashboard" continueLabel="Go to Dashboard" />;
   }
 
   return (

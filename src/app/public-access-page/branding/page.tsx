@@ -15,8 +15,7 @@ import { useUserContext } from "@/context/user-context";
 import { POST_REQUEST, POST_REQUEST_FILE_UPLOAD } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import StandardPreloader from "@/components/new-marketplace/StandardPreloader";
-
-const NEXT_SETUP_HREF = "/public-access-page/theme";
+import { goToNextPractitionerSetup } from "@/lib/practitioner-setup-flow";
 
 export default function BrandingPage() {
   const router = useRouter();
@@ -86,10 +85,7 @@ export default function BrandingPage() {
             },
           });
         }
-        try {
-          sessionStorage.setItem("khabiteq-public-page-just-saved", "1");
-        } catch {}
-        router.push(NEXT_SETUP_HREF);
+        goToNextPractitionerSetup(router, "/public-access-page/branding");
         return;
       } else {
         toast.error(res?.message || "Failed to save settings");

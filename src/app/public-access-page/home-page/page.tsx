@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useState, useCallback, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import { Home, Save, ImageIcon, Trash2, Plus, X, Star } from "lucide-react";
+import { goToNextPractitionerSetup } from "@/lib/practitioner-setup-flow";
 import * as LucideIcons from "lucide-react";
 import { POST_REQUEST, POST_REQUEST_FILE_UPLOAD } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
@@ -68,6 +70,7 @@ type SupportCard = {
 };
 
 export default function HomePageSettings() {
+  const router = useRouter();
   const { settings, updateSettings } = useDealSite();
   const [preloader, setPreloader] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -370,6 +373,8 @@ export default function HomePageSettings() {
           },
         } as any);
         toast.success("Home page settings saved successfully");
+        goToNextPractitionerSetup(router, "/public-access-page/home-page");
+        return;
       } else {
         toast.error(res?.message || "Failed to save settings");
       }
@@ -378,7 +383,7 @@ export default function HomePageSettings() {
     } finally {
       setPreloader(false);
     }
-  }, [formData, settings, testimonials, testimonialsSection, whyChooseUs, whyChooseUsSection, supportCards, supportSection, updateSettings]);
+  }, [formData, settings, testimonials, testimonialsSection, whyChooseUs, whyChooseUsSection, supportCards, supportSection, updateSettings, router]);
 
   const getLucideIcon = (iconName: string) => {
     const Icon = (LucideIcons as any)[iconName];

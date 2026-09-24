@@ -15,6 +15,7 @@ import ProcessingRequest from "@/components/loading-component/ProcessingRequest"
 import { handleApiError } from "@/utils/handleApiError";
 import toast from "react-hot-toast";
 import { ArrowLeft, ArrowRight, CheckCircle2, Shield } from "lucide-react";
+import { PRACTITIONER_SETUP_PATH } from "@/lib/practitioner-setup-flow";
 
 type AccountType = "Individual" | "Company";
 
@@ -38,8 +39,6 @@ function Field({
 
 const inputClass =
   "w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-[#09391C] outline-none focus:border-[#8DDB90] focus:ring-2 focus:ring-[#8DDB90]/20";
-
-const PRACTITIONER_SETUP_HREF = "/public-access-page/setup";
 
 export default function DeveloperKycForm() {
   const router = useRouter();
@@ -284,7 +283,7 @@ export default function DeveloperKycForm() {
               ? "Verification approved."
               : "KYC submitted successfully.",
           );
-          router.push(PRACTITIONER_SETUP_HREF);
+          router.push(PRACTITIONER_SETUP_PATH);
           return;
         }
       }
@@ -314,7 +313,7 @@ export default function DeveloperKycForm() {
       <KycSubmittedConfirmation
         userType="Developer"
         variant="approved"
-        continueHref={PRACTITIONER_SETUP_HREF}
+        continueHref={PRACTITIONER_SETUP_PATH}
         continueLabel="Set up your practitioner page"
       />
     );
@@ -324,7 +323,7 @@ export default function DeveloperKycForm() {
     return (
       <KycSubmittedConfirmation
         userType="Developer"
-        continueHref={PRACTITIONER_SETUP_HREF}
+        continueHref={PRACTITIONER_SETUP_PATH}
         continueLabel="Set up your practitioner page"
       />
     );

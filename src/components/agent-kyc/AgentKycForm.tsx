@@ -1,9 +1,12 @@
 "use client";
 import React, { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useFormik, getIn } from "formik";
 import * as Yup from "yup";
+import toast from "react-hot-toast";
 import { PUT_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
+import { PRACTITIONER_SETUP_PATH } from "@/lib/practitioner-setup-flow";
 import {
   AgentKycSubmissionPayload,
   SPECIALIZATION_OPTIONS,
@@ -76,6 +79,7 @@ const steps = [
 const isImage = (url?: string) => !!url && /(\.png|\.jpg|\.jpeg|\.gif|\.webp)$/i.test(url);
 
 const AgentKycForm: React.FC = () => {
+  const router = useRouter();
   const { user, setUser } = useUserContext();
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -244,6 +248,8 @@ const AgentKycForm: React.FC = () => {
         individualAgent: user?.individualAgent,
         companyAgent: user?.companyAgent,
       }));
+      toast.success("KYC submitted successfully.");
+      router.push(PRACTITIONER_SETUP_PATH);
 
     } catch (error) {
       // Error handled, validation messages will be shown via formik
@@ -489,7 +495,14 @@ const AgentKycForm: React.FC = () => {
   }
 
   if (kycStatus === "approved") {
-    return <KycSubmittedConfirmation userType="Agent" variant="approved" />;
+    return (
+      <KycSubmittedConfirmation
+        userType="Agent"
+        variant="approved"
+        continueHref={PRACTITIONER_SETUP_PATH}
+        continueLabel="Set up your practitioner page"
+      />
+    );
   }
 
   if (kycStatus === "rejected" || kycStatus === "reject") {

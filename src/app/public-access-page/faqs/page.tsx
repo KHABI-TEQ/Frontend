@@ -1,14 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import { Plus, Trash2 } from "lucide-react";
 import { POST_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import { useDealSite } from "@/context/deal-site-context";
+import { goToNextPractitionerSetup } from "@/lib/practitioner-setup-flow";
 
 export default function FaqsSettingsPage() {
+  const router = useRouter();
   const { settings, updateSettings } = useDealSite();
   const [saving, setSaving] = useState(false);
   const faqs = settings.faqs || { title: "Frequently asked questions", items: [] };
@@ -27,8 +30,11 @@ export default function FaqsSettingsPage() {
         },
       };
       const res = await POST_REQUEST(`${URLS.BASE}${URLS.dealSiteUpdate}`, payload, token);
-      if (res?.success) toast.success("FAQs saved. Enable the FAQ tab in Navigation if it is off.");
-      else toast.error(res?.message || "Could not save FAQs");
+      if (res?.success) {
+        toast.success("FAQs saved. Enable the FAQ tab in Navigation if it is off.");
+        goToNextPractitionerSetup(router, "/public-access-page/faqs");
+        return;
+      } else toast.error(res?.message || "Could not save FAQs");
     } catch {
       toast.error("Could not save FAQs");
     } finally {

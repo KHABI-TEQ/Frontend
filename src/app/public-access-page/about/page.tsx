@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import { BookOpen, Save, Trash2, Plus, ImageIcon } from "lucide-react";
@@ -23,8 +24,10 @@ import { POST_REQUEST, POST_REQUEST_FILE_UPLOAD } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import OverlayPreloader from "@/components/general-components/OverlayPreloader";
 import WYSIWYGEditor from "@/components/public-access-page/WYSIWYGEditor";
+import { goToNextPractitionerSetup } from "@/lib/practitioner-setup-flow";
 
 export default function AboutPage() {
+  const router = useRouter();
   const { settings, updateSettings } = useDealSite();
   const [saving, setSaving] = useState(false);
   const [preloader, setPreloader] = useState({ visible: false, message: "" });
@@ -112,6 +115,8 @@ export default function AboutPage() {
       if (res?.success) {
         updateSettings(payload);
         toast.success("About page updated successfully");
+        goToNextPractitionerSetup(router, "/public-access-page/about");
+        return;
       } else {
         toast.error(res?.message || "Failed to save changes");
       }
@@ -120,7 +125,7 @@ export default function AboutPage() {
     } finally {
       setSaving(false);
     }
-  }, [aboutData, updateSettings]);
+  }, [aboutData, updateSettings, router]);
 
   const inputBase =
     "w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400 text-gray-900";

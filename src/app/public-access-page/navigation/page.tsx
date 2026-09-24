@@ -1,11 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import { POST_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import { useDealSite } from "@/context/deal-site-context";
+import { goToNextPractitionerSetup } from "@/lib/practitioner-setup-flow";
 
 const DEFAULT_ITEMS = [
   { key: "home", label: "Home", href: "/", enabled: true },
@@ -19,6 +21,7 @@ const DEFAULT_ITEMS = [
 ];
 
 export default function NavigationSettingsPage() {
+  const router = useRouter();
   const { settings, updateSettings } = useDealSite();
   const [saving, setSaving] = useState(false);
   const items = useMemo(() => {
@@ -33,8 +36,11 @@ export default function NavigationSettingsPage() {
     try {
       const token = Cookies.get("token");
       const res = await POST_REQUEST(`${URLS.BASE}${URLS.dealSiteUpdate}`, { navigation: { items } }, token);
-      if (res?.success) toast.success("Navigation saved. It will appear on the live public page.");
-      else toast.error(res?.message || "Could not save navigation");
+      if (res?.success) {
+        toast.success("Navigation saved. It will appear on the live public page.");
+        goToNextPractitionerSetup(router, "/public-access-page/navigation");
+        return;
+      } else toast.error(res?.message || "Could not save navigation");
     } catch {
       toast.error("Could not save navigation");
     } finally {
