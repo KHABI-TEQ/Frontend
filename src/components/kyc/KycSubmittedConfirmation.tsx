@@ -9,6 +9,8 @@ type Props = {
   variant?: "pending" | "approved";
   embedded?: boolean;
   children?: React.ReactNode;
+  continueHref?: string;
+  continueLabel?: string;
 };
 
 export default function KycSubmittedConfirmation({
@@ -16,6 +18,8 @@ export default function KycSubmittedConfirmation({
   variant = "pending",
   embedded = false,
   children,
+  continueHref,
+  continueLabel,
 }: Props) {
   const role = kycRoleLabel(userType);
   const shell = embedded ? "py-2" : "min-h-screen bg-[#EEF1F1] py-10 px-4";
@@ -33,10 +37,10 @@ export default function KycSubmittedConfirmation({
               Your professional account has been verified. You now have access to your available {role} account features.
             </p>
             <Link
-              href="/dashboard"
+              href={continueHref || "/dashboard"}
               className="mt-6 inline-flex rounded-xl bg-[#09391C] px-6 py-3 text-sm font-semibold text-white hover:bg-[#0B423D]"
             >
-              Go to Dashboard
+              {continueLabel || "Go to Dashboard"}
             </Link>
           </div>
           {children}
@@ -78,10 +82,10 @@ export default function KycSubmittedConfirmation({
             </p>
             <div className="pt-2">
               <Link
-                href="/dashboard"
+                href={continueHref || "/dashboard"}
                 className="inline-flex rounded-xl bg-[#09391C] px-6 py-3 text-sm font-semibold text-white hover:bg-[#0B423D]"
               >
-                Back to Dashboard
+                {continueLabel || "Back to Dashboard"}
               </Link>
             </div>
           </div>

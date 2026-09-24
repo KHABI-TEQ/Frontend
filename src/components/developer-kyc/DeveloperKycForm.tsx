@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useUserContext, normalizeUser } from "@/context/user-context";
 import KycSubmittedConfirmation from "@/components/kyc/KycSubmittedConfirmation";
 import { isApprovedKyc, isPendingKyc, normalizeKycStatus } from "@/lib/kyc-status";
@@ -38,7 +39,10 @@ function Field({
 const inputClass =
   "w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-[#09391C] outline-none focus:border-[#8DDB90] focus:ring-2 focus:ring-[#8DDB90]/20";
 
+const PRACTITIONER_SETUP_HREF = "/public-access-page/setup";
+
 export default function DeveloperKycForm() {
+  const router = useRouter();
   const { user, setUser } = useUserContext();
   const token = getCookie("token") as string;
   const lgas = useMemo(() => getLGAsByState(PILOT_STATE), []);
@@ -260,7 +264,11 @@ export default function DeveloperKycForm() {
             {},
             token,
           );
-          if (submitted.success && submitted.data) {
+          if (!submitted.success) {
+            handleApiError(submitted);
+            return;
+          }
+          if (submitted.data) {
             setVerification(submitted.data);
           }
           const nextStatus =
@@ -276,6 +284,8 @@ export default function DeveloperKycForm() {
               ? "Verification approved."
               : "KYC submitted successfully.",
           );
+          router.push(PRACTITIONER_SETUP_HREF);
+          return;
         }
       }
       if (ok && step < steps.length - 1) setStep((s) => s + 1);
@@ -298,22 +308,26 @@ export default function DeveloperKycForm() {
 
   const verified = Boolean(verification?.isVerifiedDeveloper);
   const kycStatus = normalizeKycStatus(verification?.kycStatus || user?.kycStatus);
-  const needsAttention = [
-    verification?.company?.rawStatus,
-    verification?.representative?.rawStatus,
-    verification?.address?.rawStatus,
-  ].some((s) => s === "requires_attention");
 
-  if (!loading && verified) {
-    return <KycSubmittedConfirmation userType="Developer" variant="approved" />;
+  if (!loading && (verified || isApprovedKyc(kycStatus))) {
+    return (
+      <KycSubmittedConfirmation
+        userType="Developer"
+        variant="approved"
+        continueHref={PRACTITIONER_SETUP_HREF}
+        continueLabel="Set up your practitioner page"
+      />
+    );
   }
 
-  if (!loading && isPendingKyc(kycStatus) && !needsAttention) {
-    return <KycSubmittedConfirmation userType="Developer" />;
-  }
-
-  if (!loading && isApprovedKyc(kycStatus)) {
-    return <KycSubmittedConfirmation userType="Developer" variant="approved" />;
+  if (!loading && isPendingKyc(kycStatus)) {
+    return (
+      <KycSubmittedConfirmation
+        userType="Developer"
+        continueHref={PRACTITIONER_SETUP_HREF}
+        continueLabel="Set up your practitioner page"
+      />
+    );
   }
 
   return (
