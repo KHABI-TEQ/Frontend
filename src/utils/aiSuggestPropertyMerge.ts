@@ -40,7 +40,9 @@ export function mergeSuggestPropertyIntoForm(
 
   if (!empty(apiData.propertyType)) {
     const v = toStr(apiData.propertyType).toLowerCase();
-    if (["sell", "rent", "jv", "shortlet"].includes(v)) out.propertyType = v as PropertyData["propertyType"];
+    if (["sell", "off-plan", "rent", "jv", "shortlet"].includes(v)) {
+      out.propertyType = v as PropertyData["propertyType"];
+    }
   }
   if (!empty(apiData.propertyCategory)) {
     const v = toStr(apiData.propertyCategory);
@@ -50,7 +52,15 @@ export function mergeSuggestPropertyIntoForm(
   if (!empty(apiData.propertyCondition)) out.propertyCondition = toStr(apiData.propertyCondition);
   if (!empty(apiData.typeOfBuilding)) out.typeOfBuilding = toStr(apiData.typeOfBuilding);
   if (!empty(apiData.rentalType)) out.rentalType = toStr(apiData.rentalType);
-  if (apiData.price != null && apiData.price !== "") out.price = toStr(apiData.price);
+  if (!empty(apiData.leaseHold)) out.leaseHold = toStr(apiData.leaseHold);
+  const asking = apiData.maxPrice ?? apiData.price;
+  if (asking != null && asking !== "") out.price = toStr(asking);
+  if (!empty(apiData.developmentStage)) out.developmentStage = toStr(apiData.developmentStage);
+  if (!empty(apiData.paymentPlan)) out.paymentPlan = toStr(apiData.paymentPlan);
+  if (!empty(apiData.expectedCompletionDate)) out.expectedCompletionDate = toStr(apiData.expectedCompletionDate);
+  if (Array.isArray(apiData.jvConditions) && apiData.jvConditions.length > 0) {
+    out.jvConditions = apiData.jvConditions.map(String);
+  }
   if (!empty(apiData.description)) out.description = toStr(apiData.description);
   if (!empty(apiData.additionalInfo)) out.additionalInfo = toStr(apiData.additionalInfo);
   if (!empty(apiData.addtionalInfo)) out.additionalInfo = toStr(apiData.addtionalInfo);
@@ -83,6 +93,22 @@ export function mergeSuggestPropertyIntoForm(
     if (!empty(loc.streetAddress) && empty(current.streetAddress)) {
       out.streetAddress = toStr(loc.streetAddress);
     }
+  }
+
+  if (typeof apiData.bedrooms === "number" || !empty(apiData.bedrooms)) {
+    out.bedrooms = Number(apiData.bedrooms) || 0;
+  }
+  if (typeof apiData.bathrooms === "number" || !empty(apiData.bathrooms)) {
+    out.bathrooms = Number(apiData.bathrooms) || 0;
+  }
+  if (typeof apiData.toilets === "number" || !empty(apiData.toilets)) {
+    out.toilets = Number(apiData.toilets) || 0;
+  }
+  if (typeof apiData.parkingSpaces === "number" || !empty(apiData.parkingSpaces)) {
+    out.parkingSpaces = Number(apiData.parkingSpaces) || 0;
+  }
+  if (typeof apiData.maxGuests === "number" || !empty(apiData.maxGuests)) {
+    out.maxGuests = Number(apiData.maxGuests) || 0;
   }
 
   if (add) {

@@ -399,8 +399,66 @@ export function getPropertyFieldPrompt(
     return { displayLine: speak, speakLine: speak };
   }
 
+  if (f.includes("estate")) {
+    const speak = "Which estate or gated community? Tap one, or skip if it is not in an estate.";
+    return { displayLine: speak, speakLine: speak };
+  }
+
+  if (f.includes("area") && !f.includes("square")) {
+    const speak = pickVariant(
+      ["Which area or neighbourhood?", "What area is the property in?", "Name the area."],
+      variant,
+    );
+    return { displayLine: speak, speakLine: speak };
+  }
+
+  if (f.includes("min price") || f.includes("minimum price")) {
+    const speak = "What is the minimum price in Naira?";
+    return { displayLine: speak, speakLine: speak };
+  }
+
+  if (f.includes("max price") || f.includes("maximum") || f.includes("asking price")) {
+    const speak = "What is the asking / maximum price in Naira?";
+    return { displayLine: speak, speakLine: speak };
+  }
+
   if (f.includes("price")) {
     const speak = "What is the price in Naira?";
+    return { displayLine: speak, speakLine: speak };
+  }
+
+  if (f.includes("guest")) {
+    const speak = "How many guests can the shortlet take?";
+    return { displayLine: speak, speakLine: speak };
+  }
+
+  if (f.includes("rental type")) {
+    const speak = "Is this a Rent or a Lease listing?";
+    return { displayLine: speak, speakLine: speak };
+  }
+
+  if (f.includes("lease hold") || f.includes("leasehold")) {
+    const speak = "What is the lease hold duration?";
+    return { displayLine: speak, speakLine: speak };
+  }
+
+  if (f.includes("development stage")) {
+    const speak = "What is the current development stage?";
+    return { displayLine: speak, speakLine: speak };
+  }
+
+  if (f.includes("payment plan")) {
+    const speak = "Which payment plan is available?";
+    return { displayLine: speak, speakLine: speak };
+  }
+
+  if (f.includes("completion")) {
+    const speak = "What is the expected completion date?";
+    return { displayLine: speak, speakLine: speak };
+  }
+
+  if (f.includes("joint venture condition") || f.includes("jv condition")) {
+    const speak = "Which joint venture conditions apply?";
     return { displayLine: speak, speakLine: speak };
   }
 

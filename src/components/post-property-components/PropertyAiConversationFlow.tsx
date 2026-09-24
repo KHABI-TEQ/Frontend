@@ -22,14 +22,32 @@ import {
   filterMissingPropertyAiFields,
   applyPropertyLocationFromNaturalText,
   sanitizePropertyConversationLocation,
+  keepPropertyLocationIfUserMentioned,
+  getPropertyAiCategoryOptions,
   PROPERTY_AI_FIELD,
 } from "@/utils/propertyAiFieldGuide";
 import { assistantMessageToSpeakable } from "@/utils/ttsText";
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
-import { ArrowLeft, MessageSquare, Bot, Loader2, Volume2, VolumeX } from "lucide-react";
-import { getAreasByStateLGA, getLGAsByState, getStates, PILOT_STATE } from "@/utils/location-utils";
+import { ArrowLeft, MessageSquare, Bot, Loader2, Volume2, VolumeX, ChevronDown } from "lucide-react";
+import {
+  getAreasByStateLGA,
+  getEstatesByStateLgaArea,
+  getLGAsByState,
+  getStates,
+  PILOT_STATE,
+} from "@/utils/location-utils";
+import {
+  BRIEF_TYPES,
+  buildingTypeOptions,
+  documentOptions,
+  getFeaturesByCategory,
+  jvConditions,
+  offPlanDevelopmentStageOptions,
+  offPlanPaymentPlanOptions,
+  propertyConditionOptions,
+} from "@/data/comprehensive-post-property-config";
 import {
   applyCatalogLocationToPropertyLoc,
   formatCatalogLocation,
@@ -42,6 +60,20 @@ const LOCATION_OPTIONS_PAGE_SIZE = Number.MAX_SAFE_INTEGER;
 const SHOW_MORE_LOCATION_OPTIONS = "Show more";
 const DONE_SELECTING_AREAS = "Done selecting areas";
 const AREA_DONE_MARKER = "__AREA_DONE__::";
+const DONE_SELECTING_FEATURES = "Done selecting features";
+const FEATURE_DONE_MARKER = "__FEATURE_DONE__::";
+const SKIP_FEATURES_OPTION = "Skip features";
+const DONE_SELECTING_DOCUMENTS = "Done selecting documents";
+const DOC_DONE_MARKER = "__DOC_DONE__::";
+const DONE_SELECTING_JV = "Done selecting conditions";
+const JV_DONE_MARKER = "__JV_DONE__::";
+const SKIP_ESTATE_OPTION = "No estate / skip";
+const ROOM_COUNT_CHIPS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "More than 10"];
+const LAND_UNIT_CHIPS = ["Plot", "Square Meter", "Acres", "Hectares"];
+const LISTING_TYPE_CHIPS = ["Sale", "Off-Plan", "Rent", "Shortlet", "JV"];
+const LISTING_TYPE_CHIPS_NO_OFF_PLAN = ["Sale", "Rent", "Shortlet", "JV"];
+const RENTAL_TYPE_CHIPS = ["Rent", "Lease"];
+const LEASE_HOLD_CHIPS = ["6 months", "1 year", "2 years"];
 
 function fieldLabelOnly(field: string): string {
   return field.replace(/\s*\([^)]*\)\s*$/, "").trim() || field;
@@ -92,13 +124,14 @@ function buildPropertyInteractiveReply(
 
   const focus = missing[0];
   const { displayLine, speakLine } = getPropertyFieldPrompt(focus, 0);
+  const requiredLeft = missing.filter((f) => !isPropertyAiFieldSkippable(f)).length;
 
   return {
     content: displayLine,
     speakLine,
     focusedMissingField: focus,
     missingFields: [focus],
-    remainingMissingCount: Math.max(0, missing.length - 1),
+    remainingMissingCount: Math.max(0, requiredLeft - 1),
   };
 }
 
@@ -156,8 +189,9 @@ function resolveCanonicalLgaName(state: string, rawLga: string): string {
   return match || lga;
 }
 
-function locationFocusKind(focusedMissingField?: string): "lga" | "area" | null {
+function locationFocusKind(focusedMissingField?: string): "lga" | "area" | "estate" | null {
   const focus = normalizeFieldKey(focusedMissingField || "");
+  if (focus.includes("estate")) return "estate";
   if (focus.includes("local government") || focus.includes("/ lga") || focus.includes("lga")) return "lga";
   if (focus.includes("area")) return "area";
   return null;
@@ -186,7 +220,7 @@ function applyPropertyLocationFromFocusedAnswer(
   for (const part of parts) {
     const { resolved } = resolveSpokenLocationAgainstCatalog(part, {
       currentLga: String(mergedLoc.localGovernment || ""),
-      focus: kind,
+      focus: kind === "estate" ? "any" : kind,
     });
     if (resolved) {
       mergedLoc = applyCatalogLocationToPropertyLoc(mergedLoc, resolved);
@@ -196,8 +230,10 @@ function applyPropertyLocationFromFocusedAnswer(
       const lgas = getLGAsByState(PILOT_STATE);
       const match = lgas.find((lga) => lga.toLowerCase() === part.toLowerCase());
       if (match) {
-        mergedLoc = { ...mergedLoc, localGovernment: match, area: "", areas: [] };
+        mergedLoc = { ...mergedLoc, localGovernment: match, area: "", areas: [], estate: "" };
       }
+    } else if (kind === "estate") {
+      mergedLoc = { ...mergedLoc, estate: part };
     } else {
       const areas = getAreasByStateLGA(PILOT_STATE, String(mergedLoc.localGovernment || ""));
       const match = areas.find((area) => area.toLowerCase() === part.toLowerCase());
@@ -208,7 +244,9 @@ function applyPropertyLocationFromFocusedAnswer(
         const areasNext = current.some((x) => x.toLowerCase() === match.toLowerCase())
           ? current
           : [...current, match];
-        mergedLoc = { ...mergedLoc, areas: areasNext, area: areasNext[0] || match };
+        mergedLoc = { ...mergedLoc, areas: areasNext, area: areasNext[0] || match, estate: "" };
+      } else if (part) {
+        mergedLoc = { ...mergedLoc, area: part, areas: [part], estate: "" };
       }
     }
   }
@@ -228,6 +266,7 @@ function withPropertyLocationOptions(
     locationOptionsLabel?: string;
   },
   data: Record<string, unknown>,
+  allowOffPlan = true,
 ) {
   const focus = normalizeFieldKey(reply.focusedMissingField || "");
   const loc = (data.location || {}) as Record<string, unknown>;
@@ -241,11 +280,107 @@ function withPropertyLocationOptions(
     }
   }
 
-  if (focus.includes("area")) {
+  if (focus.includes("area") && !focus.includes("estate")) {
     const areas = getAreasByStateLGA(state, lga);
     if (state && lga && areas.length > 0) {
       return buildLocationPagedReply(reply, `areas in ${lga}, ${state}`, areas, 0);
     }
+  }
+
+  if (focus.includes("estate")) {
+    const area = String(loc.area || (Array.isArray(loc.areas) ? loc.areas[0] : "") || "");
+    const estates = getEstatesByStateLgaArea(state, lga, area);
+    return {
+      ...reply,
+      quickOptions: [...estates, SKIP_ESTATE_OPTION],
+      locationAllOptions: estates,
+      locationOptionsOffset: 0,
+      locationOptionsLabel: estates.length ? `estates in ${area || lga}` : "estates",
+    };
+  }
+
+  return withPropertyChoiceQuickOptions(reply, data, allowOffPlan);
+}
+
+function propertyFeatureLabels(data: Record<string, unknown>): string[] {
+  const brief = normalizedListingPropertyType(data);
+  const cat = String(data.propertyCategory || "").trim();
+  return getFeaturesByCategory(cat, brief).map((f) => f.label);
+}
+
+function propertyBuildingLabels(data: Record<string, unknown>): string[] {
+  const brief = normalizedListingPropertyType(data);
+  const cat = String(data.propertyCategory || "").toLowerCase();
+  if (brief === BRIEF_TYPES.SHORTLET) return buildingTypeOptions.shortlet.map((o) => o.label);
+  if (cat.includes("commercial")) return buildingTypeOptions.commercial.map((o) => o.label);
+  return buildingTypeOptions.residential.map((o) => o.label);
+}
+
+function withPropertyChoiceQuickOptions<T extends { quickOptions?: string[] }>(
+  reply: T,
+  data: Record<string, unknown>,
+  allowOffPlan = true,
+): T {
+  const focus = canonicalPropertyAiFieldKey(
+    (reply as { focusedMissingField?: string }).focusedMissingField || "",
+  );
+
+  if (focus === PROPERTY_AI_FIELD.LISTING_TYPE) {
+    return {
+      ...reply,
+      quickOptions: allowOffPlan ? [...LISTING_TYPE_CHIPS] : [...LISTING_TYPE_CHIPS_NO_OFF_PLAN],
+    };
+  }
+  if (focus === PROPERTY_AI_FIELD.CATEGORY) {
+    return { ...reply, quickOptions: getPropertyAiCategoryOptions(normalizedListingPropertyType(data)) };
+  }
+  if (focus === PROPERTY_AI_FIELD.PROPERTY_CONDITION) {
+    return { ...reply, quickOptions: propertyConditionOptions.map((o) => o.label) };
+  }
+  if (focus === PROPERTY_AI_FIELD.TYPE_OF_BUILDING) {
+    return { ...reply, quickOptions: propertyBuildingLabels(data) };
+  }
+  if (
+    focus === PROPERTY_AI_FIELD.BEDROOMS ||
+    focus === PROPERTY_AI_FIELD.BATHROOMS ||
+    focus === PROPERTY_AI_FIELD.TOILETS ||
+    focus === PROPERTY_AI_FIELD.PARKING ||
+    focus === PROPERTY_AI_FIELD.MAX_GUESTS
+  ) {
+    return { ...reply, quickOptions: [...ROOM_COUNT_CHIPS] };
+  }
+  if (focus === PROPERTY_AI_FIELD.LAND_SIZE) {
+    return { ...reply, quickOptions: [...LAND_UNIT_CHIPS] };
+  }
+  if (focus === PROPERTY_AI_FIELD.RENTAL_TYPE) {
+    return { ...reply, quickOptions: [...RENTAL_TYPE_CHIPS] };
+  }
+  if (focus === PROPERTY_AI_FIELD.LEASE_HOLD) {
+    return { ...reply, quickOptions: [...LEASE_HOLD_CHIPS] };
+  }
+  if (focus === PROPERTY_AI_FIELD.DOCUMENTS) {
+    return {
+      ...reply,
+      quickOptions: [...documentOptions.map((o) => o.label), DONE_SELECTING_DOCUMENTS],
+    };
+  }
+  if (focus === PROPERTY_AI_FIELD.DEVELOPMENT_STAGE) {
+    return { ...reply, quickOptions: offPlanDevelopmentStageOptions.map((o) => o.label) };
+  }
+  if (focus === PROPERTY_AI_FIELD.PAYMENT_PLAN) {
+    return { ...reply, quickOptions: offPlanPaymentPlanOptions.map((o) => o.label) };
+  }
+  if (focus === PROPERTY_AI_FIELD.JV_CONDITIONS) {
+    return {
+      ...reply,
+      quickOptions: [...jvConditions.map((o) => o.label), DONE_SELECTING_JV],
+    };
+  }
+  if (focus === PROPERTY_AI_FIELD.FEATURES) {
+    return {
+      ...reply,
+      quickOptions: [...propertyFeatureLabels(data), DONE_SELECTING_FEATURES, SKIP_FEATURES_OPTION],
+    };
   }
   return reply;
 }
@@ -362,6 +497,12 @@ export default function PropertyAiConversationFlow({
   const [playRepliesAloud, setPlayRepliesAloud] = useState(true);
   const [selectedAreaOptions, setSelectedAreaOptions] = useState<string[]>([]);
   const selectedAreaOptionsRef = useRef<string[]>([]);
+  const [selectedFeatureOptions, setSelectedFeatureOptions] = useState<string[]>([]);
+  const selectedFeatureOptionsRef = useRef<string[]>([]);
+  const [selectedDocumentOptions, setSelectedDocumentOptions] = useState<string[]>([]);
+  const selectedDocumentOptionsRef = useRef<string[]>([]);
+  const [selectedJvOptions, setSelectedJvOptions] = useState<string[]>([]);
+  const selectedJvOptionsRef = useRef<string[]>([]);
   const prevMessageCountRef = useRef(0);
   const conversationScrollRef = useRef<HTMLDivElement>(null);
   const inputSectionRef = useRef<HTMLDivElement>(null);
@@ -405,10 +546,25 @@ export default function PropertyAiConversationFlow({
   }, [selectedAreaOptions]);
 
   useEffect(() => {
+    selectedFeatureOptionsRef.current = selectedFeatureOptions;
+  }, [selectedFeatureOptions]);
+
+  useEffect(() => {
+    selectedDocumentOptionsRef.current = selectedDocumentOptions;
+  }, [selectedDocumentOptions]);
+
+  useEffect(() => {
+    selectedJvOptionsRef.current = selectedJvOptions;
+  }, [selectedJvOptions]);
+
+  useEffect(() => {
     if (aiConversationMessages.length === 0) {
       skippedFieldsRef.current = new Set();
       userAnsweredFieldsRef.current = new Set();
       setSelectedAreaOptions([]);
+      setSelectedFeatureOptions([]);
+      setSelectedDocumentOptions([]);
+      setSelectedJvOptions([]);
     }
   }, [aiConversationMessages.length]);
 
@@ -416,10 +572,11 @@ export default function PropertyAiConversationFlow({
     const lastAssistant = [...aiConversationMessages].reverse().find((m) => m.role === "assistant") as
       | { focusedMissingField?: string }
       | undefined;
-    const focus = normalizeFieldKey(lastAssistant?.focusedMissingField || "");
-    if (!focus.includes("area")) {
-      setSelectedAreaOptions([]);
-    }
+    const focus = canonicalPropertyAiFieldKey(lastAssistant?.focusedMissingField || "");
+    if (focus !== PROPERTY_AI_FIELD.AREA) setSelectedAreaOptions([]);
+    if (focus !== PROPERTY_AI_FIELD.FEATURES) setSelectedFeatureOptions([]);
+    if (focus !== PROPERTY_AI_FIELD.DOCUMENTS) setSelectedDocumentOptions([]);
+    if (focus !== PROPERTY_AI_FIELD.JV_CONDITIONS) setSelectedJvOptions([]);
   }, [aiConversationMessages]);
 
   const handleSend = useCallback(async (textOverride: string) => {
@@ -496,6 +653,56 @@ export default function PropertyAiConversationFlow({
       }
     }
 
+    if (rawInput.startsWith(FEATURE_DONE_MARKER) || rawInput.startsWith(DOC_DONE_MARKER) || rawInput.startsWith(JV_DONE_MARKER)) {
+      const payload = rawInput.slice(rawInput.indexOf("::") + 2).trim();
+      const lastAssist = [...aiConversationMessages].reverse().find((m) => m.role === "assistant");
+      const focus = lastAssist?.focusedMissingField;
+      const fieldKey = rawInput.startsWith(FEATURE_DONE_MARKER)
+        ? PROPERTY_AI_FIELD.FEATURES
+        : rawInput.startsWith(DOC_DONE_MARKER)
+          ? PROPERTY_AI_FIELD.DOCUMENTS
+          : PROPERTY_AI_FIELD.JV_CONDITIONS;
+      let data = applyFocusedPropertyAnswer(
+        payload,
+        focus || fieldKey,
+        normalizePropertyAiCollectedData({
+          ...(collectedDataRef.current || {}),
+          ...(listingTypePreset ? { propertyType: listingTypePreset } : {}),
+        }),
+      );
+      userAnsweredFieldsRef.current.add(fieldKey);
+      setAiCollectedData(data);
+      collectedDataRef.current = data;
+      const reply = withPropertyLocationOptions(
+        buildPropertyInteractiveReply(
+          data,
+          skippedFieldsRef.current,
+          listingTypePreset,
+          userAnsweredFieldsRef.current,
+        ),
+        data,
+        allowOffPlanListing,
+      );
+      setAiConversationMessages((prev) => [
+        ...prev,
+        { role: "user", content: payload },
+        {
+          role: "assistant",
+          content: reply.content,
+          speakLine: reply.speakLine,
+          data,
+          missingFields: reply.missingFields.length ? reply.missingFields : undefined,
+          focusedMissingField: reply.focusedMissingField,
+          remainingMissingCount: reply.remainingMissingCount,
+          quickOptions: reply.quickOptions,
+          locationAllOptions: reply.locationAllOptions,
+          locationOptionsOffset: reply.locationOptionsOffset,
+          locationOptionsLabel: reply.locationOptionsLabel,
+        },
+      ]);
+      return;
+    }
+
     if (!trimmed) {
       toast.error("Please enter or say something.");
       return;
@@ -561,6 +768,7 @@ export default function PropertyAiConversationFlow({
             userAnsweredFieldsRef.current,
           ),
           dataForNext,
+          allowOffPlanListing,
         );
         setAiConversationMessages((prev) => [
           ...prev,
@@ -669,6 +877,7 @@ export default function PropertyAiConversationFlow({
               userAnsweredFieldsRef.current,
             ),
             data,
+            allowOffPlanListing,
           );
           return [
             ...prev,
@@ -719,7 +928,7 @@ export default function PropertyAiConversationFlow({
     const effectiveListing = rawListing;
 
     if (!effectiveListing) {
-      const typeField = "property type — start with Sale, Rent, Shortlet, or JV (listing type on the form)";
+      const typeField = "property type — start with Sale, Off-Plan, Rent, Shortlet, or JV (listing type on the form)";
       const prompt = getPropertyFieldPrompt(typeField, 0);
       setAiConversationMessages((prev) => [
         ...prev,
@@ -731,6 +940,7 @@ export default function PropertyAiConversationFlow({
           missingFields: [typeField],
           focusedMissingField: typeField,
           remainingMissingCount: 0,
+          quickOptions: allowOffPlanListing ? LISTING_TYPE_CHIPS : LISTING_TYPE_CHIPS_NO_OFF_PLAN,
         },
       ]);
       return;
@@ -738,6 +948,48 @@ export default function PropertyAiConversationFlow({
 
     const lastAssistForLocal = [...aiConversationMessages].reverse().find((m) => m.role === "assistant");
     const locationKind = locationFocusKind(lastAssistForLocal?.focusedMissingField);
+    if (locationKind === "estate") {
+      let data = normalizePropertyAiCollectedData({
+        ...(collectedDataRef.current || {}),
+        propertyType: effectiveListing,
+      });
+      if (/^(no estate|skip|none|n\/a)$/i.test(trimmed) || trimmed === SKIP_ESTATE_OPTION) {
+        skippedFieldsRef.current.add(PROPERTY_AI_FIELD.ESTATE);
+      } else {
+        data = applyFocusedPropertyAnswer(trimmed, lastAssistForLocal?.focusedMissingField, data);
+        userAnsweredFieldsRef.current.add(PROPERTY_AI_FIELD.ESTATE);
+      }
+      setAiCollectedData(data);
+      collectedDataRef.current = data;
+      const reply = withPropertyLocationOptions(
+        buildPropertyInteractiveReply(
+          data,
+          skippedFieldsRef.current,
+          listingTypePreset,
+          userAnsweredFieldsRef.current,
+        ),
+        data,
+        allowOffPlanListing,
+      );
+      setAiConversationMessages((prev) => [
+        ...prev,
+        { role: "user", content: trimmed },
+        {
+          role: "assistant",
+          content: reply.content,
+          speakLine: reply.speakLine,
+          data,
+          missingFields: reply.missingFields.length ? reply.missingFields : undefined,
+          focusedMissingField: reply.focusedMissingField,
+          remainingMissingCount: reply.remainingMissingCount,
+          quickOptions: reply.quickOptions,
+          locationAllOptions: reply.locationAllOptions,
+          locationOptionsOffset: reply.locationOptionsOffset,
+          locationOptionsLabel: reply.locationOptionsLabel,
+        },
+      ]);
+      return;
+    }
     if (locationKind) {
       const currentLoc = ((collectedDataRef.current || {}).location || {}) as Record<string, unknown>;
       const spokenResolution = resolveSpokenLocationAgainstCatalog(trimmed, {
@@ -782,6 +1034,7 @@ export default function PropertyAiConversationFlow({
               userAnsweredFieldsRef.current,
             ),
             data,
+            allowOffPlanListing,
           );
           const suggestionChips = spokenResolution.suggestions.map(formatCatalogLocation);
           const confirmed = spokenResolution.resolved
@@ -883,17 +1136,24 @@ export default function PropertyAiConversationFlow({
       }
       data = {
         ...data,
-        location: sanitizePropertyConversationLocation(
-          (data.location || {}) as Record<string, unknown>,
+        location: keepPropertyLocationIfUserMentioned(
+          sanitizePropertyConversationLocation(
+            (data.location || {}) as Record<string, unknown>,
+            accumulated || trimmed,
+            getStates(),
+          ),
           accumulated || trimmed,
-          getStates(),
+          focus,
         ),
       };
       {
         const currentLoc = (data.location || {}) as Record<string, unknown>;
         const catalog = resolveSpokenLocationAgainstCatalog(accumulated || trimmed, {
           currentLga: String(currentLoc.localGovernment || ""),
-          focus: locationFocusKind(focus) || "any",
+          focus: (() => {
+            const kind = locationFocusKind(focus);
+            return kind === "estate" || !kind ? "any" : kind;
+          })(),
         });
         if (catalog.resolved) {
           data = {
@@ -952,6 +1212,7 @@ export default function PropertyAiConversationFlow({
           userAnsweredFieldsRef.current,
         ),
         data,
+        allowOffPlanListing,
       );
       setAiConversationMessages((prev) => [
         ...prev,
@@ -985,6 +1246,7 @@ export default function PropertyAiConversationFlow({
     listingTypePreset,
     setAiConversationMessages,
     setAiCollectedData,
+    allowOffPlanListing,
   ]);
 
   // Auto-play latest assistant reply when TTS is enabled (Web Speech API — SpeechSynthesis).
@@ -1024,7 +1286,12 @@ export default function PropertyAiConversationFlow({
     const last = [...aiConversationMessages].reverse().find((m) => m.role === "assistant") as
       | { focusedMissingField?: string }
       | undefined;
-    return canonicalPropertyAiFieldKey(last?.focusedMissingField ?? "") === PROPERTY_AI_FIELD.PRICE;
+    const key = canonicalPropertyAiFieldKey(last?.focusedMissingField ?? "");
+    return (
+      key === PROPERTY_AI_FIELD.PRICE ||
+      key === PROPERTY_AI_FIELD.MIN_PRICE ||
+      key === PROPERTY_AI_FIELD.MAX_PRICE
+    );
   }, [aiConversationMessages]);
 
   const handleSuggest = useCallback(
@@ -1039,24 +1306,65 @@ export default function PropertyAiConversationFlow({
       option: string,
       msg: { focusedMissingField?: string; quickOptions?: string[] },
     ) => {
-      const focus = normalizeFieldKey(msg.focusedMissingField || "");
-      const isAreaMultiSelect =
-        focus.includes("area") &&
-        Array.isArray(msg.quickOptions) &&
-        msg.quickOptions.includes(DONE_SELECTING_AREAS);
-      if (!isAreaMultiSelect) {
+      const focus = canonicalPropertyAiFieldKey(msg.focusedMissingField || "");
+      const chips = Array.isArray(msg.quickOptions) ? msg.quickOptions : [];
+
+      if (option === SKIP_ESTATE_OPTION || (option === SKIP_FEATURES_OPTION && focus === PROPERTY_AI_FIELD.FEATURES)) {
+        skippedFieldsRef.current.add(focus);
+        const data = { ...(collectedDataRef.current || {}) } as Record<string, unknown>;
+        const reply = withPropertyLocationOptions(
+          buildPropertyInteractiveReply(
+            data,
+            skippedFieldsRef.current,
+            listingTypePreset,
+            userAnsweredFieldsRef.current,
+          ),
+          data,
+          allowOffPlanListing,
+        );
+        setAiConversationMessages((prev) => [
+          ...prev,
+          { role: "user", content: option },
+          {
+            role: "assistant",
+            content: reply.content,
+            speakLine: reply.speakLine,
+            data,
+            missingFields: reply.missingFields.length ? reply.missingFields : undefined,
+            focusedMissingField: reply.focusedMissingField,
+            remainingMissingCount: reply.remainingMissingCount,
+            quickOptions: reply.quickOptions,
+            locationAllOptions: reply.locationAllOptions,
+            locationOptionsOffset: reply.locationOptionsOffset,
+            locationOptionsLabel: reply.locationOptionsLabel,
+          },
+        ]);
+        return;
+      }
+
+      const isAreaMulti = focus === PROPERTY_AI_FIELD.AREA && chips.includes(DONE_SELECTING_AREAS);
+      const isFeatureMulti = focus === PROPERTY_AI_FIELD.FEATURES && chips.includes(DONE_SELECTING_FEATURES);
+      const isDocMulti = focus === PROPERTY_AI_FIELD.DOCUMENTS && chips.includes(DONE_SELECTING_DOCUMENTS);
+      const isJvMulti = focus === PROPERTY_AI_FIELD.JV_CONDITIONS && chips.includes(DONE_SELECTING_JV);
+
+      if (!isAreaMulti && !isFeatureMulti && !isDocMulti && !isJvMulti) {
+        await handleSuggest(option);
+        return;
+      }
+
+      if (option === SHOW_MORE_LOCATION_OPTIONS) {
         await handleSuggest(option);
         return;
       }
 
       if (option === DONE_SELECTING_AREAS) {
-        const chips = selectedAreaOptionsRef.current;
+        const selected = selectedAreaOptionsRef.current;
         const loc = ((collectedDataRef.current || {}).location || {}) as Record<string, unknown>;
         const existing = [
           ...(Array.isArray(loc.areas) ? (loc.areas as unknown[]).map((x) => String(x).trim()) : []),
           String(loc.area ?? "").trim(),
         ].filter(Boolean);
-        const chosen = chips.length > 0 ? chips : existing;
+        const chosen = selected.length > 0 ? selected : existing;
         if (chosen.length === 0) {
           toast.error("Select at least one area, or type an area name, then tap Done.");
           return;
@@ -1066,18 +1374,99 @@ export default function PropertyAiConversationFlow({
         return;
       }
 
-      if (option === SHOW_MORE_LOCATION_OPTIONS) {
-        await handleSuggest(option);
+      if (option === DONE_SELECTING_FEATURES) {
+        const chosen = selectedFeatureOptionsRef.current;
+        if (chosen.length === 0) {
+          skippedFieldsRef.current.add(PROPERTY_AI_FIELD.FEATURES);
+          const data = { ...(collectedDataRef.current || {}) } as Record<string, unknown>;
+          const reply = withPropertyLocationOptions(
+            buildPropertyInteractiveReply(
+              data,
+              skippedFieldsRef.current,
+              listingTypePreset,
+              userAnsweredFieldsRef.current,
+            ),
+            data,
+            allowOffPlanListing,
+          );
+          setAiConversationMessages((prev) => [
+            ...prev,
+            { role: "user", content: SKIP_FEATURES_OPTION },
+            {
+              role: "assistant",
+              content: reply.content,
+              speakLine: reply.speakLine,
+              data,
+              missingFields: reply.missingFields.length ? reply.missingFields : undefined,
+              focusedMissingField: reply.focusedMissingField,
+              remainingMissingCount: reply.remainingMissingCount,
+              quickOptions: reply.quickOptions,
+              locationAllOptions: reply.locationAllOptions,
+              locationOptionsOffset: reply.locationOptionsOffset,
+              locationOptionsLabel: reply.locationOptionsLabel,
+            },
+          ]);
+          setSelectedFeatureOptions([]);
+          return;
+        }
+        await handleSuggest(`${FEATURE_DONE_MARKER}${chosen.join(", ")}`);
+        setSelectedFeatureOptions([]);
         return;
       }
 
-      setSelectedAreaOptions((prev) =>
+      if (option === DONE_SELECTING_DOCUMENTS) {
+        const chosen = selectedDocumentOptionsRef.current;
+        if (chosen.length === 0) {
+          toast.error("Select at least one document, then tap Done.");
+          return;
+        }
+        await handleSuggest(`${DOC_DONE_MARKER}${chosen.join(", ")}`);
+        setSelectedDocumentOptions([]);
+        return;
+      }
+
+      if (option === DONE_SELECTING_JV) {
+        const chosen = selectedJvOptionsRef.current;
+        if (chosen.length === 0) {
+          toast.error("Select at least one condition, then tap Done.");
+          return;
+        }
+        await handleSuggest(`${JV_DONE_MARKER}${chosen.join(", ")}`);
+        setSelectedJvOptions([]);
+        return;
+      }
+
+      if (isAreaMulti) {
+        setSelectedAreaOptions((prev) =>
+          prev.some((x) => x.toLowerCase() === option.toLowerCase())
+            ? prev.filter((x) => x.toLowerCase() !== option.toLowerCase())
+            : [...prev, option],
+        );
+        return;
+      }
+      if (isFeatureMulti) {
+        setSelectedFeatureOptions((prev) =>
+          prev.some((x) => x.toLowerCase() === option.toLowerCase())
+            ? prev.filter((x) => x.toLowerCase() !== option.toLowerCase())
+            : [...prev, option],
+        );
+        return;
+      }
+      if (isDocMulti) {
+        setSelectedDocumentOptions((prev) =>
+          prev.some((x) => x.toLowerCase() === option.toLowerCase())
+            ? prev.filter((x) => x.toLowerCase() !== option.toLowerCase())
+            : [...prev, option],
+        );
+        return;
+      }
+      setSelectedJvOptions((prev) =>
         prev.some((x) => x.toLowerCase() === option.toLowerCase())
           ? prev.filter((x) => x.toLowerCase() !== option.toLowerCase())
           : [...prev, option],
       );
     },
-    [handleSuggest],
+    [handleSuggest, listingTypePreset, allowOffPlanListing, setAiConversationMessages],
   );
 
   const handleProceedToSummary = useCallback(() => {
@@ -1136,11 +1525,47 @@ export default function PropertyAiConversationFlow({
         <details className="group">
           <summary className="flex items-center justify-between px-4 py-3 text-sm font-medium text-[#09391C] bg-[#8DDB90]/10 hover:bg-[#8DDB90]/20 cursor-pointer transition-colors list-none select-none">
             <span>How to use</span>
+            <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
           </summary>
           <div className="px-4 py-3 space-y-3 text-sm text-[#5A5D63]">
             <p>
-              The AI asks for one form field at a time based on your <strong>{briefTypeLabel}</strong> listing — same fields as the manual form. You can type or speak. Typing always works, even if the microphone is on.
+              Start by describing your <strong>{briefTypeLabel}</strong> listing. The AI asks one question at a time — tap a chip where options are shown, or type / speak your answer.
             </p>
+            <div className="pt-2 border-t border-gray-100">
+              <p className="font-medium text-[#09391C] mb-2">What you&apos;ll need to provide:</p>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-2">
+                  <span className="shrink-0">1.</span>
+                  <span>
+                    <span className="font-medium text-[#09391C]">📍 Location</span>
+                    <span className="mt-0.5 block">Lagos LGA, area, and estate (selectable).</span>
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="shrink-0">2.</span>
+                  <span>
+                    <span className="font-medium text-[#09391C]">🏠 Property</span>
+                    <span className="mt-0.5 block">Category, rooms, features, and type-specific details (sale, rent, shortlet, JV, off-plan).</span>
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="shrink-0">3.</span>
+                  <span>
+                    <span className="font-medium text-[#09391C]">💰 Price</span>
+                    <span className="mt-0.5 block">Minimum and asking / maximum price in Naira (not required for JV).</span>
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="shrink-0">4.</span>
+                  <span>
+                    <span className="font-medium text-[#09391C]">📄 Title documents (Sale / Off-Plan / JV)</span>
+                    <span className="mt-0.5 block">
+                      Select documents such as C of O, Governor&apos;s Consent, or Deed of Assignment.
+                    </span>
+                  </span>
+                </li>
+              </ul>
+            </div>
             <p className="text-xs italic pt-2 border-t border-gray-100">
               Tip: Say &quot;Skip&quot; for optional details. Say &quot;I&apos;m done&quot; when you&apos;re ready to review.
             </p>
@@ -1164,17 +1589,32 @@ export default function PropertyAiConversationFlow({
         </span>
       </label>
 
+      {loading && (
+        <div className="flex items-center gap-3 rounded-lg border border-[#8DDB90]/50 bg-[#f0fdf4] px-4 py-3 text-sm text-[#09391C]">
+          <Loader2 className="h-5 w-5 flex-shrink-0 animate-spin text-[#8DDB90]" aria-hidden />
+          <span>{processingStatus || "Reading your description and preparing suggestions…"}</span>
+        </div>
+      )}
+
       <div
         ref={conversationScrollRef}
-        className="bg-white rounded-lg border border-gray-200 w-full min-h-[20rem] max-h-[min(70vh,36rem)] overflow-y-auto overscroll-contain scroll-smooth p-4 md:p-5 space-y-3"
+        className="bg-white rounded-lg border border-gray-200 max-h-[400px] overflow-y-auto p-4 space-y-3"
         role="log"
         aria-live="polite"
         aria-label="Property listing conversation"
       >
         {aiConversationMessages.length === 0 ? (
-          <p className="text-sm text-[#5A5D63] italic">
-            Example: &quot;Sale — duplex in Ikoyi…&quot; or &quot;Rent, 3-bed in Surulere…&quot; You must include Sale, Rent, Shortlet, or JV.
-          </p>
+          <div className="border border-[#8DDB90]/30 rounded-lg overflow-hidden">
+            <details className="group">
+              <summary className="flex items-center justify-between px-3 py-2.5 text-sm font-medium text-[#09391C] bg-[#8DDB90]/10 hover:bg-[#8DDB90]/20 cursor-pointer transition-colors list-none select-none">
+                <span>Example messages</span>
+                <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
+              </summary>
+              <div className="px-3 py-2.5 text-sm text-[#5A5D63] italic">
+                &quot;Sale — duplex in Ikoyi…&quot; or &quot;Rent, 3-bed in Surulere…&quot; Include Sale, Off-Plan, Rent, Shortlet, or JV if you have not already chosen a listing type.
+              </div>
+            </details>
+          </div>
         ) : (
           aiConversationMessages.map((msg, i) => (
             <div
@@ -1202,10 +1642,8 @@ export default function PropertyAiConversationFlow({
                 </div>
               )}
               <div
-                className={`rounded-lg px-4 py-2.5 text-sm ${
-                  msg.role === "user"
-                    ? "max-w-[min(100%,28rem)] bg-[#09391C] text-white"
-                    : "max-w-[min(100%,42rem)] bg-gray-100 text-[#09391C]"
+                className={`max-w-[85%] rounded-lg px-4 py-2 text-sm ${
+                  msg.role === "user" ? "bg-[#09391C] text-white" : "bg-gray-100 text-[#09391C]"
                 }`}
               >
                 {msg.role === "assistant" &&
@@ -1215,9 +1653,6 @@ export default function PropertyAiConversationFlow({
                     {(msg as { quickOptions?: string[] }).quickOptions &&
                     (msg as { quickOptions?: string[] }).quickOptions!.length > 0 ? (
                       <div className="mb-2">
-                        <p className="mb-1 text-[11px] font-medium text-[#5A5D63]">
-                          Tap to choose
-                        </p>
                         <div className="flex flex-wrap gap-2">
                           {(msg as { quickOptions?: string[] }).quickOptions!.map((option) => (
                             <button
@@ -1231,9 +1666,15 @@ export default function PropertyAiConversationFlow({
                               }
                               disabled={loading}
                               className={`rounded-full border px-3 py-1 text-xs font-medium disabled:opacity-50 ${
-                                option === DONE_SELECTING_AREAS
+                                option === DONE_SELECTING_AREAS ||
+                                option === DONE_SELECTING_FEATURES ||
+                                option === DONE_SELECTING_DOCUMENTS ||
+                                option === DONE_SELECTING_JV
                                   ? "border-[#09391C] bg-[#8DDB90] text-[#09391C] font-semibold shadow-sm hover:bg-[#7BC87F]"
                                   : selectedAreaOptions.some((x) => x.toLowerCase() === option.toLowerCase())
+                                    || selectedFeatureOptions.some((x) => x.toLowerCase() === option.toLowerCase())
+                                    || selectedDocumentOptions.some((x) => x.toLowerCase() === option.toLowerCase())
+                                    || selectedJvOptions.some((x) => x.toLowerCase() === option.toLowerCase())
                                     ? "border-[#09391C] bg-[#09391C] text-white"
                                     : "border-[#8DDB90] bg-white text-[#09391C] hover:bg-[#8DDB90]/15"
                               }`}
@@ -1246,9 +1687,7 @@ export default function PropertyAiConversationFlow({
                     ) : null}
                     {(msg as { remainingMissingCount?: number }).remainingMissingCount ? (
                       <p className="text-xs text-[#5A5D63] mt-2 pt-2 border-t border-gray-200">
-                        {(msg as { remainingMissingCount: number }).remainingMissingCount} more item
-                        {(msg as { remainingMissingCount: number }).remainingMissingCount !== 1 ? "s" : ""}{" "}
-                        after this (or say skip).
+                        {(msg as { remainingMissingCount: number }).remainingMissingCount} more after this.
                       </p>
                     ) : null}
                   </>
@@ -1259,14 +1698,14 @@ export default function PropertyAiConversationFlow({
             </div>
           ))
         )}
-        {(loading || processingStatus) && (
+        {loading && processingStatus && processingStatus !== "Listening…" && (
           <div className="flex gap-2 justify-start">
             <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#8DDB90]/20 flex items-center justify-center">
               <Bot className="h-4 w-4 text-[#09391C]" aria-hidden />
             </div>
             <div className="flex items-center gap-2 rounded-lg bg-gray-100 px-4 py-2.5 text-sm text-[#09391C]">
               <Loader2 className="h-4 w-4 flex-shrink-0 animate-spin text-[#8DDB90]" aria-hidden />
-              <span>{processingStatus || "Processing…"}</span>
+              <span>{processingStatus}</span>
             </div>
           </div>
         )}
@@ -1305,7 +1744,7 @@ export default function PropertyAiConversationFlow({
               onClick={handleProceedToSummary}
               className="px-4 py-2 rounded-lg border-2 border-[#8DDB90] text-[#09391C] font-medium hover:bg-[#8DDB90]/10"
             >
-              I’m done — show summary
+              I&apos;m done
             </button>
           )}
         </div>
