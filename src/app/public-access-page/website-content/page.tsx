@@ -30,11 +30,20 @@ export default function WebsiteContentHubPage() {
 
   return (
     <div className="max-w-4xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-[#09391C]">Website content</h1>
-        <p className="mt-1 text-sm text-gray-600">
-          Add the business information that appears on your public page. Every field here is saved to the server and rendered on the live site when filled.
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-[#09391C]">Website content</h1>
+          <p className="mt-1 text-sm text-gray-600">
+            Optional overview. Continue to fill About, Contact, and the rest of your page.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => router.push(nextPractitionerSetupPath("/public-access-page/website-content"))}
+          className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+        >
+          Continue to About Us
+        </button>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">

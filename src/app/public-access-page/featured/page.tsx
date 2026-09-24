@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
-import { Star, Save } from "lucide-react";
+import { Star, Save, ChevronRight } from "lucide-react";
 import api from "@/utils/axiosConfig";
 import { useDealSite } from "@/context/deal-site-context";
 import OverlayPreloader from "@/components/general-components/OverlayPreloader";
@@ -98,7 +98,8 @@ export default function FeaturedPage() {
 
       const slug = String(settings.publicSlug || "").trim();
       if (!slug) {
-        toast.error("Set up your practitioner page slug first before saving featured listings.");
+        toast.success("You can feature listings later. Continuing setup.");
+        goToNextPractitionerSetup(router, "/public-access-page/featured");
         return;
       }
 
@@ -108,7 +109,11 @@ export default function FeaturedPage() {
         updateSettings({
           featureSelection: payload,
         });
-        toast.success("Featured listings updated successfully");
+        toast.success(
+          featuredIds.size
+            ? "Featured listings updated successfully"
+            : "Saved. You can feature listings after you add properties.",
+        );
         goToNextPractitionerSetup(router, "/public-access-page/featured");
         return;
       } else {
@@ -121,6 +126,8 @@ export default function FeaturedPage() {
       setIsSaving(false);
     }
   }, [featuredIds, settings, updateSettings, router]);
+
+  const continueLabel = properties.length > 0 ? "Save & continue" : "Continue setup";
 
   // Filter properties based on search term
   const filteredProperties = properties.filter((prop) => {
@@ -144,14 +151,25 @@ export default function FeaturedPage() {
     <div className="space-y-8">
       <OverlayPreloader isVisible={isSaving} message="Saving featured listings..." />
 
-      <div>
-        <h1 className="text-3xl font-bold text-[#09391C] flex items-center gap-3">
-          <Star size={32} />
-          Featured Listings
-        </h1>
-        <p className="text-gray-600 mt-2">
-          Select which properties appear as featured on your Practitioner page
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-[#09391C] flex items-center gap-3">
+            <Star size={32} />
+            Featured Listings
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Optional. Select properties to feature, or continue if you have none yet.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={isSaving}
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+        >
+          {continueLabel}
+          <ChevronRight size={18} />
+        </button>
       </div>
 
       {/* Stats Card */}
@@ -185,11 +203,20 @@ export default function FeaturedPage() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
           </div>
         ) : properties.length === 0 ? (
-          <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-            <p className="text-gray-600 mb-2">No properties found</p>
-            <p className="text-sm text-gray-400">
-              Create and list properties first to feature them on your practitioner page
+          <div className="bg-white rounded-lg border border-gray-200 p-8 text-center space-y-4">
+            <p className="text-gray-800 font-medium">No properties found yet</p>
+            <p className="text-sm text-gray-500">
+              You can list properties later. Featured listings are optional for finishing your practitioner page.
             </p>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={isSaving}
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+            >
+              Continue setup
+              <ChevronRight size={18} />
+            </button>
           </div>
         ) : filteredProperties.length === 0 ? (
           <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
@@ -293,19 +320,19 @@ export default function FeaturedPage() {
         )}
       </div>
 
-      {/* Save Button */}
-      {properties.length > 0 && (
-        <div className="flex justify-end gap-3">
+      <div className="sticky bottom-0 z-10 -mx-6 border-t border-gray-200 bg-white/95 px-6 py-3 backdrop-blur lg:-mx-8 lg:px-8">
+        <div className="flex justify-end">
           <button
+            type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="inline-flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 disabled:opacity-50 transition-all"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
           >
             <Save size={18} />
-            Save Changes
+            {continueLabel}
           </button>
         </div>
-      )}
+      </div>
 
       {/* Info Box */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
