@@ -5,23 +5,25 @@
 
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import { Save, Trash2, ImageIcon, Settings, X } from "lucide-react";
-import { useDealSite, FooterDetails } from "@/context/deal-site-context";
+import { useDealSite } from "@/context/deal-site-context";
 import { useUserContext } from "@/context/user-context";
 import { POST_REQUEST, POST_REQUEST_FILE_UPLOAD } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import StandardPreloader from "@/components/new-marketplace/StandardPreloader";
-import PublicPageSetupComplete from "@/components/public-access-page/PublicPageSetupComplete";
+
+const NEXT_SETUP_HREF = "/public-access-page/theme";
 
 export default function BrandingPage() {
-  const { settings, updateSettings, loadSettings, markSetupComplete, previewUrl } = useDealSite();
+  const router = useRouter();
+  const { settings, updateSettings, loadSettings, markSetupComplete } = useDealSite();
   const { user, setUser } = useUserContext();
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [showComplete, setShowComplete] = useState(false);
   const [keywordInput, setKeywordInput] = useState(settings.keywords.join(", "));
 
   const handleUploadLogo = useCallback(async (file: File) => {
@@ -84,10 +86,11 @@ export default function BrandingPage() {
             },
           });
         }
-        setShowComplete(true);
         try {
           sessionStorage.setItem("khabiteq-public-page-just-saved", "1");
         } catch {}
+        router.push(NEXT_SETUP_HREF);
+        return;
       } else {
         toast.error(res?.message || "Failed to save settings");
       }
@@ -97,21 +100,13 @@ export default function BrandingPage() {
     } finally {
       setSaving(false);
     }
-  }, [settings, loadSettings, markSetupComplete, user, setUser]);
+  }, [settings, loadSettings, markSetupComplete, user, setUser, router]);
 
   const inputBase =
     "w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400 text-gray-900";
 
   return (
     <div className="space-y-8">
-      {showComplete && (
-        <PublicPageSetupComplete
-          previewUrl={previewUrl}
-          continueHref="/public-access-page"
-          continueLabel="Continue Setup"
-        />
-      )}
-
       <div>
         <h1 className="text-3xl font-bold text-[#09391C] flex items-center gap-3">
           <Settings size={32} />
