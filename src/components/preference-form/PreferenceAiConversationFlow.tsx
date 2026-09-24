@@ -881,19 +881,29 @@ function applyPreferenceOffPlanFieldsFromFocusedAnswer(
   return data;
 }
 
-function isBudgetMinFocus(field: string): boolean {
-  const f = normalizePreferenceFieldKey(field);
-  return (
-    (f.includes("budget") && f.includes("minimum")) ||
-    (f.includes("min price") && !f.includes("max"))
-  );
-}
-
 function isBudgetMaxFocus(field: string): boolean {
   const f = normalizePreferenceFieldKey(field);
   return (
+    f === "max_budget" ||
+    f.includes("max_budget") ||
     f.includes("max price") ||
-    (f.includes("budget") && (f.includes("maximum") || f.includes("must be greater")))
+    f.includes("maximum price") ||
+    f.includes("maximum budget") ||
+    (f.includes("budget") && f.includes("maximum")) ||
+    f.includes("must be greater")
+  );
+}
+
+function isBudgetMinFocus(field: string): boolean {
+  if (isBudgetMaxFocus(field)) return false;
+  const f = normalizePreferenceFieldKey(field);
+  return (
+    f === "min_budget" ||
+    f.includes("min_budget") ||
+    (f.includes("budget") && f.includes("minimum")) ||
+    f.includes("min price") ||
+    f.includes("minimum price") ||
+    f.includes("minimum budget")
   );
 }
 
@@ -912,11 +922,11 @@ function applyPreferenceBudgetFromFocusedAnswer(
   if (!focusedField || !trimmed) return { data, applied: false };
   const amount = parseBudgetAmountFromUserText(trimmed);
   if (amount == null || amount <= 0) return { data, applied: false };
-  if (isBudgetMinFocus(focusedField)) {
-    return { data: applyBudgetToData(data, "min_budget", amount), applied: true };
-  }
   if (isBudgetMaxFocus(focusedField)) {
     return { data: applyBudgetToData(data, "max_budget", amount), applied: true };
+  }
+  if (isBudgetMinFocus(focusedField)) {
+    return { data: applyBudgetToData(data, "min_budget", amount), applied: true };
   }
   return { data, applied: false };
 }

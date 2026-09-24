@@ -1312,12 +1312,15 @@ export function applyBudgetToData(
       : { currency: "NGN" };
   if (field === "min_budget") {
     b.minPrice = amount;
-    if (b.maxPrice === undefined || b.maxPrice === null || b.maxPrice === "")
-      b.maxPrice = amount;
+    const maxN =
+      b.maxPrice === undefined || b.maxPrice === null || b.maxPrice === ""
+        ? NaN
+        : typeof b.maxPrice === "number"
+          ? b.maxPrice
+          : Number(String(b.maxPrice).replace(/,/g, ""));
+    if (Number.isFinite(maxN) && maxN <= amount) delete b.maxPrice;
   } else {
     b.maxPrice = amount;
-    if (b.minPrice === undefined || b.minPrice === null || b.minPrice === "")
-      b.minPrice = amount;
   }
   return { ...data, budget: b };
 }

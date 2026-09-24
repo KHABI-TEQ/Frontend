@@ -155,10 +155,16 @@ function ensurePreferencePayloadStrings(payload: Record<string, unknown>): void 
 }
 
 function compactPayload<T extends Record<string, unknown>>(obj: T): T {
-  const out = { ...obj };
-  Object.keys(out).forEach((k) => {
-    const v = out[k];
-    if (v === null || v === undefined) delete out[k];
+  const out: Record<string, unknown> = {};
+  Object.keys(obj).forEach((k) => {
+    const v = obj[k];
+    if (v === null || v === undefined) return;
+    if (typeof v === "string" && v.trim() === "") return;
+    if (v && typeof v === "object" && !Array.isArray(v)) {
+      out[k] = compactPayload(v as Record<string, unknown>);
+      return;
+    }
+    out[k] = v;
   });
   return out as T;
 }

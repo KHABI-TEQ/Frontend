@@ -116,6 +116,11 @@ export default function DeveloperKycForm() {
           setRepName(d.representative?.fullName || `${user?.firstName || ""} ${user?.lastName || ""}`.trim());
           setRepPhone(d.profile?.phoneNumber || (user as any)?.phoneNumber || "");
           setRepEmail(d.profile?.email || user?.email || "");
+          if (d.representative?.idType) setIdType(d.representative.idType);
+          if (d.representative?.idNumber) setIdNumber(d.representative.idNumber);
+          if (Array.isArray(d.representative?.idDocumentUrls) && d.representative.idDocumentUrls[0]) {
+            setIdDoc(d.representative.idDocumentUrls[0]);
+          }
         } else {
           setFirstName(user?.firstName || "");
           setLastName(user?.lastName || "");
@@ -537,7 +542,13 @@ export default function DeveloperKycForm() {
                 <input className={inputClass} value={idNumber} onChange={(e) => setIdNumber(e.target.value)} />
               </Field>
               <Field label="Upload ID document" why="A clear photo or scan of the selected ID. This is used only for verification.">
-                <AttachFile id="id-doc" heading="Upload ID" setFileUrl={setIdDoc} acceptedFileTypes="image/*,.pdf" />
+                <AttachFile
+                  id="id-doc"
+                  heading="Upload ID"
+                  fileUrl={idDoc}
+                  setFileUrl={setIdDoc}
+                  acceptedFileTypes="image/*,.pdf"
+                />
               </Field>
               <label className="flex items-start gap-2 text-sm text-[#09391C]">
                 <input type="checkbox" className="mt-1" checked={consent} onChange={(e) => setConsent(e.target.checked)} />

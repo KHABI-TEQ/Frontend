@@ -99,13 +99,25 @@ export function getPreferenceFieldPrompt(
     return { displayLine: speak, speakLine: speak };
   }
 
-  if (f.includes("min price")) {
-    const speak = "What is your minimum budget in Naira?";
+  if (
+    f.includes("max_budget") ||
+    f.includes("max price must") ||
+    f.includes("must be greater") ||
+    f.includes("maximum budget") ||
+    f.includes("maximum price") ||
+    (f.includes("max price") && !f.includes("min price"))
+  ) {
+    const speak = "What is your maximum budget in Naira?";
     return { displayLine: speak, speakLine: speak };
   }
 
-  if (f.includes("max price must")) {
-    const speak = "What is your maximum budget in Naira?";
+  if (
+    f.includes("min_budget") ||
+    f.includes("minimum budget") ||
+    f.includes("minimum price") ||
+    f.includes("min price")
+  ) {
+    const speak = "What is your minimum budget in Naira?";
     return { displayLine: speak, speakLine: speak };
   }
 

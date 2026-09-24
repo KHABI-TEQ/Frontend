@@ -12,6 +12,7 @@ type SetFileUrlType =
 interface AttachFileProps {
   heading: string;
   setFileUrl?: SetFileUrlType;
+  fileUrl?: string | null;
   className?: string;
   id: string;
   style?: React.CSSProperties;
@@ -20,9 +21,19 @@ interface AttachFileProps {
   onUploadEnd?: () => void; // for hiding external process modal
 }
 
+function uploadedFileLabel(url: string): string {
+  try {
+    const name = decodeURIComponent(url.split("/").pop() || "");
+    return name.split("?")[0] || "Document uploaded";
+  } catch {
+    return "Document uploaded";
+  }
+}
+
 const AttachFile: React.FC<AttachFileProps> = ({
   heading,
   setFileUrl,
+  fileUrl,
   className = "",
   id,
   style,
@@ -89,28 +100,37 @@ const AttachFile: React.FC<AttachFileProps> = ({
         onChange={handleFileChange}
       />
 
-      <button
-        type="button"
-        onClick={handleClick}
-        style={style}
-        className="mt-3 lg:mt-0 w-full lg:w-[367px] h-[58px] rounded-md border border-[#8DDB90] text-[#09391C] bg-[#F8F8FD] px-4 flex items-center justify-center gap-2 border-dashed"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#8DDB90"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="w-5 h-5"
+      <div className="mt-3 lg:mt-0 w-full lg:w-[367px] space-y-2">
+        {fileUrl ? (
+          <p className="text-xs text-[#09391C] truncate" title={fileUrl}>
+            Uploaded: {uploadedFileLabel(fileUrl)}
+          </p>
+        ) : null}
+        <button
+          type="button"
+          onClick={handleClick}
+          style={style}
+          className="w-full h-[58px] rounded-md border border-[#8DDB90] text-[#09391C] bg-[#F8F8FD] px-4 flex items-center justify-center gap-2 border-dashed"
         >
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          <polyline points="17 8 12 3 7 8" />
-          <line x1="12" y1="3" x2="12" y2="15" />
-        </svg>
-        <span className="text-sm font-medium">Click to upload</span>
-      </button>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#8DDB90"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="w-5 h-5"
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="17 8 12 3 7 8" />
+            <line x1="12" y1="3" x2="12" y2="15" />
+          </svg>
+          <span className="text-sm font-medium">
+            {fileUrl ? "Replace uploaded file" : "Click to upload"}
+          </span>
+        </button>
+      </div>
     </div>
   );
 };
