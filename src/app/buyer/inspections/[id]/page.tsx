@@ -68,7 +68,15 @@ export default function BuyerInspectionDetailPage() {
     property.propertyName ||
     [property.location?.area, property.location?.state].filter(Boolean).join(", ") ||
     "Inspection";
-  const completed = inspection?.status === "completed";
+  const cancelled = ["cancelled", "agent_rejected", "transaction_failed"].includes(
+    String(inspection?.status || "")
+  );
+  const slotPassed =
+    inspection?.inspectionDate &&
+    Date.now() >=
+      new Date(inspection.inspectionDate).getTime() +
+        (inspection.proceedToTransactionPromptSentAt ? 0 : 2 * 60 * 60 * 1000);
+  const showProceed = !cancelled && Boolean(inspection?.proceedToTransactionPromptSentAt || slotPassed);
 
   return (
     <BuyerShell title={title} subtitle="Inspection details and next steps after your visit.">
@@ -95,7 +103,7 @@ export default function BuyerInspectionDetailPage() {
             ) : null}
           </article>
 
-          {completed ? (
+          {showProceed ? (
             <article className="rounded-3xl bg-white p-6 shadow-sm">
               {done === "search" ? (
                 <div>
@@ -119,6 +127,9 @@ export default function BuyerInspectionDetailPage() {
                     </Link>
                     <Link href={`/document-verification?inspectionId=${inspectionId}`} className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#09391C] ring-1 ring-black/10">
                       Document verification
+                    </Link>
+                    <Link href={`/survey-services?inspectionId=${inspectionId}`} className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#09391C] ring-1 ring-black/10">
+                      Survey services
                     </Link>
                     <Link href={`/transaction-registration?inspectionId=${inspectionId}`} className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#09391C] ring-1 ring-black/10">
                       Continue to transaction registration

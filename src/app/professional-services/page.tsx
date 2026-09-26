@@ -6,6 +6,8 @@ import toast from "react-hot-toast";
 import { ArrowLeft, Check, Scale, Compass, Landmark } from "lucide-react";
 import { GET_REQUEST, POST_REQUEST, POST_REQUEST_FILE_UPLOAD } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
+import InspectionBookingSelect from "@/components/due-diligence/InspectionBookingSelect";
+import { getBuyerProfile, getBuyerToken } from "@/lib/search-insurance";
 
 type CatalogField = {
   key: string;
@@ -72,6 +74,7 @@ export default function ProfessionalServicesPage() {
   const [contact, setContact] = useState({ fullName: "", email: "", phoneNumber: "" });
   const [uploading, setUploading] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [inspectionId, setInspectionId] = useState("");
 
   useEffect(() => {
     const load = async () => {
@@ -85,6 +88,14 @@ export default function ProfessionalServicesPage() {
       setLoading(false);
     };
     void load();
+    const profile = getBuyerProfile();
+    if (profile) {
+      setContact((c) => ({
+        fullName: c.fullName || profile.fullName || "",
+        email: c.email || profile.email || "",
+        phoneNumber: c.phoneNumber || profile.phoneNumber || "",
+      }));
+    }
   }, []);
 
   const selected = useMemo(
@@ -123,12 +134,21 @@ export default function ProfessionalServicesPage() {
       toast.error("Enter your name and email.");
       return;
     }
+    if (!inspectionId) {
+      toast.error("Select the inspected property this due diligence is for.");
+      return;
+    }
 
     setSubmitting(true);
-    const res = await POST_REQUEST(`${URLS.BASE}${URLS.professionalServiceRequests(selected.slug)}`, {
-      contact,
-      answers,
-    });
+    const res = await POST_REQUEST(
+      `${URLS.BASE}${URLS.professionalServiceRequests(selected.slug)}`,
+      {
+        contact,
+        answers,
+        inspectionId,
+      },
+      getBuyerToken() || undefined,
+    );
     if (!res.success) {
       setSubmitting(false);
       toast.error(res.message || "Could not submit the request.");
@@ -275,6 +295,7 @@ export default function ProfessionalServicesPage() {
 
             <div className="mt-8 space-y-4">
               <h3 className="font-bold">Your details</h3>
+              <InspectionBookingSelect value={inspectionId} onChange={setInspectionId} />
               <input
                 className="w-full rounded-lg border border-gray-200 px-3 py-3"
                 placeholder="Full name"

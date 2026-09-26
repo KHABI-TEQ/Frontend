@@ -329,7 +329,7 @@ export interface EnhancedAgentUser {
   firstName: string;
   lastName: string;
   phoneNumber: string;
-  userType: 'Agent' | 'Landowners' | 'FieldAgent';
+  userType: 'Agent' | 'Landowners';
   
   // Agent-specific data
   agentState: AgentState;

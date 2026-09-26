@@ -158,12 +158,14 @@ const SuccessModal = memo(
     onDone,
     onViewMatches,
     onGoDashboard,
+    insured,
   }: {
     showSuccessModal: boolean;
     onSubmitNew: () => void;
     onDone: () => void;
     onViewMatches?: () => void;
     onGoDashboard?: () => void;
+    insured?: boolean;
   }) => {
     // Prevent body scroll when modal is open
     React.useEffect(() => {
@@ -216,7 +218,9 @@ const SuccessModal = memo(
                   Preference Submitted Successfully!
                 </h3>
                 <p className="text-gray-600 mb-6">
-                  Khabiteq matches your preference with suitable properties. Your account remains active for inspections, professional services and transactions.
+                  {insured
+                    ? "Khabiteq matches your insured preference with suitable properties. You will get in-app and email alerts when we find a match."
+                    : "Thank you for submitting your property preference. You will receive an acknowledgement by email. When we find a match, we will email you a link to view the listing."}
                 </p>
               </div>
 
@@ -810,7 +814,7 @@ const PreferenceFormContent: React.FC = () => {
       return;
     }
 
-    if (!getBuyerToken()) {
+    if (insureSearch && !getBuyerToken()) {
       setShowBuyerAuth(true);
       return;
     }
@@ -1182,8 +1186,8 @@ const PreferenceFormContent: React.FC = () => {
       <BuyerAuthModal
         open={showBuyerAuth}
         onClose={() => setShowBuyerAuth(false)}
-        title="Create your account to continue"
-        description="Your account will be used for all inspections, professional services and transactions."
+        title="Create your account to insure this search"
+        description="Insurance is per search. Your account lets us track this journey and file a claim if you are scammed."
         defaultName={getBuyerProfile()?.fullName || (state.formData as any)?.contactInfo?.fullName}
         defaultEmail={getBuyerProfile()?.email || (state.formData as any)?.contactInfo?.email}
         defaultPhone={getBuyerProfile()?.phoneNumber || (state.formData as any)?.contactInfo?.phoneNumber}
@@ -1197,8 +1201,9 @@ const PreferenceFormContent: React.FC = () => {
         showSuccessModal={showSuccessModal}
         onSubmitNew={handleSubmitNew}
         onDone={handleDone}
-        onViewMatches={submittedPreference ? handleViewMatches : undefined}
-        onGoDashboard={getBuyerToken() ? handleGoDashboard : undefined}
+        insured={insureSearch}
+        onViewMatches={insureSearch && submittedPreference ? handleViewMatches : undefined}
+        onGoDashboard={insureSearch && getBuyerToken() ? handleGoDashboard : undefined}
       />
     </motion.div>
   );

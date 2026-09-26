@@ -824,7 +824,10 @@ const Register = () => {
               </>
             )}
             {(formik.values.userType === "Agent" ||
-              formik.values.userType === "Developer") && (
+              formik.values.userType === "Developer" ||
+              formik.values.userType === "Lawyer" ||
+              formik.values.userType === "Surveyor" ||
+              formik.values.userType === "Valuer") && (
               <BrmPicker
                 selectedId={formik.values.brmId || null}
                 onChange={(id) => formik.setFieldValue("brmId", id || "")}

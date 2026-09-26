@@ -36,7 +36,7 @@ interface UserProfile {
   address?: string;
   accountId?: string;
   profileImage?: string;
-  userType: "Agent" | "Landowners" | "FieldAgent" | "Developer" | "Lawyer" | "Surveyor" | "Valuer" | "PropertyScout";
+  userType: "Agent" | "Landowners" | "Developer" | "Lawyer" | "Surveyor" | "Valuer" | "PropertyScout";
   accountApproved?: boolean;
   createdAt: string;
 }
@@ -417,14 +417,14 @@ export default function ProfileSettingsPage() {
                 ? "Agent Account"
                 : user.userType === "Landowners"
                 ? "Landowner Account"
-                : user.userType === "FieldAgent"
-                ? "Field Agent Account"
                 : user.userType === "Developer"
                 ? "Developer Account"
                 : user.userType === "Lawyer"
                 ? "Lawyer Account"
                 : user.userType === "Surveyor"
                 ? "Surveyor Account"
+                : user.userType === "Valuer"
+                ? "Valuer Account"
                 : ""}
             </div>
           </div>
@@ -436,7 +436,11 @@ export default function ProfileSettingsPage() {
             {[
               { id: "profile", label: "Profile Details", icon: UserIcon },
               { id: "password", label: "Change Password", icon: LockIcon },
-              ...((user.userType === "Agent" || user.userType === "Developer")
+              ...((user.userType === "Agent" ||
+                user.userType === "Developer" ||
+                user.userType === "Lawyer" ||
+                user.userType === "Surveyor" ||
+                user.userType === "Valuer")
                 ? [{ id: "brm", label: "BRM", icon: UsersIcon }]
                 : []),
               {
@@ -823,7 +827,12 @@ export default function ProfileSettingsPage() {
               </div>
             )}
 
-            {activeTab === "brm" && (user.userType === "Agent" || user.userType === "Developer") && (
+            {activeTab === "brm" &&
+              (user.userType === "Agent" ||
+                user.userType === "Developer" ||
+                user.userType === "Lawyer" ||
+                user.userType === "Surveyor" ||
+                user.userType === "Valuer") && (
               <div className="space-y-6">
                 <div>
                   <h3 className="text-lg font-semibold text-[#09391C] mb-2">

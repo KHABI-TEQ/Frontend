@@ -110,10 +110,11 @@ export const transactionRegistrationService = {
     );
   },
 
-  register: (body: RegisterTransactionBody) =>
+  register: (body: RegisterTransactionBody, token?: string) =>
     POST_REQUEST<TransactionRegistrationRegisterResponse["data"]>(
       URLS.BASE + URLS.transactionRegistrationRegister,
-      body
+      body,
+      token
     ),
 
   downloadCertificate: (body: { email: string; registrationId: string }) =>

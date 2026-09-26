@@ -20,7 +20,6 @@ interface WhatsAppChatWidgetProps {
 function roleFromUserType(userType: string | undefined): SupportFaqRoleTab | null {
   switch (userType) {
     case "Agent":
-    case "FieldAgent":
       return "agent";
     case "Developer":
       return "developer";

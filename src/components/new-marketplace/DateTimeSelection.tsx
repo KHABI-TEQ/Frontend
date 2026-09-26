@@ -160,9 +160,7 @@ const DateTimeSelection: React.FC<DateTimeSelectionProps> = ({
         whatsAppNumber: prev.whatsAppNumber || profile.whatsAppNumber || "",
       }));
     };
-    if (!getBuyerToken()) {
-      setShowBuyerAuth(true);
-    } else {
+    if (getBuyerToken()) {
       applyProfile();
     }
   }, []);
@@ -427,7 +425,11 @@ const DateTimeSelection: React.FC<DateTimeSelectionProps> = ({
           <div className="flex justify-between items-center">
             <span className="text-[#5A5D63]">Inspection Fee:</span>
             <span className="font-semibold text-[#09391C] text-lg">
-              {inspectionFee > 0 ? `₦${inspectionFee.toLocaleString()}` : "No inspection fee"}
+              {selectedProperties.some((item) => item.sourcePage === "insured-match")
+                ? "Waived (insured search)"
+                : inspectionFee > 0
+                  ? `₦${inspectionFee.toLocaleString()}`
+                  : "No inspection fee"}
             </span>
           </div>
 

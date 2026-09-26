@@ -51,8 +51,6 @@ const userProtectedRoutes = [
   "/post-property-by-preference",
   "/profile-settings",
   "/notifications",
-  "/field-agent-inspections",
-  "/field-agent-inspection",
   "/transactions",
   "/agent-subscriptions",
   "/agent-kyc",

@@ -20,6 +20,7 @@ import { PersonNameFields } from "@/components/transaction-registration/PersonNa
 import { concatFullName, isPersonNameComplete } from "@/utils/person-name";
 import { GuidelinesTabContent } from "@/components/transaction-registration/GuidelinesTabContent";
 import { FileText, Search, ShieldCheck, ChevronLeft, ChevronRight, Award } from "lucide-react";
+import { buyerFetch, getBuyerProfile, getBuyerToken } from "@/lib/search-insurance";
 
 type TabId = "guidelines" | "search" | "register" | "certificate";
 const TAB_ORDER: TabId[] = ["guidelines", "search", "register", "certificate"];
@@ -44,6 +45,7 @@ const labelClass = "block text-sm font-semibold text-gray-800 mb-2";
 export default function TransactionRegistrationPortal() {
   const searchParams = useSearchParams();
   const propertyIdFromUrl = searchParams.get("propertyCode") ?? searchParams.get("propertyId") ?? "";
+  const inspectionIdFromUrl = searchParams.get("inspectionId") ?? "";
   const tabFromUrl = searchParams.get("tab");
   const initialTab: TabId =
     tabFromUrl === "certificate" || tabFromUrl === "search" || tabFromUrl === "register" || tabFromUrl === "guidelines"
@@ -91,6 +93,10 @@ export default function TransactionRegistrationPortal() {
   const [deedsOfAssignmentFile, setDeedsOfAssignmentFile] = useState<File | null>(null);
   const [conveyanceFile, setConveyanceFile] = useState<File | null>(null);
   const [registering, setRegistering] = useState(false);
+  const [seekerGate, setSeekerGate] = useState<{
+    ready: boolean;
+    blocked?: string;
+  }>({ ready: !inspectionIdFromUrl });
 
   const [certEmail, setCertEmail] = useState("");
   const [certRegistrationId, setCertRegistrationId] = useState("");
@@ -106,6 +112,45 @@ export default function TransactionRegistrationPortal() {
   useEffect(() => {
     if (tabFromUrl === "certificate") setTab("certificate");
   }, [tabFromUrl]);
+
+  useEffect(() => {
+    if (!inspectionIdFromUrl) return;
+    const next = `/transaction-registration?inspectionId=${encodeURIComponent(inspectionIdFromUrl)}&tab=register`;
+    if (!getBuyerToken()) {
+      window.location.href = `/buyer/login?next=${encodeURIComponent(next)}`;
+      return;
+    }
+    setTab("register");
+    const profile = getBuyerProfile();
+    if (profile?.email) setRegBuyerEmail(profile.email);
+    if (profile?.fullName) {
+      const [first, ...rest] = profile.fullName.split(/\s+/);
+      setRegBuyerFirstName(first || "");
+      setRegBuyerLastName(rest.join(" "));
+    }
+    if (profile?.phoneNumber) setRegBuyerPhone(profile.phoneNumber);
+    buyerFetch<{ inspections: any[] }>("/buyer/auth/me/inspections").then((res) => {
+      const found = (res.data?.inspections || []).find(
+        (row: any) => String(row._id) === inspectionIdFromUrl
+      );
+      if (!found) {
+        setSeekerGate({
+          ready: true,
+          blocked: "We could not find this inspection on your buyer account.",
+        });
+        return;
+      }
+      const path = String(found.dueDiligencePath || "");
+      if (path !== "platform" && path !== "independent") {
+        setSeekerGate({
+          ready: true,
+          blocked: "Record due diligence on this inspection before registering the transaction.",
+        });
+        return;
+      }
+      setSeekerGate({ ready: true });
+    });
+  }, [inspectionIdFromUrl]);
 
   useEffect(() => {
     if (propertyIdFromUrl) {
@@ -316,8 +361,11 @@ export default function TransactionRegistrationPortal() {
       if (propertyListedOnPlatform && regPropertyId.trim()) {
         body.propertyId = regPropertyId.trim();
       }
+      if (inspectionIdFromUrl) {
+        body.inspectionId = inspectionIdFromUrl;
+      }
 
-      const res = await transactionRegistrationService.register(body);
+      const res = await transactionRegistrationService.register(body, getBuyerToken() || undefined);
       if (res.success) {
         const paymentUrl = (res.data as { paymentUrl?: string } | null)?.paymentUrl;
         if (paymentUrl) {
@@ -485,7 +533,21 @@ export default function TransactionRegistrationPortal() {
           </div>
         )}
 
-        {tab === "register" && (
+        {tab === "register" && seekerGate.blocked && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-950">
+            <p className="font-semibold">Due diligence required</p>
+            <p className="mt-2">{seekerGate.blocked}</p>
+            {inspectionIdFromUrl ? (
+              <a
+                href={`/buyer/inspections/${inspectionIdFromUrl}`}
+                className="mt-4 inline-flex rounded-full bg-[#09391C] px-4 py-2 text-sm font-semibold text-white"
+              >
+                Complete due diligence
+              </a>
+            ) : null}
+          </div>
+        )}
+        {tab === "register" && !seekerGate.blocked && (
           <div className="rounded-2xl border border-gray-200 bg-white p-6 md:p-8 shadow-sm">
             <h2 className="text-xl font-bold text-gray-900 mb-2">Register transaction</h2>
             <p className="text-sm text-gray-600 mb-6">

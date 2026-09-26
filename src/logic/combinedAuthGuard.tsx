@@ -16,7 +16,7 @@ export const REDIRECT_AFTER_SUBSCRIPTION_KEY = "redirectAfterSubscription";
 interface CombinedAuthGuardProps {
   children: ReactNode;
   requireAuth?: boolean;
-  allowedUserTypes?: ("Agent" | "Landowners" | "FieldAgent" | "Developer" | "PropertyScout" | "Lawyer" | "Surveyor" | "Valuer")[];
+  allowedUserTypes?: ("Agent" | "Landowners" | "Developer" | "PropertyScout" | "Lawyer" | "Surveyor" | "Valuer")[];
   redirectTo?: string;
   // Kept for backward-compatibility but ignored
   requireAgentOnboarding?: boolean;

@@ -171,7 +171,7 @@ interface PostPropertyContextType {
   showPropertySummary: boolean;
   setShowPropertySummary: (show: boolean) => void;
   getUserCommissionRate: () => number;
-  /** Canonical account type from session (Agent, Developer, Landowners, FieldAgent). */
+  /** Canonical account type from session (Agent, Developer, Landowners). */
   getUserType: () => string;
   /** "ai" | "manual" | null. When null, user has not yet chosen. */
   postingMode: PostingMode;
@@ -480,7 +480,7 @@ export function PostPropertyProvider({ children }: { children: ReactNode }) {
 
   const getUserType = (): string => readAccountUserTypeFromStorage();
 
-  /** Agent uses agent commission tier; Developer / Landowners / FieldAgent use publisher tier. */
+  /** Agent uses agent commission tier; Developer / Landowners use publisher tier. */
   const getUserCommissionRate = (): number => {
     const accountType = readAccountUserTypeFromStorage();
     const commissionRole = accountType === "Agent" ? "agent" : "landowner";

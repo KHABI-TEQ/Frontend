@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useUserContext } from "@/context/user-context";
 import Agent from "./agent";
 import Landlord from "./landlord";
-import FieldAgent from "./field-agent";
 import Developer from "./developer";
 import ProfessionalDashboard from "./professional";
 import Scout from "./scout";
@@ -91,9 +90,7 @@ export default function Dashboard() {
               ? "Agent"
               : typeLower === "propertyscout"
                 ? "PropertyScout"
-                : typeLower === "fieldagent" || typeLower === "field_agent"
-                  ? "FieldAgent"
-                  : effectiveType;
+                : effectiveType;
       if (canonical && current !== canonical) {
         localStorage.setItem("userType", canonical);
       }
@@ -105,7 +102,6 @@ export default function Dashboard() {
   const showAgentDashboard = typeLower === "agent";
   const showDeveloperDashboard = typeLower === "developer";
   const showLandlord = typeLower === "landowners" || typeLower === "landowner";
-  const showFieldAgent = typeLower === "fieldagent" || typeLower === "field_agent";
   const showLawyer = typeLower === "lawyer";
   const showSurveyor = typeLower === "surveyor";
   const showValuer = typeLower === "valuer";
@@ -115,7 +111,6 @@ export default function Dashboard() {
     !showAgentDashboard &&
     !showDeveloperDashboard &&
     !showLandlord &&
-    !showFieldAgent &&
     !showLawyer &&
     !showSurveyor &&
     !showValuer &&
@@ -157,7 +152,6 @@ export default function Dashboard() {
       {showAgentDashboard && <Agent />}
       {showDeveloper && <Developer />}
       {showLandlord && <Landlord />}
-      {showFieldAgent && <FieldAgent />}
       {showLawyer && <ProfessionalDashboard role="Lawyer" />}
       {showSurveyor && <ProfessionalDashboard role="Surveyor" />}
       {showValuer && <Valuer />}

@@ -100,6 +100,7 @@ interface InspectionData {
   scheduleStatus?: string;
   assignedFieldAgent?: string;
   fieldAgentRequestStatus?: string;
+  isInsuredSearch?: boolean;
 }
 
 interface BookingData {
@@ -950,6 +951,7 @@ export default function MyInspectionRequestsPage() {
                           <img src={inspection.property.image} alt={altTitle || "Property"} className="w-full h-full object-cover" />
                           <div className="absolute top-4 left-4 flex gap-2">
                             <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusConfig.color} text-white`}>{statusConfig.label}</span>
+                            {inspection.isInsuredSearch && <span className="px-3 py-1 rounded-full text-xs font-medium bg-emerald-700 text-white">Insured — fee waived</span>}
                             {inspection.isLOI && <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-500 text-white">LOI</span>}
                           </div>
                         </div>
@@ -1528,18 +1530,25 @@ export default function MyInspectionRequestsPage() {
                 <button disabled={isSubmittingRespond} onClick={() => setRespondInspection(null)} className="text-gray-500 hover:text-gray-700 disabled:opacity-50">✕</button>
               </div>
               <p className="text-sm text-[#5A5D63] mb-4">
-                {respondAction === "accept"
-                  ? "You can add an optional note. The buyer pays the inspection fee (₦1,000–₦50,000) after you accept."
+                {respondInspection.isInsuredSearch
+                  ? "Insured search — inspection fee waived. Accepting confirms the slot immediately."
+                  : respondAction === "accept"
+                  ? "You can request an optional inspection fee (₦1,000–₦50,000) or leave it blank for no fee."
                   : "The buyer will be notified. You can add an optional reason."}
               </p>
-              {respondAction === "accept" && (respondInspection.receiverMode?.type === "dealSite" || (respondInspection as any).receiverMode?.type === "dealSite") && (
+              {respondInspection.isInsuredSearch && (
+                <p className="text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 mb-4">
+                  Insured search — inspection fee waived. The client will not pay a fee.
+                </p>
+              )}
+              {respondAction === "accept" && !respondInspection.isInsuredSearch && (respondInspection.receiverMode?.type === "dealSite" || (respondInspection as any).receiverMode?.type === "dealSite") && (
                 <p className="text-sm text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-2 mb-4">
                   DealSite request: You can optionally set an inspection fee (₦1,000–₦50,000). If set, the buyer will receive a payment link.
                 </p>
               )}
-              {respondAction === "accept" && (
+              {respondAction === "accept" && !respondInspection.isInsuredSearch && (
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Inspection fee (₦) — buyer pays after accept</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Inspection fee (₦) — optional</label>
                   <input
                     type="number"
                     min={INSPECTION_FEE_MIN}
@@ -1550,7 +1559,7 @@ export default function MyInspectionRequestsPage() {
                     onChange={(e) => setRespondInspectionFee(e.target.value.replace(/\D/g, "").slice(0, 6))}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#8DDB90] focus:border-transparent"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Required on the main marketplace. Range: ₦1,000 – ₦50,000. Leave empty to use the listing fee (default ₦5,000).</p>
+                  <p className="text-xs text-gray-500 mt-1">Leave empty to confirm no fee. Range: ₦1,000 – ₦50,000 if you request one.</p>
                 </div>
               )}
               <div className="mb-6">

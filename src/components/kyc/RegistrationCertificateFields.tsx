@@ -87,6 +87,7 @@ export function RegistrationCertificateFields({
         <AttachFile
           id={uploadId}
           heading={`Upload ${label}`}
+          fileUrl={fileUrl || null}
           setFileUrl={(url: string | null) => onFileUrlChange(url || "")}
           acceptedFileTypes="image/*,.pdf"
         />

@@ -10,7 +10,7 @@ interface AgreementModalProps {
   onClose: () => void;
   onAccept: () => void;
   userName?: string;
-  /** Session account type: Agent, Developer, Landowners, FieldAgent (from user context). */
+  /** Session account type: Agent, Developer, Landowners (from user context). */
   userType?: string;
   textValue?: string;
 }

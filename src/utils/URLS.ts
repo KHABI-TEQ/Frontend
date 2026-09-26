@@ -96,17 +96,7 @@ export const URLS = {
   accountMyInspectionGetOne: (inspectionId: string) => `/account/my-inspections/${inspectionId}`,
   /** POST /account/my-inspections/:inspectionId/respond { action: "accept" | "reject", note?: string, inspectionFee?: number } (guide §8.3) */
   accountInspectionRespond: (inspectionId: string) => `/account/my-inspections/${inspectionId}/respond`,
-  /** Field Agent representation — legacy; prefer licensed Agents */
-  fieldAgentRepresentationTerms: "/account/field-agents/representation-terms",
-  fieldAgentsAvailable: "/account/field-agents/available",
-  requestFieldAgentForInspection: (inspectionId: string) =>
-    `/account/my-inspections/${inspectionId}/request-field-agent`,
-  cancelFieldAgentRequest: (inspectionId: string) =>
-    `/account/my-inspections/${inspectionId}/field-agent-request`,
-  fieldAgentRepresentationRequests: "/account/inspectionsFieldAgent/representation-requests",
-  fieldAgentRepresentationRespond: (inspectionId: string) =>
-    `/account/inspectionsFieldAgent/${inspectionId}/representation/respond`,
-  /** Property Scout → licensed Agent representation (replaces Field Agent request) */
+  /** Property Scout → licensed Agent representation */
   propertyScoutStatus: "/account/property-scout/status",
   professionalUpgrade: "/account/professional-upgrade",
   licensedAgentRepresentationTerms: "/account/licensed-agents/representation-terms",
@@ -114,6 +104,8 @@ export const URLS = {
   licensedAgentRepresentationRequests:
     "/account/licensed-agents/representation-requests",
   requestLicensedAgentForInspection: (inspectionId: string) =>
+    `/account/my-inspections/${inspectionId}/request-licensed-agent`,
+  cancelLicensedAgentRequest: (inspectionId: string) =>
     `/account/my-inspections/${inspectionId}/request-licensed-agent`,
   licensedAgentRepresentationRespond: (inspectionId: string) =>
     `/account/licensed-agents/${inspectionId}/representation/respond`,

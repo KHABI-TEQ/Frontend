@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { X, Paperclip, File as FileIcon, Trash2, Download, Eye, Upload, ChevronRight, ChevronLeft, Check } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useDocumentVerification } from '@/context/document-verification-context';
@@ -9,6 +9,8 @@ import { DELETE_REQUEST, POST_REQUEST, POST_REQUEST_FILE_UPLOAD } from '@/utils/
 import DocumentIframePreview from '@/components/document-verification/DocumentIframePreview';
 import { useDocumentVerificationSettings, useDocumentVerificationPrices } from '@/hooks/useSystemSettings';
 import ProfessionalPicker, { type MarketplaceProfessional } from '@/components/professionals/ProfessionalPicker';
+import InspectionBookingSelect from '@/components/due-diligence/InspectionBookingSelect';
+import { getBuyerProfile, getBuyerToken } from '@/lib/search-insurance';
 
 // Define the document types as a union type
 const documentOptions = [
@@ -84,6 +86,7 @@ const DocumentVerificationPage: React.FC = () => {
     receiptUploadStatus: 'idle',
   });
   const [selectedLawyer, setSelectedLawyer] = useState<MarketplaceProfessional | null>(null);
+  const [inspectionId, setInspectionId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRedirectingToPayment, setIsRedirectingToPayment] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -92,6 +95,17 @@ const DocumentVerificationPage: React.FC = () => {
   const fileInputRefs = useRef<{ [key in DocumentType]?: HTMLInputElement | null }>({});
   const receiptInputRef = useRef<HTMLInputElement | null>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    const profile = getBuyerProfile();
+    if (!profile) return;
+    setContactInfo((c) => ({
+      fullName: c.fullName || profile.fullName || '',
+      phoneNumber: c.phoneNumber || profile.phoneNumber || '',
+      email: c.email || profile.email || '',
+      address: c.address || profile.address || '',
+    }));
+  }, []);
 
   const {
     setDocumentsMetadata,
@@ -284,6 +298,10 @@ const DocumentVerificationPage: React.FC = () => {
   };
 
   const validateStep1 = (): boolean => {
+    if (!inspectionId) {
+      toast.error('Select the inspected property this due diligence is for.');
+      return false;
+    }
     if (selectedDocuments.length === 0) {
       toast.error('Please select at least one document');
       return false;
@@ -363,9 +381,14 @@ const DocumentVerificationPage: React.FC = () => {
         },
         lawyerId: selectedLawyer.id,
         documentsMetadata: docsMeta,
+        inspectionId,
       };
 
-      const response = await POST_REQUEST(`${URLS.BASE}${URLS.submitVerificationDocs}`, payload);
+      const response = await POST_REQUEST(
+        `${URLS.BASE}${URLS.submitVerificationDocs}`,
+        payload,
+        getBuyerToken() || undefined,
+      );
 
       if (response.success) {
         // Check if payment authorization URL is provided
@@ -421,6 +444,9 @@ const DocumentVerificationPage: React.FC = () => {
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold text-gray-800 mb-3">Step 1: Select & Upload Documents</h2>
         <p className="text-gray-600">Choose up to 2 documents and upload them so the professional you select can review them.</p>
+      </div>
+      <div className="mb-8 text-left">
+        <InspectionBookingSelect value={inspectionId} onChange={setInspectionId} />
       </div>
 
       {/* Document Selection Grid */}

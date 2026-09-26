@@ -160,7 +160,7 @@ const Login: FC = () => {
             if (stored)
               normalized = {
                 ...normalized,
-                userType: stored.trim() as "Agent" | "Landowners" | "FieldAgent" | "Developer",
+                userType: stored.trim() as "Agent" | "Landowners" | "Developer",
               };
           }
           if (normalized.userType) localStorage.setItem("userType", normalized.userType);

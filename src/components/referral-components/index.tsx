@@ -32,7 +32,7 @@ interface ReferredUser {
   dateReferred: string;
   status: 'pending' | 'verified' | 'completed';
   earnings: number;
-  userType: 'Agent' | 'Landowner' | 'FieldAgent';
+  userType: 'Agent' | 'Landowner';
 }
 
 interface ReferralStats {
@@ -71,7 +71,7 @@ interface ReferralRecordItem {
     lastName?: string;
     fullName?: string;
     email?: string;
-    userType?: 'Agent' | 'FieldAgent' | 'Landowner' | string;
+    userType?: 'Agent' | 'Landowner' | string;
     accountStatus?: string;
     isAccountVerified?: boolean;
   };
@@ -162,7 +162,7 @@ const ReferralPage = () => {
         const earliestLog = (item.logs || []).slice().sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())[0];
         const hasGranted = (item.logs || []).some((l) => l.rewardStatus === 'granted');
         const status: ReferredUser['status'] = hasGranted ? 'completed' : (u.isAccountVerified ? 'verified' : 'pending');
-        const userType = (u.userType === 'Agent' || u.userType === 'FieldAgent' || u.userType === 'Landowner') ? u.userType : 'Agent';
+        const userType = (u.userType === 'Agent' || u.userType === 'Landowner') ? u.userType : 'Agent';
         return {
           id: u._id || Math.random().toString(36).slice(2),
           name: fullName,

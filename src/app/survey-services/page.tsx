@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import ProfessionalPicker, {
@@ -8,6 +8,8 @@ import ProfessionalPicker, {
 } from "@/components/professionals/ProfessionalPicker";
 import { POST_REQUEST, POST_REQUEST_FILE_UPLOAD } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
+import InspectionBookingSelect from "@/components/due-diligence/InspectionBookingSelect";
+import { getBuyerProfile, getBuyerToken } from "@/lib/search-insurance";
 
 const SERVICE_TYPES = ["plan-verification", "site-survey"] as const;
 
@@ -25,6 +27,17 @@ export default function SurveyServicesPage() {
   });
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [inspectionId, setInspectionId] = useState("");
+
+  useEffect(() => {
+    const profile = getBuyerProfile();
+    if (!profile) return;
+    setContact((c) => ({
+      fullName: c.fullName || profile.fullName || "",
+      email: c.email || profile.email || "",
+      phoneNumber: c.phoneNumber || profile.phoneNumber || "",
+    }));
+  }, []);
 
   const uploadPlan = async (file?: File) => {
     if (!file) return;
@@ -57,20 +70,29 @@ export default function SurveyServicesPage() {
       toast.error("Fill in your contact details.");
       return;
     }
+    if (!inspectionId) {
+      toast.error("Select the inspected property this due diligence is for.");
+      return;
+    }
     setSubmitting(true);
     try {
-      const res = await POST_REQUEST(`${URLS.BASE}${URLS.surveyRequests}`, {
-        contactInfo: {
-          fullName: contact.fullName.trim(),
-          email: contact.email.trim().toLowerCase(),
-          phoneNumber: contact.phoneNumber.trim(),
+      const res = await POST_REQUEST(
+        `${URLS.BASE}${URLS.surveyRequests}`,
+        {
+          contactInfo: {
+            fullName: contact.fullName.trim(),
+            email: contact.email.trim().toLowerCase(),
+            phoneNumber: contact.phoneNumber.trim(),
+          },
+          surveyorId: selected.id,
+          serviceType,
+          propertyAddress: propertyAddress.trim() || undefined,
+          surveyPlanUrl: planUrl.trim() || undefined,
+          notes: notes.trim() || undefined,
+          inspectionId,
         },
-        surveyorId: selected.id,
-        serviceType,
-        propertyAddress: propertyAddress.trim() || undefined,
-        surveyPlanUrl: planUrl.trim() || undefined,
-        notes: notes.trim() || undefined,
-      });
+        getBuyerToken() || undefined,
+      );
       if (res.success) {
         toast.success(
           `${selected.fullName} will accept or decline. We will notify you when payment is due.`,
@@ -116,6 +138,7 @@ export default function SurveyServicesPage() {
         </div>
 
         <div className="bg-white rounded-2xl p-6 shadow-sm space-y-5">
+          <InspectionBookingSelect value={inspectionId} onChange={setInspectionId} />
           <div>
             <p className="font-semibold text-[#09391C] mb-3">Service type</p>
             <div className="flex flex-wrap gap-2">

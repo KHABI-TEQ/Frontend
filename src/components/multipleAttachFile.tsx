@@ -17,11 +17,13 @@ const AttachFile: React.FC<AttachFileProps> = ({
   className,
   id, // Destructure id prop
 }) => {
+  const [selectedNames, setSelectedNames] = React.useState<string[]>([]);
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const files = event.target.files;
     if (!files) return;
+    setSelectedNames(Array.from(files).map((file) => file.name));
 
     const fileUrls = await Promise.all(
       Array.from(files).map(async (file) => {
@@ -40,6 +42,11 @@ const AttachFile: React.FC<AttachFileProps> = ({
       <span className='text-base leading-[25.6px] text-[#202430] font-semibold'>
         {heading}
       </span>
+      {selectedNames.length > 0 ? (
+        <p className="text-xs text-[#09391C] font-medium mt-1 lg:mt-0 truncate max-w-[367px]">
+          Selected: {selectedNames.join(", ")}
+        </p>
+      ) : null}
       <input
         type='file'
         name=''

@@ -10,11 +10,11 @@ import {
   Settings,
   LogOut,
   Home,
-  Briefcase,
   Users,
   Calendar,
   Handshake,
   CreditCard,
+  Briefcase,
 } from "lucide-react";
 import { usePageContext } from "@/context/page-context";
 import { AgentNavData } from "@/enums";
@@ -33,12 +33,12 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
   const ref = React.useRef<HTMLDivElement | null>(null);
   const { logout, user: contextUser } = useUserContext();
   const { setSelectedNav } = usePageContext();
-  type UserTypeValue = "Agent" | "Landowners" | "Developer" | "FieldAgent" | "Lawyer" | "Surveyor" | "Valuer" | "PropertyScout";
+  type UserTypeValue = "Agent" | "Landowners" | "Developer" | "Lawyer" | "Surveyor" | "Valuer" | "PropertyScout";
   const [position, setPosition] = useState({ top: 0, right: 0 });
 
   useClickOutside(ref, () => closeUserProfileModal(false));
 
-  // Normalize platform role (Agent | Developer | Landowners | FieldAgent) — not agentData.agentType (Individual/Company).
+  // Normalize platform role (Agent | Developer | Landowners) — not agentData.agentType (Individual/Company).
   const normalizeToUserType = (value: unknown): UserTypeValue | null => {
     if (value == null) return null;
     const s = String(value).trim();
@@ -46,13 +46,12 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
     const lower = s.toLowerCase();
     if (lower === "developer") return "Developer";
     if (lower === "landowners" || lower === "landowner") return "Landowners";
-    if (lower === "fieldagent" || lower === "field_agent") return "FieldAgent";
     if (lower === "agent") return "Agent";
     if (lower === "lawyer") return "Lawyer";
     if (lower === "surveyor") return "Surveyor";
     if (lower === "valuer") return "Valuer";
     if (lower === "propertyscout" || lower === "property_scout") return "PropertyScout";
-    if (["Agent", "Landowners", "Developer", "FieldAgent", "Lawyer", "Surveyor", "Valuer", "PropertyScout"].includes(s)) return s as UserTypeValue;
+    if (["Agent", "Landowners", "Developer", "Lawyer", "Surveyor", "Valuer", "PropertyScout"].includes(s)) return s as UserTypeValue;
     return null;
   };
 
@@ -91,9 +90,7 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
         ? "Landowner"
         : effectiveUserType === "Developer"
           ? "Developer"
-          : effectiveUserType === "FieldAgent"
-            ? "Field Agent"
-            : effectiveUserType === "Lawyer"
+          : effectiveUserType === "Lawyer"
               ? "Lawyer"
               : effectiveUserType === "Surveyor"
                 ? "Surveyor"
@@ -293,28 +290,6 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
             label: "Upgrade Account",
             action: () => {
               clientNavigate("/account/upgrade");
-              closeUserProfileModal(false);
-            },
-          },
-          {
-            icon: <Settings size={18} />,
-            label: "Account Settings",
-            action: () => {
-              clientNavigate("/profile-settings");
-              closeUserProfileModal(false);
-            },
-          },
-        ]
-      : []),
-
-    // FieldAgent-specific items
-    ...(effectiveUserType === "FieldAgent"
-      ? [
-          {
-            icon: <Briefcase size={18} />,
-            label: "Assigned Inspection",
-            action: () => {
-              clientNavigate("/field-agent-inspections");
               closeUserProfileModal(false);
             },
           },

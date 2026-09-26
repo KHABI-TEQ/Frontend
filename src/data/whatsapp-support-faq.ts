@@ -3,7 +3,6 @@ export type SupportFaqAudience =
   | "agent"
   | "developer"
   | "landlord"
-  | "field_agent"
   | "client"
   | "syndicating_partner";
 
@@ -123,7 +122,7 @@ export const WHATSAPP_SUPPORT_FAQ: SupportFaqItem[] = [
     id: "create-account",
     question: "How do I create an account?",
     answer:
-      "Select Get Started or Register, then choose whether you are a Landlord, Agent, or Developer. Verify your email and sign in. Landlords and developers can go straight to their dashboard. Agents should finish the agent setup steps in their account. Field Agents are added by our team—you cannot sign up as a Field Agent on your own.",
+      "Select Get Started or Register, then choose whether you are a Landlord, Agent, or Developer. Verify your email and sign in. Landlords and developers can go straight to their dashboard. Agents should finish the agent setup steps in their account.",
     audiences: ["landlord", "developer","agent"],
     whatsappMessage: "Hi, I need help creating or accessing my Khabi-Teq account.",
   },
@@ -249,14 +248,6 @@ export const WHATSAPP_SUPPORT_FAQ: SupportFaqItem[] = [
     whatsappMessage: "Hi, I am a Developer and need help with subscription or syndication.",
   },
   {
-    id: "field-agent-inspections",
-    question: "As a Field Agent, what can I do on the platform?",
-    answer:
-      "Field Agents work on property inspections assigned to them. View your assigned visits from the dashboard, complete each inspection report, and update your profile in Account Settings. You cannot post properties or use the agent marketplace.",
-    audiences: ["field_agent"],
-    whatsappMessage: "Hi, I am a Field Agent and need help with assigned inspections on Khabi-Teq.",
-  },
-  {
     id: "developer-landlord-agent-request-to-market",
     question: "What is the Agent Request-to-market workflow?",
     answer:
@@ -316,7 +307,7 @@ export const WHATSAPP_SUPPORT_FAQ: SupportFaqItem[] = [
     id: "access-denied-usertype",
     question: "I see “access denied” or the wrong dashboard",
     answer:
-      "Each account is set up as Agent, Landlord, Developer, or Field Agent. Sign out, then sign in again with the correct email. Avoid using the same browser for more than one account at a time. If you still see the wrong dashboard or cannot open a page, contact support with your registered email.",
+      "Each account is set up as Agent, Landlord, Developer, or another practitioner type. Sign out, then sign in again with the correct email. Avoid using the same browser for more than one account at a time. If you still see the wrong dashboard or cannot open a page, contact support with your registered email.",
     audiences: ["all"],
     whatsappMessage: "Hi, I am having access or wrong user role issues on Khabi-Teq. My email is: ",
   },

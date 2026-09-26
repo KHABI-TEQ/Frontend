@@ -8,7 +8,6 @@ export function getPostingAgreementUserTypeLabel(accountType: string | undefined
   if (lower === "agent") return "Agent";
   if (lower === "landowner" || lower === "landowners") return "Property Owner";
   if (lower === "developer") return "Developer";
-  if (lower === "fieldagent" || lower === "field_agent") return "Field Agent";
   switch (raw) {
     case "Agent":
       return "Agent";
@@ -16,8 +15,6 @@ export function getPostingAgreementUserTypeLabel(accountType: string | undefined
       return "Developer";
     case "Landowners":
       return "Property Owner";
-    case "FieldAgent":
-      return "Field Agent";
     default:
       return raw;
   }

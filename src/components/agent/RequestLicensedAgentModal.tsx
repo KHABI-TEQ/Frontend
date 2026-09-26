@@ -102,7 +102,7 @@ export function RequestLicensedAgentModal({
     setSubmitting(true);
     try {
       const res = await DELETE_REQUEST(
-        `${URLS.BASE}${URLS.cancelFieldAgentRequest(inspectionId)}`,
+        `${URLS.BASE}${URLS.cancelLicensedAgentRequest(inspectionId)}`,
         undefined,
         token,
       );
@@ -379,6 +379,3 @@ export function RequestLicensedAgentModal({
     </AnimatePresence>
   );
 }
-
-/** @deprecated Use RequestLicensedAgentModal */
-export { RequestLicensedAgentModal as RequestFieldAgentModal };

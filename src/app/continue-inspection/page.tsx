@@ -56,6 +56,7 @@ const ContinueInspectionPage = () => {
 
   const inspectionFee = useMemo(() => {
     return selectedProperties.reduce((sum, item) => {
+      if (item.sourcePage === "insured-match") return sum;
       const raw = (item.property as { inspectionFee?: unknown } | undefined)?.inspectionFee;
       return sum + listingInspectionFeeNaira(raw);
     }, 0);

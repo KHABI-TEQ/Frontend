@@ -19,11 +19,6 @@ function isLandownerUser(user: User | null): boolean {
   return t === "landowners" || t === "landowner";
 }
 
-function isFieldAgentUser(user: User | null): boolean {
-  const t = (user?.userType ?? "").toLowerCase().replace(/[\s_]/g, "");
-  return t === "fieldagent";
-}
-
 export function hasConfiguredPractitionerPage(dealSite: unknown): boolean {
   if (dealSite == null || dealSite === false) return false;
   if (typeof dealSite !== "object") return Boolean(dealSite);
@@ -83,7 +78,6 @@ export function DealSiteSetupOverlay({ user }: Props) {
   const shouldShow =
     !dismissed &&
     !isLandownerUser(user) &&
-    !isFieldAgentUser(user) &&
     needsPractitionerPage;
 
   useEffect(() => {

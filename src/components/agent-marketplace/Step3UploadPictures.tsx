@@ -121,7 +121,9 @@ const Step3UploadPictures: React.FC<Step3Props> = ({
             </div>
             <div>
               <p className='text-[18px] font-medium text-[#1E1E1E] mb-1'>
-                Click to upload or drag and drop
+                {propertyImages.length > 0
+                  ? `${propertyImages.length} image${propertyImages.length === 1 ? "" : "s"} selected — click to add more`
+                  : "Click to upload or drag and drop"}
               </p>
               <p className='text-[14px] text-[#8D9090]'>
                 PNG, JPG up to 5MB each

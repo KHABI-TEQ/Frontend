@@ -63,7 +63,8 @@ export default function NewSearchInsuranceClaimPage() {
     <BuyerShell title="File a search insurance claim">
       <div className="rounded-3xl bg-white p-6 shadow-sm">
         <p className="text-sm text-[#5A5D63]">
-          Describe the scam and attach evidence. Admin will review and record a decision against your ₦2,000,000 cover.
+          Claims are only available when this search is insured and due diligence was done with a Khabiteq professional.
+          An external declaration does not qualify.
         </p>
         <textarea
           className="mt-4 min-h-36 w-full rounded-2xl border border-black/10 px-3 py-3 text-sm"
