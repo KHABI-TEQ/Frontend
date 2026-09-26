@@ -436,8 +436,8 @@ export default function AgentSubscriptionsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8 px-4">
-        <div className="max-w-7xl mx-auto">
+      <div className="min-h-screen overflow-x-hidden bg-gray-50 px-4 py-6 sm:py-8">
+        <div className="mx-auto min-w-0 max-w-7xl">
           <div className="animate-pulse space-y-6">
             <div className="h-8 bg-gray-200 rounded w-1/3"></div>
             <div className="h-4 bg-gray-200 rounded w-2/3"></div>
@@ -453,8 +453,8 @@ export default function AgentSubscriptionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen overflow-x-hidden bg-gray-50 px-4 py-6 sm:py-8">
+      <div className="mx-auto min-w-0 max-w-7xl">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
           <Link href="/dashboard" className="inline-flex items-center gap-2 text-[#8DDB90] hover:text-[#09391C] font-medium transition-colors">
             <ArrowLeftIcon size={20} />
@@ -464,13 +464,13 @@ export default function AgentSubscriptionsPage() {
         {/* Header */}
         <div className="mb-8 space-y-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            <h1 className="mb-2 text-2xl font-bold text-gray-900 sm:text-3xl">
               Professional Subscriptions
             </h1>
             <p className="text-gray-600">
               Choose the plan that matches your Khabiteq role. Custom domain and white-labeling packages are no longer offered.
             </p>
-            <p className="mt-3 inline-flex items-center rounded-full bg-slate-100 border border-slate-200 px-3 py-1 text-sm font-medium text-slate-800">
+            <p className="mt-3 inline-flex max-w-full items-center break-words rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-sm font-medium text-slate-800">
               Account:{" "}
               {isServiceProfessional
                 ? userTypeRaw
@@ -512,25 +512,25 @@ export default function AgentSubscriptionsPage() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="mb-8">
+        <div className="mb-8 min-w-0">
           <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8">
+            <nav className="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:gap-x-6 sm:gap-y-2">
               {[
                 { key: 'subscriptions', label: 'My Subscriptions', icon: Package },
                 { key: 'plans', label: 'Subscription Plans', icon: CreditCard },
                 { key: 'transactions', label: 'Transaction History', icon: Calendar }
               ].map(({ key, label, icon: Icon }) => (
-                <div key={key} className="flex items-center gap-2">
+                <div key={key} className="flex min-w-0 items-center justify-between gap-2 sm:justify-start">
                   <button
                     onClick={() => setActiveTab(key as any)}
                     className={`${
                       activeTab === key
                         ? 'border-green-500 text-green-600'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
+                    } flex min-w-0 items-center gap-2 border-b-2 px-1 py-2 text-sm font-medium`}
                   >
-                    <Icon size={16} />
-                    {label}
+                    <Icon size={16} className="shrink-0" />
+                    <span className="truncate">{label}</span>
                   </button>
                   <button
                     onClick={() => {
@@ -538,10 +538,12 @@ export default function AgentSubscriptionsPage() {
                       if (key === 'plans') fetchPlans();
                       if (key === 'transactions') fetchTransactions();
                     }}
-                    className={`text-xs inline-flex items-center gap-1 px-2 py-1 border rounded ${activeTab === key ? 'border-green-500 text-green-600' : 'border-gray-300 text-gray-500'}`}
+                    className={`inline-flex shrink-0 items-center gap-1 rounded border px-2 py-1 text-xs ${activeTab === key ? 'border-green-500 text-green-600' : 'border-gray-300 text-gray-500'}`}
                     title="Refresh"
+                    aria-label={`Refresh ${label}`}
                   >
-                    <RefreshCw size={12} /> Refresh
+                    <RefreshCw size={12} />
+                    <span className="hidden sm:inline">Refresh</span>
                   </button>
                 </div>
               ))}
@@ -599,10 +601,10 @@ export default function AgentSubscriptionsPage() {
                           "Professional plan";
 
                         return (
-                          <div key={subscription._id || subscription.id} className="bg-white rounded-lg border border-gray-200 p-6">
-                            <div className="flex items-center justify-between mb-4">
-                              <h3 className="text-lg font-semibold text-gray-900">{planName}</h3>
-                              <div className="flex items-center gap-2">
+                          <div key={subscription._id || subscription.id} className="min-w-0 bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+                            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                              <h3 className="min-w-0 break-words text-lg font-semibold text-gray-900">{planName}</h3>
+                              <div className="flex shrink-0 items-center gap-2">
                                 {getStatusIcon(displayStatus)}
                                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(displayStatus)}`}>
                                   {displayStatus}
@@ -612,17 +614,17 @@ export default function AgentSubscriptionsPage() {
                             <p className="text-xs font-semibold text-emerald-700 mb-3">{categoryLabel}</p>
 
                             <div className="space-y-3 mb-6">
-                              <div className="flex justify-between text-sm">
+                              <div className="flex justify-between gap-3 text-sm">
                                 <span className="text-gray-500">Start Date:</span>
-                                <span className="font-medium">{startDateRaw ? format(new Date(startDateRaw), 'MMM d, yyyy') : '-'}</span>
+                                <span className="text-right font-medium">{startDateRaw ? format(new Date(startDateRaw), 'MMM d, yyyy') : '-'}</span>
                               </div>
-                              <div className="flex justify-between text-sm">
+                              <div className="flex justify-between gap-3 text-sm">
                                 <span className="text-gray-500">End Date:</span>
-                                <span className="font-medium">{endDateRaw ? format(new Date(endDateRaw), 'MMM d, yyyy') : '-'}</span>
+                                <span className="text-right font-medium">{endDateRaw ? format(new Date(endDateRaw), 'MMM d, yyyy') : '-'}</span>
                               </div>
-                              <div className="flex justify-between text-sm">
+                              <div className="flex justify-between gap-3 text-sm">
                                 <span className="text-gray-500">Amount:</span>
-                                <span className="font-medium">₦{Number(amount || 0).toLocaleString()}</span>
+                                <span className="text-right font-medium">₦{Number(amount || 0).toLocaleString()}</span>
                               </div>
                             </div>
 
@@ -648,7 +650,7 @@ export default function AgentSubscriptionsPage() {
               )}
 
               {activeTab === 'plans' && (
-                <div className="space-y-6">
+                <div className="min-w-0 space-y-6">
                   <CatalogHero
                     kicker="Your dashboard"
                     title="Plans for your role"
@@ -676,7 +678,7 @@ export default function AgentSubscriptionsPage() {
     )}
 
         {activeTab === 'transactions' && (
-          <div className="bg-white rounded-lg border border-gray-200">
+          <div className="max-w-full overflow-hidden rounded-lg border border-gray-200 bg-white">
             {transactions.length === 0 ? (
               <div className="text-center py-12">
                 <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -684,7 +686,34 @@ export default function AgentSubscriptionsPage() {
                 <p className="text-gray-500">Your subscription transactions will appear here.</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+              <div className="space-y-3 p-4 md:hidden">
+                {transactions.map((transaction) => (
+                  <div key={transaction._id} className="rounded-xl border border-gray-200 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="break-all text-sm font-medium text-gray-900">{transaction.reference}</p>
+                        <p className="mt-1 text-xs capitalize text-gray-500">{transaction.transactionType}</p>
+                      </div>
+                      <span className={`shrink-0 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(transaction.status)}`}>
+                        {transaction.status}
+                      </span>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between gap-3 text-sm">
+                      <span className="font-medium text-gray-900">₦{transaction.amount.toLocaleString()}</span>
+                      <span className="text-gray-500">{format(new Date(transaction.createdAt), 'MMM d, yyyy')}</span>
+                    </div>
+                    <button
+                      onClick={() => setSelectedTransaction(transaction)}
+                      className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-green-700"
+                    >
+                      <Eye size={16} />
+                      View details
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="hidden overflow-x-auto md:block">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
@@ -750,14 +779,15 @@ export default function AgentSubscriptionsPage() {
                   </tbody>
                 </table>
               </div>
+              </>
             )}
           </div>
         )}
 
         {/* Renewal Modal */}
         {showRenewalModal && selectedSubscription && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg max-w-md w-full p-6">
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center">
+            <div className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-lg bg-white p-5 sm:p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Renew Subscription
               </h3>
@@ -797,7 +827,7 @@ export default function AgentSubscriptionsPage() {
                 </select>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex flex-col-reverse gap-3 sm:flex-row">
                 <button
                   onClick={() => setShowRenewalModal(false)}
                   className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
@@ -825,8 +855,8 @@ export default function AgentSubscriptionsPage() {
 
         {/* Subscribe Confirmation Modal */}
         {showSubscribeModal && selectedPlanForSub && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg max-w-md w-full p-6">
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center">
+            <div className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-lg bg-white p-5 sm:p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Confirm Subscription</h3>
               <p className="text-gray-700 mb-1">You are about to subscribe to:</p>
               <div className="mb-4 p-3 bg-gray-50 rounded border">
@@ -840,12 +870,12 @@ export default function AgentSubscriptionsPage() {
                 )}
               </div>
  
-              <div className="flex items-center gap-2 mb-6">
-                <input id="autoRenew" type="checkbox" checked={autoRenewal} onChange={(e) => setAutoRenewal(e.target.checked)} className="rounded border-gray-300 text-green-600 focus:ring-green-600" />
-                <label htmlFor="autoRenew" className="text-sm text-gray-800">Enable auto-renewal when this plan expires</label>
+              <div className="mb-6 flex items-start gap-2">
+                <input id="autoRenew" type="checkbox" checked={autoRenewal} onChange={(e) => setAutoRenewal(e.target.checked)} className="mt-1 shrink-0 rounded border-gray-300 text-green-600 focus:ring-green-600" />
+                <label htmlFor="autoRenew" className="min-w-0 text-sm text-gray-800">Enable auto-renewal when this plan expires</label>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex flex-col-reverse gap-3 sm:flex-row">
                 <button onClick={() => setShowSubscribeModal(false)} className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">Cancel</button>
                 <button onClick={confirmSubscribe} disabled={isProcessingSubscribe} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
                   {isProcessingSubscribe ? (<><RefreshCw size={16} className="animate-spin" />Processing...</>) : 'Proceed'}
@@ -856,11 +886,11 @@ export default function AgentSubscriptionsPage() {
         )}
 
         {selectedTransaction && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg max-w-md w-full p-6">
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center">
+            <div className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-lg bg-white p-5 sm:p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Transaction Details</h3>
               <div className="space-y-2 text-sm">
-                <div><span className="text-gray-600">Reference:</span> <span className="font-medium">{selectedTransaction.reference}</span></div>
+                <div className="break-all"><span className="text-gray-600">Reference:</span> <span className="font-medium">{selectedTransaction.reference}</span></div>
                 <div><span className="text-gray-600">Type:</span> <span className="font-medium capitalize">{selectedTransaction.transactionType}</span></div>
                 <div><span className="text-gray-600">Amount:</span> <span className="font-medium">₦{selectedTransaction.amount.toLocaleString()}</span></div>
                 <div><span className="text-gray-600">Status:</span> <span className="font-medium capitalize">{selectedTransaction.status}</span></div>

@@ -562,7 +562,7 @@ export default function CatalogPricing({
   }, [plans]);
 
   return (
-    <div className="relative">
+    <div className="relative min-w-0 w-full max-w-full overflow-x-clip">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -top-24 right-0 h-72 w-72 rounded-full bg-[#8DDB90]/20 blur-3xl" />
         <div className="absolute top-40 -left-16 h-64 w-64 rounded-full bg-[#09391C]/10 blur-3xl" />
@@ -607,7 +607,7 @@ export default function CatalogPricing({
                 <button
                   type="button"
                   onClick={(event) => toggleGroup(group.key, event)}
-                  className="relative flex w-full items-start gap-4 overflow-hidden px-5 py-5 text-left sm:px-7 sm:py-6"
+                  className="relative flex w-full min-w-0 items-start gap-3 overflow-hidden px-4 py-4 text-left sm:gap-4 sm:px-7 sm:py-6"
                 >
                   <span
                     className="pointer-events-none absolute inset-0 opacity-95"
@@ -620,7 +620,7 @@ export default function CatalogPricing({
                     animate={{ x: ["-140%", "320%"] }}
                     transition={{ duration: 3.8, repeat: Infinity, ease: "linear" }}
                   />
-                  <span className="relative mt-0.5 flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-white ring-1 ring-white/30">
+                  <span className="relative mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-white ring-1 ring-white/30 sm:h-12 sm:w-12">
                     <Icon size={22} />
                   </span>
                   <span className="relative min-w-0 flex-1">
@@ -634,10 +634,10 @@ export default function CatalogPricing({
                         </span>
                       ) : null}
                     </span>
-                    <span className="mt-1 block text-xl font-bold tracking-tight text-white sm:text-2xl">
+                    <span className="mt-1 block break-words text-lg font-bold tracking-tight text-white sm:text-2xl">
                       {group.headline}
                     </span>
-                    <span className="mt-1 block max-w-3xl text-sm leading-relaxed text-white/80">
+                    <span className="mt-1 block max-w-3xl break-words text-sm leading-relaxed text-white/80">
                       {group.tagline}
                     </span>
                   </span>
@@ -659,13 +659,13 @@ export default function CatalogPricing({
                       transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
                       className="overflow-hidden [overflow-anchor:none]"
                     >
-                      <div className="border-t border-black/5 px-5 pb-6 pt-2 sm:px-7">
+                      <div className="min-w-0 border-t border-black/5 px-4 pb-6 pt-2 sm:px-7">
                         {groupPlans.length === 0 ? (
                           <p className="py-6 text-sm text-[#5A5D63]">
                             Plans for this role will appear here once published on the server.
                           </p>
                         ) : (
-                          <div className={`grid gap-4 ${groupPlans.length > 1 ? "lg:grid-cols-2 xl:grid-cols-3" : "lg:grid-cols-1"}`}>
+                          <div className={`grid min-w-0 gap-4 ${groupPlans.length > 1 ? "lg:grid-cols-2 xl:grid-cols-3" : "grid-cols-1"}`}>
                             {groupPlans.map((plan, planIndex) => (
                               <PlanCard
                                 key={plan.code || plan.name}
@@ -686,8 +686,8 @@ export default function CatalogPricing({
                         {group.quote ? (
                           <div className="mt-5 flex items-start gap-3 rounded-2xl bg-[#F5F7F9] px-4 py-4">
                             <Quote size={18} className="mt-0.5 shrink-0 text-[#8DDB90]" />
-                            <div>
-                              <p className="text-sm italic text-[#09391C]">“{group.quote.text}”</p>
+                            <div className="min-w-0">
+                              <p className="break-words text-sm italic text-[#09391C]">“{group.quote.text}”</p>
                               <p className="mt-1 text-xs font-medium text-[#5A5D63]">— {group.quote.attribution}</p>
                             </div>
                           </div>
@@ -766,7 +766,7 @@ function PlanCard({
         boxShadow: { duration: 3.2, repeat: Infinity, ease: "easeInOut" },
       }}
       whileHover={{ y: -10, scale: 1.025 }}
-      className={`relative flex h-full flex-col overflow-hidden rounded-[28px] bg-gradient-to-br ${theme.soft} p-5 ring-1 ring-black/5 sm:p-6`}
+      className={`relative flex h-full min-w-0 flex-col overflow-hidden rounded-[28px] bg-gradient-to-br ${theme.soft} p-4 ring-1 ring-black/5 sm:p-6`}
     >
       <motion.span
         className="pointer-events-none absolute inset-0 opacity-40"
@@ -791,7 +791,7 @@ function PlanCard({
           <p className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.16em] ${theme.chip}`}>
             {planRoleTag(plan, group)}
           </p>
-          <h3 className="mt-2 text-xl font-bold" style={{ color: theme.ink }}>{plan.name}</h3>
+          <h3 className="mt-2 break-words text-xl font-bold" style={{ color: theme.ink }}>{plan.name}</h3>
         </div>
         {plan.allowsOffPlan ? (
           <span className="rounded-full px-2.5 py-1 text-[11px] font-semibold text-white" style={{ background: theme.from }}>
@@ -830,7 +830,7 @@ function PlanCard({
         ))}
       </div>
 
-      <p className="relative mt-4 text-sm leading-relaxed text-[#5A5D63]">{plan.designedFor || group.designedFor}</p>
+      <p className="relative mt-4 break-words text-sm leading-relaxed text-[#5A5D63]">{plan.designedFor || group.designedFor}</p>
 
       <ul className="relative mt-5 space-y-2.5">
         {features.map((item, index) => (
@@ -839,13 +839,13 @@ function PlanCard({
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: delay + 0.08 * index }}
-            className="flex items-start gap-2.5 text-sm"
+            className="flex min-w-0 items-start gap-2.5 text-sm"
             style={{ color: theme.ink }}
           >
             <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${theme.check}`}>
               <Check size={13} strokeWidth={3} />
             </span>
-            <span>
+            <span className="min-w-0 break-words">
               <span className="font-semibold">{item.title}</span>
               {item.description ? (
                 <span className="block text-[#5A5D63]">{item.description}</span>
@@ -909,7 +909,7 @@ function PlanCard({
                 if (!onSubscribe) return;
                 onSubscribe(plan, opt);
               }}
-              className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold text-white shadow-lg transition disabled:cursor-not-allowed disabled:bg-gray-300 ${theme.cta}`}
+              className={`inline-flex min-h-11 w-full items-center justify-center gap-2 whitespace-normal rounded-full px-4 text-center text-sm font-semibold text-white shadow-lg transition disabled:cursor-not-allowed disabled:bg-gray-300 ${theme.cta}`}
             >
               Subscribe · {naira(opt.price)} {opt.label}
             </button>
@@ -930,7 +930,7 @@ export function CatalogHero({
   text?: string;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-[32px] bg-[#09391C] px-6 py-10 text-white sm:px-10 sm:py-12">
+    <div className="relative overflow-hidden rounded-[28px] bg-[#09391C] px-4 py-8 text-white sm:rounded-[32px] sm:px-10 sm:py-12">
       <motion.div
         className="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rounded-full bg-[#8DDB90]/30 blur-2xl"
         animate={{ scale: [1, 1.15, 1], opacity: [0.45, 0.7, 0.45] }}
@@ -944,7 +944,7 @@ export function CatalogHero({
       <p className="relative text-xs font-semibold uppercase tracking-[0.22em] text-[#8DDB90]">
         {kicker}
       </p>
-      <h1 className="relative mt-3 max-w-3xl text-3xl font-bold leading-tight sm:text-5xl">
+      <h1 className="relative mt-3 max-w-3xl break-words text-2xl font-bold leading-tight sm:text-5xl">
         {title}
       </h1>
       <p className="relative mt-4 max-w-2xl text-base leading-relaxed text-white/80 sm:text-lg">

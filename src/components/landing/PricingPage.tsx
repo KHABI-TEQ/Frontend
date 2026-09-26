@@ -7,7 +7,7 @@ import SearchInsuranceMarketing from "@/components/search-insurance/SearchInsura
 export default function PricingPageContent() {
   return (
     <main className="w-full min-h-screen bg-[radial-gradient(circle_at_top_right,#E8F6E9,transparent_28%),radial-gradient(circle_at_bottom_left,#F5F7F9,transparent_32%),#FFFEFB] pt-24 sm:pt-28 lg:pt-32 pb-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto min-w-0 max-w-7xl px-4 sm:px-6 lg:px-8">
         <CatalogHero />
 
         <p className="mt-8 max-w-3xl text-sm text-[#5A5D63]">
