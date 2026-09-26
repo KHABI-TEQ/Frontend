@@ -16,6 +16,9 @@ export type BuyerProfile = {
   fullName?: string;
   email?: string;
   phoneNumber?: string;
+  whatsAppNumber?: string;
+  address?: string;
+  enableNotifications?: boolean;
 };
 
 export function getBuyerToken(): string | null {

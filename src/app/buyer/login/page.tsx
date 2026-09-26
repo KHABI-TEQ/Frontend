@@ -30,7 +30,7 @@ export default function BuyerLoginPage() {
       typeof window !== "undefined"
         ? new URLSearchParams(window.location.search).get("next")
         : null;
-    router.push(next || "/buyer/searches");
+    router.push(next || "/buyer");
   };
 
   return (

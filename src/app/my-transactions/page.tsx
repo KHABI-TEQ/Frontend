@@ -6,6 +6,7 @@ import Cookies from "js-cookie";
 import { GET_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import BackToDashboard from "@/components/common/BackToDashboard";
+import { buyerFetch, getBuyerToken } from "@/lib/search-insurance";
 
 type TransactionRow = {
   id: string;
@@ -26,15 +27,41 @@ export default function MyTransactionsPage() {
 
   useEffect(() => {
     const load = async () => {
-      const token = Cookies.get("token");
-      if (!token) {
+      const accountToken = Cookies.get("token");
+      const buyerToken = getBuyerToken();
+      if (buyerToken && !accountToken) {
+        const res = await buyerFetch<{ transactions: any[] }>("/buyer/auth/me/transaction-registrations");
+        if (res.success && Array.isArray(res.data?.transactions)) {
+          setRows(
+            res.data.transactions.map((row) => ({
+              id: String(row._id || row.id),
+              property:
+                row.propertyIdentification?.exactAddress ||
+                row.propertyCode ||
+                "Registered transaction",
+              propertyCode: row.propertyCode,
+              transactionReference: row.transactionReference,
+              transactionStatus: row.status,
+              certificateStatus: row.certificateStatus,
+              registrationDate: row.createdAt,
+              certificateUrl: row.certificateUrl,
+              hasCertificate: Boolean(row.certificateUrl || row.certificateStatus),
+            }))
+          );
+        } else {
+          setError(res.message || "Unable to load transactions.");
+        }
+        setLoading(false);
+        return;
+      }
+      if (!accountToken) {
         setError("Sign in to view your transaction records.");
         setLoading(false);
         return;
       }
       const res = await GET_REQUEST<{ transactions: TransactionRow[] }>(
         `${URLS.BASE}${URLS.myTransactionRegistrations}`,
-        token
+        accountToken
       );
       if (res?.success && Array.isArray(res.data?.transactions)) {
         setRows(res.data.transactions);

@@ -88,12 +88,30 @@ export default function BuyerSearchesPage() {
                         <p className="mt-1 text-xs text-[#5A5D63]">{reviews.length} agent reviews received</p>
                       ) : null}
                       {adjustHref ? (
-                        <Link
-                          href={adjustHref}
-                          className="mt-3 inline-flex rounded-full bg-[#09391C] px-4 py-2 text-sm font-semibold text-white"
-                        >
-                          Adjust this preference
-                        </Link>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <Link
+                            href={adjustHref}
+                            className="inline-flex rounded-full bg-[#09391C] px-4 py-2 text-sm font-semibold text-white"
+                          >
+                            Adjust this preference
+                          </Link>
+                          <button
+                            type="button"
+                            className="inline-flex rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#09391C] ring-1 ring-black/10"
+                            onClick={async () => {
+                              const res = await fetch(
+                                `${process.env.NEXT_PUBLIC_API_URL}/preferences/getByBuyer/${ownerId}/${pref._id}`
+                              );
+                              const json = await res.json().catch(() => ({}));
+                              const matchedId = json?.data?.matchedId;
+                              if (matchedId) {
+                                router.push(`/matched-properties/${matchedId}/${pref._id}`);
+                              }
+                            }}
+                          >
+                            View matches
+                          </button>
+                        </div>
                       ) : null}
                     </div>
                   ) : adjustHref ? (

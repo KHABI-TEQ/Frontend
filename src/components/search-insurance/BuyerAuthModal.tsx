@@ -12,6 +12,8 @@ export default function BuyerAuthModal({
   defaultName,
   defaultEmail,
   defaultPhone,
+  title,
+  description,
 }: {
   open: boolean;
   onClose: () => void;
@@ -19,6 +21,8 @@ export default function BuyerAuthModal({
   defaultName?: string;
   defaultEmail?: string;
   defaultPhone?: string;
+  title?: string;
+  description?: string;
 }) {
   const [mode, setMode] = useState<Mode>("register");
   const [fullName, setFullName] = useState(defaultName || "");
@@ -100,10 +104,11 @@ export default function BuyerAuthModal({
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
         <h3 className="text-xl font-bold text-[#09391C]">
-          {mode === "login" ? "Sign in to insure this search" : "Create a buyer account"}
+          {title || (mode === "login" ? "Sign in to continue" : "Create your account to continue")}
         </h3>
         <p className="mt-2 text-sm text-[#5A5D63]">
-          Insurance is per search. Your account lets us track this journey and file a claim if you are scammed.
+          {description ||
+            "Your account will be used for all inspections, professional services and transactions."}
         </p>
         <div className="mt-4 space-y-3">
           {mode !== "login" ? (

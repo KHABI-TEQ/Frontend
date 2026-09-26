@@ -8,6 +8,7 @@ import { URLS } from '@/utils/URLS';
 import toast from 'react-hot-toast';
 import { REDIRECT_AFTER_SUBSCRIPTION_KEY } from '@/logic/combinedAuthGuard';
 import { useUserContext } from '@/context/user-context';
+import { setBuyerSession } from '@/lib/search-insurance';
 
 const PaymentVerificationPage = () => {
   const router = useRouter();
@@ -43,11 +44,23 @@ const PaymentVerificationPage = () => {
       if (response.success && response.data) {
         setVerificationData(response.data);
         const trxType = (response.data as any)?.transaction?.transactionType;
+        const buyerToken = (response.data as any)?.token;
+        const buyer = (response.data as any)?.buyer;
+        if (buyerToken && buyer) {
+          setBuyerSession(buyerToken, buyer);
+        }
 
         // Subscription: redirect to intended page (e.g. /post-property/outright-sales) if stored, else dashboard
         if (trxType === 'search-insurance') {
           toast.success('Search insurance payment verified.');
-          router.push('/buyer/searches');
+          router.push('/buyer');
+          return;
+        }
+
+        if (trxType === 'inspection' || trxType === 'inspection-request') {
+          toast.success('Inspection booked successfully. You’re now logged in.');
+          setRedirectAfterCountdown(false);
+          setVerificationStatus('success');
           return;
         }
 
@@ -145,8 +158,8 @@ const PaymentVerificationPage = () => {
       return;
     }
 
-    // Inspection request: do NOT redirect (stay on receipt)
-    if (trxType === 'inspection-request') {
+    if (trxType === 'inspection' || trxType === 'inspection-request' || trxType === 'search-insurance') {
+      router.push('/buyer');
       return;
     }
 
@@ -157,6 +170,7 @@ const PaymentVerificationPage = () => {
   const renderVerificationStatus = () => {
     const trxType = verificationData?.transaction?.transactionType;
     const isTransactionRegistration = trxType === 'transaction-registration';
+    const isBuyerSessionPayment = trxType === 'inspection' || trxType === 'inspection-request' || trxType === 'search-insurance';
 
     switch (verificationStatus) {
       case 'verifying':
@@ -205,7 +219,25 @@ const PaymentVerificationPage = () => {
                 </div>
               </div>
             )}
-            {isTransactionRegistration ? (
+            {isBuyerSessionPayment ? (
+              <div className="text-left space-y-4">
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50/80 p-4">
+                  <p className="text-lg font-semibold text-emerald-950 mb-2">
+                    {trxType === 'search-insurance' ? 'Search insurance is active' : 'Inspection booked successfully'}
+                  </p>
+                  <p className="text-sm text-emerald-900 leading-relaxed">
+                    You&apos;re now logged in. Your account will remain active for all future activities on Khabiteq.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => router.push('/buyer')}
+                  className="w-full bg-[#09391C] hover:bg-[#0B423D] text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+                >
+                  Go to my dashboard
+                </button>
+              </div>
+            ) : isTransactionRegistration ? (
               <div className="text-left space-y-4">
                 <div className="rounded-lg border border-emerald-200 bg-emerald-50/80 p-4">
                   <p className="text-sm font-semibold text-emerald-950 mb-2">What happens next</p>

@@ -7,6 +7,8 @@ import Button from "@/components/general-components/button";
 import { POST_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import ProcessingRequest from "../loading-component/ProcessingRequest";
+import BuyerAuthModal from "@/components/search-insurance/BuyerAuthModal";
+import { getBuyerProfile, getBuyerToken } from "@/lib/search-insurance";
 
 interface DateTimeSelectionProps {
   selectedProperties: any[];
@@ -133,6 +135,7 @@ const DateTimeSelection: React.FC<DateTimeSelectionProps> = ({
     email: "",
     whatsAppNumber: "",
   });
+  const [showBuyerAuth, setShowBuyerAuth] = useState(false);
   const [showMoreDates, setShowMoreDates] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRedirectingToPayment, setIsRedirectingToPayment] = useState(false);
@@ -145,6 +148,24 @@ const DateTimeSelection: React.FC<DateTimeSelectionProps> = ({
   const [propertySchedules, setPropertySchedules] = useState<
     Record<string, PropertySchedule>
   >(() => initializeSchedules(selectedProperties, defaultInitialDate, defaultInitialTime));
+
+  useEffect(() => {
+    const applyProfile = () => {
+      const profile = getBuyerProfile();
+      if (!profile) return;
+      setBuyerInfo((prev) => ({
+        fullName: prev.fullName || profile.fullName || "",
+        phoneNumber: prev.phoneNumber || profile.phoneNumber || "",
+        email: prev.email || profile.email || "",
+        whatsAppNumber: prev.whatsAppNumber || profile.whatsAppNumber || "",
+      }));
+    };
+    if (!getBuyerToken()) {
+      setShowBuyerAuth(true);
+    } else {
+      applyProfile();
+    }
+  }, []);
 
   useEffect(() => {
     setPropertySchedules((prev) => {
@@ -282,6 +303,10 @@ const DateTimeSelection: React.FC<DateTimeSelectionProps> = ({
   };
 
   const handleSubmitInspectionRequest = async () => {
+    if (!getBuyerToken()) {
+      setShowBuyerAuth(true);
+      return;
+    }
     if (!hasCompleteSchedules) {
       toast.error("Please select an inspection date and time for each property.");
       return;
@@ -355,6 +380,25 @@ const DateTimeSelection: React.FC<DateTimeSelectionProps> = ({
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+      <BuyerAuthModal
+        open={showBuyerAuth}
+        onClose={() => setShowBuyerAuth(false)}
+        title="Sign up or log in"
+        description="If you want to inspect a property, sign up or log in before scheduling and paying for the inspection."
+        defaultName={buyerInfo.fullName}
+        defaultEmail={buyerInfo.email}
+        defaultPhone={buyerInfo.phoneNumber}
+        onAuthed={() => {
+          const profile = getBuyerProfile();
+          setBuyerInfo((prev) => ({
+            fullName: profile?.fullName || prev.fullName,
+            phoneNumber: profile?.phoneNumber || prev.phoneNumber,
+            email: profile?.email || prev.email,
+            whatsAppNumber: profile?.whatsAppNumber || prev.whatsAppNumber,
+          }));
+          setShowBuyerAuth(false);
+        }}
+      />
   
       <ProcessingRequest
         isVisible={isSubmitting || isRedirectingToPayment}
@@ -551,7 +595,9 @@ const DateTimeSelection: React.FC<DateTimeSelectionProps> = ({
           Buyer Information <span className="text-red-500">*</span>
         </h3>
         <p className="text-sm text-[#5A5D63] mb-6">
-          Please provide your contact information for the inspection appointment.
+          {getBuyerToken()
+            ? "We’ll use the details on your account for this inspection."
+            : "Sign in so we can use your account for this inspection and future activities."}
         </p>
 
         <div className="space-y-4">

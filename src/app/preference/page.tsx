@@ -156,10 +156,14 @@ const SuccessModal = memo(
     showSuccessModal,
     onSubmitNew,
     onDone,
+    onViewMatches,
+    onGoDashboard,
   }: {
     showSuccessModal: boolean;
     onSubmitNew: () => void;
     onDone: () => void;
+    onViewMatches?: () => void;
+    onGoDashboard?: () => void;
   }) => {
     // Prevent body scroll when modal is open
     React.useEffect(() => {
@@ -212,23 +216,38 @@ const SuccessModal = memo(
                   Preference Submitted Successfully!
                 </h3>
                 <p className="text-gray-600 mb-6">
-                  Thank you for submitting your property preference. You will receive an acknowledgement by email. Once approved, your preference will be shared with relevant agents to help you find suitable properties.
+                  Khabiteq matches your preference with suitable properties. Your account remains active for inspections, professional services and transactions.
                 </p>
               </div>
 
-              {/* Submit New Preference Button */}
+              {onViewMatches ? (
+                <button
+                  onClick={onViewMatches}
+                  className="w-full bg-[#09391C] hover:bg-[#0B423D] text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 mb-3"
+                >
+                  View matched properties
+                </button>
+              ) : null}
+              {onGoDashboard ? (
+                <button
+                  onClick={onGoDashboard}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 mb-3"
+                >
+                  Go to my dashboard
+                </button>
+              ) : null}
               <button
                 onClick={onSubmitNew}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 mb-4"
+                className="w-full border border-black/10 text-[#09391C] font-semibold py-3 px-6 rounded-lg transition-colors duration-200 mb-4"
               >
-                Do you want to submit a new preference
+                Submit a new preference
               </button>
 
               <button
                 onClick={onDone}
                 className="text-sm text-gray-600 hover:text-gray-800 underline transition-colors duration-200"
               >
-                No, I&apos;m done for now
+                I&apos;m done for now
               </button>
             </motion.div>
           </motion.div>
@@ -384,6 +403,10 @@ const PreferenceFormContent: React.FC = () => {
   const [linkedPropertyCode, setLinkedPropertyCode] = useState("");
   const [insureSearch, setInsureSearch] = useState(false);
   const [showBuyerAuth, setShowBuyerAuth] = useState(false);
+  const [submittedPreference, setSubmittedPreference] = useState<{
+    id: string;
+    buyerId: string;
+  } | null>(null);
 
   // When user submits from AI summary, show the same success modal
   useEffect(() => {
@@ -787,7 +810,7 @@ const PreferenceFormContent: React.FC = () => {
       return;
     }
 
-    if (insureSearch && !getBuyerToken()) {
+    if (!getBuyerToken()) {
       setShowBuyerAuth(true);
       return;
     }
@@ -812,6 +835,10 @@ const PreferenceFormContent: React.FC = () => {
 
       if (response.success) {
         const preferenceId = (response.data as any)?._id || (response.data as any)?.id;
+        const buyerId = String((response.data as any)?.buyer || getBuyerProfile()?.id || "");
+        if (preferenceId) {
+          setSubmittedPreference({ id: String(preferenceId), buyerId });
+        }
         if (insureSearch && preferenceId) {
           const checkout = await checkoutSearchInsurance(String(preferenceId));
           if (checkout.success && checkout.data?.paymentUrl) {
@@ -854,8 +881,31 @@ const PreferenceFormContent: React.FC = () => {
   const handleDone = useCallback(() => {
     setShowSuccessModal(false);
     dispatch({ type: "RESET_FORM" });
-    router.push("/");
+    router.push(getBuyerToken() ? "/buyer" : "/");
   }, [dispatch, router]);
+
+  const handleGoDashboard = useCallback(() => {
+    setShowSuccessModal(false);
+    dispatch({ type: "RESET_FORM" });
+    router.push("/buyer");
+  }, [dispatch, router]);
+
+  const handleViewMatches = useCallback(async () => {
+    if (!submittedPreference) {
+      router.push("/buyer/searches");
+      return;
+    }
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/preferences/getByBuyer/${submittedPreference.buyerId}/${submittedPreference.id}`
+    );
+    const json = await res.json().catch(() => ({}));
+    const matchedId = json?.data?.matchedId || json?.data?.matched?._id;
+    if (matchedId) {
+      router.push(`/matched-properties/${matchedId}/${submittedPreference.id}`);
+      return;
+    }
+    router.push("/buyer/searches");
+  }, [router, submittedPreference]);
 
   // Render preference type selector - memoized to prevent recreation
   const renderPreferenceTypeSelector = useMemo(
@@ -1132,6 +1182,8 @@ const PreferenceFormContent: React.FC = () => {
       <BuyerAuthModal
         open={showBuyerAuth}
         onClose={() => setShowBuyerAuth(false)}
+        title="Create your account to continue"
+        description="Your account will be used for all inspections, professional services and transactions."
         defaultName={getBuyerProfile()?.fullName || (state.formData as any)?.contactInfo?.fullName}
         defaultEmail={getBuyerProfile()?.email || (state.formData as any)?.contactInfo?.email}
         defaultPhone={getBuyerProfile()?.phoneNumber || (state.formData as any)?.contactInfo?.phoneNumber}
@@ -1145,6 +1197,8 @@ const PreferenceFormContent: React.FC = () => {
         showSuccessModal={showSuccessModal}
         onSubmitNew={handleSubmitNew}
         onDone={handleDone}
+        onViewMatches={submittedPreference ? handleViewMatches : undefined}
+        onGoDashboard={getBuyerToken() ? handleGoDashboard : undefined}
       />
     </motion.div>
   );

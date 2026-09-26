@@ -20,6 +20,7 @@ import dynamic from "next/dynamic";
 import KhabiteqHeaderLogo from "@/components/branding/KhabiteqHeaderLogo";
 import LookingToDoNav from "@/components/new-homepage/LookingToDoNav";
 import { userDisplayInitials } from "@/utils/userInitials";
+import { getBuyerToken } from "@/lib/search-insurance";
 
 // Lazy load heavy components that are only shown on interaction
 const SideBar = dynamic(() => import("../general-components/sideBar"), { ssr: false });
@@ -42,6 +43,7 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const { user, logout } = useUserContext();
   const [isScrolled, setIsScrolled] = useState(false);
+  const [hasBuyerSession, setHasBuyerSession] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -50,6 +52,10 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    setHasBuyerSession(Boolean(getBuyerToken()));
+  }, [pathName]);
   const [isUserProfileModalOpened, setIsUserProfileModal] =
     useState<boolean>(false);
   const [isNotificationModalOpened, setIsNotificationModalOpened] =
@@ -299,6 +305,18 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
               </>
             ) : (
               <div className="flex items-center gap-2">
+                {hasBuyerSession ? (
+                  <Link
+                    href="/buyer"
+                    className={`whitespace-nowrap px-3.5 xl:px-4 py-2 text-[13px] xl:text-sm font-semibold rounded-full transition-all duration-300 ${
+                      pathName === "/buyer" || pathName?.startsWith("/buyer/")
+                        ? "text-white bg-[#09391C] shadow-md"
+                        : "text-[#09391C] bg-[#8DDB90]/20 hover:bg-[#8DDB90]/35 ring-1 ring-[#8DDB90]/40"
+                    }`}
+                  >
+                    My dashboard
+                  </Link>
+                ) : null}
                 <Link
                   href="/auth/login"
                   className="whitespace-nowrap px-3 xl:px-4 py-2 text-[13px] xl:text-sm font-medium text-gray-700 hover:text-[#09391C] rounded-full hover:bg-gray-100/80 transition-all duration-300"

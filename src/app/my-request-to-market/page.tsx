@@ -321,12 +321,17 @@ export default function MyRequestToMarketPage() {
           {!loading && requests.length > 0 && (
             <ul className="space-y-4">
               {requests.map((item) => {
-                const displayAmount = item.agentCommissionAmount ?? DEFAULT_AGENT_COMMISSION_DISPLAY_NAIRA;
                 const prop = item.propertyId && typeof item.propertyId === "object" ? item.propertyId as { briefType?: string; price?: number; pictures?: string[]; propertyCode?: string } : null;
                 const agentDisplay = getAgentDisplay(item);
                 const firstPicture = prop?.pictures?.[0];
                 const isAccepted = item.status === "accepted";
                 const saleRegistered = !!(item.saleRegisteredAt ?? (item as { saleRegisteredAt?: string }).saleRegisteredAt);
+                const salePrice = Number(item.actualSalePriceNaira);
+                const saleRate = Number(item.commissionPercent ?? item.agentCommissionPercent);
+                const displayAmount =
+                  saleRegistered && Number.isFinite(salePrice) && salePrice > 0 && Number.isFinite(saleRate) && saleRate > 0
+                    ? Math.round((salePrice * saleRate) / 100)
+                    : item.agentCommissionAmount ?? DEFAULT_AGENT_COMMISSION_DISPLAY_NAIRA;
 
                 return (
                   <li

@@ -28,7 +28,7 @@ export default function BuyerRegisterPage() {
       return;
     }
     setBuyerSession(res.data.token, res.data.buyer);
-    router.push("/buyer/searches");
+    router.push("/buyer");
   };
 
   return (
