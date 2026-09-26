@@ -883,13 +883,15 @@ function applyPreferenceOffPlanFieldsFromFocusedAnswer(
 
 function isBudgetMaxFocus(field: string): boolean {
   const f = normalizePreferenceFieldKey(field);
+  // The shortlet guest prompt mentions the "Property details & Budget" step.
+  // Matching any "maximum" + "budget" text treated 1–10 as a price and never stored the guest count.
+  if (f.includes("guest")) return false;
   return (
     f === "max_budget" ||
     f.includes("max_budget") ||
     f.includes("max price") ||
     f.includes("maximum price") ||
     f.includes("maximum budget") ||
-    (f.includes("budget") && f.includes("maximum")) ||
     f.includes("must be greater")
   );
 }

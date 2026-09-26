@@ -11,6 +11,7 @@ import { extractNumericValue } from "@/utils/price-helpers";
 import { normalizeHoldDurationForApi, normalizeIsTenantedForApi, isFreeLimitPropertyError } from "@/utils/post-property-payload";
 import { usePublisherListingEligibility } from "@/hooks/usePublisherListingEligibility";
 import { useAgentEligibility } from "@/hooks/useAgentEligibility";
+import { isPropertyScoutAccount, PROPERTY_SCOUT_LISTING_QUOTA_LABEL } from "@/utils/subscription-plan-features";
 import { URLS } from "@/utils/URLS";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
@@ -293,7 +294,9 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
   const { eligibility: agentEligibility } = useAgentEligibility();
   const listingsEntry = useAppSelector(selectFeatureEntry(FEATURE_KEYS.LISTINGS));
   const quotaText =
-    publisherListing?.listingsRemaining != null
+    isPropertyScoutAccount(getUserType()) || publisherListing?.unlimitedListings
+      ? PROPERTY_SCOUT_LISTING_QUOTA_LABEL
+      : publisherListing?.listingsRemaining != null
       ? `${publisherListing.listingsRemaining} of ${publisherListing.listingLimit ?? 25} remaining`
       : agentEligibility?.listingsRemaining != null
         ? `${agentEligibility.listingsRemaining} of ${agentEligibility.listingLimit ?? 25} remaining`

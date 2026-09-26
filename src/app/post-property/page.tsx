@@ -7,8 +7,6 @@ import CombinedAuthGuard from "@/logic/combinedAuthGuard";
 import Breadcrumb from "@/components/extrals/Breadcrumb";
 import Loading from "@/components/loading-component/loading";
 import toast from "react-hot-toast";
-import { useAppSelector } from "@/store/hooks";
-import { selectFeatureEntry } from "@/store/subscriptionFeaturesSlice";
 import { FEATURE_KEYS } from "@/hooks/useFeatureGate";
 import FeatureGate from "@/components/access/FeatureGate";
 import AgentEligibilityBanner from "@/components/agent/AgentEligibilityBanner";
@@ -16,6 +14,7 @@ import { useAgentEligibility } from "@/hooks/useAgentEligibility";
 import { usePublisherListingEligibility } from "@/hooks/usePublisherListingEligibility";
 import { useDeveloperPlanEntitlement } from "@/hooks/useDeveloperPlanEntitlement";
 import { canUserListOffPlan } from "@/utils/listingAccess";
+import { isPropertyScoutAccount, PROPERTY_SCOUT_LISTING_QUOTA_LABEL } from "@/utils/subscription-plan-features";
 import BackToDashboard from "@/components/common/BackToDashboard";
 
 interface PropertyTypeCard {
@@ -82,9 +81,10 @@ const PostPropertyPage = () => {
     landlordCannotListOffPlan ||
     (user?.userType === "Developer" && !developerPlan?.canListOffPlan);
   const visiblePropertyTypes = propertyTypes.filter((item) => item.type !== "off-plan");
-  const listingsEntry = useAppSelector(selectFeatureEntry(FEATURE_KEYS.LISTINGS));
   const quotaText =
-    publisherListing?.listingsRemaining != null
+    isPropertyScoutAccount(user?.userType) || publisherListing?.unlimitedListings
+      ? PROPERTY_SCOUT_LISTING_QUOTA_LABEL
+      : publisherListing?.listingsRemaining != null
       ? `${publisherListing.listingsRemaining} of ${publisherListing.listingLimit ?? 25} remaining`
       : eligibility?.listingsRemaining != null
         ? `${eligibility.listingsRemaining} of ${eligibility.listingLimit ?? 25} remaining`

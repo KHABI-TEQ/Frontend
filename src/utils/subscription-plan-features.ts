@@ -1,6 +1,11 @@
 /** Shared listing-cap copy aligned with server publisherListingLimits. */
 export const STANDARD_LISTING_CAP = 25;
 export const ANNUAL_LISTING_CAP = 50;
+export const PROPERTY_SCOUT_LISTING_QUOTA_LABEL = "You can list more than 10 properties";
+
+export function isPropertyScoutAccount(userType?: string | null): boolean {
+  return String(userType || "").trim().toLowerCase() === "propertyscout";
+}
 /** @deprecated Unpaid trial listings are retired. */
 export const FREE_TRIAL_LISTING_CAP = 0;
 /** @deprecated Time-boxed free trial is retired. */
@@ -42,6 +47,14 @@ export function formatCatalogListingsFeature(plan: {
   const isAnnual =
     /YEARLY|ANNUAL/i.test(String(plan.code || "")) ||
     /year/i.test(String(plan.name || ""));
+
+  if (/^SCOUT_STANDARD/i.test(String(plan.code || ""))) {
+    return {
+      label: baseLabel,
+      valueText: ": more than 10",
+      isOn: true,
+    };
+  }
 
   if (isFree) {
     return {

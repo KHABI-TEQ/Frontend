@@ -44,6 +44,7 @@ import { useAppSelector } from "@/store/hooks";
 import { selectFeatureEntry } from "@/store/subscriptionFeaturesSlice";
 import { FEATURE_KEYS } from "@/hooks/useFeatureGate";
 import FeatureGate from "@/components/access/FeatureGate";
+import { isPropertyScoutAccount, PROPERTY_SCOUT_LISTING_QUOTA_LABEL } from "@/utils/subscription-plan-features";
 
 // Preference interfaces
 interface Buyer {
@@ -906,7 +907,9 @@ const PostPropertyByPreference = () => {
   }
 
   
-  const quotaText = listingsEntry
+  const quotaText = isPropertyScoutAccount(user?.userType)
+    ? PROPERTY_SCOUT_LISTING_QUOTA_LABEL
+    : listingsEntry
     ? (listingsEntry.type === 'unlimited' || listingsEntry.remaining === -1)
       ? 'Unlimited'
       : (listingsEntry.type === 'count')
