@@ -11,7 +11,8 @@ import { extractNumericValue } from "@/utils/price-helpers";
 import { normalizeHoldDurationForApi, normalizeIsTenantedForApi, isFreeLimitPropertyError } from "@/utils/post-property-payload";
 import { usePublisherListingEligibility } from "@/hooks/usePublisherListingEligibility";
 import { useAgentEligibility } from "@/hooks/useAgentEligibility";
-import { isPropertyScoutAccount, PROPERTY_SCOUT_LISTING_QUOTA_LABEL } from "@/utils/subscription-plan-features";
+import { isPropertyScoutAccount, PROPERTY_SCOUT_LISTING_CAP } from "@/utils/subscription-plan-features";
+import { canAccountListProperty } from "@/utils/listingAccess";
 import { URLS } from "@/utils/URLS";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
@@ -294,8 +295,8 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
   const { eligibility: agentEligibility } = useAgentEligibility();
   const listingsEntry = useAppSelector(selectFeatureEntry(FEATURE_KEYS.LISTINGS));
   const quotaText =
-    isPropertyScoutAccount(getUserType()) || publisherListing?.unlimitedListings
-      ? PROPERTY_SCOUT_LISTING_QUOTA_LABEL
+    isPropertyScoutAccount(getUserType())
+      ? `${publisherListing?.listingsRemaining ?? PROPERTY_SCOUT_LISTING_CAP} of ${publisherListing?.listingLimit ?? PROPERTY_SCOUT_LISTING_CAP} remaining`
       : publisherListing?.listingsRemaining != null
       ? `${publisherListing.listingsRemaining} of ${publisherListing.listingLimit ?? 25} remaining`
       : agentEligibility?.listingsRemaining != null
@@ -361,15 +362,9 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
     }
     const raw = (user as { userType?: string }).userType;
     const stored = typeof window !== "undefined" ? localStorage.getItem("userType") : null;
-    const effectiveType = (raw || stored || "").trim().toLowerCase();
-    const canPost =
-      effectiveType === "landowners" ||
-      effectiveType === "landowner" ||
-      effectiveType === "developer" ||
-      effectiveType === "agent";
-    if (canPost) return;
+    if (canAccountListProperty(raw || stored)) return;
 
-    toast.error("You need to be a landowner, agent, or developer to post properties");
+    toast.error("You need to be a landowner, agent, developer, or property scout to post properties");
     router.push("/dashboard");
   }, [user, router]);
 

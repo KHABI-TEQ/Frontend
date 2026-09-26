@@ -6,6 +6,7 @@ import { useUserContext } from "@/context/user-context";
 import { usePostPropertyContext } from "@/context/post-property-context";
 import Loading from "@/components/loading-component/loading";
 import toast from "react-hot-toast";
+import { canAccountListProperty } from "@/utils/listingAccess";
 import Cookies from "js-cookie";
 import api from "@/utils/axiosConfig";
 
@@ -26,8 +27,8 @@ const UpdatePropertyRedirect = () => {
         }
 
         // Check user permissions
-        if (user.userType !== "Landowners" && user.userType !== "Agent" && user.userType !== "Developer") {
-          toast.error("You need to be a landowner, agent, or developer to update properties");
+        if (!canAccountListProperty(user.userType)) {
+          toast.error("You need to be a landowner, agent, developer, or property scout to update properties");
           router.push("/dashboard");
           return;
         }

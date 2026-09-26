@@ -10,6 +10,7 @@ import { POST_REQUEST } from "@/utils/requests";
 import { extractNumericValue } from "@/utils/price-helpers";
 import { listingAgentCommissionFields } from "@/utils/listingCommission";
 import { shouldHideListingOwnerDeclaration } from "@/utils/listingOwnerDeclaration";
+import { canAccountListProperty } from "@/utils/listingAccess";
 import {
   listingInspectionFeeNaira,
   scoutMustConfirmListingAuthorization,
@@ -225,11 +226,9 @@ const OutrightSalesPropertyForm: React.FC<OutrightSalesPropertyFormProps> = ({
 
     const raw = (user as { userType?: string }).userType;
     const stored = typeof window !== "undefined" ? localStorage.getItem("userType") : null;
-    const effectiveType = (raw || stored || "").trim().toLowerCase();
-    const canPost = ["landowners", "landowner", "developer", "agent"].includes(effectiveType);
-    if (canPost) return;
+    if (canAccountListProperty(raw || stored)) return;
 
-    toast.error("You need to be a landowner, agent, or developer to post properties");
+    toast.error("You need to be a landowner, agent, developer, or property scout to post properties");
     router.push("/dashboard");
   }, [user, router]);
 

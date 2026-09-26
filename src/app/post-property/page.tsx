@@ -14,7 +14,7 @@ import { useAgentEligibility } from "@/hooks/useAgentEligibility";
 import { usePublisherListingEligibility } from "@/hooks/usePublisherListingEligibility";
 import { useDeveloperPlanEntitlement } from "@/hooks/useDeveloperPlanEntitlement";
 import { canUserListOffPlan } from "@/utils/listingAccess";
-import { isPropertyScoutAccount, PROPERTY_SCOUT_LISTING_QUOTA_LABEL } from "@/utils/subscription-plan-features";
+import { isPropertyScoutAccount, PROPERTY_SCOUT_LISTING_CAP } from "@/utils/subscription-plan-features";
 import BackToDashboard from "@/components/common/BackToDashboard";
 
 interface PropertyTypeCard {
@@ -82,8 +82,8 @@ const PostPropertyPage = () => {
     (user?.userType === "Developer" && !developerPlan?.canListOffPlan);
   const visiblePropertyTypes = propertyTypes.filter((item) => item.type !== "off-plan");
   const quotaText =
-    isPropertyScoutAccount(user?.userType) || publisherListing?.unlimitedListings
-      ? PROPERTY_SCOUT_LISTING_QUOTA_LABEL
+    isPropertyScoutAccount(user?.userType)
+      ? `${publisherListing?.listingsRemaining ?? PROPERTY_SCOUT_LISTING_CAP} of ${publisherListing?.listingLimit ?? PROPERTY_SCOUT_LISTING_CAP} remaining`
       : publisherListing?.listingsRemaining != null
       ? `${publisherListing.listingsRemaining} of ${publisherListing.listingLimit ?? 25} remaining`
       : eligibility?.listingsRemaining != null

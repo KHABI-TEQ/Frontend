@@ -8,6 +8,7 @@ import { useUserContext } from "@/context/user-context";
 import { usePostPropertyContext } from "@/context/post-property-context";
 import { extractNumericValue } from "@/utils/price-helpers";
 import { normalizeHoldDurationForApi, normalizeIsTenantedForApi } from "@/utils/post-property-payload";
+import { canAccountListProperty } from "@/utils/listingAccess";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import api from "@/utils/axiosConfig";
@@ -215,11 +216,9 @@ const UpdateRentPropertyForm: React.FC<UpdateRentPropertyFormProps> = ({
 
     const raw = (user as { userType?: string }).userType;
     const stored = typeof window !== "undefined" ? localStorage.getItem("userType") : null;
-    const effectiveType = (raw || stored || "").trim().toLowerCase();
-    const canEdit = ["landowners", "landowner", "developer", "agent"].includes(effectiveType);
-    if (canEdit) return;
+    if (canAccountListProperty(raw || stored)) return;
 
-    toast.error("You need to be a landowner, agent, or developer to update properties");
+    toast.error("You need to be a landowner, agent, developer, or property scout to update properties");
     router.push("/dashboard");
   }, [user, router]);
 

@@ -1,7 +1,7 @@
 /** Shared listing-cap copy aligned with server publisherListingLimits. */
 export const STANDARD_LISTING_CAP = 25;
 export const ANNUAL_LISTING_CAP = 50;
-export const PROPERTY_SCOUT_LISTING_QUOTA_LABEL = "You can list more than 10 properties";
+export const PROPERTY_SCOUT_LISTING_CAP = 10;
 
 export function isPropertyScoutAccount(userType?: string | null): boolean {
   return String(userType || "").trim().toLowerCase() === "propertyscout";
@@ -51,7 +51,7 @@ export function formatCatalogListingsFeature(plan: {
   if (/^SCOUT_STANDARD/i.test(String(plan.code || ""))) {
     return {
       label: baseLabel,
-      valueText: ": more than 10",
+      valueText: ": up to 10",
       isOn: true,
     };
   }
