@@ -10,7 +10,7 @@ import { POST_REQUEST } from "@/utils/requests";
 import { extractNumericValue } from "@/utils/price-helpers";
 import { listingAgentCommissionFields } from "@/utils/listingCommission";
 import { shouldHideListingOwnerDeclaration } from "@/utils/listingOwnerDeclaration";
-import { canAccountListProperty } from "@/utils/listingAccess";
+import { canAccountListProperty, LISTING_PENDING_APPROVAL_MESSAGE, listingNeedsAdminApproval } from "@/utils/listingAccess";
 import {
   listingInspectionFeeNaira,
   scoutMustConfirmListingAuthorization,
@@ -454,9 +454,11 @@ const OutrightSalesPropertyForm: React.FC<OutrightSalesPropertyFormProps> = ({
 
       if (response.success) {
         toast.success(
-          isOffPlan
-            ? "Off-plan property listed successfully!"
-            : "Outright sales property created successfully!",
+          listingNeedsAdminApproval(user?.userType, isOffPlan ? "off-plan" : "sell")
+            ? LISTING_PENDING_APPROVAL_MESSAGE
+            : isOffPlan
+              ? "Off-plan property listed successfully!"
+              : "Outright sales property created successfully!",
         );
         resetForm();
         setCreatedPropertyCode(extractCreatedPropertyCode(response));

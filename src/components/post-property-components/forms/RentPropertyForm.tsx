@@ -10,7 +10,7 @@ import { POST_REQUEST } from "@/utils/requests";
 import { extractNumericValue } from "@/utils/price-helpers";
 import { listingAgentCommissionFields } from "@/utils/listingCommission";
 import { shouldHideListingOwnerDeclaration } from "@/utils/listingOwnerDeclaration";
-import { canAccountListProperty } from "@/utils/listingAccess";
+import { canAccountListProperty, LISTING_PENDING_APPROVAL_MESSAGE, listingNeedsAdminApproval } from "@/utils/listingAccess";
 import {
   listingInspectionFeeNaira,
   scoutMustConfirmListingAuthorization,
@@ -416,7 +416,11 @@ const RentPropertyForm: React.FC<RentPropertyFormProps> = ({
       );
 
       if (response.success) {
-        toast.success("Rent property created successfully!");
+        toast.success(
+          listingNeedsAdminApproval(user?.userType, "rent")
+            ? LISTING_PENDING_APPROVAL_MESSAGE
+            : "Rent property created successfully!",
+        );
         resetForm();
         setCreatedPropertyCode(extractCreatedPropertyCode(response));
         setShowSuccessModal(true);

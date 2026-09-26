@@ -37,3 +37,22 @@ const LISTING_ACCOUNT_TYPES = new Set([
 export function canAccountListProperty(userType?: string | null): boolean {
   return LISTING_ACCOUNT_TYPES.has(String(userType || "").trim().toLowerCase());
 }
+
+/** Landlord and property-scout listings, and developer off-plan projects, stay pending until an admin approves them. */
+export function listingNeedsAdminApproval(
+  userType?: string | null,
+  propertyType?: string | null,
+): boolean {
+  const t = String(userType || "").trim().toLowerCase();
+  const pt = String(propertyType || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-");
+  if (t === "propertyscout" || t === "property_scout" || t === "property scout") return true;
+  if (t === "landowners" || t === "landowner" || t === "landlord") return true;
+  if (t === "developer" && (pt === "off-plan" || pt === "offplan")) return true;
+  return false;
+}
+
+export const LISTING_PENDING_APPROVAL_MESSAGE =
+  "Your listing was submitted and is pending admin approval. It will go live after it is approved.";

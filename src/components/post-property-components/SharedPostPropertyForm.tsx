@@ -12,7 +12,7 @@ import { normalizeHoldDurationForApi, normalizeIsTenantedForApi, isFreeLimitProp
 import { usePublisherListingEligibility } from "@/hooks/usePublisherListingEligibility";
 import { useAgentEligibility } from "@/hooks/useAgentEligibility";
 import { isPropertyScoutAccount, PROPERTY_SCOUT_LISTING_CAP } from "@/utils/subscription-plan-features";
-import { canAccountListProperty } from "@/utils/listingAccess";
+import { canAccountListProperty, LISTING_PENDING_APPROVAL_MESSAGE, listingNeedsAdminApproval } from "@/utils/listingAccess";
 import { URLS } from "@/utils/URLS";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
@@ -664,7 +664,11 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
       );
 
       if (response.success) {
-        toast.success("Property created successfully!");
+        toast.success(
+          listingNeedsAdminApproval(getUserType(), String(propertyData.propertyType || ""))
+            ? LISTING_PENDING_APPROVAL_MESSAGE
+            : "Property created successfully!",
+        );
         dispatch(decrementFeature({ key: FEATURE_KEYS.LISTINGS, amount: 1 }));
         void refreshPublisherListing();
         resetForm();

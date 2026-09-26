@@ -10,7 +10,7 @@ import { POST_REQUEST } from "@/utils/requests";
 import { extractNumericValue } from "@/utils/price-helpers";
 import { listingAgentCommissionFields } from "@/utils/listingCommission";
 import { shouldHideListingOwnerDeclaration } from "@/utils/listingOwnerDeclaration";
-import { canAccountListProperty } from "@/utils/listingAccess";
+import { canAccountListProperty, LISTING_PENDING_APPROVAL_MESSAGE, listingNeedsAdminApproval } from "@/utils/listingAccess";
 import {
   listingInspectionFeeNaira,
   scoutMustConfirmListingAuthorization,
@@ -421,7 +421,11 @@ const JointVenturePropertyForm: React.FC<JointVenturePropertyFormProps> = ({
       );
 
       if (response.success) {
-        toast.success("Joint venture property created successfully!");
+        toast.success(
+          listingNeedsAdminApproval(user?.userType, "jv")
+            ? LISTING_PENDING_APPROVAL_MESSAGE
+            : "Joint venture property created successfully!",
+        );
         resetForm();
         setCreatedPropertyCode(extractCreatedPropertyCode(response));
         setShowSuccessModal(true);

@@ -10,7 +10,7 @@ import { POST_REQUEST } from "@/utils/requests";
 import { extractNumericValue } from "@/utils/price-helpers";
 import { listingAgentCommissionFields } from "@/utils/listingCommission";
 import { shouldHideListingOwnerDeclaration } from "@/utils/listingOwnerDeclaration";
-import { canAccountListProperty } from "@/utils/listingAccess";
+import { canAccountListProperty, LISTING_PENDING_APPROVAL_MESSAGE, listingNeedsAdminApproval } from "@/utils/listingAccess";
 import {
   listingInspectionFeeNaira,
   scoutMustConfirmListingAuthorization,
@@ -456,7 +456,11 @@ const ShortletPropertyForm: React.FC<ShortletPropertyFormProps> = ({
       );
 
       if (response.success) {
-        toast.success("Shortlet property created successfully!");
+        toast.success(
+          listingNeedsAdminApproval(user?.userType, "shortlet")
+            ? LISTING_PENDING_APPROVAL_MESSAGE
+            : "Shortlet property created successfully!",
+        );
         resetForm();
         setCreatedPropertyCode(extractCreatedPropertyCode(response));
         setShowSuccessModal(true);
