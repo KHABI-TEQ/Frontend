@@ -407,6 +407,7 @@ const DateTimeSelection: React.FC<DateTimeSelectionProps> = ({
   };
 
   const firstPropertyId = selectedProperties[0]?.propertyId;
+  const isInsuredMatch = selectedProperties.some((item) => item.sourcePage === "insured-match");
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -457,7 +458,7 @@ const DateTimeSelection: React.FC<DateTimeSelectionProps> = ({
           <div className="flex justify-between items-center">
             <span className="text-[#5A5D63]">Inspection Fee:</span>
             <span className="font-semibold text-[#09391C] text-lg">
-              {selectedProperties.some((item) => item.sourcePage === "insured-match")
+              {isInsuredMatch
                 ? "Waived (insured search)"
                 : inspectionFee > 0
                   ? `₦${inspectionFee.toLocaleString()}`
@@ -713,7 +714,9 @@ const DateTimeSelection: React.FC<DateTimeSelectionProps> = ({
           <li>• You can choose today, tomorrow, or any later day</li>
           <li>• Please arrive 15 minutes before your scheduled time</li>
           <li>• Bring a valid form of identification</li>
-          <li>• Payment confirmation is required before inspection</li>
+          {isInsuredMatch ? null : (
+            <li>• Payment confirmation is required before inspection</li>
+          )}
           <li>• Confirmation details will be sent to your provided email</li>
         </ul>
       </div>
@@ -728,7 +731,7 @@ const DateTimeSelection: React.FC<DateTimeSelectionProps> = ({
 
         <Button
           onClick={handleSubmitInspectionRequest}
-          value="Submit to Payment"
+          value={isInsuredMatch ? "Submit request" : "Submit to Payment"}
           isDisabled={
             !hasCompleteSchedules ||
             !buyerInfo.fullName.trim() ||
