@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { buyerFetch, setBuyerSession } from "@/lib/search-insurance";
+import PasswordField from "@/components/common/PasswordField";
 
 type Mode = "register" | "login" | "claim";
 
@@ -134,12 +136,11 @@ export default function BuyerAuthModal({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
-          <input
-            className="w-full rounded-xl border border-black/10 px-3 py-2.5 text-sm"
-            placeholder="Password (min 6 characters)"
-            type="password"
+          <PasswordField
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={setPassword}
+            placeholder="Password (min 6 characters)"
+            autoComplete={mode === "login" ? "current-password" : "new-password"}
           />
         </div>
         {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
@@ -152,6 +153,11 @@ export default function BuyerAuthModal({
           {busy ? "Please wait..." : mode === "login" ? "Sign in" : "Continue"}
         </button>
         <div className="mt-3 flex flex-wrap justify-between gap-2 text-xs text-[#5A5D63]">
+          {mode === "login" ? (
+            <Link href="/buyer/forgot-password" className="font-semibold text-[#09391C]" onClick={onClose}>
+              Forgot password?
+            </Link>
+          ) : null}
           <button type="button" onClick={() => setMode(mode === "login" ? "register" : "login")}>
             {mode === "login" ? "Need an account?" : "Already have an account?"}
           </button>

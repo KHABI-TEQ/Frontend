@@ -53,13 +53,14 @@ export default function BuyerInspectionDetailPage() {
     setBusy(false);
     if (!res.success) {
       setError(res.message || "Could not save your decision.");
-      return;
+      return false;
     }
     if (!payload.wishToProceed) {
       setDone("search");
-      return;
+      return true;
     }
     setDone(payload.dueDiligencePath || "platform");
+    return true;
   };
 
   const property = inspection?.propertyId || {};
@@ -180,7 +181,12 @@ export default function BuyerInspectionDetailPage() {
                     <button
                       type="button"
                       disabled={busy}
-                      onClick={() => void submitIntent({ wishToProceed: true, dueDiligencePath: "platform" })}
+                      onClick={async () => {
+                        const saved = await submitIntent({ wishToProceed: true, dueDiligencePath: "platform" });
+                        if (saved !== false) {
+                          router.push(`/buyer/service-requests/new?inspectionId=${inspectionId}`);
+                        }
+                      }}
                       className="rounded-2xl border border-black/10 p-5 text-left hover:border-[#09391C]"
                     >
                       <p className="text-xs font-semibold uppercase tracking-wide text-[#0F766E]">Option A</p>

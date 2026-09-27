@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import BuyerShell from "@/components/search-insurance/BuyerShell";
+import PasswordField from "@/components/common/PasswordField";
 import { buyerFetch, setBuyerSession } from "@/lib/search-insurance";
 
 export default function BuyerRegisterPage() {
@@ -41,7 +42,7 @@ export default function BuyerRegisterPage() {
           <input className="w-full rounded-xl border border-black/10 px-3 py-2.5 text-sm" placeholder="Full name" value={fullName} onChange={(e) => setFullName(e.target.value)} />
           <input className="w-full rounded-xl border border-black/10 px-3 py-2.5 text-sm" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
           <input className="w-full rounded-xl border border-black/10 px-3 py-2.5 text-sm" placeholder="Phone number" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
-          <input className="w-full rounded-xl border border-black/10 px-3 py-2.5 text-sm" placeholder="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <PasswordField value={password} onChange={setPassword} placeholder="Password" autoComplete="new-password" />
         </div>
         {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
         <button type="button" disabled={busy} onClick={() => void submit("/buyer/auth/register")} className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-[#09391C] text-sm font-semibold text-white">

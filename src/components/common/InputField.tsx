@@ -30,8 +30,11 @@ const InputField: FC<InputFieldProps> = ({
   togglePasswordVisibility,
   className,
 }) => {
+  const [localVisible, setLocalVisible] = React.useState(false);
   const isPasswordType = type === 'password';
-  const displayType = isPasswordType && isPasswordVisible ? 'text' : type;
+  const visible = typeof isPasswordVisible === 'boolean' ? isPasswordVisible : localVisible;
+  const toggle = togglePasswordVisibility || (() => setLocalVisible((current) => !current));
+  const displayType = isPasswordType && visible ? 'text' : type;
 
   return (
     <div className={`flex flex-col gap-1 ${className}`}>
@@ -53,12 +56,12 @@ const InputField: FC<InputFieldProps> = ({
         />
 
         {/* Conditional rendering for icons */}
-        {isPasswordType && showPasswordToggle && togglePasswordVisibility && (
+        {isPasswordType && (showPasswordToggle || !togglePasswordVisibility) && (
           <FontAwesomeIcon
-            icon={isPasswordVisible ? faEye : faEyeSlash}
+            icon={visible ? faEyeSlash : faEye}
             className="absolute right-4 cursor-pointer text-gray-500 hover:text-gray-700 transition-colors"
-            onClick={togglePasswordVisibility}
-            title={isPasswordVisible ? "Hide password" : "Show password"}
+            onClick={toggle}
+            title={visible ? "Hide password" : "Show password"}
           />
         )}
         {icon && !isPasswordType && ( // Only show if an icon is provided and it's not a password field

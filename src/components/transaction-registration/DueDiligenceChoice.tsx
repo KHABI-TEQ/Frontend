@@ -264,7 +264,7 @@ export default function DueDiligenceChoice({
                   });
                   if (!saved) return;
                   setPath("platform");
-                  window.location.href = `/professional-services?inspectionId=${encodeURIComponent(selectedId)}`;
+                  window.location.href = `/buyer/service-requests/new?inspectionId=${encodeURIComponent(selectedId)}`;
                 }}
                 className="mt-5 inline-flex rounded-full bg-[#09391C] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
               >

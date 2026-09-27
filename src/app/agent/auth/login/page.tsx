@@ -264,19 +264,30 @@ interface InputProps {
 }
 
 const Input: FC<InputProps> = ({ className, id, title, type, placeholder, icon, formik }) => {
+  const [visible, setVisible] = useState(false);
+  const isPassword = type === 'password';
   return (
     <label htmlFor={id} className={`min-h-[80px] ${className} flex flex-col gap-[4px]`}>
       <span className='text-base leading-[25.6px] font-medium text-[#1E1E1E]'>{title}</span>
-      <div className='flex'>
+      <div className='relative flex'>
         <input
           name={id}
-          type={type}
-          value={formik.values[title]}
+          type={isPassword && visible ? 'text' : type}
+          value={formik.values[id || title]}
           onBlur={formik.handleBlur}
           onChange={formik.handleChange}
           placeholder={placeholder ?? 'This is placeholder'}
-          className='w-full outline-none min-h-[50px] border-[1px] py-[12px] px-[16px] bg-[#FAFAFA] border-[#D6DDEB] placeholder:text-[#A8ADB7] text-black text-base leading-[25.6px] hide-scrollbar'
+          className='w-full outline-none min-h-[50px] border-[1px] py-[12px] px-[16px] pr-12 bg-[#FAFAFA] border-[#D6DDEB] placeholder:text-[#A8ADB7] text-black text-base leading-[25.6px] hide-scrollbar'
         />
+        {isPassword ? (
+          <button
+            type='button'
+            className='absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-[#5A5D63]'
+            onClick={() => setVisible((current) => !current)}
+          >
+            {visible ? 'Hide' : 'Show'}
+          </button>
+        ) : null}
         {/* {icon ? (
           <Image
             src={icon}
