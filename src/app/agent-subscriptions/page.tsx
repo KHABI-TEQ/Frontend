@@ -218,14 +218,12 @@ export default function AgentSubscriptionsPage() {
             popular: false,
           } as any;
         });
-        // Always show free plan first, then by ascending base price
-        normalized = normalized.sort((a: any, b: any) => {
-          const aFree = a.basePrice === 0 || a.isTrial || /free/i.test(a.name || '');
-          const bFree = b.basePrice === 0 || b.isTrial || /free/i.test(b.name || '');
-          if (aFree && !bFree) return -1;
-          if (!aFree && bFree) return 1;
-          return a.basePrice - b.basePrice;
-        });
+        normalized = normalized
+          .filter((plan: any) => {
+            const price = Number(plan.basePrice) || 0;
+            return !plan.isTrial && price > 0 && !/free/i.test(String(plan.name || ""));
+          })
+          .sort((a: any, b: any) => a.basePrice - b.basePrice);
         // Mark the most expensive as popular
         const idxMax = normalized.reduce((idx: number, cur: any, i: number, arr: any[]) =>
           (cur.basePrice > (arr[idx]?.basePrice ?? 0) ? i : idx), 0);
@@ -591,9 +589,6 @@ export default function AgentSubscriptionsPage() {
                         const amount = subscription.transaction?.amount || subscription.amount || 0;
                         const txnRef = subscription.transaction?._id || subscription.transaction?.reference || subscription.transaction?.id || '-';
                         const txnStatus = subscription.transaction?.status || subscription.status || '-';
-                        const isFreePlan = ((planObj && ((planObj as any).basePrice === 0 || (planObj as any).isTrial)) ||
-                          /free|trial/i.test(String(planName)) ||
-                          Number(amount || 0) === 0);
 
                         const categoryLabel =
                           planObj?.audienceLabel ||

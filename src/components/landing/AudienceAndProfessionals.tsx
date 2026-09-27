@@ -40,7 +40,7 @@ export default function AudienceAndProfessionals() {
           </p>
           <SectionHeading>THE PROFESSIONAL NETWORK.</SectionHeading>
           <SectionText className="mt-4">
-            Khabiteq connects property seekers with licensed and qualified professionals. Those professionals provide their services directly — Khabiteq provides the discovery, matching and workflow.
+            Khabiteq connects property seekers with licensed and qualified professionals. Those professionals provide their services directly. Khabiteq provides the discovery, matching and workflow.
           </SectionText>
         </FadeIn>
 

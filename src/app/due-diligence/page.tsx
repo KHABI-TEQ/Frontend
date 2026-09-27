@@ -4,7 +4,7 @@ import Link from "next/link";
 export const metadata = {
   title: "Due Diligence | Khabiteq",
   description:
-    "Connect with a lawyer, surveyor or valuer for professional due diligence. Khabiteq provides the connection and platform infrastructure — professionals deliver the service.",
+    "Connect with a lawyer, surveyor or valuer for professional due diligence. Khabiteq provides the connection and platform infrastructure. Professionals deliver the service.",
 };
 
 const cards = [
@@ -32,7 +32,7 @@ export default function DueDiligencePage() {
       <section className="space-y-4">
         <h2 className="text-2xl font-bold text-[#09391C]">What due diligence is</h2>
         <p className="text-[#5A5D63] leading-relaxed">
-          Due diligence is the professional work that helps you understand the property, the documents, the site and the value before you commit. It is carried out by the relevant licensed or qualified professional — not by Khabiteq as a substitute for that professional.
+          Due diligence is the professional work that helps you understand the property, the documents, the site and the value before you commit. It is carried out by the relevant licensed or qualified professional. It is not carried out by Khabiteq as a substitute for that professional.
         </p>
       </section>
       <section className="space-y-4">
@@ -52,7 +52,7 @@ export default function DueDiligencePage() {
       <section className="rounded-2xl bg-[#F5F7F9] p-6 space-y-3">
         <h2 className="text-xl font-bold text-[#09391C]">How to request a service</h2>
         <p className="text-[#5A5D63]">
-          Choose the professional category, review their Practitioner Page, and request the relevant service through Khabiteq. Pricing is set by the professional where applicable. Documents a professional may review can include title documents and related papers — the professional decides what is required for the work.
+          Choose the professional category, review their Practitioner Page, and request the relevant service through Khabiteq. Pricing is set by the professional where applicable. Documents a professional may review can include title documents and related papers. The professional decides what is required for the work.
         </p>
         <p className="text-sm text-[#5A5D63]">
           The service is delivered directly by the relevant professional. Khabiteq provides the connection and platform infrastructure.

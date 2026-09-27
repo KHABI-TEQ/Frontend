@@ -568,7 +568,6 @@ const POLICIES_DATA: PolicyData[] = [
           { text: '3-month subscription: 10% discount.' },
           { text: '6-month subscription: 15% discount.' },
           { text: '12-month subscription: 20% discount.' },
-          { text: 'Trial Period: Free 7-day trial before payment is required.' },
         ],
       },
       {

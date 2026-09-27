@@ -176,7 +176,7 @@ const EnhancedAgentDashboard: React.FC = () => {
                 ) : (
                   <>
                     <Crown size={16} />
-                    Free Agent
+                    No active plan
                   </>
                 )}
               </div>

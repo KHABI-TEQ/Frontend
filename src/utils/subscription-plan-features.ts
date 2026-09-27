@@ -39,11 +39,6 @@ export function formatCatalogListingsFeature(plan: {
   value?: number | string | boolean;
 }): { label: string; valueText: string; isOn: boolean } {
   const baseLabel = feature.label || "Property listings";
-  const isFree =
-    !!plan.isFree ||
-    !!plan.isTrial ||
-    Number(plan.basePrice) === 0 ||
-    /free/i.test(String(plan.name || ""));
   const isAnnual =
     /YEARLY|ANNUAL/i.test(String(plan.code || "")) ||
     /year/i.test(String(plan.name || ""));
@@ -53,14 +48,6 @@ export function formatCatalogListingsFeature(plan: {
       label: baseLabel,
       valueText: ": up to 10",
       isOn: true,
-    };
-  }
-
-  if (isFree) {
-    return {
-      label: baseLabel,
-      valueText: ": paid plan required to list",
-      isOn: false,
     };
   }
 

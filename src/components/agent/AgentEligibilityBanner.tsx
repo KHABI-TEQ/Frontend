@@ -135,7 +135,7 @@ export default function AgentEligibilityBanner({
       tone="amber"
       icon={<CreditCard size={18} />}
       title="Subscribe to start listing"
-      body="After signup, an active paid plan is required before you can list properties. Complimentary or trial listings are no longer available."
+      body="After signup, an active paid plan is required before you can list properties."
       actions={cta("/agent-subscriptions?tab=plans", "View plans")}
     />
   );

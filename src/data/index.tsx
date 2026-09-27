@@ -341,9 +341,8 @@ export const LandlordFAQsData: { heading: string; text: string }[] = [
     text: `Khabi-Teq connects you with verified tenants, offers comprehensive property management services through trusted partners, and facilitates seamless rent collection and property maintenance.`,
   },
   {
-    heading: `Can I list my property for free?`,
-    text: `Yes, submitting a property brief is free of charge. Our team will review and list it
-on the platform to attract potential tenants or buyers.`,
+    heading: `Can I list my property?`,
+    text: `Yes. After signup, an active paid plan is required before a property can be listed. Our team reviews submissions before they go live.`,
   },
   {
     heading: `What types of properties can I list?`,

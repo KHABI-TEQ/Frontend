@@ -811,7 +811,7 @@ const DocumentVerificationPage: React.FC = () => {
             <span className="text-gray-800">with a professional</span>
           </h1>
           <p className="text-gray-600 mb-6">
-            Request legal document review from a qualified property lawyer. The professional provides the service directly — Khabiteq provides the connection and platform infrastructure.
+            Request legal document review from a qualified property lawyer. The professional provides the service directly. Khabiteq provides the connection and platform infrastructure.
           </p>
           
           <div className="mb-4">

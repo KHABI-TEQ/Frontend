@@ -221,9 +221,9 @@ export class AgentVerificationService {
   static formatAgentStateDisplay(agentState: AgentState) {
     const stateConfig = {
       free: {
-        label: "Free Agent",
+        label: "No active plan",
         color: "gray",
-        description: "Basic features available",
+        description: "A paid plan is required to list",
         bgColor: "bg-gray-100",
         textColor: "text-gray-700",
       },

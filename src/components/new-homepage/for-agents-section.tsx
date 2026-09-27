@@ -61,7 +61,7 @@ const PlanCard: React.FC<{ plan: ApiPlan }> = ({ plan }) => {
   const cur = plan.currency || 'NGN';
 
   return (
-    <div className={`bg-white rounded-2xl p-8 border-2 ${plan.isTrial || (plan.price === 0) ? 'border-gray-200' : 'border-[#8DDB90]'} relative overflow-hidden`}>
+    <div className="bg-white rounded-2xl p-8 border-2 border-[#8DDB90] relative overflow-hidden">
       <div className="text-center mb-6">
         <h4 className="text-2xl font-bold text-[#09391C] mb-2">{plan.name}</h4>
         <div className="flex items-center justify-center gap-3 mb-1">
@@ -152,13 +152,12 @@ const ForAgentsSection = () => {
       setLoadingPlans(true);
       const res = await GET_REQUEST<{ success: boolean; data: ApiPlan[] }>(`${URLS.BASE}${URLS.getSubscriptionPlans}`);
       if (res?.success && Array.isArray(res.data)) {
-        const sorted = [...res.data].sort((a, b) => {
-          const aFree = (a.price || 0) === 0 || a.isTrial || /free/i.test(a.name || '');
-          const bFree = (b.price || 0) === 0 || b.isTrial || /free/i.test(b.name || '');
-          if (aFree && !bFree) return -1;
-          if (!aFree && bFree) return 1;
-          return (a.price || 0) - (b.price || 0);
-        });
+        const sorted = res.data
+          .filter((plan) => {
+            const price = Number(plan.price) || 0;
+            return !plan.isTrial && price > 0 && !/free/i.test(String(plan.name || ""));
+          })
+          .sort((a, b) => (a.price || 0) - (b.price || 0));
         setPlans(sorted as ApiPlan[]);
       } else {
         setPlans([]);

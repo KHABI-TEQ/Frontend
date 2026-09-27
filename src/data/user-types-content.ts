@@ -15,7 +15,7 @@ export const BUYER_LASRERA_CERTIFICATE_BULLET =
 
 export const USER_TYPE_BULLETS: Record<UserTypeId, string[]> = {
   landlords: [
-    'List one or multiple properties for free',
+    'List one or multiple properties on a paid plan',
     'Receive marketing requests from verified agents',
     'Choose the agents you want to work with',
     'Your contact details remain private until you approve an agent',

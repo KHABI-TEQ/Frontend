@@ -101,7 +101,7 @@ const AgentNavigationWithUpgrade: React.FC = () => {
         return (
           <div className="flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
             <User size={14} />
-            Free Agent
+            No active plan
           </div>
         );
     }
