@@ -142,6 +142,10 @@ export const URLS = {
   surveyorJobReport: (id: string) => `/account/surveyor/jobs/${id}/report`,
   surveyorPublicPage: "/account/surveyor/public-page",
   surveyorSlugAvailability: "/account/surveyor/public-page/slug-availability",
+  valuerMe: "/account/valuer/me",
+  valuerKyc: "/account/valuer/kyc",
+  valuerBank: "/account/valuer/bank",
+  valuerJobs: "/account/valuer/jobs",
   dealSiteBankList: "/account/dealSite/bankList",
   /** Landlord / Developer: CRUD for inspection notification contacts (email + WhatsApp) */
   accountInspectionRepresentatives: "/account/inspection-representatives",

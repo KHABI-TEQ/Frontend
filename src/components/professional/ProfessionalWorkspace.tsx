@@ -3,6 +3,15 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import {
+  Briefcase,
+  CreditCard,
+  Globe2,
+  LayoutDashboard,
+  Menu,
+  ShieldCheck,
+  X,
+} from "lucide-react";
 import api from "@/utils/axiosConfig";
 import { URLS } from "@/utils/URLS";
 import { POST_REQUEST_FILE_UPLOAD } from "@/utils/requests";
@@ -10,7 +19,7 @@ import { useUserContext, normalizeUser } from "@/context/user-context";
 import KycSubmittedConfirmation from "@/components/kyc/KycSubmittedConfirmation";
 import { isApprovedKyc, isPendingKyc } from "@/lib/kyc-status";
 
-type Role = "Lawyer" | "Surveyor";
+type Role = "Lawyer" | "Surveyor" | "Valuer";
 type Tab = "overview" | "kyc" | "jobs" | "payout" | "page";
 
 function formatNaira(n?: number) {
@@ -32,7 +41,13 @@ async function uploadAsset(file: File, fileFor: string) {
 export default function ProfessionalWorkspace({ role }: { role: Role }) {
   const { user, setUser } = useUserContext();
   const isLawyer = role === "Lawyer";
+  const isValuer = role === "Valuer";
   const [tab, setTab] = useState<Tab>("overview");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [focusBrief, setFocusBrief] = useState("");
+  const [offerDrafts, setOfferDrafts] = useState<
+    Record<string, { note: string; fee: string; agreed: boolean }>
+  >({});
   const [me, setMe] = useState<any>(null);
   const [jobs, setJobs] = useState<any[]>([]);
   const [banks, setBanks] = useState<any[]>([]);
@@ -66,16 +81,27 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
         report: URLS.lawyerJobReport,
         publicPage: URLS.lawyerPublicPage,
       }
-    : {
-        me: URLS.surveyorMe,
-        profile: URLS.surveyorProfile,
-        kyc: URLS.surveyorKyc,
-        bank: URLS.surveyorBank,
-        jobs: URLS.surveyorJobs,
-        respond: URLS.surveyorJobRespond,
-        report: URLS.surveyorJobReport,
-        publicPage: URLS.surveyorPublicPage,
-      };
+    : isValuer
+      ? {
+          me: URLS.valuerMe,
+          profile: URLS.valuerKyc,
+          kyc: URLS.valuerKyc,
+          bank: URLS.valuerBank,
+          jobs: URLS.valuerJobs,
+          respond: (id: string) => `/account/professional-services/${id}/respond`,
+          report: (_id: string) => "",
+          publicPage: "",
+        }
+      : {
+          me: URLS.surveyorMe,
+          profile: URLS.surveyorProfile,
+          kyc: URLS.surveyorKyc,
+          bank: URLS.surveyorBank,
+          jobs: URLS.surveyorJobs,
+          respond: URLS.surveyorJobRespond,
+          report: URLS.surveyorJobReport,
+          publicPage: URLS.surveyorPublicPage,
+        };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -84,7 +110,9 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
         api.get(paths.me),
         api.get(paths.jobs),
         api.get(URLS.dealSiteBankList).catch(() => ({ data: { data: [] } })),
-        api.get(paths.publicPage).catch(() => ({ data: { data: null } })),
+        paths.publicPage
+          ? api.get(paths.publicPage).catch(() => ({ data: { data: null } }))
+          : Promise.resolve({ data: { data: null } }),
       ]);
       const meData = meRes.data?.data;
       setMe(meData);
@@ -121,6 +149,21 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
     load();
   }, [load]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const section = params.get("section");
+    if (section === "briefs" || section === "jobs") setTab("jobs");
+    else if (section === "kyc") setTab("kyc");
+    else if (section === "payout") setTab("payout");
+    else if (section === "page" && !isValuer) setTab("page");
+    setFocusBrief(params.get("brief") || "");
+  }, [isValuer]);
+
+  useEffect(() => {
+    if (!focusBrief || tab !== "jobs") return;
+    document.getElementById(`brief-${focusBrief}`)?.scrollIntoView({ block: "center" });
+  }, [focusBrief, tab, jobs]);
+
   const saveProfile = async () => {
     setSaving(true);
     try {
@@ -129,9 +172,11 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
         firmName: form.firmName,
         licenseNumber: form.licenseNumber,
         profilePhoto: form.photo || undefined,
-        ...(isLawyer
-          ? { verificationFee: Number(form.fee) }
-          : { surveyFee: Number(form.fee) }),
+        ...(isValuer
+          ? {}
+          : isLawyer
+            ? { verificationFee: Number(form.fee) }
+            : { surveyFee: Number(form.fee) }),
       });
       toast.success("Profile saved");
       load();
@@ -154,9 +199,11 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
         licenseNumber: form.licenseNumber,
         profilePhoto: form.photo || undefined,
         kycDocuments: form.docs,
-        ...(isLawyer
-          ? { verificationFee: Number(form.fee) }
-          : { surveyFee: Number(form.fee) }),
+        ...(isValuer
+          ? {}
+          : isLawyer
+            ? { verificationFee: Number(form.fee) }
+            : { surveyFee: Number(form.fee) }),
       });
       toast.success("KYC submitted for review");
       if (user) setUser(normalizeUser({ ...user, kycStatus: "pending" }));
@@ -178,7 +225,7 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
         accountNumber: form.accountNumber,
       });
       toast.success("Settlement account connected");
-      setTab("page");
+      setTab(isValuer ? "jobs" : "page");
       load();
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Bank setup failed");
@@ -203,6 +250,30 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
       toast.error(err?.response?.data?.message || "Page update failed");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const sendOffer = async (job: any) => {
+    const draft = offerDrafts[job._id] || {
+      note: job.myOffer?.coverageNote || "",
+      fee: job.myOffer?.serviceFee ? String(job.myOffer.serviceFee) : "",
+      agreed: false,
+    };
+    if (!me?.profile?.paystackSubaccountCode) {
+      toast.error("Connect the bank account from your KYC before you send an offer.");
+      setTab("payout");
+      return;
+    }
+    try {
+      await api.post(`/account/professional-services/${job._id}/respond`, {
+        coverageNote: draft.note,
+        fee: Number(draft.fee),
+        commissionAccepted: draft.agreed,
+      });
+      toast.success("Offer sent. The client can compare it with other professionals.");
+      load();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Could not send the offer");
     }
   };
 
@@ -238,7 +309,7 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
   const bounds = me?.feeBounds || { min: 0, max: 0 };
   const kyc = profile?.kycStatus || "none";
   const pending = jobs.filter((j) =>
-    ["pending", "payment-approved", "in-progress", "awaiting-acceptance"].includes(
+    ["pending", "payment-approved", "in-progress", "awaiting-acceptance", "awaiting-offers"].includes(
       String(j.status || ""),
     ),
   ).length;
@@ -247,44 +318,110 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
     return <div className="py-16 text-center text-[#5A5D63]">Loading workspace…</div>;
   }
 
-  return (
-    <div className="min-h-screen bg-[#EEF1F1] py-8">
-      <div className="container mx-auto px-4 max-w-5xl">
-        <h1 className="text-3xl font-bold text-[#09391C] mb-2">
-          {role} workspace
-        </h1>
-        <p className="text-[#5A5D63] mb-6">
-          Manage KYC, incoming jobs, payouts and your public professional page.
-        </p>
-        <Link
-          href="/agent-subscriptions?tab=plans"
-          className="mb-6 inline-flex rounded-full bg-[#09391C] px-4 py-2 text-sm font-semibold text-white"
-        >
-          Subscription plans
-        </Link>
+  const navItems: { id: Tab; label: string; icon: typeof LayoutDashboard }[] = [
+    { id: "overview", label: "Overview", icon: LayoutDashboard },
+    { id: "kyc", label: "KYC & profile", icon: ShieldCheck },
+    { id: "jobs", label: "Service briefs", icon: Briefcase },
+    { id: "payout", label: "Payout", icon: CreditCard },
+    ...(!isValuer ? [{ id: "page" as Tab, label: "Public page", icon: Globe2 }] : []),
+  ];
 
-        <div className="flex flex-wrap gap-2 mb-6">
-          {(
-            [
-              ["overview", "Overview"],
-              ["kyc", "KYC & profile"],
-              ["jobs", "Jobs"],
-              ["payout", "Payout"],
-              ["page", "Public page"],
-            ] as const
-          ).map(([id, label]) => (
+  const openSection = (id: Tab) => {
+    setTab(id);
+    setMenuOpen(false);
+  };
+
+  const sidebar = (
+    <nav className="flex flex-1 flex-col gap-1">
+      {navItems.map((item) => {
+        const Icon = item.icon;
+        const active = tab === item.id;
+        return (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => openSection(item.id)}
+            className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold ${
+              active ? "bg-[#09391C] text-white" : "text-[#09391C] hover:bg-[#F4FBF5]"
+            }`}
+          >
+            <Icon className="h-4 w-4 shrink-0" />
+            {item.label}
+          </button>
+        );
+      })}
+      <Link
+        href="/agent-subscriptions?tab=plans"
+        className="mt-2 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-[#09391C] hover:bg-[#F4FBF5]"
+      >
+        <CreditCard className="h-4 w-4 shrink-0" />
+        Subscription plans
+      </Link>
+    </nav>
+  );
+
+  const sectionTitle =
+    tab === "jobs"
+      ? "Service briefs"
+      : tab === "kyc"
+        ? "KYC & profile"
+        : tab === "payout"
+          ? "Payout"
+          : tab === "page"
+            ? "Public page"
+            : "Overview";
+
+  return (
+    <div className="min-h-screen bg-[#F5F7F9] py-8">
+      <div className="mx-auto flex max-w-6xl gap-6 px-4">
+        <aside className="sticky top-24 hidden h-[calc(100vh-7.5rem)] w-64 shrink-0 flex-col rounded-3xl border border-black/5 bg-white p-4 shadow-sm md:flex">
+          <div className="mb-5 px-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#0F766E]">
+              {role} account
+            </p>
+            <p className="mt-1 truncate text-sm font-semibold text-[#09391C]">
+              {user?.email || "Your account"}
+            </p>
+          </div>
+          {sidebar}
+        </aside>
+
+        <div className="min-w-0 flex-1">
+          <div className="mb-5 flex items-start justify-between gap-3">
+            <div>
+              <h1 className="text-2xl font-bold text-[#09391C] md:text-3xl">{sectionTitle}</h1>
+              <p className="mt-1 max-w-2xl text-sm text-[#5A5D63]">
+                {tab === "jobs"
+                  ? "Describe what the service covers, set the fee the client will pay, and agree that Khabiteq deducts 10% of that fee."
+                  : "Manage verification, service briefs, payouts and your public page."}
+              </p>
+            </div>
             <button
-              key={id}
               type="button"
-              onClick={() => setTab(id)}
-              className={`px-4 py-2 rounded-full text-sm font-medium ${
-                tab === id ? "bg-[#09391C] text-white" : "bg-white text-[#09391C]"
-              }`}
+              className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-3 py-2 text-sm font-semibold text-[#09391C] md:hidden"
+              onClick={() => setMenuOpen(true)}
             >
-              {label}
+              <Menu className="h-4 w-4" />
+              Menu
             </button>
-          ))}
-        </div>
+          </div>
+
+          {menuOpen && (
+            <div className="fixed inset-0 z-50 bg-black/40 md:hidden" onClick={() => setMenuOpen(false)}>
+              <div
+                className="absolute inset-y-0 left-0 flex w-72 flex-col bg-white p-4 shadow-xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="mb-4 flex items-center justify-between">
+                  <p className="text-sm font-semibold text-[#09391C]">{role} account</p>
+                  <button type="button" onClick={() => setMenuOpen(false)} aria-label="Close menu">
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+                {sidebar}
+              </div>
+            </div>
+          )}
 
         {tab === "overview" && (
           <div className="grid sm:grid-cols-3 gap-4">
@@ -293,13 +430,13 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
               <p className="text-xl font-bold text-[#09391C] capitalize">{kyc}</p>
             </div>
             <div className="bg-white rounded-2xl p-5">
-              <p className="text-sm text-[#5A5D63]">Open jobs</p>
+              <p className="text-sm text-[#5A5D63]">Open briefs</p>
               <p className="text-xl font-bold text-[#09391C]">{pending}</p>
             </div>
             <div className="bg-white rounded-2xl p-5">
-              <p className="text-sm text-[#5A5D63]">Fee</p>
+              <p className="text-sm text-[#5A5D63]">Payout account</p>
               <p className="text-xl font-bold text-[#09391C]">
-                {formatNaira(profile?.verificationFee || profile?.surveyFee)}
+                {profile?.paystackSubaccountCode ? "Connected" : "Not connected"}
               </p>
             </div>
           </div>
@@ -315,9 +452,11 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
 
         {tab === "kyc" && !isPendingKyc(kyc) && !isApprovedKyc(kyc) && (
           <div className="bg-white rounded-2xl p-6 space-y-4">
-            <p className="text-sm text-[#5A5D63]">
-              Allowed fee: {formatNaira(bounds.min)} – {formatNaira(bounds.max)}
-            </p>
+            {!isValuer && (
+              <p className="text-sm text-[#5A5D63]">
+                Allowed fee: {formatNaira(bounds.min)} – {formatNaira(bounds.max)}
+              </p>
+            )}
             <input
               value={form.firmName}
               onChange={(e) => setForm({ ...form, firmName: e.target.value })}
@@ -330,12 +469,14 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
               placeholder={isLawyer ? "License / NBA number" : "Surveyor license number"}
               className="w-full p-3 border rounded-lg"
             />
-            <input
-              value={form.fee}
-              onChange={(e) => setForm({ ...form, fee: e.target.value })}
-              placeholder="Fee (NGN)"
-              className="w-full p-3 border rounded-lg"
-            />
+            {!isValuer && (
+              <input
+                value={form.fee}
+                onChange={(e) => setForm({ ...form, fee: e.target.value })}
+                placeholder="Fee (NGN)"
+                className="w-full p-3 border rounded-lg"
+              />
+            )}
             <textarea
               value={form.bio}
               onChange={(e) => setForm({ ...form, bio: e.target.value })}
@@ -385,14 +526,16 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
               <p className="text-xs text-[#5A5D63] mt-1">{form.docs.length} document(s)</p>
             </label>
             <div className="flex flex-wrap gap-3">
-              <button
-                type="button"
-                disabled={saving}
-                onClick={saveProfile}
-                className="px-5 py-2 rounded-lg bg-[#09391C] text-white"
-              >
-                Save profile
-              </button>
+              {!isValuer && (
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={saveProfile}
+                  className="px-5 py-2 rounded-lg bg-[#09391C] text-white"
+                >
+                  Save profile
+                </button>
+              )}
               <button
                 type="button"
                 disabled={saving}
@@ -407,55 +550,133 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
 
         {tab === "jobs" && (
           <div className="space-y-4">
-            {!jobs.length && (
-              <p className="text-[#5A5D63]">No jobs yet. They appear here when clients hire you.</p>
+            {!profile?.paystackSubaccountCode && (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+                Connect the bank account from your KYC before you can send an offer.{" "}
+                <button type="button" className="font-semibold underline" onClick={() => setTab("payout")}>
+                  Open payout
+                </button>
+              </div>
             )}
-            {jobs.map((job) => (
-              <div key={job._id} className="bg-white rounded-2xl p-5">
-                <div className="flex justify-between gap-4">
-                  <div>
-                    <p className="font-semibold text-[#09391C]">
-                      {job.docType || job.serviceType || "Request"}
-                    </p>
-                    <p className="text-sm text-[#5A5D63] capitalize">
-                      Status: {String(job.status || "").replace(/-/g, " ")}
-                    </p>
-                    {job.buyerId?.fullName && (
-                      <p className="text-sm mt-1">Client: {job.buyerId.fullName}</p>
-                    )}
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    {["pending", "awaiting-acceptance"].includes(String(job.status)) && (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => respond(job._id, true)}
-                          className="px-3 py-1 rounded bg-[#09391C] text-white text-sm"
-                        >
-                          Accept
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => respond(job._id, false)}
-                          className="px-3 py-1 rounded border text-sm"
-                        >
-                          Decline
-                        </button>
-                      </>
-                    )}
-                    {["payment-approved", "in-progress"].includes(String(job.status)) && (
+            {!jobs.length && (
+              <p className="text-[#5A5D63]">
+                No service briefs yet. A brief appears here when a client asks for your kind of due diligence.
+              </p>
+            )}
+            {jobs.map((job) => {
+              const brief = String(job.status) === "awaiting-offers" || job.source === "catalog";
+              const draft = offerDrafts[job._id] || {
+                note: job.myOffer?.coverageNote || "",
+                fee: job.myOffer?.serviceFee ? String(job.myOffer.serviceFee) : "",
+                agreed: false,
+              };
+              const objective = job.answers?.objective || job.answers?.additional || "";
+              return (
+                <div
+                  key={job._id}
+                  id={`brief-${job._id}`}
+                  className={`bg-white rounded-2xl p-5 ${
+                    focusBrief === String(job._id) ? "ring-2 ring-[#8DDB90]" : ""
+                  }`}
+                >
+                  <p className="font-semibold text-[#09391C]">
+                    {job.serviceName || job.docType || job.serviceType || "Service brief"}
+                  </p>
+                  {job.reference && (
+                    <p className="mt-1 text-sm text-[#5A5D63]">Reference: {job.reference}</p>
+                  )}
+                  <p className="text-sm text-[#5A5D63] capitalize">
+                    Status: {String(job.status || "").replace(/-/g, " ")}
+                  </p>
+                  {job.buyerId?.fullName && (
+                    <p className="text-sm mt-1">Client: {job.buyerId.fullName}</p>
+                  )}
+                  {objective ? <p className="mt-3 text-sm text-[#09391C]">{objective}</p> : null}
+                  {brief && String(job.status) === "awaiting-offers" && (
+                    <div className="mt-4 space-y-3">
+                      {job.myOffer?.serviceFee ? (
+                        <p className="text-sm text-green-800">
+                          You sent an offer for {formatNaira(job.myOffer.serviceFee)}. Sending again replaces it.
+                        </p>
+                      ) : null}
+                      <textarea
+                        value={draft.note}
+                        onChange={(e) =>
+                          setOfferDrafts((prev) => ({
+                            ...prev,
+                            [job._id]: { ...draft, note: e.target.value },
+                          }))
+                        }
+                        rows={4}
+                        placeholder="Describe what this service covers"
+                        className="w-full rounded-lg border p-3 text-sm"
+                      />
+                      <input
+                        value={draft.fee}
+                        onChange={(e) =>
+                          setOfferDrafts((prev) => ({
+                            ...prev,
+                            [job._id]: { ...draft, fee: e.target.value },
+                          }))
+                        }
+                        placeholder="Fee the client will pay (NGN)"
+                        className="w-full rounded-lg border p-3 text-sm"
+                      />
+                      <label className="flex items-start gap-2 text-sm text-[#09391C]">
+                        <input
+                          type="checkbox"
+                          checked={draft.agreed}
+                          onChange={(e) =>
+                            setOfferDrafts((prev) => ({
+                              ...prev,
+                              [job._id]: { ...draft, agreed: e.target.checked },
+                            }))
+                          }
+                          className="mt-1"
+                        />
+                        <span>
+                          I agree that Khabiteq deducts 10% of this fee from my settlement. The client pays only the fee I set.
+                        </span>
+                      </label>
                       <button
                         type="button"
-                        onClick={() => submitReport(job._id)}
-                        className="px-3 py-1 rounded bg-[#8DDB90] text-[#09391C] text-sm font-medium"
+                        onClick={() => sendOffer(job)}
+                        className="rounded-lg bg-[#09391C] px-4 py-2 text-sm font-semibold text-white"
                       >
-                        Submit report
+                        Send offer
                       </button>
-                    )}
-                  </div>
+                    </div>
+                  )}
+                  {!brief && ["pending", "awaiting-acceptance"].includes(String(job.status)) && (
+                    <div className="mt-3 flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => respond(job._id, true)}
+                        className="px-3 py-1 rounded bg-[#09391C] text-white text-sm"
+                      >
+                        Accept
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => respond(job._id, false)}
+                        className="px-3 py-1 rounded border text-sm"
+                      >
+                        Decline
+                      </button>
+                    </div>
+                  )}
+                  {!brief && ["payment-approved", "in-progress"].includes(String(job.status)) && paths.report(job._id) && (
+                    <button
+                      type="button"
+                      onClick={() => submitReport(job._id)}
+                      className="mt-3 px-3 py-1 rounded bg-[#8DDB90] text-[#09391C] text-sm font-medium"
+                    >
+                      Submit report
+                    </button>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
@@ -548,6 +769,7 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
             </button>
           </div>
         )}
+        </div>
       </div>
     </div>
   );
