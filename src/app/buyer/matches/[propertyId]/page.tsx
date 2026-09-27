@@ -5,7 +5,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import BuyerShell from "@/components/search-insurance/BuyerShell";
 import { getBuyerToken } from "@/lib/search-insurance";
-import api from "@/utils/axiosConfig";
+import { URLS } from "@/utils/URLS";
 import { useGlobalPropertyActions } from "@/context/global-property-actions-context";
 import sampleImage from "@/assets/noImageAvailable.png";
 
@@ -61,10 +61,10 @@ export default function InsuredMatchListingPage() {
       return;
     }
     if (!propertyId) return;
-    api
-      .get(`/properties/${propertyId}/getOne`)
-      .then((res) => {
-        const raw = res.data?.data?.property || res.data?.data || res.data?.property;
+    fetch(`${URLS.BASE}/properties/${propertyId}/getOne`)
+      .then((res) => res.json())
+      .then((body) => {
+        const raw = body?.data?.property || body?.data || body?.property;
         if (!raw) {
           setError("Property not found");
           return;

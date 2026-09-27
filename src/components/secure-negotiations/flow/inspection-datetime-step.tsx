@@ -134,20 +134,24 @@ const InspectionDateTimeStep: React.FC<InspectionDateTimeStepProps> = ({
     return times;
   }, []);
 
-  // Generate valid dates starting from tomorrow (excluding passed dates and Sundays)
+  // Today, tomorrow, and later days. Local calendar date avoids a UTC shift hiding today.
   const generateValidDates = useMemo(() => {
     const dates = [];
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() + 1); // Start from tomorrow
-
-    const currentDate = new Date(startDate);
+    const currentDate = new Date();
+    currentDate.setHours(12, 0, 0, 0);
     let count = 0;
-    const maxDates = 20; // Generate more dates to have enough after filtering
+    const maxDates = 21;
+
+    const localDateKey = (value: Date) => {
+      const y = value.getFullYear();
+      const m = String(value.getMonth() + 1).padStart(2, "0");
+      const d = String(value.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    };
 
     while (count < maxDates) {
-      // Skip Sundays (0 = Sunday)
-      if (currentDate.getDay() !== 0) {
-        const dateStr = currentDate.toISOString().split("T")[0];
+      {
+        const dateStr = localDateKey(currentDate);
 
         dates.push({
           date: dateStr,

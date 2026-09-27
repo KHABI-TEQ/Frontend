@@ -41,51 +41,59 @@ const INSPECTION_TIMES: string[] = [
   "6:00 PM",
 ];
 
+const startOfLocalDay = (date: Date) => {
+  const next = new Date(date);
+  next.setHours(0, 0, 0, 0);
+  return next;
+};
+
+const timeToHour = (time: string) => {
+  const match = time.match(/^(\d+):(\d+)\s*(AM|PM)$/i);
+  if (!match) return 0;
+  let hour = parseInt(match[1], 10);
+  const period = match[3].toUpperCase();
+  if (period === "PM" && hour !== 12) hour += 12;
+  if (period === "AM" && hour === 12) hour = 0;
+  return hour;
+};
+
+const isSameLocalDay = (dateLabel: string, now = new Date()) => {
+  const selected = new Date(dateLabel);
+  if (Number.isNaN(selected.getTime())) return false;
+  return (
+    selected.getFullYear() === now.getFullYear() &&
+    selected.getMonth() === now.getMonth() &&
+    selected.getDate() === now.getDate()
+  );
+};
+
+/** A slot can be booked when it has not already started. Future days keep every time. */
+const isTimeStillBookable = (time: string, dateLabel: string) => {
+  if (!isSameLocalDay(dateLabel)) return true;
+  return timeToHour(time) > new Date().getHours();
+};
+
+const firstBookableTime = (dateLabel: string) =>
+  INSPECTION_TIMES.find((time) => isTimeStillBookable(time, dateLabel)) || INSPECTION_TIMES[0];
+
 const getInitialDate = () => {
-  const date = new Date();
-  date.setDate(date.getDate() + 3);
-
-  while (date.getDay() === 0) {
-    date.setDate(date.getDate() + 1);
+  const today = startOfLocalDay(new Date());
+  const todayLabel = format(today, "MMM d, yyyy");
+  if (INSPECTION_TIMES.some((time) => isTimeStillBookable(time, todayLabel))) {
+    return todayLabel;
   }
-
-  return format(date, "MMM d, yyyy");
+  today.setDate(today.getDate() + 1);
+  return format(today, "MMM d, yyyy");
 };
 
-const getInitialTime = () => {
-  const currentHour = new Date().getHours();
-  const nextHour = currentHour + 1;
-
-  const hourMap: Record<number, string> = {
-    8: "8:00 AM",
-    9: "9:00 AM",
-    10: "10:00 AM",
-    11: "11:00 AM",
-    12: "12:00 PM",
-    13: "1:00 PM",
-    14: "2:00 PM",
-    15: "3:00 PM",
-    16: "4:00 PM",
-    17: "5:00 PM",
-    18: "6:00 PM",
-  };
-
-  if (nextHour >= 8 && nextHour <= 18 && hourMap[nextHour]) {
-    return hourMap[nextHour];
-  }
-
-  return INSPECTION_TIMES[0];
-};
+const getInitialTime = () => firstBookableTime(getInitialDate());
 
 const getAvailableDates = (count: number) => {
   const dates: string[] = [];
-  const date = new Date();
-  date.setDate(date.getDate() + 3);
+  const date = startOfLocalDay(new Date());
 
   while (dates.length < count) {
-    if (date.getDay() !== 0) {
-      dates.push(format(date, "MMM d, yyyy"));
-    }
+    dates.push(format(date, "MMM d, yyyy"));
     date.setDate(date.getDate() + 1);
   }
   return dates;
@@ -213,12 +221,17 @@ const DateTimeSelection: React.FC<DateTimeSelectionProps> = ({
         time: defaultInitialTime,
       };
 
+      const nextSchedule = {
+        ...schedule,
+        [field]: value,
+      };
+      if (field === "date" && !isTimeStillBookable(nextSchedule.time, value)) {
+        nextSchedule.time = firstBookableTime(value);
+      }
+
       return {
         ...prev,
-        [propertyId]: {
-          ...schedule,
-          [field]: value,
-        },
+        [propertyId]: nextSchedule,
       };
     });
   };
@@ -310,6 +323,15 @@ const DateTimeSelection: React.FC<DateTimeSelectionProps> = ({
       return;
     }
 
+    const hasStartedSlot = selectedProperties.some((property) => {
+      const schedule = propertySchedules[property.propertyId];
+      return schedule ? !isTimeStillBookable(schedule.time, schedule.date) : false;
+    });
+    if (hasStartedSlot) {
+      toast.error("Choose a time that has not already passed.");
+      return;
+    }
+
     if (
       !buyerInfo.fullName.trim() ||
       !buyerInfo.phoneNumber.trim() ||
@@ -337,6 +359,16 @@ const DateTimeSelection: React.FC<DateTimeSelectionProps> = ({
 
     try {
       const payload = buildInspectionPayload();
+      const client = getBuyerProfile();
+      if (getBuyerToken() && client?.email) {
+        payload.requestedBy = {
+          ...payload.requestedBy,
+          fullName: client.fullName || payload.requestedBy.fullName,
+          email: client.email,
+          phoneNumber: client.phoneNumber || payload.requestedBy.phoneNumber,
+          whatsAppNumber: client.whatsAppNumber || payload.requestedBy.whatsAppNumber || "",
+        };
+      }
 
       const response = await POST_REQUEST(
         URLS.BASE + URLS.requestInspection,
@@ -518,19 +550,26 @@ const DateTimeSelection: React.FC<DateTimeSelectionProps> = ({
                     Select Time
                   </h5>
                   <div className="grid grid-cols-2 gap-3">
-                    {INSPECTION_TIMES.map((time) => (
-                      <button
-                        key={`${property.propertyId}-${time}`}
-                        onClick={() => handleScheduleChange(property.propertyId, "time", time)}
-                        className={`p-3 rounded-lg border-2 transition-colors text-sm font-medium ${
-                          schedule?.time === time
-                            ? "border-[#8DDB90] bg-[#E4EFE7] text-[#09391C]"
-                            : "border-gray-200 hover:border-[#8DDB90] text-[#24272C]"
-                        }`}
-                      >
-                        {time}
-                      </button>
-                    ))}
+                    {INSPECTION_TIMES.map((time) => {
+                      const bookable = isTimeStillBookable(time, schedule?.date || "");
+                      return (
+                        <button
+                          key={`${property.propertyId}-${time}`}
+                          type="button"
+                          disabled={!bookable}
+                          onClick={() => handleScheduleChange(property.propertyId, "time", time)}
+                          className={`p-3 rounded-lg border-2 transition-colors text-sm font-medium ${
+                            !bookable
+                              ? "cursor-not-allowed border-gray-100 bg-gray-50 text-gray-300"
+                              : schedule?.time === time
+                                ? "border-[#8DDB90] bg-[#E4EFE7] text-[#09391C]"
+                                : "border-gray-200 hover:border-[#8DDB90] text-[#24272C]"
+                          }`}
+                        >
+                          {time}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -597,9 +636,11 @@ const DateTimeSelection: React.FC<DateTimeSelectionProps> = ({
           Buyer Information <span className="text-red-500">*</span>
         </h3>
         <p className="text-sm text-[#5A5D63] mb-6">
-          {getBuyerToken()
-            ? "We’ll use the details on your account for this inspection."
-            : "Sign in so we can use your account for this inspection and future activities."}
+          {getBuyerToken() && getBuyerProfile()?.email
+            ? `This inspection is requested by your client account, ${getBuyerProfile()?.email}.`
+            : getBuyerToken()
+              ? "We’ll use the details on your client account for this inspection."
+              : "Sign in with your client account so this inspection is not filed under another signed-in account."}
         </p>
 
         <div className="space-y-4">
@@ -624,10 +665,11 @@ const DateTimeSelection: React.FC<DateTimeSelectionProps> = ({
               </label>
               <input
                 type="email"
-                value={buyerInfo.email}
+                value={getBuyerToken() && getBuyerProfile()?.email ? getBuyerProfile()?.email : buyerInfo.email}
                 onChange={(e) => handleBuyerInfoChange("email", e.target.value)}
                 placeholder="Enter your email address"
-                className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8DDB90] focus:border-transparent"
+                readOnly={Boolean(getBuyerToken() && getBuyerProfile()?.email)}
+                className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8DDB90] focus:border-transparent read-only:bg-[#F5F7F9]"
                 required
               />
             </div>
@@ -668,7 +710,7 @@ const DateTimeSelection: React.FC<DateTimeSelectionProps> = ({
       <div className="bg-[#FFF3E0] border border-[#FFB74D] rounded-lg p-4">
         <h4 className="font-semibold text-[#E65100] mb-2">Important Notes:</h4>
         <ul className="text-sm text-[#E65100] space-y-1">
-          <li>• Inspections are available Monday to Saturday (excluding Sundays)</li>
+          <li>• You can choose today, tomorrow, or any later day</li>
           <li>• Please arrive 15 minutes before your scheduled time</li>
           <li>• Bring a valid form of identification</li>
           <li>• Payment confirmation is required before inspection</li>

@@ -88,7 +88,7 @@ export default function BuyerAuthModal({
       });
       if (!res.success || !res.data?.token) {
         const msg = res.message || "Could not sign you in.";
-        if (/guest search exists|set a password/i.test(msg)) setMode("claim");
+        if (/already exists/i.test(msg)) setMode("login");
         throw new Error(msg);
       }
       setBuyerSession(res.data.token, res.data.buyer);

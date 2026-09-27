@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useParams, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { useUserContext } from "@/context/user-context";
 import { requestToMarketService, DEFAULT_AGENT_COMMISSION_DISPLAY_NAIRA, type RequestToMarketListItem } from "@/services/requestToMarketService";
@@ -42,6 +43,10 @@ type PublisherStatusFilter = "" | "pending" | "accepted" | "rejected";
 
 export default function MyRequestToMarketPage() {
   const { user } = useUserContext();
+  const searchParams = useSearchParams();
+  const params = useParams();
+  const pathRequestId = typeof params?.requestId === "string" ? params.requestId : "";
+  const focusRequestId = pathRequestId || searchParams.get("requestId") || "";
   const [requests, setRequests] = useState<RequestToMarketListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -76,7 +81,7 @@ export default function MyRequestToMarketPage() {
         role,
         page: 1,
         limit: 50,
-        ...(role === "publisher" && statusFilter ? { status: statusFilter } : {}),
+        ...(role === "publisher" && !focusRequestId && statusFilter ? { status: statusFilter } : {}),
       });
       if (res?.success && Array.isArray(res.data)) {
         setRequests(res.data);
@@ -89,7 +94,19 @@ export default function MyRequestToMarketPage() {
     } finally {
       setLoading(false);
     }
-  }, [role, statusFilter]);
+  }, [role, statusFilter, focusRequestId]);
+
+  useEffect(() => {
+    if (focusRequestId) setStatusFilter("");
+  }, [focusRequestId]);
+
+  useEffect(() => {
+    if (!focusRequestId || loading) return;
+    document.getElementById(`request-to-market-${focusRequestId}`)?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }, [focusRequestId, loading, requests]);
 
   useEffect(() => {
     fetchRequests();
@@ -267,7 +284,11 @@ export default function MyRequestToMarketPage() {
           </Link>
 
           <h1 className="text-2xl font-bold text-[#09391C] mb-2">
-            {isAgent ? "My request to market" : "Requests for my properties"}
+            {focusRequestId && !isAgent
+              ? "Accept or reject this request"
+              : isAgent
+                ? "My request to market"
+                : "Requests for my properties"}
           </h1>
           <p className="text-[#5A5D63] mb-6">
             {isAgent
@@ -320,7 +341,14 @@ export default function MyRequestToMarketPage() {
 
           {!loading && requests.length > 0 && (
             <ul className="space-y-4">
-              {requests.map((item) => {
+              {[...requests]
+                .sort((a, b) => {
+                  if (!focusRequestId) return 0;
+                  if (a._id === focusRequestId) return -1;
+                  if (b._id === focusRequestId) return 1;
+                  return 0;
+                })
+                .map((item) => {
                 const prop = item.propertyId && typeof item.propertyId === "object" ? item.propertyId as { briefType?: string; price?: number; pictures?: string[]; propertyCode?: string } : null;
                 const agentDisplay = getAgentDisplay(item);
                 const firstPicture = prop?.pictures?.[0];
@@ -336,7 +364,12 @@ export default function MyRequestToMarketPage() {
                 return (
                   <li
                     key={item._id}
-                    className="bg-white rounded-xl border border-[#E5E7EB] p-4 shadow-sm"
+                    id={`request-to-market-${item._id}`}
+                    className={`bg-white rounded-xl border p-4 shadow-sm ${
+                      focusRequestId === item._id
+                        ? "border-[#09391C] ring-2 ring-[#8DDB90]"
+                        : "border-[#E5E7EB]"
+                    }`}
                   >
                     <div className="flex flex-wrap gap-4">
                       {firstPicture && (

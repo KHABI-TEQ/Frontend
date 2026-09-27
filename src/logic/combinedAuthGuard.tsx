@@ -76,7 +76,11 @@ export const CombinedAuthGuard: React.FC<CombinedAuthGuardProps> = ({
   }
 
   if (requireAuth && !user) {
-    if (typeof window !== "undefined") window.location.href = redirectTo;
+    if (typeof window !== "undefined") {
+      const dest = `${window.location.pathname}${window.location.search}`;
+      const loginBase = redirectTo.split("?")[0] || "/auth/login";
+      window.location.href = `${loginBase}?from=${encodeURIComponent(dest)}`;
+    }
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#EEF1F1]">
         <Loading />

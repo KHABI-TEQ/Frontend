@@ -137,8 +137,8 @@ const Login: FC = () => {
       router.replace("/auth/change-password");
       return;
     }
-    router.replace("/dashboard");
-  }, [user, isInitialized, router]);
+    router.replace(resolvePostLoginPath(resolvedRedirectTarget, "/dashboard"));
+  }, [user, isInitialized, router, resolvedRedirectTarget]);
 
   useEffect(() => {
     if (resolvedRedirectTarget && resolvePostLoginPath(resolvedRedirectTarget, "") ) {

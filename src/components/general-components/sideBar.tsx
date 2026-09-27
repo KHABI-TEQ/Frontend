@@ -7,7 +7,8 @@ import { useUserContext } from "@/context/user-context";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCaretDown, faClose } from "@fortawesome/free-solid-svg-icons";
 import { AnimatePresence, motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { getBuyerProfile, getBuyerToken } from "@/lib/search-insurance";
 import Image from "next/image";
 import userIcon from "@/svgs/user.svg";
 import { mainNavigationData } from "@/data/navigation-data";
@@ -23,6 +24,16 @@ const SideBar = ({
   const pathName = usePathname();
   const router = useRouter();
   const { user, logout } = useUserContext();
+  const [hasBuyerSession, setHasBuyerSession] = useState(false);
+  const isClientJourney =
+    pathName === "/buyer" ||
+    Boolean(pathName?.startsWith("/buyer/")) ||
+    pathName === "/continue-inspection";
+  const showPractitioner = Boolean(user?._id || user?.id) && !isClientJourney;
+
+  useEffect(() => {
+    setHasBuyerSession(Boolean(getBuyerToken()));
+  }, [pathName]);
 
   const [openedMenus, setOpenedMenus] = useState<{ [key: string]: boolean }>(
     {},
@@ -43,7 +54,7 @@ const SideBar = ({
         <nav className="w-full h-[100%] pt-[10px] flex flex-col justify-between">
           <div>
             <div className="flex justify-between w-full">
-              {(user?._id || user?.id) ? (
+              {showPractitioner ? (
                 <Link
                   href="/dashboard"
                   onClick={() => setIsModalOpened(false)}
@@ -64,6 +75,17 @@ const SideBar = ({
                     </h2>
                     <p className="text-sm text-[#5A5D63]">{user.userType}</p>
                   </div>
+                </Link>
+              ) : hasBuyerSession ? (
+                <Link
+                  href="/buyer"
+                  onClick={() => setIsModalOpened(false)}
+                  className="flex flex-col gap-[1px] min-w-0"
+                >
+                  <h2 className="text-base text-black font-medium truncate">Client account</h2>
+                  <p className="text-sm text-[#5A5D63] truncate">
+                    {getBuyerProfile()?.email || "Signed in"}
+                  </p>
                 </Link>
               ) : (
                 <div className="w-[136px] flex">
@@ -124,7 +146,7 @@ const SideBar = ({
               </button>
             </div>
             <div className="w-full mt-10 flex flex-col gap-[20px]">
-              {(user?._id || user?.id) && (
+              {showPractitioner && (
                 <Link
                   href="/dashboard"
                   onClick={() => setIsModalOpened(false)}
@@ -138,6 +160,22 @@ const SideBar = ({
                     <circle cx="5" cy="5" r="5" fill="#09391C" />
                   </svg>
                   Dashboard
+                </Link>
+              )}
+              {(user?._id || user?.id || hasBuyerSession) && (
+                <Link
+                  href="/notifications"
+                  onClick={() => setIsModalOpened(false)}
+                  className={`flex items-center gap-2 w-fit pb-1 text-[#09391C] text-[18px] leading-[21.09px] font-semibold ${
+                    pathName === "/notifications"
+                      ? "border-b-2 border-[#09391C]"
+                      : "hover:border-b-2 hover:border-[#09391C]"
+                  }`}
+                >
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="5" cy="5" r="5" fill="#8DDB90" />
+                  </svg>
+                  Notifications
                 </Link>
               )}
               <LookingToDoMobileNav onNavigate={() => setIsModalOpened(false)} />
@@ -325,7 +363,7 @@ const SideBar = ({
               })}
             </div>
           </div>
-          {(user?._id || user?.id) && (
+          {showPractitioner && (
             <button
               type="button"
               onClick={() => {

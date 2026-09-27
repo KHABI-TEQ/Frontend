@@ -26,6 +26,7 @@ import { getBuyerToken } from "@/lib/search-insurance";
 const SideBar = dynamic(() => import("../general-components/sideBar"), { ssr: false });
 // Import profile directly so dropdown always has latest logic (Developer/Landlord menu on /dashboard)
 import UserProfile from "./my-profile";
+import NotificationBell from "./NotificationBell";
 
 const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
   const {
@@ -44,6 +45,11 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
   const { user, logout } = useUserContext();
   const [isScrolled, setIsScrolled] = useState(false);
   const [hasBuyerSession, setHasBuyerSession] = useState(false);
+  const isClientJourney =
+    pathName === "/buyer" ||
+    Boolean(pathName?.startsWith("/buyer/")) ||
+    pathName === "/continue-inspection";
+  const showPractitioner = Boolean(user?._id || user?.id) && !isClientJourney;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -262,7 +268,7 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
           {/**Buttons for desktop screens */}
           <div className="hidden lg:flex shrink-0 items-center gap-2 xl:gap-3">
             <LookingToDoNav />
-            {user?._id || user?.id ? (
+            {showPractitioner ? (
               <>
                 <Link
                   href="/dashboard"
@@ -274,6 +280,7 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
                 >
                   Dashboard
                 </Link>
+                <NotificationBell />
                 <div className="relative profile-dropdown">
                   <button
                     type="button"
@@ -305,6 +312,7 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
               </>
             ) : (
               <div className="flex items-center gap-2">
+                {hasBuyerSession ? <NotificationBell audience="buyer" /> : null}
                 {hasBuyerSession ? (
                   <Link
                     href="/buyer"
@@ -317,23 +325,32 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
                     My dashboard
                   </Link>
                 ) : null}
-                <Link
-                  href="/auth/login"
-                  className="whitespace-nowrap px-3 xl:px-4 py-2 text-[13px] xl:text-sm font-medium text-gray-700 hover:text-[#09391C] rounded-full hover:bg-gray-100/80 transition-all duration-300"
-                >
-                  Log in
-                </Link>
-                <Link
-                  href="/auth/register"
-                  className="whitespace-nowrap px-4 xl:px-5 py-2 xl:py-2.5 text-[13px] xl:text-sm font-semibold text-white bg-[#09391C] hover:bg-[#0B423D] rounded-full shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
-                >
-                  GET STARTED
-                </Link>
+                {!hasBuyerSession ? (
+                  <>
+                    <Link
+                      href="/auth/login"
+                      className="whitespace-nowrap px-3 xl:px-4 py-2 text-[13px] xl:text-sm font-medium text-gray-700 hover:text-[#09391C] rounded-full hover:bg-gray-100/80 transition-all duration-300"
+                    >
+                      Log in
+                    </Link>
+                    <Link
+                      href="/auth/register"
+                      className="whitespace-nowrap px-4 xl:px-5 py-2 xl:py-2.5 text-[13px] xl:text-sm font-semibold text-white bg-[#09391C] hover:bg-[#0B423D] rounded-full shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
+                    >
+                      GET STARTED
+                    </Link>
+                  </>
+                ) : null}
               </div>
             )}
           </div>
 
-          <div className="flex lg:hidden">
+          <div className="flex items-center gap-2 lg:hidden">
+            {showPractitioner ? (
+              <NotificationBell />
+            ) : hasBuyerSession ? (
+              <NotificationBell audience="buyer" />
+            ) : null}
             <button
               onClick={() => {
                 setIsModalOpened(!isModalOpened);
