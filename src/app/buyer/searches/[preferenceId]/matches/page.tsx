@@ -21,10 +21,38 @@ export default function PreferenceMatchesPage() {
       router.replace(`/buyer/login?next=/buyer/searches/${preferenceId}/matches`);
       return;
     }
-    buyerFetch<{ preferences: any[] }>("/buyer/auth/me/preferences").then((res) => {
-      const pref = (res.data?.preferences || []).find((row) => String(row._id) === preferenceId);
-      setMatchedId(String(pref?.matchedId || ""));
-      setMatches(Array.isArray(pref?.matches) ? pref.matches : []);
+    buyerFetch<{ preferences: any[]; buyerId?: string }>("/buyer/auth/me/preferences").then(async (res) => {
+      const preferences = res.data?.preferences || [];
+      const pref = preferences.find((row) => String(row._id) === preferenceId);
+      const ownerId = String(res.data?.buyerId || pref?.buyer || "");
+      let nextMatchedId = String(pref?.matchedId || "");
+      let nextMatches: MatchRow[] = Array.isArray(pref?.matches) ? pref.matches : [];
+
+      if (!nextMatches.length && ownerId) {
+        const detail = await buyerFetch<any>(`/preferences/getByBuyer/${ownerId}/${preferenceId}`);
+        nextMatchedId = String(detail.data?.matchedId || nextMatchedId);
+        if (nextMatchedId) {
+          const listed = await buyerFetch<any>(
+            `/properties/${nextMatchedId}/${preferenceId}/matches?limit=50`
+          );
+          const rows = listed.data?.matchedProperties || [];
+          nextMatches = rows
+            .map((property: any) => ({
+              propertyId: String(property.id || property._id || ""),
+              title:
+                property.title ||
+                [property.location?.area, property.location?.localGovernment, property.location?.state]
+                  .filter(Boolean)
+                  .join(", ") ||
+                property.propertyType ||
+                "Property",
+            }))
+            .filter((row: MatchRow) => row.propertyId);
+        }
+      }
+
+      setMatchedId(nextMatchedId);
+      setMatches(nextMatches);
       setLoading(false);
     });
   }, [preferenceId, router]);

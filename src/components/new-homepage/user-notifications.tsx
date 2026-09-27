@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Bell, X, Eye, Trash2, Clock, CheckCircle } from "lucide-react";
 import useClickOutside from "@/hooks/clickOutside";
 import { useNotifications } from "@/context/notification-context";
+import { notificationText } from "@/components/new-homepage/NotificationBell";
 import toast from "react-hot-toast";
 
 type UserNotificationsProps = {
@@ -193,7 +194,7 @@ const UserNotifications: React.FC<UserNotificationsProps> = ({
                       )}
                     </div>
                     <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                      {notification.message}
+                      {notificationText(notification.message)}
                     </p>
                     <p className="text-xs text-gray-400 mt-2">
                       {formatTimeAgo(notification.createdAt)}

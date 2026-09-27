@@ -17,6 +17,33 @@ export function actionPathOf(notification: {
   return null;
 }
 
+/** Show stored email HTML as a readable notification sentence. */
+export function notificationText(value: string): string {
+  const raw = String(value || "");
+  if (!/<[a-z!/][^>]*>/i.test(raw)) return raw;
+  let next = raw
+    .replace(/<!--[\s\S]*?-->/g, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<head[\s\S]*?<\/head>/gi, " ")
+    .replace(/<br\s*\/?>/gi, " ")
+    .replace(/<\/(p|div|tr|li|h[1-6])>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+  const greeting = next.search(/\bDear\b/i);
+  if (greeting > 0 && greeting < 120) next = next.slice(greeting);
+  next = next.replace(/\s*Copyright\s*©[\s\S]*$/i, "");
+  next = next.replace(/\s+/g, " ").trim();
+  return next.length > 280 ? `${next.slice(0, 277)}…` : next;
+}
+
 export function timeAgo(dateString: string): string {
   const diff = Date.now() - new Date(dateString).getTime();
   const minutes = Math.floor(diff / 60000);
@@ -140,7 +167,7 @@ export default function NotificationBell({
                         <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#8DDB90]" />
                       ) : null}
                     </span>
-                    <span className="mt-1 block text-sm text-gray-600 line-clamp-2">{item.message}</span>
+                    <span className="mt-1 block text-sm text-gray-600 line-clamp-2">{notificationText(item.message)}</span>
                     <span className="mt-1 block text-xs text-gray-400">{timeAgo(item.createdAt)}</span>
                   </button>
                 );

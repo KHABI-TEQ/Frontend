@@ -69,7 +69,7 @@ export default function BuyerSearchesPage() {
                       preferenceId: String(pref._id),
                       ...(pref.matchedId ? { matchedId: String(pref.matchedId) } : {}),
                     }).toString()}`
-                  : matches.length > 1
+                  : matches.length > 1 || String(pref.status || "").toLowerCase() === "matched"
                     ? `/buyer/searches/${pref._id}/matches`
                     : "";
               return (

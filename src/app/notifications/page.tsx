@@ -7,7 +7,7 @@ import { Bell } from "lucide-react";
 import { useUserContext } from "@/context/user-context";
 import { useNotifications } from "@/context/notification-context";
 import { getBuyerToken } from "@/lib/search-insurance";
-import { actionPathOf, timeAgo } from "@/components/new-homepage/NotificationBell";
+import { actionPathOf, notificationText, timeAgo } from "@/components/new-homepage/NotificationBell";
 
 export default function NotificationsPage() {
   const { user } = useUserContext();
@@ -89,7 +89,7 @@ export default function NotificationsPage() {
                         <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#8DDB90]" />
                       ) : null}
                     </span>
-                    <span className="mt-1 block text-sm text-gray-600">{item.message}</span>
+                    <span className="mt-1 block text-sm text-gray-600">{notificationText(item.message)}</span>
                     <span className="mt-2 block text-xs text-gray-400">{timeAgo(item.createdAt)}</span>
                   </button>
                 </li>
