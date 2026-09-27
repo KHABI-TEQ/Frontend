@@ -1,0 +1,69 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import BuyerShell from "@/components/search-insurance/BuyerShell";
+import { buyerFetch, getBuyerToken } from "@/lib/search-insurance";
+
+type MatchRow = { propertyId: string; title: string };
+
+export default function PreferenceMatchesPage() {
+  const router = useRouter();
+  const params = useParams();
+  const preferenceId = String(params?.preferenceId || "");
+  const [loading, setLoading] = useState(true);
+  const [matchedId, setMatchedId] = useState("");
+  const [matches, setMatches] = useState<MatchRow[]>([]);
+
+  useEffect(() => {
+    if (!getBuyerToken()) {
+      router.replace(`/buyer/login?next=/buyer/searches/${preferenceId}/matches`);
+      return;
+    }
+    buyerFetch<{ preferences: any[] }>("/buyer/auth/me/preferences").then((res) => {
+      const pref = (res.data?.preferences || []).find((row) => String(row._id) === preferenceId);
+      setMatchedId(String(pref?.matchedId || ""));
+      setMatches(Array.isArray(pref?.matches) ? pref.matches : []);
+      setLoading(false);
+    });
+  }, [preferenceId, router]);
+
+  return (
+    <BuyerShell
+      title="Preference matches"
+      subtitle="Open a matched property to schedule an inspection."
+    >
+      {loading ? (
+        <p className="text-sm text-[#5A5D63]">Loading matches...</p>
+      ) : matches.length === 0 ? (
+        <div className="rounded-3xl bg-white p-8 text-center">
+          <p className="text-[#5A5D63]">No matches are ready for this preference yet.</p>
+          <Link href="/buyer/searches" className="mt-4 inline-flex text-sm font-semibold text-[#09391C]">
+            Back to preferences
+          </Link>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {matches.map((match) => {
+            const href = `/buyer/matches/${match.propertyId}?${new URLSearchParams({
+              preferenceId,
+              ...(matchedId ? { matchedId } : {}),
+            }).toString()}`;
+            return (
+              <article key={match.propertyId} className="rounded-3xl bg-white p-5 shadow-sm">
+                <h2 className="text-lg font-bold text-[#09391C]">{match.title}</h2>
+                <Link
+                  href={href}
+                  className="mt-3 inline-flex rounded-full bg-[#09391C] px-4 py-2 text-sm font-semibold text-white"
+                >
+                  Open listing
+                </Link>
+              </article>
+            );
+          })}
+        </div>
+      )}
+    </BuyerShell>
+  );
+}

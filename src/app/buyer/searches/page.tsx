@@ -60,6 +60,18 @@ export default function BuyerSearchesPage() {
               const latest = reviews[0];
               const ownerId = buyerId || String(pref.buyer || "");
               const adjustHref = ownerId ? `/update-preference/${ownerId}/${pref._id}` : "";
+              const matches: { propertyId: string; title: string }[] = Array.isArray(pref.matches)
+                ? pref.matches
+                : [];
+              const matchHref =
+                matches.length === 1
+                  ? `/buyer/matches/${matches[0].propertyId}?${new URLSearchParams({
+                      preferenceId: String(pref._id),
+                      ...(pref.matchedId ? { matchedId: String(pref.matchedId) } : {}),
+                    }).toString()}`
+                  : matches.length > 1
+                    ? `/buyer/searches/${pref._id}/matches`
+                    : "";
               return (
                 <article key={pref._id} className="rounded-3xl bg-white p-5 shadow-sm">
                   <div className="flex flex-wrap items-start justify-between gap-3">
@@ -87,50 +99,29 @@ export default function BuyerSearchesPage() {
                       {reviews.length > 1 ? (
                         <p className="mt-1 text-xs text-[#5A5D63]">{reviews.length} agent reviews received</p>
                       ) : null}
-                      {adjustHref ? (
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <Link
-                            href={adjustHref}
-                            className="inline-flex rounded-full bg-[#09391C] px-4 py-2 text-sm font-semibold text-white"
-                          >
-                            Adjust this preference
-                          </Link>
-                          <button
-                            type="button"
-                            className="inline-flex rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#09391C] ring-1 ring-black/10"
-                            onClick={async () => {
-                              const res = await fetch(
-                                `${process.env.NEXT_PUBLIC_API_URL}/preferences/getByBuyer/${ownerId}/${pref._id}`
-                              );
-                              const json = await res.json().catch(() => ({}));
-                              const matchedId = json?.data?.matchedId;
-                              if (matchedId) {
-                                router.push(`/matched-properties/${matchedId}/${pref._id}`);
-                              }
-                            }}
-                          >
-                            View matches
-                          </button>
-                        </div>
-                      ) : null}
                     </div>
-                  ) : adjustHref ? (
-                    <Link
-                      href={adjustHref}
-                      className="mt-4 inline-flex text-sm font-semibold text-[#09391C]"
-                    >
-                      Open preference
-                    </Link>
                   ) : null}
 
-                  {insured ? (
-                    <Link
-                      href={`/buyer/claims/new?policyId=${policy._id}`}
-                      className="mt-4 inline-flex text-sm font-semibold text-[#09391C]"
-                    >
-                      File a claim ({naira(policy.coverAmount)} cover)
-                    </Link>
-                  ) : null}
+                  <div className="mt-4 flex flex-col items-start gap-2">
+                    {matchHref ? (
+                      <Link href={matchHref} className="text-sm font-semibold text-[#09391C] hover:underline">
+                        Open preference match
+                      </Link>
+                    ) : null}
+                    {adjustHref ? (
+                      <Link href={adjustHref} className="text-sm font-semibold text-[#09391C] hover:underline">
+                        Edit preference
+                      </Link>
+                    ) : null}
+                    {insured ? (
+                      <Link
+                        href={`/buyer/claims/new?policyId=${policy._id}`}
+                        className="text-sm font-semibold text-[#09391C] hover:underline"
+                      >
+                        File a claim ({naira(policy.coverAmount)} cover)
+                      </Link>
+                    ) : null}
+                  </div>
                 </article>
               );
             })
