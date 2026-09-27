@@ -71,9 +71,9 @@ const SideBar = ({
                   </span>
                   <div className="flex flex-col gap-[1px] min-w-0">
                     <h2 className="text-base text-black font-medium truncate">
-                      {user.firstName} {user.lastName}
+                      {user?.firstName} {user?.lastName}
                     </h2>
-                    <p className="text-sm text-[#5A5D63]">{user.userType}</p>
+                    <p className="text-sm text-[#5A5D63]">{user?.userType}</p>
                   </div>
                 </Link>
               ) : hasBuyerSession ? (
