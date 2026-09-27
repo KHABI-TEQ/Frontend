@@ -19,11 +19,12 @@ import { AddressBreakdownFields } from "@/components/transaction-registration/Ad
 import { PersonNameFields } from "@/components/transaction-registration/PersonNameFields";
 import { concatFullName, isPersonNameComplete } from "@/utils/person-name";
 import { GuidelinesTabContent } from "@/components/transaction-registration/GuidelinesTabContent";
-import { FileText, Search, ShieldCheck, ChevronLeft, ChevronRight, Award } from "lucide-react";
+import DueDiligenceChoice from "@/components/transaction-registration/DueDiligenceChoice";
+import { FileText, Search, ShieldCheck, ChevronLeft, ChevronRight, Award, Scale } from "lucide-react";
 import { buyerFetch, getBuyerProfile, getBuyerToken } from "@/lib/search-insurance";
 
-type TabId = "guidelines" | "search" | "register" | "certificate";
-const TAB_ORDER: TabId[] = ["guidelines", "search", "register", "certificate"];
+type TabId = "guidelines" | "search" | "diligence" | "register" | "certificate";
+const TAB_ORDER: TabId[] = ["guidelines", "search", "diligence", "register", "certificate"];
 
 const TRANSACTION_TYPES = [
   { name: "Rental Agreement", slug: "rental" },
@@ -48,7 +49,11 @@ export default function TransactionRegistrationPortal() {
   const inspectionIdFromUrl = searchParams.get("inspectionId") ?? "";
   const tabFromUrl = searchParams.get("tab");
   const initialTab: TabId =
-    tabFromUrl === "certificate" || tabFromUrl === "search" || tabFromUrl === "register" || tabFromUrl === "guidelines"
+    tabFromUrl === "certificate" ||
+    tabFromUrl === "search" ||
+    tabFromUrl === "diligence" ||
+    tabFromUrl === "register" ||
+    tabFromUrl === "guidelines"
       ? tabFromUrl
       : "guidelines";
 
@@ -418,10 +423,17 @@ export default function TransactionRegistrationPortal() {
             const labels = {
               guidelines: "Guidelines & fees",
               search: "Check status",
+              diligence: "Due diligence",
               register: "Register",
               certificate: "Download certificate",
             };
-            const icons = { guidelines: FileText, search: Search, register: ShieldCheck, certificate: Award };
+            const icons = {
+              guidelines: FileText,
+              search: Search,
+              diligence: Scale,
+              register: ShieldCheck,
+              certificate: Award,
+            };
             const Icon = icons[t];
             const active = tab === t;
             return (
@@ -533,26 +545,37 @@ export default function TransactionRegistrationPortal() {
           </div>
         )}
 
-        {tab === "register" && seekerGate.blocked && (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-950">
-            <p className="font-semibold">Due diligence required</p>
-            <p className="mt-2">{seekerGate.blocked}</p>
-            {inspectionIdFromUrl ? (
-              <a
-                href={`/buyer/inspections/${inspectionIdFromUrl}`}
-                className="mt-4 inline-flex rounded-full bg-[#09391C] px-4 py-2 text-sm font-semibold text-white"
-              >
-                Complete due diligence
-              </a>
-            ) : null}
-          </div>
+        {(tab === "diligence" || (tab === "register" && seekerGate.blocked)) && (
+          <DueDiligenceChoice
+            inspectionId={inspectionIdFromUrl}
+            onContinueToRegistration={() => {
+              setSeekerGate({ ready: true });
+              setTab("register");
+            }}
+          />
         )}
+
         {tab === "register" && !seekerGate.blocked && (
           <div className="rounded-2xl border border-gray-200 bg-white p-6 md:p-8 shadow-sm">
             <h2 className="text-xl font-bold text-gray-900 mb-2">Register transaction</h2>
-            <p className="text-sm text-gray-600 mb-6">
+            <p className="text-sm text-gray-600 mb-4">
               For deals completed outside a KHABITEQ listing, provide practitioner details and property identification below.
             </p>
+            {!inspectionIdFromUrl ? (
+              <div className="mb-6 rounded-xl border border-[#8DDB90]/50 bg-[#F4FBF5] p-4">
+                <p className="text-sm font-semibold text-[#09391C]">Completed an inspection?</p>
+                <p className="mt-1 text-sm text-gray-600">
+                  Choose Option A or Option B for due diligence before you register that transaction.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setTab("diligence")}
+                  className="mt-3 inline-flex rounded-full bg-[#09391C] px-4 py-2 text-sm font-semibold text-white"
+                >
+                  Choose due diligence option
+                </button>
+              </div>
+            ) : null}
             <form onSubmit={handleRegister} className="space-y-6 max-w-3xl">
               <div>
                 <label className={labelClass}>Transaction type *</label>

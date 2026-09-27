@@ -7,7 +7,7 @@ import BuyerShell from "@/components/search-insurance/BuyerShell";
 import { buyerFetch, getBuyerProfile, getBuyerToken } from "@/lib/search-insurance";
 
 const INDEPENDENT_TEXT =
-  "I confirm that I have conducted or opted out of due diligence independently of Khabiteq, and I understand that Khabiteq is not responsible for the due diligence conducted outside this platform.";
+  "I confirm that I have conducted or obtained due diligence independently of Khabiteq and am satisfied with the outcome. I understand that Khabiteq is not responsible for the due diligence conducted outside this platform.";
 
 export default function BuyerInspectionDetailPage() {
   const params = useParams();
@@ -186,13 +186,23 @@ export default function BuyerInspectionDetailPage() {
                       <p className="text-xs font-semibold uppercase tracking-wide text-[#0F766E]">Option A</p>
                       <p className="mt-1 font-bold text-[#09391C]">Engage a professional on Khabiteq</p>
                       <p className="mt-2 text-sm text-[#5A5D63]">
-                        Hire a verified lawyer, surveyor, valuer or other professional. Review requirements, book, communicate, and pay through the platform.
+                        Hire a verified lawyer, surveyor, valuer, or other professional.
                       </p>
+                      <ol className="mt-3 space-y-1 text-sm text-[#5A5D63]">
+                        <li>1. Create service request</li>
+                        <li>2. Professional responds</li>
+                        <li>3. Book professional</li>
+                        <li>4. Communicate directly</li>
+                        <li>5. Pay through Khabiteq</li>
+                      </ol>
                     </button>
                     <div className="rounded-2xl border border-black/10 p-5">
                       <p className="text-xs font-semibold uppercase tracking-wide text-[#0F766E]">Option B</p>
                       <p className="mt-1 font-bold text-[#09391C]">I have conducted due diligence independently</p>
-                      <p className="mt-2 text-sm text-[#5A5D63]">{INDEPENDENT_TEXT}</p>
+                      <p className="mt-2 text-sm text-[#5A5D63]">
+                        If you have already carried out due diligence outside Khabiteq, confirm below.
+                      </p>
+                      <p className="mt-3 text-sm text-[#5A5D63]">{INDEPENDENT_TEXT}</p>
                       <label className="mt-4 flex items-start gap-2 text-sm text-[#09391C]">
                         <input type="checkbox" className="mt-1" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} />
                         I agree to the above declaration
