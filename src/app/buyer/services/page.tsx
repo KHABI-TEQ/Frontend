@@ -58,18 +58,22 @@ export default function BuyerServicesPage() {
               <p className="text-sm text-[#5A5D63] capitalize">{String(row.status || "").replace(/-/g, " ")}</p>
             </>
           )} />
-          {serviceOnly ? null : <Section title="Document verifications" empty="No document reviews yet." rows={documents} render={(row) => (
-            <>
-              <p className="font-semibold text-[#09391C]">{row.docType || row.docCode || "Document review"}</p>
-              <p className="text-sm text-[#5A5D63] capitalize">{String(row.status || "").replace(/_/g, " ")}</p>
-            </>
-          )} />
-          {serviceOnly ? null : <Section title="Survey requests" empty="No survey requests yet." rows={surveys} render={(row) => (
-            <>
-              <p className="font-semibold text-[#09391C]">{row.serviceType || "Survey"}</p>
-              <p className="text-sm text-[#5A5D63]">{row.propertyAddress || String(row.status || "")}</p>
-            </>
-          )} />
+          {serviceOnly ? null : (
+            <Section title="Document verifications" empty="No document reviews yet." rows={documents} render={(row) => (
+              <>
+                <p className="font-semibold text-[#09391C]">{row.docType || row.docCode || "Document review"}</p>
+                <p className="text-sm text-[#5A5D63] capitalize">{String(row.status || "").replace(/_/g, " ")}</p>
+              </>
+            )} />
+          )}
+          {serviceOnly ? null : (
+            <Section title="Survey requests" empty="No survey requests yet." rows={surveys} render={(row) => (
+              <>
+                <p className="font-semibold text-[#09391C]">{row.serviceType || "Survey"}</p>
+                <p className="text-sm text-[#5A5D63]">{row.propertyAddress || String(row.status || "")}</p>
+              </>
+            )} />
+          )}
         </div>
       )}
     </BuyerShell>
