@@ -103,6 +103,9 @@ export default function BuyerSearchesPage() {
                   ) : null}
 
                   <div className="mt-4 flex flex-col items-start gap-2">
+                    <Link href={`/buyer/searches/${pref._id}`} className="text-sm font-semibold text-[#09391C] hover:underline">
+                      Open journey
+                    </Link>
                     {matchHref ? (
                       <Link href={matchHref} className="text-sm font-semibold text-[#09391C] hover:underline">
                         Open preference match

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Briefcase,
+  Award,
   CalendarCheck,
   FileCheck,
   LayoutDashboard,
@@ -23,14 +23,16 @@ const NAV: {
   icon: typeof LayoutDashboard;
   exact?: boolean;
   match?: string;
+  tab?: string;
 }[] = [
   { href: "/buyer", label: "Dashboard", exact: true, icon: LayoutDashboard },
   { href: "/buyer/profile", label: "Profile", icon: UserRound },
   { href: "/buyer/searches", label: "Preferences", icon: Search },
   { href: "/buyer/inspections", label: "Inspections", icon: CalendarCheck },
-  { href: "/buyer/service-requests", label: "Offers", icon: Briefcase },
-  { href: "/buyer/services", label: "Professionals", icon: Users },
-  { href: "/transaction-registration", label: "Transactions", icon: FileCheck },
+  { href: "/buyer/service-requests", label: "Professionals", icon: Users },
+  { href: "/my-transactions", label: "Transactions", icon: FileCheck },
+  { href: "/transaction-registration?tab=search", label: "Check property status", icon: Search, tab: "search" },
+  { href: "/transaction-registration?tab=certificate", label: "Download certificate", icon: Award, tab: "certificate" },
   { href: "/buyer/claims/new", label: "Insurance", match: "/buyer/claims", icon: Shield },
 ];
 
@@ -46,7 +48,12 @@ export default function BuyerShell({
   const signedIn = Boolean(getBuyerToken());
   const buyer = getBuyerProfile();
   const pathname = usePathname() || "";
+  const [tab, setTab] = useState("");
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    setTab(new URLSearchParams(window.location.search).get("tab") || "");
+  }, [pathname]);
 
   const signOut = () => {
     clearBuyerSession();
@@ -56,9 +63,12 @@ export default function BuyerShell({
   const nav = (
     <nav className="flex flex-1 flex-col gap-1">
       {NAV.map((item) => {
-        const active = item.exact
-          ? pathname === item.href
-          : pathname.startsWith(item.match || item.href);
+        const path = item.href.split("?")[0];
+        const active = item.tab
+          ? pathname.startsWith("/transaction-registration") && tab === item.tab
+          : item.exact
+            ? pathname === path
+            : pathname.startsWith(item.match || path);
         const Icon = item.icon;
         return (
           <Link

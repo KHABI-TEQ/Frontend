@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import BuyerShell from "@/components/search-insurance/BuyerShell";
+import { JourneyTrail, type JourneyStep } from "@/components/search-insurance/JourneyTrail";
 import { buyerFetch, getBuyerProfile, getBuyerToken } from "@/lib/search-insurance";
 
 const INDEPENDENT_TEXT =
@@ -19,6 +20,7 @@ export default function BuyerInspectionDetailPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState<"search" | "platform" | "independent" | "">("");
+  const [propertySteps, setPropertySteps] = useState<JourneyStep[]>([]);
 
   useEffect(() => {
     if (!getBuyerToken()) {
@@ -31,6 +33,19 @@ export default function BuyerInspectionDetailPage() {
       if (found?.wishToProceed === false) setDone("search");
       if (found?.dueDiligencePath === "platform") setDone("platform");
       if (found?.dueDiligencePath === "independent") setDone("independent");
+      const preferenceId = found?.meta?.preferenceId || found?.meta?.requestSource?.preferenceId;
+      if (!preferenceId) {
+        setPropertySteps([]);
+        return;
+      }
+      buyerFetch<{ properties: { inspectionId: string | null; steps: JourneyStep[] }[] }>(
+        `/buyer/auth/me/preferences/${preferenceId}/journey`
+      ).then((journey) => {
+        const match = (journey.data?.properties || []).find(
+          (row) => String(row.inspectionId) === inspectionId
+        );
+        setPropertySteps(match?.steps || []);
+      });
     });
   }, [inspectionId, router]);
 
@@ -104,6 +119,23 @@ export default function BuyerInspectionDetailPage() {
             ) : null}
           </article>
 
+          {propertySteps.length ? (
+            <article className="rounded-3xl bg-white p-6 shadow-sm">
+              <h3 className="text-lg font-bold text-[#09391C]">Progress</h3>
+              <p className="mt-1 mb-4 text-sm text-[#5A5D63]">What is done on this property, and the one next step.</p>
+              <JourneyTrail
+                steps={propertySteps}
+                hideActionFor={
+                  showProceed && !done
+                    ? "proceed"
+                    : propertySteps.find((step) => step.state === "current")?.key === "inspection"
+                      ? "inspection"
+                      : undefined
+                }
+              />
+            </article>
+          ) : null}
+
           {showProceed ? (
             <article className="rounded-3xl bg-white p-6 shadow-sm">
               {done === "search" ? (
@@ -118,24 +150,15 @@ export default function BuyerInspectionDetailPage() {
                 </div>
               ) : done === "platform" ? (
                 <div>
-                  <h3 className="text-lg font-bold text-[#09391C]">Engage a professional on Khabiteq</h3>
+                  <h3 className="text-lg font-bold text-[#09391C]">Due diligence is the next step</h3>
                   <p className="mt-2 text-sm text-[#5A5D63]">
-                    Select a service request, review requirements, book a professional, and pay through the platform.
+                    Use the progress guide above. It opens the service brief for this property.
                   </p>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <Link href={`/professional-services?inspectionId=${inspectionId}`} className="rounded-full bg-[#09391C] px-5 py-2.5 text-sm font-semibold text-white">
-                      Hire a professional
+                  {!propertySteps.length ? (
+                    <Link href={`/buyer/service-requests/new?inspectionId=${inspectionId}`} className="mt-4 inline-flex rounded-full bg-[#09391C] px-5 py-2.5 text-sm font-semibold text-white">
+                      Create a service brief
                     </Link>
-                    <Link href={`/document-verification?inspectionId=${inspectionId}`} className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#09391C] ring-1 ring-black/10">
-                      Document verification
-                    </Link>
-                    <Link href={`/survey-services?inspectionId=${inspectionId}`} className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#09391C] ring-1 ring-black/10">
-                      Survey services
-                    </Link>
-                    <Link href={`/transaction-registration?inspectionId=${inspectionId}`} className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#09391C] ring-1 ring-black/10">
-                      Continue to transaction registration
-                    </Link>
-                  </div>
+                  ) : null}
                 </div>
               ) : done === "independent" ? (
                 <div>
@@ -143,9 +166,11 @@ export default function BuyerInspectionDetailPage() {
                   <p className="mt-2 text-sm text-[#5A5D63]">
                     Once due diligence is completed or confirmed, you can proceed with transaction registration on Khabiteq.
                   </p>
-                  <Link href={`/transaction-registration?inspectionId=${inspectionId}`} className="mt-4 inline-flex rounded-full bg-[#09391C] px-5 py-2.5 text-sm font-semibold text-white">
-                    Continue to transaction registration
-                  </Link>
+                  {!propertySteps.length ? (
+                    <Link href={`/transaction-registration?inspectionId=${inspectionId}`} className="mt-4 inline-flex rounded-full bg-[#09391C] px-5 py-2.5 text-sm font-semibold text-white">
+                      Continue to transaction registration
+                    </Link>
+                  ) : null}
                 </div>
               ) : step === "review" ? (
                 <div>
