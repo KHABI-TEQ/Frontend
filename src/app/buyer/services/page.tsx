@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import BuyerShell from "@/components/search-insurance/BuyerShell";
-import { buyerFetch, getBuyerToken } from "@/lib/search-insurance";
+import { buyerFetch, getBuyerAccountFocus, getBuyerToken } from "@/lib/search-insurance";
 
 export default function BuyerServicesPage() {
   const router = useRouter();
@@ -12,8 +12,10 @@ export default function BuyerServicesPage() {
   const [documents, setDocuments] = useState<any[]>([]);
   const [surveys, setSurveys] = useState<any[]>([]);
   const [catalog, setCatalog] = useState<any[]>([]);
+  const [serviceOnly, setServiceOnly] = useState(false);
 
   useEffect(() => {
+    setServiceOnly(getBuyerAccountFocus() === "professional-service");
     if (!getBuyerToken()) {
       router.replace("/buyer/login?next=/buyer/services");
       return;
@@ -40,27 +42,29 @@ export default function BuyerServicesPage() {
       ) : (
         <div className="space-y-6">
           <div className="flex flex-wrap gap-2">
-            <Link href="/professional-services" className="rounded-full bg-[#09391C] px-4 py-2 text-sm font-semibold text-white">
-              Hire a professional
+            <Link href="/buyer/service-requests/new?focus=service" className="rounded-full bg-[#09391C] px-4 py-2 text-sm font-semibold text-white">
+              Submit a brief
             </Link>
-            <Link href="/document-verification" className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#09391C] shadow-sm">
-              Document verification
-            </Link>
+            {serviceOnly ? null : (
+              <Link href="/document-verification" className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#09391C] shadow-sm">
+                Document verification
+              </Link>
+            )}
           </div>
 
-          <Section title="Catalog requests" empty="No professional service requests yet." rows={catalog} render={(row) => (
+          <Section title="Service briefs" empty="No professional service requests yet." rows={catalog} render={(row) => (
             <>
               <p className="font-semibold text-[#09391C]">{row.serviceName || row.slug}</p>
               <p className="text-sm text-[#5A5D63] capitalize">{String(row.status || "").replace(/-/g, " ")}</p>
             </>
           )} />
-          <Section title="Document verifications" empty="No document reviews yet." rows={documents} render={(row) => (
+          {serviceOnly ? null : <Section title="Document verifications" empty="No document reviews yet." rows={documents} render={(row) => (
             <>
               <p className="font-semibold text-[#09391C]">{row.docType || row.docCode || "Document review"}</p>
               <p className="text-sm text-[#5A5D63] capitalize">{String(row.status || "").replace(/_/g, " ")}</p>
             </>
           )} />
-          <Section title="Survey requests" empty="No survey requests yet." rows={surveys} render={(row) => (
+          {serviceOnly ? null : <Section title="Survey requests" empty="No survey requests yet." rows={surveys} render={(row) => (
             <>
               <p className="font-semibold text-[#09391C]">{row.serviceType || "Survey"}</p>
               <p className="text-sm text-[#5A5D63]">{row.propertyAddress || String(row.status || "")}</p>

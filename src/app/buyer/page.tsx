@@ -12,7 +12,13 @@ import {
   ClipboardList,
 } from "lucide-react";
 import BuyerShell from "@/components/search-insurance/BuyerShell";
-import { buyerFetch, getBuyerProfile, getBuyerToken } from "@/lib/search-insurance";
+import {
+  buyerFetch,
+  getBuyerAccountFocus,
+  getBuyerProfile,
+  getBuyerToken,
+  setBuyerAccountFocus,
+} from "@/lib/search-insurance";
 
 type Summary = {
   counts?: {
@@ -60,7 +66,7 @@ const TILES = [
     copy: "Track professionals you have booked — lawyers, surveyors, valuers.",
     icon: FileCheck2,
     empty: "Hire a professional",
-    emptyHref: "/professional-services",
+    emptyHref: "/buyer/service-requests/new?focus=service",
     countKey: "professionalServices",
   },
   {
@@ -86,6 +92,7 @@ const TILES = [
 export default function BuyerHubPage() {
   const router = useRouter();
   const [summary, setSummary] = useState<Summary | null>(null);
+  const [serviceOnly, setServiceOnly] = useState(false);
   const buyer = getBuyerProfile();
 
   useEffect(() => {
@@ -93,6 +100,7 @@ export default function BuyerHubPage() {
       router.replace("/buyer/login?next=/buyer");
       return;
     }
+    setServiceOnly(getBuyerAccountFocus() === "professional-service");
     buyerFetch<Summary>("/buyer/auth/me/summary").then((res) => {
       if (res.success) setSummary(res.data || {});
     });
@@ -101,10 +109,16 @@ export default function BuyerHubPage() {
   return (
     <BuyerShell
       title={`Welcome${buyer?.fullName ? `, ${buyer.fullName}` : ""}`}
-      subtitle="Once logged in, you have a complete record of your activities on Khabiteq."
+      subtitle={
+        serviceOnly
+          ? "Submit a brief and compare offers from verified lawyers, surveyors, and valuers."
+          : "Once logged in, you have a complete record of your activities on Khabiteq."
+      }
     >
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {TILES.map((tile) => {
+        {TILES.filter((tile) =>
+          serviceOnly ? tile.href === "/buyer/profile" || tile.href === "/buyer/services" : true
+        ).map((tile) => {
           const Icon = tile.icon;
           const count = tile.countKey ? Number(summary?.counts?.[tile.countKey as keyof NonNullable<Summary["counts"]>] || 0) : null;
           return (
@@ -138,6 +152,18 @@ export default function BuyerHubPage() {
           );
         })}
       </div>
+      {serviceOnly ? (
+        <button
+          type="button"
+          className="mt-6 text-sm font-semibold text-[#0F766E]"
+          onClick={() => {
+            setBuyerAccountFocus("full");
+            router.push("/preference");
+          }}
+        >
+          Looking for a property? Start a search
+        </button>
+      ) : null}
     </BuyerShell>
   );
 }

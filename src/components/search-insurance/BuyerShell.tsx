@@ -15,7 +15,14 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { clearBuyerSession, getBuyerProfile, getBuyerToken } from "@/lib/search-insurance";
+import {
+  buyerFetch,
+  clearBuyerSession,
+  getBuyerAccountFocus,
+  getBuyerProfile,
+  getBuyerToken,
+  setBuyerAccountFocus,
+} from "@/lib/search-insurance";
 
 const NAV: {
   href: string;
@@ -50,9 +57,22 @@ export default function BuyerShell({
   const pathname = usePathname() || "";
   const [tab, setTab] = useState("");
   const [open, setOpen] = useState(false);
+  const [serviceOnly, setServiceOnly] = useState(false);
 
   useEffect(() => {
     setTab(new URLSearchParams(window.location.search).get("tab") || "");
+    const focused = getBuyerAccountFocus() === "professional-service";
+    setServiceOnly(focused);
+    if (!focused || !getBuyerToken()) return;
+    buyerFetch<{ counts?: { preferences?: number; inspections?: number } }>("/buyer/auth/me/summary").then(
+      (res) => {
+        const counts = res.data?.counts;
+        if (Number(counts?.preferences || 0) > 0 || Number(counts?.inspections || 0) > 0) {
+          setBuyerAccountFocus("full");
+          setServiceOnly(false);
+        }
+      }
+    );
   }, [pathname]);
 
   const signOut = () => {
@@ -60,9 +80,13 @@ export default function BuyerShell({
     window.location.href = "/buyer/login";
   };
 
+  const visibleNav = serviceOnly
+    ? NAV.filter((item) => ["/buyer", "/buyer/profile", "/buyer/service-requests"].includes(item.href))
+    : NAV;
+
   const nav = (
     <nav className="flex flex-1 flex-col gap-1">
-      {NAV.map((item) => {
+      {visibleNav.map((item) => {
         const path = item.href.split("?")[0];
         const active = item.tab
           ? pathname.startsWith("/transaction-registration") && tab === item.tab

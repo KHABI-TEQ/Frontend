@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import BuyerShell from "@/components/search-insurance/BuyerShell";
@@ -13,6 +13,14 @@ export default function BuyerLoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [registerHref, setRegisterHref] = useState("/buyer/register");
+
+  useEffect(() => {
+    const next = new URLSearchParams(window.location.search).get("next");
+    if (next && next.startsWith("/") && !next.startsWith("//")) {
+      setRegisterHref(`/buyer/register?next=${encodeURIComponent(next)}`);
+    }
+  }, []);
 
   const submit = async () => {
     setBusy(true);
@@ -27,11 +35,8 @@ export default function BuyerLoginPage() {
       return;
     }
     setBuyerSession(res.data.token, res.data.buyer);
-    const next =
-      typeof window !== "undefined"
-        ? new URLSearchParams(window.location.search).get("next")
-        : null;
-    router.push(next || "/buyer");
+    const next = new URLSearchParams(window.location.search).get("next");
+    router.push(next && next.startsWith("/") && !next.startsWith("//") ? next : "/buyer");
   };
 
   return (
@@ -49,7 +54,7 @@ export default function BuyerLoginPage() {
           <Link className="font-semibold text-[#09391C]" href="/buyer/forgot-password">Forgot password?</Link>
         </p>
         <p className="mt-2 text-sm text-[#5A5D63]">
-          New here? <Link className="font-semibold text-[#09391C]" href="/buyer/register">Create a buyer account</Link>
+          New here? <Link className="font-semibold text-[#09391C]" href={registerHref}>Create a buyer account</Link>
         </p>
       </div>
     </BuyerShell>

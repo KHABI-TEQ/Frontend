@@ -7,7 +7,21 @@ import BuyerShell from "@/components/search-insurance/BuyerShell";
 import { JourneyTrail, type JourneyStep } from "@/components/search-insurance/JourneyTrail";
 import { buyerFetch, getBuyerProfile, getBuyerToken } from "@/lib/search-insurance";
 
-function platformFollowUp(steps: JourneyStep[]) {
+function platformFollowUp(steps: JourneyStep[]): {
+  title: string;
+  body: string;
+  href?: string;
+  label?: string;
+} {
+  const certificate = steps.find((step) => step.key === "certificate");
+  if (certificate?.state === "done") {
+    return {
+      title: "Your certificate is ready to download",
+      body: "LASRERA has issued the certificate for this property.",
+      href: "/my-transactions",
+      label: "Download certificate",
+    };
+  }
   const current = steps.find((step) => step.state === "current");
   if (current?.key === "registration") {
     return {
@@ -18,7 +32,7 @@ function platformFollowUp(steps: JourneyStep[]) {
   if (current?.key === "certificate") {
     return {
       title: "The certificate is the next step",
-      body: "The certificate appears after the registration is issued. Use the progress guide above.",
+      body: "The certificate appears after LASRERA issues it. Use the progress guide above.",
     };
   }
   return {
@@ -178,6 +192,11 @@ export default function BuyerInspectionDetailPage() {
                     <>
                       <h3 className="text-lg font-bold text-[#09391C]">{followUp.title}</h3>
                       <p className="mt-2 text-sm text-[#5A5D63]">{followUp.body}</p>
+                      {followUp.href ? (
+                        <Link href={followUp.href} className="mt-4 inline-flex rounded-full bg-[#09391C] px-5 py-2.5 text-sm font-semibold text-white">
+                          {followUp.label}
+                        </Link>
+                      ) : null}
                     </>
                   ) : (
                     <p className="text-sm text-[#5A5D63]">Loading the next step…</p>

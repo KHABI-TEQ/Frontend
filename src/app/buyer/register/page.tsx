@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import BuyerShell from "@/components/search-insurance/BuyerShell";
@@ -15,6 +15,16 @@ export default function BuyerRegisterPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [loginHref, setLoginHref] = useState("/buyer/login");
+  const [serviceSignup, setServiceSignup] = useState(false);
+
+  useEffect(() => {
+    const next = new URLSearchParams(window.location.search).get("next");
+    if (next && next.startsWith("/") && !next.startsWith("//")) {
+      setLoginHref(`/buyer/login?next=${encodeURIComponent(next)}`);
+      if (next.includes("service-requests")) setServiceSignup(true);
+    }
+  }, []);
 
   const submit = async (path: "/buyer/auth/register" | "/buyer/auth/claim-account") => {
     setBusy(true);
@@ -29,14 +39,17 @@ export default function BuyerRegisterPage() {
       return;
     }
     setBuyerSession(res.data.token, res.data.buyer);
-    router.push("/buyer");
+    const next = new URLSearchParams(window.location.search).get("next");
+    router.push(next && next.startsWith("/") && !next.startsWith("//") ? next : "/buyer");
   };
 
   return (
     <BuyerShell title="Create a buyer account">
       <div className="rounded-3xl bg-white p-6 shadow-sm">
         <p className="text-sm text-[#5A5D63]">
-          Required to insure a search and file a claim of up to ₦2,000,000 with evidence.
+          {serviceSignup
+            ? "Create a client account to submit a brief to a lawyer, surveyor, or valuer."
+            : "Required to insure a search and file a claim of up to ₦2,000,000 with evidence."}
         </p>
         <div className="mt-4 space-y-3">
           <input className="w-full rounded-xl border border-black/10 px-3 py-2.5 text-sm" placeholder="Full name" value={fullName} onChange={(e) => setFullName(e.target.value)} />
@@ -52,7 +65,10 @@ export default function BuyerRegisterPage() {
           I already submitted a guest search
         </button>
         <p className="mt-4 text-sm text-[#5A5D63]">
-          Already registered? <Link className="font-semibold text-[#09391C]" href="/buyer/login">Sign in</Link>
+          Already registered?{" "}
+          <Link className="font-semibold text-[#09391C]" href={loginHref}>
+            Sign in
+          </Link>
         </p>
       </div>
     </BuyerShell>

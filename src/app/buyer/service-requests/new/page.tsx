@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import BuyerShell from "@/components/search-insurance/BuyerShell";
-import { buyerFetch } from "@/lib/search-insurance";
+import InspectionBookingSelect from "@/components/due-diligence/InspectionBookingSelect";
+import { buyerFetch, getBuyerToken, setBuyerAccountFocus } from "@/lib/search-insurance";
 
 const SERVICES = [
   {
@@ -27,7 +28,9 @@ const SERVICES = [
 function NewBriefForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const inspectionId = params.get("inspectionId") || "";
+  const linkedInspection = params.get("inspectionId") || "";
+  const serviceOnly = params.get("focus") === "service" && !linkedInspection;
+  const [inspectionId, setInspectionId] = useState(linkedInspection);
   const [step, setStep] = useState(1);
   const [category, setCategory] = useState<(typeof SERVICES)[number]["category"] | "">("");
   const [brief, setBrief] = useState({
@@ -45,9 +48,22 @@ function NewBriefForm() {
     [category]
   );
 
+  useEffect(() => {
+    if (!getBuyerToken()) {
+      const next = `${window.location.pathname}${window.location.search}`;
+      router.replace(`/buyer/login?next=${encodeURIComponent(next)}`);
+      return;
+    }
+    if (!serviceOnly) return;
+    buyerFetch<{ inspections: unknown[] }>("/buyer/auth/me/inspections").then((res) => {
+      const rows = res.data?.inspections || [];
+      if (rows.length === 0) setBuyerAccountFocus("professional-service");
+    });
+  }, [router, serviceOnly]);
+
   const publish = async () => {
-    if (!selected || !inspectionId) {
-      setError("Choose a service and keep this request linked to your inspection.");
+    if (!selected) {
+      setError("Choose a professional service.");
       return;
     }
     setBusy(true);
@@ -59,7 +75,7 @@ function NewBriefForm() {
         body: JSON.stringify({
           category: selected.category,
           serviceName: selected.serviceName,
-          inspectionId,
+          ...(inspectionId ? { inspectionId } : {}),
           brief,
         }),
       }
@@ -109,22 +125,24 @@ function NewBriefForm() {
 
       {step === 2 ? (
         <article className="rounded-2xl bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-bold text-[#09391C]">Link this request to your inspection</h2>
+          <h2 className="text-lg font-bold text-[#09391C]">Attach a property inspection</h2>
           <p className="mt-2 text-sm text-[#5A5D63]">
-            This brief stays on the inspection you just completed. Share title documents and site papers directly with the professional after you engage them.
+            This is optional. Attach an inspection if this brief is for a property you already visited. Leave it unattached if you only need the professional service.
           </p>
-          <p className="mt-4 text-sm font-semibold text-[#09391C]">
-            Inspection {inspectionId || "is missing from this link"}
-          </p>
+          <div className="mt-4">
+            <InspectionBookingSelect optional value={inspectionId} onChange={setInspectionId} />
+          </div>
           <div className="mt-5 flex gap-3">
             <button type="button" className="text-sm font-semibold text-[#5A5D63]" onClick={() => setStep(1)}>
               Back
             </button>
             <button
               type="button"
-              disabled={!inspectionId}
-              onClick={() => setStep(3)}
-              className="rounded-full bg-[#09391C] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+              onClick={() => {
+                if (inspectionId) setBuyerAccountFocus("full");
+                setStep(3);
+              }}
+              className="rounded-full bg-[#09391C] px-5 py-2.5 text-sm font-semibold text-white"
             >
               Continue
             </button>

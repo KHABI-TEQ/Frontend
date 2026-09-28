@@ -11,6 +11,26 @@ export const SEARCH_INSURANCE = {
 const TOKEN_KEY = "buyerToken";
 const BUYER_KEY = "buyerProfile";
 
+const FOCUS_KEY = "buyerAccountFocus";
+
+export function getBuyerAccountFocus(): "professional-service" | "full" {
+  if (typeof window === "undefined") return "full";
+  try {
+    return localStorage.getItem(FOCUS_KEY) === "professional-service" ? "professional-service" : "full";
+  } catch {
+    return "full";
+  }
+}
+
+export function setBuyerAccountFocus(focus: "professional-service" | "full") {
+  try {
+    if (focus === "full") localStorage.removeItem(FOCUS_KEY);
+    else localStorage.setItem(FOCUS_KEY, focus);
+  } catch {
+    /* ignore */
+  }
+}
+
 export type BuyerProfile = {
   id?: string;
   fullName?: string;
@@ -53,6 +73,7 @@ export function clearBuyerSession() {
   try {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(BUYER_KEY);
+    localStorage.removeItem(FOCUS_KEY);
   } catch {
     /* ignore */
   }

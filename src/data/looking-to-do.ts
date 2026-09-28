@@ -57,8 +57,8 @@ export const LOOKING_TO_DO_PATHS: LookingToDoPath[] = [
     title: "I NEED A PAID PROFESSIONAL SERVICE",
     shortTitle: "I need a paid professional service",
     meta: "Lawyer · Surveyor · Valuer",
-    cta: "VIEW SERVICES AND PRICES",
-    href: "/professional-services",
+    cta: "SUBMIT A BRIEF",
+    href: "/buyer/service-requests/new?focus=service",
     icon: "scale",
   },
 ];

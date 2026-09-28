@@ -48,9 +48,11 @@ function currentPath(): string {
 export default function InspectionBookingSelect({
   value,
   onChange,
+  optional = false,
 }: {
   value: string;
   onChange: (inspectionId: string) => void;
+  optional?: boolean;
 }) {
   const [bookings, setBookings] = useState<InspectionBookingOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -107,6 +109,13 @@ export default function InspectionBookingSelect({
   }
 
   if (!bookings.length) {
+    if (optional) {
+      return (
+        <p className="text-sm text-[#5A5D63]">
+          You have no inspection booking. Continue and submit this brief for the service alone.
+        </p>
+      );
+    }
     return (
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-[#09391C]">
         <p className="font-semibold">No inspection booking found</p>
@@ -126,19 +135,20 @@ export default function InspectionBookingSelect({
   return (
     <label className="block">
       <span className="block text-sm font-semibold text-[#09391C] mb-1">
-        Link inspected property *
+        {optional ? "Attach a property inspection (optional)" : "Link inspected property *"}
       </span>
       <p className="text-xs text-[#5A5D63] mb-2">
-        Choose the property from your past inspection bookings. Claims and transaction
-        registration use this link.
+        {optional
+          ? "Link this brief to a property you have already inspected, or leave it unattached if you only need the professional service."
+          : "Choose the property from your past inspection bookings. Claims and transaction registration use this link."}
       </p>
       <select
         className="w-full rounded-lg border border-gray-200 bg-white px-3 py-3"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        required
+        required={!optional}
       >
-        <option value="">Select an inspected property…</option>
+        <option value="">{optional ? "No property — service only" : "Select an inspected property…"}</option>
         {bookings.map((row) => (
           <option key={row._id} value={row._id}>
             {inspectionBookingLabel(row)}
