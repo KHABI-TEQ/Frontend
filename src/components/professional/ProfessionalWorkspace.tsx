@@ -26,6 +26,22 @@ function formatNaira(n?: number) {
   return `₦${Number(n || 0).toLocaleString()}`;
 }
 
+function formatFeeInput(raw: string) {
+  const digits = raw.replace(/\D/g, "").replace(/^0+(?=\d)/, "");
+  if (!digits) return "";
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+function parseFeeInput(raw: string) {
+  const digits = String(raw || "").replace(/\D/g, "");
+  return digits ? Number(digits) : 0;
+}
+
+function stillNeedsOffer(job: { status?: string; myOffer?: { serviceFee?: number } }) {
+  if (String(job.status) !== "awaiting-offers") return true;
+  return !(Number(job.myOffer?.serviceFee) > 0);
+}
+
 async function uploadAsset(file: File, fileFor: string) {
   const formData = new FormData();
   formData.append("file", file);
@@ -46,7 +62,7 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [focusBrief, setFocusBrief] = useState("");
   const [offerDrafts, setOfferDrafts] = useState<
-    Record<string, { note: string; fee: string; agreed: boolean }>
+    Record<string, { note: string; fee: string; agreed: boolean; letterheadAgreed: boolean }>
   >({});
   const [me, setMe] = useState<any>(null);
   const [jobs, setJobs] = useState<any[]>([]);
@@ -116,7 +132,7 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
       ]);
       const meData = meRes.data?.data;
       setMe(meData);
-      setJobs(jobsRes.data?.data || []);
+      setJobs((jobsRes.data?.data || []).filter(stillNeedsOffer));
       const bankList = bankRes.data?.data;
       setBanks(Array.isArray(bankList) ? bankList : bankList?.data || []);
       setPage(pageRes.data?.data || null);
@@ -255,9 +271,10 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
 
   const sendOffer = async (job: any) => {
     const draft = offerDrafts[job._id] || {
-      note: job.myOffer?.coverageNote || "",
-      fee: job.myOffer?.serviceFee ? String(job.myOffer.serviceFee) : "",
+      note: "",
+      fee: "",
       agreed: false,
+      letterheadAgreed: false,
     };
     if (!me?.profile?.paystackSubaccountCode) {
       toast.error("Connect the bank account from your KYC before you send an offer.");
@@ -267,10 +284,17 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
     try {
       await api.post(`/account/professional-services/${job._id}/respond`, {
         coverageNote: draft.note,
-        fee: Number(draft.fee),
+        fee: parseFeeInput(draft.fee),
         commissionAccepted: draft.agreed,
+        letterheadReportAccepted: draft.letterheadAgreed,
       });
       toast.success("Offer sent. The client can compare it with other professionals.");
+      setJobs((prev) => prev.filter((item) => String(item._id) !== String(job._id)));
+      setOfferDrafts((prev) => {
+        const next = { ...prev };
+        delete next[job._id];
+        return next;
+      });
       load();
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Could not send the offer");
@@ -566,9 +590,10 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
             {jobs.map((job) => {
               const brief = String(job.status) === "awaiting-offers" || job.source === "catalog";
               const draft = offerDrafts[job._id] || {
-                note: job.myOffer?.coverageNote || "",
-                fee: job.myOffer?.serviceFee ? String(job.myOffer.serviceFee) : "",
+                note: "",
+                fee: "",
                 agreed: false,
+                letterheadAgreed: false,
               };
               const objective = job.answers?.objective || job.answers?.additional || "";
               return (
@@ -594,11 +619,6 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
                   {objective ? <p className="mt-3 text-sm text-[#09391C]">{objective}</p> : null}
                   {brief && String(job.status) === "awaiting-offers" && (
                     <div className="mt-4 space-y-3">
-                      {job.myOffer?.serviceFee ? (
-                        <p className="text-sm text-green-800">
-                          You sent an offer for {formatNaira(job.myOffer.serviceFee)}. Sending again replaces it.
-                        </p>
-                      ) : null}
                       <textarea
                         value={draft.note}
                         onChange={(e) =>
@@ -612,14 +632,15 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
                         className="w-full rounded-lg border p-3 text-sm"
                       />
                       <input
+                        inputMode="numeric"
                         value={draft.fee}
                         onChange={(e) =>
                           setOfferDrafts((prev) => ({
                             ...prev,
-                            [job._id]: { ...draft, fee: e.target.value },
+                            [job._id]: { ...draft, fee: formatFeeInput(e.target.value) },
                           }))
                         }
-                        placeholder="Fee the client will pay (NGN)"
+                        placeholder="400,000"
                         className="w-full rounded-lg border p-3 text-sm"
                       />
                       <label className="flex items-start gap-2 text-sm text-[#09391C]">
@@ -636,6 +657,22 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
                         />
                         <span>
                           I agree that Khabiteq deducts 10% of this fee from my settlement. The client pays only the fee I set.
+                        </span>
+                      </label>
+                      <label className="flex items-start gap-2 text-sm text-[#09391C]">
+                        <input
+                          type="checkbox"
+                          checked={draft.letterheadAgreed}
+                          onChange={(e) =>
+                            setOfferDrafts((prev) => ({
+                              ...prev,
+                              [job._id]: { ...draft, letterheadAgreed: e.target.checked },
+                            }))
+                          }
+                          className="mt-1"
+                        />
+                        <span>
+                          I agree that I will send a full report to the client using my company letterhead paper.
                         </span>
                       </label>
                       <button
