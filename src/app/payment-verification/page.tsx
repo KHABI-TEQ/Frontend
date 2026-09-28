@@ -51,6 +51,17 @@ const PaymentVerificationPage = () => {
         }
 
         // Subscription: redirect to intended page (e.g. /post-property/outright-sales) if stored, else dashboard
+        if (trxType === 'professional-service') {
+          const requestId = (response.data as any)?.transaction?.meta?.professionalServiceRequestId;
+          toast.success('Payment received. Opening the professional details.');
+          router.replace(
+            requestId
+              ? `/buyer/service-requests/${requestId}?paid=1`
+              : '/buyer/service-requests',
+          );
+          return;
+        }
+
         if (trxType === 'search-insurance') {
           toast.success('Search insurance payment verified.');
           router.push('/buyer');

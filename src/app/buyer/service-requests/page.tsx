@@ -50,7 +50,9 @@ export default function ServiceRequestsPage() {
                 href={`/buyer/service-requests/${row._id}`}
                 className="mt-3 inline-flex text-sm font-semibold text-[#0F766E]"
               >
-                View offers
+                {["in-progress", "delivered", "completed"].includes(String(row.status))
+                  ? "View professional"
+                  : "View offers"}
               </Link>
             </li>
           ))}

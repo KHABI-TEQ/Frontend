@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import BuyerShell from "@/components/search-insurance/BuyerShell";
 import { buyerFetch, getBuyerProfile, getBuyerToken } from "@/lib/search-insurance";
-import { POST_REQUEST } from "@/utils/requests";
+import { GET_REQUEST, POST_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 
 type Offer = {
@@ -12,6 +12,13 @@ type Offer = {
   professionalName?: string;
   coverageNote: string;
   serviceFee: number;
+};
+
+type ProfessionalContact = {
+  name: string;
+  firmName?: string;
+  email?: string;
+  phone?: string;
 };
 
 type Brief = {
@@ -23,7 +30,10 @@ type Brief = {
   serviceFee?: number;
   offers?: Offer[];
   answers?: { objective?: string };
+  professional?: ProfessionalContact | null;
 };
+
+const PAID_STATUSES = ["in-progress", "delivered", "completed"];
 
 function naira(n?: number) {
   return `₦${Number(n || 0).toLocaleString()}`;
@@ -38,11 +48,12 @@ function BriefOffers() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const load = () => {
-    buyerFetch<Brief>(`/buyer/auth/me/professional-service-requests/${id}`).then((res) => {
-      setBrief(res.data || null);
-      if (!res.success) setError(res.message || "Could not load this brief.");
-    });
+  const load = async () => {
+    const res = await buyerFetch<Brief>(`/buyer/auth/me/professional-service-requests/${id}`);
+    setBrief(res.data || null);
+    if (!res.success) setError(res.message || "Could not load this brief.");
+    else setError("");
+    return res.data || null;
   };
 
   useEffect(() => {
@@ -50,8 +61,32 @@ function BriefOffers() {
       router.replace(`/buyer/login?next=/buyer/service-requests/${id}`);
       return;
     }
-    load();
-  }, [id, router]);
+    let cancelled = false;
+    const run = async () => {
+      const reference = search.get("reference") || search.get("trxref");
+      if (reference) {
+        try {
+          await GET_REQUEST(
+            `${URLS.BASE}${URLS.verifyPayment}?reference=${encodeURIComponent(reference)}`,
+          );
+        } catch {
+          // The brief still loads if verification is already recorded.
+        }
+      }
+      let current = await load();
+      if (cancelled || search.get("paid") !== "1") return;
+      for (let attempt = 0; attempt < 8; attempt += 1) {
+        if (PAID_STATUSES.includes(String(current?.status))) return;
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        if (cancelled) return;
+        current = await load();
+      }
+    };
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [id, router, search]);
 
   const choose = async (professionalId: string) => {
     setBusy(true);
@@ -89,6 +124,8 @@ function BriefOffers() {
   const selectedOffer = brief?.offers?.find(
     (offer) => String(offer.professionalId) === String(brief.professionalId)
   );
+  const paid = PAID_STATUSES.includes(String(brief?.status || ""));
+  const confirmingPayment = search.get("paid") === "1" && brief?.status === "awaiting-payment";
 
   return (
     <BuyerShell
@@ -105,7 +142,52 @@ function BriefOffers() {
         </article>
       ) : null}
 
-      {brief?.status === "awaiting-payment" && selectedOffer ? (
+      {confirmingPayment ? (
+        <article className="mb-6 rounded-2xl bg-white p-6 shadow-sm">
+          <p className="text-sm text-[#5A5D63]">
+            Confirming your payment. The professional’s contact details will appear here as soon as it is recorded.
+          </p>
+        </article>
+      ) : null}
+
+      {paid ? (
+        <article className="mb-6 rounded-2xl bg-white p-6 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#0F766E]">Payment received</p>
+          <h2 className="mt-1 text-xl font-bold text-[#09391C]">
+            {brief?.professional?.name || selectedOffer?.professionalName || "Your professional"}
+          </h2>
+          {brief?.professional?.firmName ? (
+            <p className="mt-1 text-sm text-[#5A5D63]">{brief.professional.firmName}</p>
+          ) : null}
+          {selectedOffer?.coverageNote ? (
+            <p className="mt-3 text-sm text-[#09391C]">{selectedOffer.coverageNote}</p>
+          ) : null}
+          <p className="mt-3 text-sm font-semibold text-[#09391C]">
+            Service fee {naira(selectedOffer?.serviceFee || brief?.serviceFee)}
+          </p>
+          <div className="mt-4 space-y-1 text-sm text-[#09391C]">
+            {brief?.professional?.email ? (
+              <p>
+                Email:{" "}
+                <a className="font-semibold text-[#0F766E]" href={`mailto:${brief.professional.email}`}>
+                  {brief.professional.email}
+                </a>
+              </p>
+            ) : null}
+            {brief?.professional?.phone ? (
+              <p>
+                Phone:{" "}
+                <a className="font-semibold text-[#0F766E]" href={`tel:${brief.professional.phone}`}>
+                  {brief.professional.phone}
+                </a>
+              </p>
+            ) : null}
+          </div>
+          <p className="mt-4 text-sm text-[#5A5D63]">
+            Share your documents with this professional directly. They will send the full report on their company letterhead.
+          </p>
+        </article>
+      ) : brief?.status === "awaiting-payment" && selectedOffer ? (
         <article className="mb-6 rounded-2xl bg-white p-6 shadow-sm">
           <p className="text-xs font-semibold uppercase tracking-wide text-[#0F766E]">Selected professional</p>
           <h2 className="mt-1 text-xl font-bold text-[#09391C]">{selectedOffer.professionalName}</h2>
@@ -139,14 +221,16 @@ function BriefOffers() {
                 <p className="mt-3 text-sm font-semibold text-[#09391C]">
                   Service fee {naira(offer.serviceFee)}
                 </p>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => void choose(String(offer.professionalId))}
-                  className="mt-4 rounded-full bg-[#09391C] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
-                >
-                  Choose this offer
-                </button>
+                {String(brief?.status) === "awaiting-offers" ? (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void choose(String(offer.professionalId))}
+                    className="mt-4 rounded-full bg-[#09391C] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+                  >
+                    Choose this offer
+                  </button>
+                ) : null}
               </article>
             ))
           )}
