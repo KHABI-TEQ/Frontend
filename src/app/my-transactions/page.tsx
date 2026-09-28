@@ -36,11 +36,38 @@ function certificateReady(row: TransactionRow) {
   return Boolean(row.certificateUrl) && ISSUED.has(String(row.transactionStatus || ""));
 }
 
+function statusLabel(status: string) {
+  switch (status) {
+    case "submitted":
+      return "Fee not paid";
+    case "pending_completion":
+      return "Fee paid, awaiting review";
+    case "khabiteq_verified":
+      return "Verified by Khabiteq";
+    case "forwarded_to_lasrera":
+      return "Forwarded for review";
+    case "info_requested":
+      return "More information requested";
+    case "approved":
+      return "Approved";
+    case "certificate_issued":
+    case "completed":
+      return "Certificate issued";
+    case "rejected":
+      return "Not approved";
+    default:
+      return status.replace(/_/g, " ") || "Pending";
+  }
+}
+
 function registrationNote(row: TransactionRow) {
   if (certificateReady(row)) return "";
   const status = String(row.transactionStatus || "");
   if (status === "submitted" || status === "draft") {
     return "The registration form was saved, but the registration fee has not been paid. No certificate has been issued.";
+  }
+  if (status === "pending_completion" || status === "khabiteq_verified" || status === "forwarded_to_lasrera") {
+    return "Registration fee paid. Khabiteq is reviewing this registration. The certificate appears after it is issued.";
   }
   return "No certificate has been issued for this registration yet.";
 }
@@ -177,7 +204,7 @@ export default function MyTransactionsPage() {
                         {row.propertyCode || "Property code pending"} · {row.transactionReference || "Reference pending"}
                       </p>
                       <p className="mt-2 text-xs text-[#6B7280]">
-                        Status {row.transactionStatus || "Pending"}
+                        Status {statusLabel(String(row.transactionStatus || ""))}
                         {row.registrationDate
                           ? ` · ${certificateReady(row) ? "Registered" : "Saved"} ${new Date(row.registrationDate).toLocaleDateString("en-GB")}`
                           : ""}
