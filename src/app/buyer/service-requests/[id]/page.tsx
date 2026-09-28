@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import BuyerShell from "@/components/search-insurance/BuyerShell";
 import { buyerFetch, getBuyerProfile, getBuyerToken } from "@/lib/search-insurance";
@@ -27,6 +28,7 @@ type Brief = {
   status?: string;
   reference?: string;
   professionalId?: string;
+  inspectionId?: string;
   serviceFee?: number;
   offers?: Offer[];
   answers?: { objective?: string };
@@ -186,6 +188,14 @@ function BriefOffers() {
           <p className="mt-4 text-sm text-[#5A5D63]">
             Share your documents with this professional directly. They will send the full report on their company letterhead.
           </p>
+          {brief?.inspectionId ? (
+            <Link
+              href={`/transaction-registration?inspectionId=${encodeURIComponent(brief.inspectionId)}&tab=register`}
+              className="mt-5 inline-flex rounded-full bg-[#09391C] px-5 py-2.5 text-sm font-semibold text-white"
+            >
+              Register this transaction
+            </Link>
+          ) : null}
         </article>
       ) : brief?.status === "awaiting-payment" && selectedOffer ? (
         <article className="mb-6 rounded-2xl bg-white p-6 shadow-sm">

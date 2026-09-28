@@ -7,6 +7,26 @@ import BuyerShell from "@/components/search-insurance/BuyerShell";
 import { JourneyTrail, type JourneyStep } from "@/components/search-insurance/JourneyTrail";
 import { buyerFetch, getBuyerProfile, getBuyerToken } from "@/lib/search-insurance";
 
+function platformFollowUp(steps: JourneyStep[]) {
+  const current = steps.find((step) => step.state === "current");
+  if (current?.key === "registration") {
+    return {
+      title: "Transaction registration is the next step",
+      body: "Due diligence payment is received. Use the progress guide above to register this transaction.",
+    };
+  }
+  if (current?.key === "certificate") {
+    return {
+      title: "The certificate is the next step",
+      body: "The certificate appears after the registration is issued. Use the progress guide above.",
+    };
+  }
+  return {
+    title: "Due diligence is the next step",
+    body: "Use the progress guide above. It opens the service brief for this property.",
+  };
+}
+
 const INDEPENDENT_TEXT =
   "I confirm that I have conducted or obtained due diligence independently of Khabiteq and am satisfied with the outcome. I understand that Khabiteq is not responsible for the due diligence conducted outside this platform.";
 
@@ -21,6 +41,7 @@ export default function BuyerInspectionDetailPage() {
   const [error, setError] = useState("");
   const [done, setDone] = useState<"search" | "platform" | "independent" | "">("");
   const [propertySteps, setPropertySteps] = useState<JourneyStep[]>([]);
+  const [stepsLoaded, setStepsLoaded] = useState(false);
 
   useEffect(() => {
     if (!getBuyerToken()) {
@@ -36,6 +57,7 @@ export default function BuyerInspectionDetailPage() {
       const preferenceId = found?.meta?.preferenceId || found?.meta?.requestSource?.preferenceId;
       if (!preferenceId) {
         setPropertySteps([]);
+        setStepsLoaded(true);
         return;
       }
       buyerFetch<{ properties: { inspectionId: string | null; steps: JourneyStep[] }[] }>(
@@ -45,7 +67,8 @@ export default function BuyerInspectionDetailPage() {
           (row) => String(row.inspectionId) === inspectionId
         );
         setPropertySteps(match?.steps || []);
-      });
+        setStepsLoaded(true);
+      }).catch(() => setStepsLoaded(true));
     });
   }, [inspectionId, router]);
 
@@ -93,6 +116,7 @@ export default function BuyerInspectionDetailPage() {
       new Date(inspection.inspectionDate).getTime() +
         (inspection.proceedToTransactionPromptSentAt ? 0 : 2 * 60 * 60 * 1000);
   const showProceed = !cancelled && Boolean(inspection?.proceedToTransactionPromptSentAt || slotPassed);
+  const followUp = stepsLoaded ? platformFollowUp(propertySteps) : null;
 
   return (
     <BuyerShell title={title} subtitle="Inspection details and next steps after your visit.">
@@ -150,11 +174,15 @@ export default function BuyerInspectionDetailPage() {
                 </div>
               ) : done === "platform" ? (
                 <div>
-                  <h3 className="text-lg font-bold text-[#09391C]">Due diligence is the next step</h3>
-                  <p className="mt-2 text-sm text-[#5A5D63]">
-                    Use the progress guide above. It opens the service brief for this property.
-                  </p>
-                  {!propertySteps.length ? (
+                  {followUp ? (
+                    <>
+                      <h3 className="text-lg font-bold text-[#09391C]">{followUp.title}</h3>
+                      <p className="mt-2 text-sm text-[#5A5D63]">{followUp.body}</p>
+                    </>
+                  ) : (
+                    <p className="text-sm text-[#5A5D63]">Loading the next step…</p>
+                  )}
+                  {stepsLoaded && !propertySteps.length ? (
                     <Link href={`/buyer/service-requests/new?inspectionId=${inspectionId}`} className="mt-4 inline-flex rounded-full bg-[#09391C] px-5 py-2.5 text-sm font-semibold text-white">
                       Create a service brief
                     </Link>
