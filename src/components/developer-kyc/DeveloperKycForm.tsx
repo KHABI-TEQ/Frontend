@@ -309,7 +309,7 @@ export default function DeveloperKycForm() {
           toast.success(
             nextStatus === "approved"
               ? "Verification approved."
-              : "KYC submitted successfully.",
+              : "KYC submitted successfully. Please await admin approval.",
           );
           router.push(PRACTITIONER_SETUP_PATH);
           return;

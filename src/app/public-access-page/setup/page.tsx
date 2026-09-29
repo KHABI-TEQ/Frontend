@@ -254,7 +254,14 @@ const Setup = () => {
             },
           });
         }
-        toast.success("Public page created. Continue with branding.");
+        const setupResult = (res as { data?: { status?: string; pausedByPolicy?: string } }).data;
+        const successMessage = (res as { message?: string }).message;
+        toast.success(
+          successMessage ||
+            (setupResult?.pausedByPolicy === "kyc"
+              ? "Public page setup saved. Please await admin approval of your KYC before your page goes live."
+              : "Public page setup completed successfully. Continue with branding."),
+        );
         router.replace("/public-access-page/branding");
       } else {
         const msg =

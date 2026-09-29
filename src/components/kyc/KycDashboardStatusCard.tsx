@@ -70,7 +70,7 @@ export default function KycDashboardStatusCard({ user, statusOverride }: Props) 
           <div className="min-w-0">
             <p className="text-lg font-bold text-amber-950">Verification Pending</p>
             <p className="mt-1 text-sm leading-relaxed text-amber-900">
-              Your KYC has been submitted successfully and is currently being reviewed.
+              Your KYC was submitted successfully. Please await admin approval.
               Estimated review time: 24–48 hours.
             </p>
             <p className="mt-2 text-sm leading-relaxed text-amber-900/90">

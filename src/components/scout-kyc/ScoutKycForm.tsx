@@ -72,7 +72,7 @@ export default function ScoutKycForm() {
             kycStatus: "pending",
           }),
         );
-        toast.success("KYC submitted successfully.");
+        toast.success("KYC submitted successfully. Please await admin approval.");
       } finally {
         setIsSubmitting(false);
       }

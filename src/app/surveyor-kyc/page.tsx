@@ -43,7 +43,7 @@ export default function SurveyorKycUpgradePage() {
       );
       if (res?.success) {
         if (user) setUser(normalizeUser({ ...user, kycStatus: "pending" }));
-        toast.success("Practitioner KYC submitted for review");
+        toast.success("KYC submitted successfully. Please await admin approval.");
       } else toast.error((res as { error?: string })?.error || "Submit failed");
     } finally {
       setBusy(false);

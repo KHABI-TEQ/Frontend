@@ -61,7 +61,7 @@ export default function KycSubmittedConfirmation({
               KYC Submitted Successfully
             </h1>
             <p className="mt-3 text-[#5A5D63] leading-relaxed">
-              Your documents have been successfully submitted and are currently under review.
+              Your documents were submitted successfully. Please await admin approval.
             </p>
           </div>
           <div className="space-y-4 px-6 py-6 sm:px-10">

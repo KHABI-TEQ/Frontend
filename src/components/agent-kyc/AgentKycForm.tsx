@@ -273,7 +273,7 @@ const AgentKycForm: React.FC = () => {
         individualAgent: user?.individualAgent,
         companyAgent: user?.companyAgent,
       }));
-      toast.success("KYC submitted successfully.");
+      toast.success("KYC submitted successfully. Please await admin approval.");
       router.push(PRACTITIONER_SETUP_PATH);
 
     } catch (error) {

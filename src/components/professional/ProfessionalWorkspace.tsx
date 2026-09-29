@@ -227,7 +227,7 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
             ? { verificationFee: Number(form.fee) }
             : { surveyFee: Number(form.fee) }),
       });
-      toast.success("KYC submitted for review");
+      toast.success("KYC submitted successfully. Please await admin approval.");
       if (user) setUser(normalizeUser({ ...user, kycStatus: "pending" }));
       setTab("payout");
       load();

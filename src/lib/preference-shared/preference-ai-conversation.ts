@@ -979,14 +979,14 @@ function normSubtype(pd: Record<string, unknown>): string {
   return String(pd.propertySubtype ?? pd.propertyType ?? "").toLowerCase().trim();
 }
 
-/** Map voice/typo variants to canonical form values (plot | sqm | acres). */
-export function parseMeasurementUnitFromUserText(text: string): "plot" | "sqm" | "acres" | null {
+/** Map voice/typo variants to canonical form values. */
+export function parseMeasurementUnitFromUserText(text: string): "plot" | "sqm" | "hectares" | "acres" | null {
   const raw = text.trim().toLowerCase();
   if (!raw) return null;
   const t = raw.replace(/\s+/g, " ");
   if (/\bplots?\b/.test(t) && !/\bsqm\b|\bsquare\b/.test(t)) return "plot";
   if (/\bsqm\b|\bsquare\s*met(er|re)s?\b|\bm\s*2\b|\bm²\b/.test(t)) return "sqm";
-  if (/\bhectares?\b/.test(t)) return "acres";
+  if (/\bhectares?\b/.test(t)) return "hectares";
   if (/\bacres?\b|\bacares\b/.test(t)) return "acres";
   if (t === "plot" || t === "plots") return "plot";
   if (t === "sqm" || t === "square") return "sqm";
@@ -1001,7 +1001,7 @@ function measurementUnitNorm(pd: Record<string, unknown>): string {
     .trim();
   const parsed = u ? parseMeasurementUnitFromUserText(u) : null;
   if (parsed) return parsed;
-  if (u === "hectares" || u === "hectare") return "acres";
+  if (u === "hectare") return "hectares";
   return u;
 }
 
@@ -1040,7 +1040,7 @@ export function normalizePreferenceDataMeasurementUnits(data: Record<string, unk
       measurementUnit: raw,
       measurement_unit: raw,
     } as Record<string, unknown>);
-    if (uNorm && ["plot", "sqm", "acres"].includes(uNorm) && uNorm !== String(dd.measurementUnit ?? "").toLowerCase()) {
+    if (uNorm && ["plot", "sqm", "hectares", "acres"].includes(uNorm) && uNorm !== String(dd.measurementUnit ?? "").toLowerCase()) {
       out = { ...out, developmentDetails: { ...dd, measurementUnit: uNorm } };
     }
   }
