@@ -978,7 +978,7 @@ export default function TransactionRegistrationPortal() {
             </button>
           ) : <span />}
         </nav>
-      </div>
+    </div>
     </div>
   );
 }

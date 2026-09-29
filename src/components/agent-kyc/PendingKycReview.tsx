@@ -51,17 +51,17 @@ const PendingKycReview: React.FC = () => {
   return (
     <KycSubmittedConfirmation
       userType={user?.userType}
-      continueHref="/public-access-page/setup"
-      continueLabel="Set up your practitioner page"
+      continueHref="/dashboard"
+      continueLabel="Return to dashboard"
     >
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
         <div className="mx-6 mt-4 mb-2 rounded-xl border border-slate-200 bg-slate-50 p-4">
           <p className="text-sm font-semibold text-[#09391C]">What you can do while waiting</p>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[#5A5D63]">
             <li>Return to your dashboard and review your account.</li>
-            <li>Set up your practitioner / public page (logo, footer, and branding).</li>
-            <li>Choose a paid subscription so you are ready to list as soon as KYC is approved.</li>
-            <li>Listing a property stays locked until KYC is approved and a paid plan is active.</li>
+            <li>Your page setup will become available after admin approval.</li>
+            <li>Subscription plans can be purchased after your KYC is approved.</li>
+            <li>Page setup and listings require an active subscription.</li>
           </ul>
         </div>
 

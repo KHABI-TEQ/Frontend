@@ -299,8 +299,7 @@ export default function DeveloperKycForm() {
             setVerification(submitted.data);
           }
           const nextStatus =
-            (submitted.data as { isVerifiedDeveloper?: boolean; kycStatus?: string } | undefined)
-              ?.isVerifiedDeveloper
+            (submitted.data as { kycStatus?: string } | undefined)?.kycStatus === "approved"
               ? "approved"
               : "pending";
           if (user) {
@@ -309,9 +308,8 @@ export default function DeveloperKycForm() {
           toast.success(
             nextStatus === "approved"
               ? "Verification approved."
-              : "KYC submitted successfully. Please await admin approval.",
+              : "KYC submitted successfully. Please await admin approval within 24 hours.",
           );
-          router.push(PRACTITIONER_SETUP_PATH);
           return;
         }
       }
@@ -333,10 +331,10 @@ export default function DeveloperKycForm() {
     );
   }
 
-  const verified = Boolean(verification?.isVerifiedDeveloper);
   const kycStatus = normalizeKycStatus(verification?.kycStatus || user?.kycStatus);
+  const verified = Boolean(verification?.isVerifiedDeveloper) && isApprovedKyc(kycStatus);
 
-  if (!loading && (verified || isApprovedKyc(kycStatus))) {
+  if (!loading && isApprovedKyc(kycStatus)) {
     return (
       <KycSubmittedConfirmation
         userType="Developer"
@@ -351,8 +349,8 @@ export default function DeveloperKycForm() {
     return (
       <KycSubmittedConfirmation
         userType="Developer"
-        continueHref={PRACTITIONER_SETUP_PATH}
-        continueLabel="Set up your practitioner page"
+        continueHref="/dashboard"
+        continueLabel="Return to dashboard"
       />
     );
   }

@@ -13,6 +13,7 @@ import { DealSiteProvider, useDealSite } from "@/context/deal-site-context";
 import { useUserContext } from "@/context/user-context";
 import DashboardSidebar from "@/components/public-access-page/DashboardSidebar";
 import { isAgentOrDeveloperEffective } from "@/utils/effectiveUserType";
+import { kycPathForUser, resolveKycStatus } from "@/lib/kyc-status";
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -26,6 +27,11 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     if (isLoading) return;
 
     if (!user || !isAgentOrDeveloperEffective(user as unknown as Record<string, unknown>)) {
+      return;
+    }
+
+    if (pathname === "/public-access-page/setup" && resolveKycStatus(user) !== "approved") {
+      router.replace(kycPathForUser(user.userType));
       return;
     }
 
@@ -130,13 +136,16 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
               Setup Your Practitioner Page
             </h2>
             <p className="text-gray-600 mb-6">
-              Your Practitioner page is not yet configured. Set it up now to get started.
+              {resolveKycStatus(user) !== "approved"
+                ? "Your setup form will be available after admin approval of your KYC."
+                : "Your Practitioner page is not yet configured. Set it up now to get started."}
             </p>
             <button
               onClick={() => router.push("/public-access-page/setup")}
-              className="w-full px-6 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-all"
+              disabled={resolveKycStatus(user) !== "approved"}
+              className="w-full px-6 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-all disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Set Up Your Practitioner Page Now
+              Complete setup
             </button>
           </div>
         </div>

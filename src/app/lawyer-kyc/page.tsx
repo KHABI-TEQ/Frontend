@@ -44,7 +44,7 @@ export default function LawyerKycUpgradePage() {
       );
       if (res?.success) {
         if (user) setUser(normalizeUser({ ...user, kycStatus: "pending" }));
-        toast.success("KYC submitted successfully. Please await admin approval.");
+        toast.success("KYC submitted successfully. Please await admin approval within 24 hours.");
       } else toast.error((res as { error?: string })?.error || "Submit failed");
     } finally {
       setBusy(false);

@@ -9,6 +9,7 @@ import { useUserContext } from "@/context/user-context";
 import { GET_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import Cookies from "js-cookie";
+import { resolveKycStatus } from "@/lib/kyc-status";
 
 function laterKey(user: User) {
   return `khabiteq-dealsite-later-${user.id || user._id || user.accountId || "anon"}`;
@@ -75,6 +76,7 @@ export function DealSiteSetupOverlay({ user }: Props) {
   }, [dismissed, setUser, userId, user.dealSite]);
 
   const needsPractitionerPage = !hasConfiguredPractitionerPage(resolvedSite ?? user.dealSite);
+  const kycApproved = resolveKycStatus(user) === "approved";
   const shouldShow =
     !dismissed &&
     !isLandownerUser(user) &&
@@ -184,7 +186,7 @@ export function DealSiteSetupOverlay({ user }: Props) {
           >
             Set up your Practitioner Page
           </motion.h2>
-          <motion.p
+            <motion.p
             className="mt-3 text-sm leading-relaxed text-[#3d5244] sm:text-[15px]"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -193,7 +195,12 @@ export function DealSiteSetupOverlay({ user }: Props) {
             Your Practitioner Page is how clients discover you, browse your listings, and get in
             touch. Completing setup unlocks your branded presence and keeps your dashboard and
             marketplace experience aligned with your profile.
-          </motion.p>
+            </motion.p>
+          {!kycApproved && (
+            <p className="mt-3 text-sm font-medium text-amber-800">
+              Complete setup will unlock after admin approval of your KYC.
+            </p>
+          )}
 
           <motion.div
             className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-stretch sm:justify-between sm:gap-4"
@@ -204,16 +211,21 @@ export function DealSiteSetupOverlay({ user }: Props) {
             <motion.div className="sm:flex-1" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Link
                 href="/public-access-page/setup"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#09391C] via-emerald-800 to-[#0a4d2a] px-5 py-3.5 text-sm font-semibold text-white shadow-md shadow-emerald-900/25 ring-2 ring-white/20 transition-shadow hover:shadow-lg hover:shadow-emerald-700/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8DDB90] focus-visible:ring-offset-2"
+                aria-disabled={!kycApproved}
+                tabIndex={kycApproved ? undefined : -1}
+                onClick={(event) => { if (!kycApproved) event.preventDefault(); }}
+                className={`inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#09391C] via-emerald-800 to-[#0a4d2a] px-5 py-3.5 text-sm font-semibold text-white shadow-md shadow-emerald-900/25 ring-2 ring-white/20 transition-shadow hover:shadow-lg hover:shadow-emerald-700/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8DDB90] focus-visible:ring-offset-2 ${kycApproved ? "" : "pointer-events-none opacity-50"}`}
               >
-                Set up now
-                <motion.span
-                  aria-hidden
-                  animate={{ x: [0, 4, 0] }}
-                  transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
-                >
-                  <ArrowRight size={18} />
-                </motion.span>
+                Complete setup
+                {kycApproved && (
+                  <motion.span
+                    aria-hidden
+                    animate={{ x: [0, 4, 0] }}
+                    transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    <ArrowRight size={18} />
+                  </motion.span>
+                )}
               </Link>
             </motion.div>
             <motion.button

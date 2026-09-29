@@ -61,13 +61,12 @@ export default function KycSubmittedConfirmation({
               KYC Submitted Successfully
             </h1>
             <p className="mt-3 text-[#5A5D63] leading-relaxed">
-              Your documents were submitted successfully. Please await admin approval.
+              Your documents were submitted successfully. Please await admin approval within 24 hours.
             </p>
           </div>
           <div className="space-y-4 px-6 py-6 sm:px-10">
             <p className="text-[#3A3F3D] leading-relaxed">
-              Review typically takes <span className="font-semibold text-[#09391C]">24–48 hours</span>.
-              You’ll be notified once your verification has been completed.
+              We will notify you once your verification is complete.
             </p>
             <p className="text-[#3A3F3D] leading-relaxed">
               While your verification is pending, some account features may remain unavailable.

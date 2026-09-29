@@ -59,6 +59,7 @@ function subscriptionErrorMessage(res: unknown): string {
 export default function AgentSubscriptionsPage() {
   const router = useRouter();
   const { user } = useUserContext();
+  const kycApproved = resolveAgentKycStatus(user) === 'approved';
   const { eligibility, loading: eligibilityLoading } = useAgentEligibility();
   const { eligibility: listingEligibility } = usePublisherListingEligibility();
   const [accountRoleLabel, setAccountRoleLabel] = useState<string | null>(null);
@@ -298,6 +299,10 @@ export default function AgentSubscriptionsPage() {
   };
 
   const handleRenewSubscription = async () => {
+    if (!kycApproved) {
+      toast.error('Wait for admin approval of your KYC before making a subscription payment.');
+      return;
+    }
     if (!selectedSubscription) return;
 
     setIsProcessingRenewal(true);
@@ -369,6 +374,10 @@ export default function AgentSubscriptionsPage() {
   };
 
   const confirmSubscribe = async () => {
+    if (!kycApproved) {
+      toast.error('Wait for admin approval of your KYC before making a subscription payment.');
+      return;
+    }
     if (!selectedPlanForSub) return;
     const authToken = Cookies.get('token')?.trim();
     if (!authToken) {
@@ -421,7 +430,6 @@ export default function AgentSubscriptionsPage() {
     );
   }
 
-  const kycApproved = resolveAgentKycStatus(user) === 'approved';
   const isDeveloper = userTypeLower === 'developer';
   const isServiceProfessional = ['lawyer', 'surveyor', 'valuer'].includes(userTypeLower);
   const isPropertyOwner = userTypeLower === 'landowners';
@@ -462,26 +470,7 @@ export default function AgentSubscriptionsPage() {
         {/* Header */}
         <div className="mb-8 space-y-4">
           <div>
-            <h1 className="mb-2 text-2xl font-bold text-gray-900 sm:text-3xl">
-              Professional Subscriptions
-            </h1>
-            <p className="text-gray-600">
-              Choose the plan that matches your Khabiteq role. Custom domain and white-labeling packages are no longer offered.
-            </p>
-            <p className="mt-3 inline-flex max-w-full items-center break-words rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-sm font-medium text-slate-800">
-              Account:{" "}
-              {isServiceProfessional
-                ? userTypeRaw
-                : isDeveloper
-                ? "Developer"
-                : userTypeLower === "landowners"
-                ? "Property Owner"
-                : userTypeLower === "propertyscout" || accountRoleLabel === "Property Scout"
-                ? "Property Scout"
-                : eligibility?.displayRoleLabel ||
-                  accountRoleLabel ||
-                  "Licensed Agent"}
-            </p>
+            <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Choose a plan</h1>
           </div>
           {userTypeLower === "agent" && (
             <AgentEligibilityBanner eligibility={eligibility} loading={eligibilityLoading} compact />
@@ -651,12 +640,21 @@ export default function AgentSubscriptionsPage() {
                     title="Plans for your role"
                     text="Only the subscription that matches your Khabiteq account type is shown here."
                   />
+                  {!kycApproved && (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                      Subscription payments unlock after an admin approves your KYC.
+                    </div>
+                  )}
                   <CatalogPricing
                     mode="dashboard"
                     userType={userTypeRaw}
                     isPropertyScout={isScoutAccount}
                     hasPaidSubscription={hasPaidSubscription}
                     onSubscribe={(plan: CatalogPlan, option: CatalogBillingOption) => {
+                      if (!kycApproved) {
+                        toast.error('Wait for admin approval of your KYC before making a subscription payment.');
+                        return;
+                      }
                       toast.success('Opening checkout…');
                       const months = Math.max(1, Math.round((option.durationInDays || 90) / 30));
                       handleSubscribeToPlan(
