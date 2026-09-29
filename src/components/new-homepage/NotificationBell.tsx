@@ -162,12 +162,12 @@ export default function NotificationBell({
                     }`}
                   >
                     <span className="flex items-start justify-between gap-2">
-                      <span className="text-sm font-medium text-[#09391C]">{item.title}</span>
+                      <span className="min-w-0 break-words text-sm font-medium text-[#09391C]">{item.title}</span>
                       {!item.isRead ? (
                         <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#8DDB90]" />
                       ) : null}
                     </span>
-                    <span className="mt-1 block text-sm text-gray-600 line-clamp-2">{notificationText(item.message)}</span>
+                    <span className="mt-1 block break-words text-sm text-gray-600 line-clamp-3">{notificationText(item.message)}</span>
                     <span className="mt-1 block text-xs text-gray-400">{timeAgo(item.createdAt)}</span>
                   </button>
                 );

@@ -9,6 +9,7 @@ export type InspectionStage =
 export type PendingResponseFrom = "buyer" | "seller" | "admin";
 export type InspectionStatus =
   | "new"
+  | "inspection_approved"
   | "pending_transaction"
   | "accepted"
   | "rejected"
@@ -62,6 +63,7 @@ export interface InspectionDetails {
   negotiationPrice: number;
   letterOfIntention?: string;
   owner: Owner;
+  sellerRepresentative?: { fullName: string } | null;
   sellerCounterOffer: number;
   pendingResponseFrom: PendingResponseFrom;
   stage: InspectionStage;

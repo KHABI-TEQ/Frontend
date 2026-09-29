@@ -58,6 +58,8 @@ interface Property {
   isAvailable?: boolean;
   propertyType?: string;
   features?: string[];
+  marketedByAgentId?: string;
+  marketedByAgentIds?: string[];
 }
  
 /** From API guide §8: DealSite inspections can have optional inspection fee when accepting. */
@@ -419,6 +421,14 @@ export default function MyInspectionRequestsPage() {
   });
 
   const token = useMemo(() => Cookies.get("token"), []);
+  const currentAccountId = String(user?._id || user?.id || "");
+  const sellerResponseId = (inspection: InspectionData) => {
+    const property = inspection.property;
+    const acceptedAgents = [property?.marketedByAgentId, ...(property?.marketedByAgentIds || [])]
+      .filter(Boolean)
+      .map(String);
+    return acceptedAgents.includes(currentAccountId) ? currentAccountId : inspection.owner;
+  };
 
   // UI state for bookings actions
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -1137,12 +1147,12 @@ export default function MyInspectionRequestsPage() {
                                     ) : null}
                                     <button onClick={() => { setRespondInspection(inspection); setRespondAction("reject"); setRespondNote(""); setRespondInspectionFee(""); }} className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium">Reject</button>
                                     {showUpdateSchedule && (
-                                      <button onClick={() => router.push(`/secure-seller-response/${inspection.owner}/${inspection.id || (inspection as any)._id}`)} className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">Update schedule</button>
+                                      <button onClick={() => router.push(`/secure-seller-response/${sellerResponseId(inspection)}/${inspection.id || (inspection as any)._id}`)} className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">Update schedule</button>
                                     )}
                                   </>
                                 )}
                                 {showRespond && (
-                                  <button onClick={() => router.push(`/secure-seller-response/${inspection.owner}/${inspection.id || (inspection as any)._id}`)} className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">Respond</button>
+                                  <button onClick={() => router.push(`/secure-seller-response/${sellerResponseId(inspection)}/${inspection.id || (inspection as any)._id}`)} className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">Respond</button>
                                 )}
                                 {inspection.property && (
                                   <button onClick={() => router.push(`/property/buy/${inspection.property!.id || inspection.property!._id}`)} className="inline-flex items-center gap-2 px-4 py-2 bg-white text-[#09391C] border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">

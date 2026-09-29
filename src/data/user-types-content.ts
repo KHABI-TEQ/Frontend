@@ -9,9 +9,9 @@ export type UserTypeId =
   | 'lawyers'
   | 'surveyors';
 
-/** Shared buyer value prop — LASRERA certificate after transaction registration. */
+/** Shared buyer value prop — Khabiteq transaction record after registration. */
 export const BUYER_LASRERA_CERTIFICATE_BULLET =
-  'Register your transaction and receive a LASRERA-issued certificate to protect your payment';
+  'Register your transaction and receive a Khabiteq digital transaction record';
 
 export const USER_TYPE_BULLETS: Record<UserTypeId, string[]> = {
   landlords: [

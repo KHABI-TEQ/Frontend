@@ -183,7 +183,7 @@ const UserNotifications: React.FC<UserNotificationsProps> = ({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between">
                       <p
-                        className={`text-sm font-medium text-gray-900 ${
+                        className={`min-w-0 break-words text-sm font-medium text-gray-900 ${
                           !notification.isRead ? "font-semibold" : ""
                         }`}
                       >
@@ -193,7 +193,7 @@ const UserNotifications: React.FC<UserNotificationsProps> = ({
                         <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0 ml-2 mt-1"></div>
                       )}
                     </div>
-                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                    <p className="min-w-0 break-words text-sm text-gray-600 mt-1 line-clamp-3">
                       {notificationText(notification.message)}
                     </p>
                     <p className="text-xs text-gray-400 mt-2">

@@ -25,6 +25,7 @@ const SecureNegotiationLayout: React.FC<SecureNegotiationLayoutProps> = ({
 
   const getStatusMessage = () => {
     if (!details) return "";
+    if (details.status === "inspection_approved") return "The inspection schedule has been confirmed";
 
     if (pendingResponseFrom !== userType) {
       return `Awaiting response from ${pendingResponseFrom}...`;
@@ -51,7 +52,7 @@ const SecureNegotiationLayout: React.FC<SecureNegotiationLayoutProps> = ({
 
   const getFullName = () => {
     if (userType === "seller") {
-      return `${details?.owner?.firstName || ""} ${details?.owner?.lastName || ""}`.trim();
+      return details?.sellerRepresentative?.fullName || `${details?.owner?.firstName || ""} ${details?.owner?.lastName || ""}`.trim();
     } else {
       return details?.requestedBy?.fullName || "";
     }

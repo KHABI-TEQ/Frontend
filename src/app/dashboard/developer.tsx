@@ -222,10 +222,10 @@ export default function DeveloperDashboard() {
               )}
             </DashCard>
             <DashCard
-              title="My Transactions"
-              helper="Track transactions associated with your properties and projects."
+              title="Transaction & commission tracking"
+              helper="Track registered deals across your properties and agent commission recorded against mandates."
               href="/my-transactions"
-              cta="View Transactions →"
+              cta="View activity →"
             >
               <Metric label="Active Transactions" value={summary?.transactions.active ?? 0} />
               <Metric label="Pending Transactions" value={summary?.transactions.pending ?? 0} />

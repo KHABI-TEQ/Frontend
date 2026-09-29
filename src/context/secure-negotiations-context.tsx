@@ -96,7 +96,7 @@ type SecureNegotiationAction =
   | { type: "SET_DETAILS"; payload: InspectionDetails }
   | { type: "SET_INSPECTION_TYPE"; payload: InspectionType }
   | { type: "SET_STAGE"; payload: InspectionStage }
-  | { type: "SET_PENDING_RESPONSE_FROM"; payload: PendingResponseFrom }
+  | { type: "SET_PENDING_RESPONSE_FROM"; payload: PendingResponseFrom | null }
   | { type: "SET_CREATED_AT"; payload: string }
   | { type: "SET_INSPECTION_STATUS"; payload: InspectionStatus }
   | {
@@ -361,12 +361,10 @@ export const SecureNegotiationProvider: React.FC<{ children: ReactNode }> = ({
           if (details?.stage) {
             dispatch({ type: "SET_STAGE", payload: details.stage });
           }
-          if (details?.pendingResponseFrom) {
-            dispatch({
-              type: "SET_PENDING_RESPONSE_FROM",
-              payload: details.pendingResponseFrom,
-            });
-          }
+          dispatch({
+            type: "SET_PENDING_RESPONSE_FROM",
+            payload: details?.pendingResponseFrom || null,
+          });
 
           // Set created date
           if (details?.createdAt) {

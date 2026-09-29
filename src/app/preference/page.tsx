@@ -220,7 +220,7 @@ const SuccessModal = memo(
                 <p className="text-gray-600 mb-6">
                   {insured
                     ? "Khabiteq matches your insured preference with suitable properties. You will get in-app and email alerts when we find a match."
-                    : "Thank you for submitting your property preference. You will receive an acknowledgement by email. When we find a match, we will email you a link to view the listing."}
+                    : "Your preference is saved. We will email you when a match is found. Sign up or log in when you are ready to book an inspection."}
                 </p>
               </div>
 
@@ -411,6 +411,9 @@ const PreferenceFormContent: React.FC = () => {
     id: string;
     buyerId: string;
   } | null>(null);
+  const isActiveAiConversation =
+    preferenceEntryMode === "ai" &&
+    preferenceAiFlowStep === "conversation";
 
   // When user submits from AI summary, show the same success modal
   useEffect(() => {
@@ -987,6 +990,7 @@ const PreferenceFormContent: React.FC = () => {
 
       <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {/* Header */}
+        {!isActiveAiConversation && (
         <motion.div
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -1042,8 +1046,9 @@ const PreferenceFormContent: React.FC = () => {
             </motion.p>
           </motion.div>
         </motion.div>
+        )}
 
-        {linkedPropertyCode ? (
+        {linkedPropertyCode && !isActiveAiConversation ? (
           <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
             Property Code <span className="font-semibold">{linkedPropertyCode}</span> will be attached to this preference so matching can identify the exact listing and professional.
           </div>

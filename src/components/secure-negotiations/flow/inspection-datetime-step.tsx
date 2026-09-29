@@ -361,7 +361,8 @@ const InspectionDateTimeStep: React.FC<InspectionDateTimeStepProps> = ({
 
   const formatTime = (timeString: string) => {
     if (!timeString) return "Not specified";
-    return timeString;
+    const match = timeString.trim().match(/^(\d{1,2}):(\d{2})\s*([AP]M)$/i);
+    return match ? `${Number(match[1])}:${match[2]}${match[3].toLowerCase()}` : timeString;
   };
 
   const submitConfirmDateTime = async (

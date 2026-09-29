@@ -13,6 +13,7 @@ type Offer = {
   professionalName?: string;
   coverageNote: string;
   serviceFee: number;
+  serviceItems?: Array<{ serviceId: string; name: string; fee: number }>;
 };
 
 type ProfessionalContact = {
@@ -227,7 +228,16 @@ function BriefOffers() {
             brief?.offers?.map((offer) => (
               <article key={String(offer.professionalId)} className="rounded-2xl bg-white p-5 shadow-sm">
                 <p className="font-bold text-[#09391C]">{offer.professionalName || "Professional"}</p>
-                <p className="mt-2 text-sm text-[#5A5D63]">{offer.coverageNote}</p>
+                {!offer.serviceItems?.length ? <p className="mt-2 text-sm text-[#5A5D63]">{offer.coverageNote}</p> : null}
+                {offer.serviceItems?.length ? (
+                  <ul className="mt-3 space-y-2 rounded-xl bg-[#F4FBF5] p-3 text-sm">
+                    {offer.serviceItems.map((item) => (
+                      <li key={item.serviceId} className="flex justify-between gap-3">
+                        <span>{item.name}</span><span className="shrink-0 font-medium">{naira(item.fee)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
                 <p className="mt-3 text-sm font-semibold text-[#09391C]">
                   Service fee {naira(offer.serviceFee)}
                 </p>

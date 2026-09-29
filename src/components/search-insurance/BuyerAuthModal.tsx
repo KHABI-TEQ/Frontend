@@ -90,7 +90,8 @@ export default function BuyerAuthModal({
       });
       if (!res.success || !res.data?.token) {
         const msg = res.message || "Could not sign you in.";
-        if (/already exists/i.test(msg)) setMode("login");
+        if (/saved preference|claim/i.test(msg)) setMode("claim");
+        else if (/already exists/i.test(msg)) setMode("login");
         throw new Error(msg);
       }
       setBuyerSession(res.data.token, res.data.buyer);
@@ -106,11 +107,13 @@ export default function BuyerAuthModal({
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
         <h3 className="text-xl font-bold text-[#09391C]">
-          {title || (mode === "login" ? "Sign in to continue" : "Create your account to continue")}
+          {title || (mode === "login" ? "Sign in to continue" : mode === "claim" ? "Create your account to continue" : "Create your account to continue")}
         </h3>
         <p className="mt-2 text-sm text-[#5A5D63]">
           {description ||
-            "Your account will be used for all inspections, professional services and transactions."}
+            (mode === "claim"
+              ? "Create a password to claim the preference you already submitted. Your account is created now so you can book this inspection."
+              : "Your account will be used for all inspections, professional services and transactions.")}
         </p>
         <div className="mt-4 space-y-3">
           {mode !== "login" ? (
@@ -139,8 +142,8 @@ export default function BuyerAuthModal({
           <PasswordField
             value={password}
             onChange={setPassword}
-            placeholder="Password (min 6 characters)"
             autoComplete={mode === "login" ? "current-password" : "new-password"}
+            placeholder={mode === "claim" ? "Create password (min 6 characters)" : "Password (min 6 characters)"}
           />
         </div>
         {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
@@ -150,7 +153,7 @@ export default function BuyerAuthModal({
           onClick={() => void submit()}
           className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-[#09391C] px-5 text-sm font-semibold text-white disabled:opacity-60"
         >
-          {busy ? "Please wait..." : mode === "login" ? "Sign in" : "Continue"}
+          {busy ? "Please wait..." : mode === "login" ? "Sign in" : mode === "claim" ? "Create account" : "Continue"}
         </button>
         <div className="mt-3 flex flex-wrap justify-between gap-2 text-xs text-[#5A5D63]">
           {mode === "login" ? (

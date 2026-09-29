@@ -33,6 +33,31 @@ const SecureBuyerResponseIndex: React.FC<SecureBuyerResponseIndexProps> = ({
 
   const renderContent = () => {
     if (!details) return null;
+    const confirmedTime = details.inspectionTime.match(/^(\d{1,2}):(\d{2})\s*([AP]M)$/i);
+    const displayConfirmedTime = confirmedTime
+      ? `${Number(confirmedTime[1])}:${confirmedTime[2]}${confirmedTime[3].toLowerCase()}`
+      : details.inspectionTime;
+
+    if (details.status === "inspection_approved") {
+      return (
+        <section className="rounded-2xl border border-green-200 bg-white p-5 shadow-sm sm:p-7">
+          <h2 className="text-xl font-bold text-[#09391C]">Inspection schedule confirmed</h2>
+          <p className="mt-2 text-sm text-gray-600">
+            You accepted the proposed schedule. The property inspection is confirmed.
+          </p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-xl bg-[#F4FBF5] p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Date</p>
+              <p className="mt-1 font-semibold text-[#09391C]">{new Date(details.inspectionDate).toLocaleDateString("en-NG", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</p>
+            </div>
+            <div className="rounded-xl bg-[#F4FBF5] p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Time</p>
+              <p className="mt-1 font-semibold text-[#09391C]">{displayConfirmedTime}</p>
+            </div>
+          </div>
+        </section>
+      );
+    }
 
     // Stage-based rendering logic according to new specifications
     switch (stage) {

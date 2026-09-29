@@ -93,7 +93,6 @@ export default function TransactionRegistrationPortal() {
   const [regLng, setRegLng] = useState("");
   const [regSurveyPlan, setRegSurveyPlan] = useState("");
   const [regOwnerConfirmation, setRegOwnerConfirmation] = useState(false);
-  const [buyerIdFile, setBuyerIdFile] = useState<File | null>(null);
   const [paymentReceiptFile, setPaymentReceiptFile] = useState<File | null>(null);
   const [deedsOfAssignmentFile, setDeedsOfAssignmentFile] = useState<File | null>(null);
   const [conveyanceFile, setConveyanceFile] = useState<File | null>(null);
@@ -146,6 +145,28 @@ export default function TransactionRegistrationPortal() {
         return;
       }
       const path = String(found.dueDiligencePath || "");
+      const property = found.propertyId && typeof found.propertyId === "object" ? found.propertyId : null;
+      if (property) {
+        const propertyType = String(property.propertyType || "").toLowerCase();
+        if (propertyType.includes("land")) setRegPropType("land");
+        else if (propertyType.includes("commercial")) setRegPropType("commercial");
+        else setRegPropType("residential");
+        const location = typeof property.location === "string"
+          ? property.location
+          : [property.location?.street, property.location?.city, property.location?.state].filter(Boolean).join(", ");
+        if (location) {
+          const parts = location.split(",").map((part: string) => part.trim()).filter(Boolean);
+          setRegAddress((current) => ({
+            ...current,
+            street: current.street || parts.slice(0, Math.max(1, parts.length - 2)).join(", "),
+            city: current.city || (parts.length > 1 ? parts[parts.length - 2] : ""),
+            state: parts.length > 1 ? parts[parts.length - 1] : current.state,
+          }));
+        }
+        if (property.price) setRegValue(String(property.price).replace(/\D/g, ""));
+        if (property.propertyCode || property.code) setRegPropertyId(String(property.propertyCode || property.code));
+        setPropertyListedOnPlatform(true);
+      }
       if (path !== "platform" && path !== "independent") {
         setSeekerGate({
           ready: true,
@@ -275,8 +296,8 @@ export default function TransactionRegistrationPortal() {
       toast.error(`${partyLabel} first name, last name, email, and phone are required.`);
       return;
     }
-    if (!buyerIdFile || !paymentReceiptFile) {
-      toast.error("Upload your valid ID and payment receipt.");
+    if (!paymentReceiptFile) {
+      toast.error("Upload your deal payment receipt.");
       return;
     }
     const needsAddress = regPropType === "residential" || regPropType === "commercial";
@@ -291,14 +312,7 @@ export default function TransactionRegistrationPortal() {
 
     setRegistering(true);
     try {
-      const [buyerIdUpload, paymentReceiptUpload] = await Promise.all([
-        uploadRegistrationDocument(buyerIdFile),
-        uploadRegistrationDocument(paymentReceiptFile),
-      ]);
-      if (!buyerIdUpload.ok) {
-        toast.error(`Valid ID upload failed: ${buyerIdUpload.error}`);
-        return;
-      }
+      const paymentReceiptUpload = await uploadRegistrationDocument(paymentReceiptFile);
       if (!paymentReceiptUpload.ok) {
         toast.error(`Payment receipt upload failed: ${paymentReceiptUpload.error}`);
         return;
@@ -339,8 +353,6 @@ export default function TransactionRegistrationPortal() {
           surveyPlanRef: regSurveyPlan.trim() || undefined,
           ownerConfirmation: regOwnerConfirmation || undefined,
         },
-        buyerIdFileName: buyerIdUpload.fileName,
-        buyerIdUrl: buyerIdUpload.url,
         paymentReceiptFileName: paymentReceiptUpload.fileName,
         paymentReceiptUrl: paymentReceiptUpload.url,
       };
@@ -748,10 +760,6 @@ export default function TransactionRegistrationPortal() {
 
               <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4 space-y-4">
                 <p className="text-sm font-bold text-gray-900">Required documents</p>
-                <div>
-                  <label className={labelClass}>Your valid ID *</label>
-                  <input type="file" onChange={(e) => setBuyerIdFile(e.target.files?.[0] ?? null)} className={inputClass} required />
-                </div>
                 <div>
                   <label className={labelClass}>Deal payment receipt *</label>
                   <input type="file" onChange={(e) => setPaymentReceiptFile(e.target.files?.[0] ?? null)} className={inputClass} required />

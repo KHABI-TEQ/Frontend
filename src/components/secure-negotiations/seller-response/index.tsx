@@ -35,6 +35,15 @@ const SecureSellerResponseIndex: React.FC<SecureSellerResponseIndexProps> = ({
   const renderContent = () => {
     if (!details) return null;
 
+    if (details.status === "inspection_approved") {
+      return (
+        <section className="rounded-2xl border border-green-200 bg-white p-5 shadow-sm sm:p-7">
+          <h2 className="text-xl font-bold text-[#09391C]">Inspection schedule confirmed</h2>
+          <p className="mt-2 text-sm text-gray-600">The buyer accepted the proposed schedule. The inspection is confirmed.</p>
+        </section>
+      );
+    }
+
     // Stage-based rendering logic according to new specifications
     switch (stage) {
       case "cancelled":

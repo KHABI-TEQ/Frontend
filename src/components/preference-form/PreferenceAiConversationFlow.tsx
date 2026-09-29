@@ -23,7 +23,7 @@ import {
 } from "@/utils/voicePreferenceResolver";
 import { isLongMultiFieldUtterance } from "@/utils/wrapAiSuggestUserInput";
 import toast from "react-hot-toast";
-import { ArrowLeft, MessageSquare, Bot, Loader2, CheckCircle, Volume2, VolumeX, ChevronDown } from "lucide-react";
+import { ArrowLeft, MessageSquare, Bot, Loader2, CheckCircle, Volume2, VolumeX } from "lucide-react";
 import nigerianStateLgaJson from "@/data/state-lga.json";
 import { getAreasByStateLGA, getLGAsByState, getStates, PILOT_STATE, isPilotState } from "@/utils/location-utils";
 import {
@@ -44,9 +44,6 @@ import {
   mergeUserLeaseTermReply,
   mergeUserPurposeReply,
 } from "@/utils/preference-ai-conversation";
-import MatchingOutlookBanner, {
-  outlookDraftFromCollected,
-} from "@/components/preference-form/MatchingOutlookBanner";
 import {
   OFF_PLAN_DEVELOPMENT_STAGE_LABELS,
   OFF_PLAN_PAYMENT_PLAN_LABELS,
@@ -91,6 +88,8 @@ const DONE_SELECTING_DOCUMENTS = "Done selecting documents";
 const DOC_DONE_MARKER = "__DOC_DONE__::";
 const DONE_SELECTING_DEV_TYPES = "Done selecting development types";
 const DEV_DONE_MARKER = "__DEV_DONE__::";
+const DONE_SELECTING_LAND_CONDITIONS = "Done selecting land conditions";
+const LAND_CONDITION_OPTIONS = ["Fenced", "Dry", "Gated", "Accessible road"];
 const ROOM_COUNT_CHIPS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "More than 10"];
 
 /** Lowercase names as in the location form dataset (keys of state-lga.json). */
@@ -425,6 +424,12 @@ function withPreferenceChoiceQuickOptions<T extends { quickOptions?: string[] }>
   const focus = normalizePreferenceFieldKey(
     (reply as { focusedMissingField?: string }).focusedMissingField || "",
   );
+  if (focus.includes("measurement unit") || focus.includes("land measurement unit")) {
+    return { ...reply, quickOptions: ["Plot", "Square metres (sqm)", "Hectares", "Acres"] };
+  }
+  if (focus.includes("land condition")) {
+    return { ...reply, quickOptions: [...LAND_CONDITION_OPTIONS, DONE_SELECTING_LAND_CONDITIONS] };
+  }
   if (focus.includes("property condition") && !focus.includes("off-plan")) {
     return { ...reply, quickOptions: [...PREFERENCE_PROPERTY_CONDITION_LABELS] };
   }
@@ -2005,6 +2010,8 @@ export default function PreferenceAiConversationFlow() {
   const selectedDocumentOptionsRef = useRef<string[]>([]);
   const [selectedDevTypeOptions, setSelectedDevTypeOptions] = useState<string[]>([]);
   const selectedDevTypeOptionsRef = useRef<string[]>([]);
+  const [selectedLandConditionOptions, setSelectedLandConditionOptions] = useState<string[]>([]);
+  const selectedLandConditionOptionsRef = useRef<string[]>([]);
   /** Fields the user skipped in the interactive AI flow (exact strings from getMissingFieldsFromPreferenceData). */
   const skippedFieldsRef = useRef<Set<string>>(new Set());
   const collectedDataRef = useRef<Record<string, unknown> | null>(null);
@@ -2060,6 +2067,10 @@ export default function PreferenceAiConversationFlow() {
   }, [selectedDevTypeOptions]);
 
   useEffect(() => {
+    selectedLandConditionOptionsRef.current = selectedLandConditionOptions;
+  }, [selectedLandConditionOptions]);
+
+  useEffect(() => {
     if (!preferenceAiCollectedData) return;
     const loc = (preferenceAiCollectedData.location || {}) as Record<string, unknown>;
     if (String(loc.state || "").trim() === PILOT_STATE) return;
@@ -2077,6 +2088,7 @@ export default function PreferenceAiConversationFlow() {
       setSelectedFeatureOptions([]);
       setSelectedDocumentOptions([]);
       setSelectedDevTypeOptions([]);
+      setSelectedLandConditionOptions([]);
     }
   }, [preferenceAiMessages.length]);
 
@@ -2096,6 +2108,9 @@ export default function PreferenceAiConversationFlow() {
     }
     if (!isDevTypeFieldFocus(focus)) {
       setSelectedDevTypeOptions([]);
+    }
+    if (!focus.includes("land condition")) {
+      setSelectedLandConditionOptions([]);
     }
   }, [preferenceAiMessages]);
 
@@ -2631,6 +2646,7 @@ export default function PreferenceAiConversationFlow() {
             missingFields: [typeFieldLabel],
             focusedMissingField: typeFieldLabel,
             remainingMissingCount: 0,
+            quickOptions: ["Buy", "Rent", "Shortlet", "Off-Plan", "Joint Venture"],
           },
         ]);
         return;
@@ -2891,6 +2907,59 @@ export default function PreferenceAiConversationFlow() {
         );
         return;
       }
+      const isLandConditionMultiSelect =
+        focus.includes("land condition") &&
+        Array.isArray(msg.quickOptions) &&
+        msg.quickOptions.includes(DONE_SELECTING_LAND_CONDITIONS);
+      if (isLandConditionMultiSelect) {
+        if (option === DONE_SELECTING_LAND_CONDITIONS) {
+          const selected = selectedLandConditionOptionsRef.current;
+          if (selected.length === 0) {
+            toast.error("Select at least one land condition, then tap Done.");
+            return;
+          }
+          const currentData = { ...(collectedDataRef.current || {}) } as Record<string, unknown>;
+          const currentDetails = (currentData.propertyDetails || {}) as Record<string, unknown>;
+          const data = {
+            ...currentData,
+            propertyDetails: {
+              ...currentDetails,
+              landConditions: selected.map((value) => value.toLowerCase().replace(/\s+/g, "-")),
+            },
+          };
+          collectedDataRef.current = data;
+          setPreferenceAiCollectedData(data);
+          const reply = withPreferenceLocationOptions(
+            buildPreferenceInteractiveReply(data, skippedFieldsRef.current, 0),
+            data,
+          );
+          setPreferenceAiMessages((prev) => [
+            ...prev,
+            { role: "user", content: selected.join(", ") },
+            {
+              role: "assistant",
+              content: reply.content,
+              speakLine: reply.speakLine,
+              data,
+              missingFields: reply.missingFields.length ? reply.missingFields : undefined,
+              focusedMissingField: reply.focusedMissingField,
+              remainingMissingCount: reply.remainingMissingCount,
+              quickOptions: reply.quickOptions,
+              locationAllOptions: reply.locationAllOptions,
+              locationOptionsOffset: reply.locationOptionsOffset,
+              locationOptionsLabel: reply.locationOptionsLabel,
+            },
+          ]);
+          setSelectedLandConditionOptions([]);
+          return;
+        }
+        setSelectedLandConditionOptions((prev) =>
+          prev.some((item) => item.toLowerCase() === option.toLowerCase())
+            ? prev.filter((item) => item.toLowerCase() !== option.toLowerCase())
+            : [...prev, option],
+        );
+        return;
+      }
       const isDocumentMultiSelect =
         isDocumentFieldFocus(focus) &&
         Array.isArray(msg.quickOptions) &&
@@ -2971,7 +3040,7 @@ export default function PreferenceAiConversationFlow() {
           : [...prev, option],
       );
     },
-    [handleSuggest],
+    [handleSuggest, setPreferenceAiCollectedData, setPreferenceAiMessages],
   );
 
   const handleProceedToContactConfirm = useCallback(() => {
@@ -3302,58 +3371,6 @@ export default function PreferenceAiConversationFlow() {
           <ArrowLeft className="h-4 w-4" /> Change to manual form
         </button>
       </div>
-      <div className="border border-[#8DDB90]/30 rounded-lg overflow-hidden bg-white">
-        <details className="group">
-          <summary className="flex items-center justify-between px-4 py-3 text-sm font-medium text-[#09391C] bg-[#8DDB90]/10 hover:bg-[#8DDB90]/20 cursor-pointer transition-colors list-none select-none">
-            <span>How to use</span>
-            <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
-          </summary>
-          <div className="px-4 py-3 space-y-3 text-sm text-[#5A5D63]">
-            <p>
-              Start by telling us what you&apos;re looking for. Choose <strong>Buy</strong>, <strong>Rent</strong>, <strong>Shortlet</strong>, or <strong>JV</strong>, and the AI will guide you through the remaining details one step at a time.
-            </p>
-            <div className="pt-2 border-t border-gray-100">
-              <p className="font-medium text-[#09391C] mb-2">What you&apos;ll need to provide:</p>
-              <ul className="space-y-3">
-                <li className="flex items-start gap-2">
-                  <span className="shrink-0">1.</span>
-                  <span>
-                    <span className="font-medium text-[#09391C]">📍 Location</span>
-                    <span className="mt-0.5 block">Area and preferred location.</span>
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="shrink-0">2.</span>
-                  <span>
-                    <span className="font-medium text-[#09391C]">🏠 Property</span>
-                    <span className="mt-0.5 block">Property type and preferred features.</span>
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="shrink-0">3.</span>
-                  <span>
-                    <span className="font-medium text-[#09391C]">💰 Budget</span>
-                    <span className="mt-0.5 block">Your price range or daily rate.</span>
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="shrink-0">4.</span>
-                  <span>
-                    <span className="font-medium text-[#09391C]">📄 Preferred Title (Buy/JV)</span>
-                    <span className="mt-0.5 block">
-                      Tell us your preferred title type, if applicable — e.g. C of O, Consent, or other title documentation.
-                    </span>
-                  </span>
-                </li>
-              </ul>
-            </div>
-            <p className="text-xs italic pt-2 border-t border-gray-100">
-              Tip: Say &quot;Skip&quot; for optional details. Say &quot;I&apos;m done&quot; when you&apos;re ready to review your preference.
-            </p>
-          </div>
-        </details>
-      </div>
-
       <label className="flex items-start gap-2 text-sm text-[#5A5D63] cursor-pointer">
         <input
           type="checkbox"
@@ -3365,8 +3382,7 @@ export default function PreferenceAiConversationFlow() {
           className="mt-1 rounded border-gray-300 text-[#8DDB90] focus:ring-[#8DDB90]"
         />
         <span>
-          <span className="block font-medium text-[#09391C]">Play AI replies aloud</span>
-          <span className="block text-xs text-[#5A5D63] mt-0.5">On by default. Tap the speaker icon on a reply to stop playback.</span>
+          <span className="block font-medium text-[#09391C]">Read AI replies aloud</span>
         </span>
       </label>
 
@@ -3377,23 +3393,18 @@ export default function PreferenceAiConversationFlow() {
         </div>
       )}
 
-      <MatchingOutlookBanner {...outlookDraftFromCollected(preferenceAiCollectedData)} />
-
       <div
         ref={conversationScrollRef}
         className="bg-white rounded-lg border border-gray-200 max-h-[400px] overflow-y-auto p-4 space-y-3"
       >
         {preferenceAiMessages.length === 0 ? (
-          <div className="border border-[#8DDB90]/30 rounded-lg overflow-hidden">
-            <details className="group">
-              <summary className="flex items-center justify-between px-3 py-2.5 text-sm font-medium text-[#09391C] bg-[#8DDB90]/10 hover:bg-[#8DDB90]/20 cursor-pointer transition-colors list-none select-none">
-                <span>Example messages</span>
-                <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
-              </summary>
-              <div className="px-3 py-2.5 text-sm text-[#5A5D63] italic">
-                &quot;Buy — 3 bedroom in Lekki…&quot; or &quot;Shortlet in Victoria Island…&quot; You must include Buy, Rent, Shortlet, or JV.
-              </div>
-            </details>
+          <div className="flex items-start gap-2">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#8DDB90]/20">
+              <Bot className="h-4 w-4 text-[#09391C]" />
+            </div>
+            <div className="rounded-lg bg-gray-100 px-4 py-2 text-sm text-[#09391C]">
+              What are you looking for?
+            </div>
           </div>
         ) : (
           preferenceAiMessages.map((msg, i) => (
@@ -3473,12 +3484,14 @@ export default function PreferenceAiConversationFlow() {
                               option === DONE_SELECTING_AREAS ||
                               option === DONE_SELECTING_FEATURES ||
                               option === DONE_SELECTING_DOCUMENTS ||
-                              option === DONE_SELECTING_DEV_TYPES
+                              option === DONE_SELECTING_DEV_TYPES ||
+                              option === DONE_SELECTING_LAND_CONDITIONS
                                 ? "border-[#09391C] bg-[#8DDB90] text-[#09391C] font-semibold shadow-sm hover:bg-[#7BC87F]"
                                 : selectedAreaOptions.some((x) => x.toLowerCase() === option.toLowerCase())
                                   || selectedFeatureOptions.some((x) => x.toLowerCase() === option.toLowerCase())
                                   || selectedDocumentOptions.some((x) => x.toLowerCase() === option.toLowerCase())
                                   || selectedDevTypeOptions.some((x) => x.toLowerCase() === option.toLowerCase())
+                                  || selectedLandConditionOptions.some((x) => x.toLowerCase() === option.toLowerCase())
                                   ? "border-[#09391C] bg-[#09391C] text-white"
                                   : "border-[#8DDB90] bg-white text-[#09391C] hover:bg-[#8DDB90]/15"
                             }`}

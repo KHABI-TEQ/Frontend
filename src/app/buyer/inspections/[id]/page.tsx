@@ -17,7 +17,7 @@ function platformFollowUp(steps: JourneyStep[]): {
   if (certificate?.state === "done") {
     return {
       title: "Your certificate is ready to download",
-      body: "LASRERA has issued the certificate for this property.",
+      body: "Khabiteq has issued the digital transaction record for this property.",
       href: "/my-transactions",
       label: "Download certificate",
     };
@@ -32,7 +32,7 @@ function platformFollowUp(steps: JourneyStep[]): {
   if (current?.key === "certificate") {
     return {
       title: "The certificate is the next step",
-      body: "The certificate appears after LASRERA issues it. Use the progress guide above.",
+      body: "The Khabiteq transaction record appears after registration is reviewed. Use the progress guide above.",
     };
   }
   return {

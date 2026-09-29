@@ -29,6 +29,8 @@ type TransactionRow = {
   hasCertificate?: boolean;
 };
 
+type AccountActivity = { id: string; title: string; reference?: string; status?: string; occurredAt?: string; amount?: number; actualSalePrice?: number; commissionAmount?: number; kind?: string; direction?: string; commissionStatus?: string };
+
 const PAID_BRIEF = new Set(["in-progress", "delivered", "completed", "paid-awaiting-assignment"]);
 const ISSUED = new Set(["certificate_issued", "completed"]);
 
@@ -82,6 +84,9 @@ function briefStatusLine(row: ServicePayment) {
 export default function MyTransactionsPage() {
   const [rows, setRows] = useState<TransactionRow[]>([]);
   const [services, setServices] = useState<ServicePayment[]>([]);
+  const [accountActivity, setAccountActivity] = useState<AccountActivity[]>([]);
+  const [activitySummary, setActivitySummary] = useState<Record<string, number>>({});
+  const [accountRole, setAccountRole] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -137,6 +142,14 @@ export default function MyTransactionsPage() {
         setLoading(false);
         return;
       }
+      const activityRes = await GET_REQUEST<{ role: string; summary: Record<string, number>; activity: AccountActivity[] }>(
+        `${URLS.BASE}/account/transactions/activity`, accountToken
+      );
+      if (activityRes?.success && activityRes.data) {
+        setAccountRole(activityRes.data.role || "");
+        setActivitySummary(activityRes.data.summary || {});
+        setAccountActivity(activityRes.data.activity || []);
+      }
       const res = await GET_REQUEST<{ transactions: TransactionRow[] }>(
         `${URLS.BASE}${URLS.myTransactionRegistrations}`,
         accountToken
@@ -160,6 +173,32 @@ export default function MyTransactionsPage() {
         <p className="text-sm text-[#5A5D63]">Loading transactions…</p>
       ) : (
         <div className="space-y-8">
+          {accountRole && ["Agent", "Developer"].includes(accountRole) ? (
+            <section className="space-y-4">
+              <div>
+                <h2 className="text-lg font-bold text-[#09391C]">{accountRole} transaction activity</h2>
+                <p className="text-sm text-[#5A5D63]">Recorded inspections, completed deals, and commission status.</p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {accountRole === "Agent" ? <>
+                  <div className="rounded-2xl bg-white p-5"><p className="text-sm text-[#5A5D63]">Confirmed commission</p><p className="mt-1 text-xl font-bold text-[#09391C]">₦{Number(activitySummary.confirmedRevenue || 0).toLocaleString("en-NG")}</p></div>
+                  <div className="rounded-2xl bg-white p-5"><p className="text-sm text-[#5A5D63]">Commission awaiting confirmation</p><p className="mt-1 text-xl font-bold text-[#09391C]">₦{Number(activitySummary.pendingRevenue || 0).toLocaleString("en-NG")}</p></div>
+                </> : <>
+                  <div className="rounded-2xl bg-white p-5"><p className="text-sm text-[#5A5D63]">Registered transaction value</p><p className="mt-1 text-xl font-bold text-[#09391C]">₦{Number(activitySummary.transactionValue || 0).toLocaleString("en-NG")}</p></div>
+                  <div className="rounded-2xl bg-white p-5"><p className="text-sm text-[#5A5D63]">Agent commission recorded</p><p className="mt-1 text-xl font-bold text-[#09391C]">₦{Number(activitySummary.commissionOwed || 0).toLocaleString("en-NG")}</p></div>
+                </>}
+              </div>
+              {accountActivity.length ? accountActivity.map((row) => (
+                <article key={row.id} className="rounded-2xl bg-white p-5 shadow-sm">
+                  <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
+                    <div><p className="font-semibold text-[#09391C]">{row.title}</p><p className="mt-1 text-sm capitalize text-[#4B5563]">{String(row.status || "pending").replace(/[-_]/g, " ")}</p><p className="mt-1 text-xs text-[#6B7280]">{row.reference || "Reference pending"}{row.occurredAt ? ` · ${new Date(row.occurredAt).toLocaleDateString("en-GB")}` : ""}</p></div>
+                    {typeof row.amount === "number" ? <p className="font-bold text-[#09391C]">₦{row.amount.toLocaleString("en-NG")}</p> : null}
+                  </div>
+                  {row.kind === "property-transaction" ? <p className="mt-2 text-xs text-[#5A5D63]">{row.actualSalePrice ? `Sale price ₦${row.actualSalePrice.toLocaleString("en-NG")} · Commission ₦${Number(row.commissionAmount || 0).toLocaleString("en-NG")} (${row.commissionStatus || "awaiting confirmation"})` : `Indicative commission ₦${Number(row.commissionAmount || row.amount || 0).toLocaleString("en-NG")}`}</p> : null}
+                </article>
+              )) : <p className="rounded-2xl bg-white p-5 text-sm text-[#5A5D63]">No transaction activity has been recorded yet.</p>}
+            </section>
+          ) : null}
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-[#09391C]">Due diligence</h2>
             {services.length === 0 ? (

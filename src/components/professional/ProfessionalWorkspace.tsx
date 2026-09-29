@@ -18,9 +18,10 @@ import { POST_REQUEST_FILE_UPLOAD } from "@/utils/requests";
 import { useUserContext, normalizeUser } from "@/context/user-context";
 import KycSubmittedConfirmation from "@/components/kyc/KycSubmittedConfirmation";
 import { isApprovedKyc, isPendingKyc } from "@/lib/kyc-status";
+import { DUE_DILIGENCE_SERVICES, type DueDiligenceService } from "@/data/professional-due-diligence-services";
 
 type Role = "Lawyer" | "Surveyor" | "Valuer";
-type Tab = "overview" | "kyc" | "jobs" | "payout" | "page";
+type Tab = "overview" | "kyc" | "jobs" | "payout" | "activity" | "page";
 
 function formatNaira(n?: number) {
   return `₦${Number(n || 0).toLocaleString()}`;
@@ -62,10 +63,12 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [focusBrief, setFocusBrief] = useState("");
   const [offerDrafts, setOfferDrafts] = useState<
-    Record<string, { note: string; fee: string; agreed: boolean; letterheadAgreed: boolean }>
+    Record<string, { selectedServices: DueDiligenceService[]; agreed: boolean; letterheadAgreed: boolean }>
   >({});
   const [me, setMe] = useState<any>(null);
   const [jobs, setJobs] = useState<any[]>([]);
+  const [activity, setActivity] = useState<any[]>([]);
+  const [activitySummary, setActivitySummary] = useState<Record<string, number>>({});
   const [banks, setBanks] = useState<any[]>([]);
   const [page, setPage] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -122,17 +125,20 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [meRes, jobsRes, bankRes, pageRes] = await Promise.all([
+      const [meRes, jobsRes, bankRes, pageRes, activityRes] = await Promise.all([
         api.get(paths.me),
         api.get(paths.jobs),
         api.get(URLS.dealSiteBankList).catch(() => ({ data: { data: [] } })),
         paths.publicPage
           ? api.get(paths.publicPage).catch(() => ({ data: { data: null } }))
           : Promise.resolve({ data: { data: null } }),
+        api.get("/account/transactions/activity").catch(() => ({ data: { data: null } })),
       ]);
       const meData = meRes.data?.data;
       setMe(meData);
       setJobs((jobsRes.data?.data || []).filter(stillNeedsOffer));
+      setActivity(activityRes.data?.data?.activity || []);
+      setActivitySummary(activityRes.data?.data?.summary || {});
       const bankList = bankRes.data?.data;
       setBanks(Array.isArray(bankList) ? bankList : bankList?.data || []);
       setPage(pageRes.data?.data || null);
@@ -271,11 +277,18 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
 
   const sendOffer = async (job: any) => {
     const draft = offerDrafts[job._id] || {
-      note: "",
-      fee: "",
+      selectedServices: [],
       agreed: false,
       letterheadAgreed: false,
     };
+    const serviceItems = draft.selectedServices
+      .filter((item) => item.suggestedFee > 0)
+      .map((item) => ({ serviceId: item.id, name: item.name, fee: item.suggestedFee }));
+    const totalFee = serviceItems.reduce((total, item) => total + item.fee, 0);
+    if (!serviceItems.length) {
+      toast.error("Select at least one service and set its fee before sending your offer.");
+      return;
+    }
     if (!me?.profile?.paystackSubaccountCode) {
       toast.error("Connect the bank account from your KYC before you send an offer.");
       setTab("payout");
@@ -283,8 +296,9 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
     }
     try {
       await api.post(`/account/professional-services/${job._id}/respond`, {
-        coverageNote: draft.note,
-        fee: parseFeeInput(draft.fee),
+        coverageNote: serviceItems.map((item) => item.name).join("; "),
+        serviceItems,
+        fee: totalFee,
         commissionAccepted: draft.agreed,
         letterheadReportAccepted: draft.letterheadAgreed,
       });
@@ -346,6 +360,7 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
     { id: "overview", label: "Overview", icon: LayoutDashboard },
     { id: "kyc", label: "KYC & profile", icon: ShieldCheck },
     { id: "jobs", label: "Service briefs", icon: Briefcase },
+    { id: "activity", label: "Transaction activity", icon: CreditCard },
     { id: "payout", label: "Payout", icon: CreditCard },
     ...(!isValuer ? [{ id: "page" as Tab, label: "Public page", icon: Globe2 }] : []),
   ];
@@ -391,6 +406,8 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
         ? "KYC & profile"
         : tab === "payout"
           ? "Payout"
+          : tab === "activity"
+            ? "Transaction activity & revenue"
           : tab === "page"
             ? "Public page"
             : "Overview";
@@ -416,8 +433,10 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
               <h1 className="text-2xl font-bold text-[#09391C] md:text-3xl">{sectionTitle}</h1>
               <p className="mt-1 max-w-2xl text-sm text-[#5A5D63]">
                 {tab === "jobs"
-                  ? "Describe what the service covers, set the fee the client will pay, and agree that Khabiteq deducts 10% of that fee."
-                  : "Manage verification, service briefs, payouts and your public page."}
+                  ? "Select the services you will provide and set your fee for each item."
+                  : tab === "activity"
+                    ? "Follow each service engagement and the professional fee recorded for it."
+                    : "Manage verification, service briefs, payouts and your public page."}
               </p>
             </div>
             <button
@@ -463,6 +482,36 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
                 {profile?.paystackSubaccountCode ? "Connected" : "Not connected"}
               </p>
             </div>
+          </div>
+        )}
+
+        {tab === "activity" && (
+          <div className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl bg-white p-5">
+                <p className="text-sm text-[#5A5D63]">Confirmed professional fees</p>
+                <p className="mt-1 text-xl font-bold text-[#09391C]">{formatNaira(activitySummary.confirmedRevenue)}</p>
+              </div>
+              <div className="rounded-2xl bg-white p-5">
+                <p className="text-sm text-[#5A5D63]">Awaiting payment or confirmation</p>
+                <p className="mt-1 text-xl font-bold text-[#09391C]">{formatNaira(activitySummary.pendingRevenue)}</p>
+              </div>
+            </div>
+            {!activity.length ? (
+              <div className="rounded-2xl bg-white p-5 text-sm text-[#5A5D63]">No service or payment activity yet.</div>
+            ) : activity.map((item) => (
+              <article key={item.id} className="rounded-2xl bg-white p-5">
+                <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
+                  <div>
+                    <p className="font-semibold text-[#09391C]">{item.title || "Professional service"}</p>
+                    <p className="mt-1 text-sm capitalize text-[#5A5D63]">{String(item.status || "pending").replace(/[-_]/g, " ")}</p>
+                    <p className="mt-1 text-xs text-[#6B7280]">{item.reference || "Reference pending"}{item.occurredAt ? ` · ${new Date(item.occurredAt).toLocaleDateString("en-GB")}` : ""}</p>
+                  </div>
+                  <p className="font-bold text-[#09391C]">{formatNaira(item.amount)}</p>
+                </div>
+                {item.platformFee > 0 ? <p className="mt-2 text-xs text-[#5A5D63]">Platform fee: {formatNaira(item.platformFee)}</p> : null}
+              </article>
+            ))}
           </div>
         )}
 
@@ -590,12 +639,13 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
             {jobs.map((job) => {
               const brief = String(job.status) === "awaiting-offers" || job.source === "catalog";
               const draft = offerDrafts[job._id] || {
-                note: "",
-                fee: "",
+                selectedServices: [],
                 agreed: false,
                 letterheadAgreed: false,
               };
               const objective = job.answers?.objective || job.answers?.additional || "";
+              const serviceOptions = DUE_DILIGENCE_SERVICES[role] || [];
+              const selectedTotal = draft.selectedServices.reduce((total, item) => total + item.suggestedFee, 0);
               return (
                 <div
                   key={job._id}
@@ -619,30 +669,63 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
                   {objective ? <p className="mt-3 text-sm text-[#09391C]">{objective}</p> : null}
                   {brief && String(job.status) === "awaiting-offers" && (
                     <div className="mt-4 space-y-3">
-                      <textarea
-                        value={draft.note}
-                        onChange={(e) =>
-                          setOfferDrafts((prev) => ({
-                            ...prev,
-                            [job._id]: { ...draft, note: e.target.value },
-                          }))
-                        }
-                        rows={4}
-                        placeholder="Describe what this service covers"
-                        className="w-full rounded-lg border p-3 text-sm"
-                      />
-                      <input
-                        inputMode="numeric"
-                        value={draft.fee}
-                        onChange={(e) =>
-                          setOfferDrafts((prev) => ({
-                            ...prev,
-                            [job._id]: { ...draft, fee: formatFeeInput(e.target.value) },
-                          }))
-                        }
-                        placeholder="400,000"
-                        className="w-full rounded-lg border p-3 text-sm"
-                      />
+                      <div>
+                        <h3 className="text-sm font-semibold text-[#09391C]">Choose the services in your offer</h3>
+                        <p className="mt-1 text-xs text-[#5A5D63]">Suggested fees are editable starting points, not statutory tariffs.</p>
+                      </div>
+                      <div className="space-y-2">
+                        {serviceOptions.map((service) => {
+                          const selected = draft.selectedServices.find((item) => item.id === service.id);
+                          return (
+                            <div key={service.id} className="rounded-xl border border-gray-200 bg-white p-3">
+                              <label className="flex items-start gap-3 text-sm text-[#09391C]">
+                                <input
+                                  type="checkbox"
+                                  checked={Boolean(selected)}
+                                  onChange={(event) => setOfferDrafts((previous) => {
+                                    const current = previous[job._id] || draft;
+                                    const selectedServices = event.target.checked
+                                      ? [...current.selectedServices, { ...service }]
+                                      : current.selectedServices.filter((item) => item.id !== service.id);
+                                    return { ...previous, [job._id]: { ...current, selectedServices } };
+                                  })}
+                                  className="mt-0.5"
+                                />
+                                <span className="flex-1 font-medium">{service.name}</span>
+                              </label>
+                              {selected ? (
+                                <div className="mt-2 flex items-center gap-2 pl-7">
+                                  <span className="text-xs text-gray-500">Fee (NGN)</span>
+                                  <input
+                                    inputMode="numeric"
+                                    aria-label={`${service.name} fee in naira`}
+                                    value={formatFeeInput(String(selected.suggestedFee))}
+                                    onChange={(event) => {
+                                      const fee = parseFeeInput(event.target.value);
+                                      setOfferDrafts((previous) => {
+                                        const current = previous[job._id] || draft;
+                                        return {
+                                          ...previous,
+                                          [job._id]: {
+                                            ...current,
+                                            selectedServices: current.selectedServices.map((item) =>
+                                              item.id === service.id ? { ...item, suggestedFee: fee } : item,
+                                            ),
+                                          },
+                                        };
+                                      });
+                                    }}
+                                    className="w-36 rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                                  />
+                                </div>
+                              ) : null}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div className="flex items-center justify-between rounded-xl bg-[#F1F8F2] px-4 py-3 font-semibold text-[#09391C]">
+                        <span>Offer total</span><span>₦{selectedTotal.toLocaleString("en-NG")}</span>
+                      </div>
                       <label className="flex items-start gap-2 text-sm text-[#09391C]">
                         <input
                           type="checkbox"

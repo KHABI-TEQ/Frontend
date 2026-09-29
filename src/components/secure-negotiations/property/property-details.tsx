@@ -39,6 +39,27 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({ propertyData }) => {
     });
   };
 
+  const formatTime = (value?: string) => {
+    if (!value) return "Not specified";
+    const raw = value.trim();
+    const clock = raw.match(/^(\d{1,2}):(\d{2})(?:\s*([AP]M))?$/i);
+    if (clock) {
+      let hour = Number(clock[1]);
+      const minute = clock[2];
+      let suffix = clock[3]?.toLowerCase();
+      if (!suffix) {
+        suffix = hour >= 12 ? "pm" : "am";
+        hour = hour % 12 || 12;
+      }
+      return `${hour}:${minute}${suffix}`;
+    }
+    const parsed = new Date(raw);
+    if (Number.isNaN(parsed.getTime())) return raw;
+    return new Intl.DateTimeFormat("en-NG", {
+      hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Africa/Lagos",
+    }).format(parsed).replace(/\s/g, "").toLowerCase();
+  };
+
   const getInspectionModeDisplay = (mode?: string) => {
     switch (mode) {
       case "in_person":
@@ -157,7 +178,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({ propertyData }) => {
               <div className="bg-[#EEF1F1] p-3 rounded-lg border border-[#C7CAD0]">
                 <div className="text-xs text-gray-600 mb-1">Time</div>
                 <div className="font-medium text-gray-800 text-sm">
-                  {inspectionTime}
+                  {formatTime(inspectionTime)}
                 </div>
               </div>
 
