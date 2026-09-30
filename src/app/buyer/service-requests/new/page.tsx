@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import BuyerShell from "@/components/search-insurance/BuyerShell";
 import InspectionBookingSelect from "@/components/due-diligence/InspectionBookingSelect";
 import { DUE_DILIGENCE_SERVICES, type DueDiligenceRole } from "@/data/professional-due-diligence-services";
+import { buyerFetch, getBuyerToken, setBuyerAccountFocus } from "@/lib/search-insurance";
 
 const SERVICES = [
   {
