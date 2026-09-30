@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import BuyerShell from "@/components/search-insurance/BuyerShell";
 import InspectionBookingSelect from "@/components/due-diligence/InspectionBookingSelect";
-import { buyerFetch, getBuyerToken, setBuyerAccountFocus } from "@/lib/search-insurance";
+import { DUE_DILIGENCE_SERVICES, type DueDiligenceRole } from "@/data/professional-due-diligence-services";
 
 const SERVICES = [
   {
@@ -40,6 +40,7 @@ function NewBriefForm() {
     deliverable: "",
     additional: "",
   });
+  const [requestedServiceIds, setRequestedServiceIds] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -47,6 +48,9 @@ function NewBriefForm() {
     () => SERVICES.find((item) => item.category === category) || null,
     [category]
   );
+  const role: DueDiligenceRole | null =
+    category === "lawyer" ? "Lawyer" : category === "surveyor" ? "Surveyor" : category === "valuer" ? "Valuer" : null;
+  const serviceOptions = role ? DUE_DILIGENCE_SERVICES[role] : [];
 
   useEffect(() => {
     if (!getBuyerToken()) {
@@ -77,6 +81,7 @@ function NewBriefForm() {
           serviceName: selected.serviceName,
           ...(inspectionId ? { inspectionId } : {}),
           brief,
+          requestedServices: requestedServiceIds,
         }),
       }
     );
@@ -94,7 +99,7 @@ function NewBriefForm() {
       subtitle="Tell verified professionals what you need. They will send offers. Documents are shared directly with the professional you choose, not stored as a Khabiteq review."
     >
       <div className="mb-6 flex gap-2 text-sm font-semibold text-[#5A5D63]">
-        {["Service", "Inspection", "Brief"].map((label, index) => (
+        {["Service", "Inspection", "Requirements", "Brief"].map((label, index) => (
           <span
             key={label}
             className={`rounded-full px-3 py-1 ${step === index + 1 ? "bg-[#09391C] text-white" : "bg-white"}`}
@@ -112,6 +117,7 @@ function NewBriefForm() {
               type="button"
               onClick={() => {
                 setCategory(item.category);
+                setRequestedServiceIds([]);
                 setStep(2);
               }}
               className="rounded-2xl bg-white p-5 text-left shadow-sm"
@@ -151,6 +157,47 @@ function NewBriefForm() {
       ) : null}
 
       {step === 3 ? (
+        <article className="rounded-2xl bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-bold text-[#09391C]">Select the work you need</h2>
+          <p className="mt-2 text-sm text-[#5A5D63]">
+            Choose the service items that make this brief clearer. The professional still sets each fee and can add or remove items when quoting.
+          </p>
+          <div className="mt-4 space-y-2">
+            {serviceOptions.map((item) => {
+              const checked = requestedServiceIds.includes(item.id);
+              return (
+                <label key={item.id} className="flex items-start gap-3 rounded-xl border border-gray-200 p-3 text-sm">
+                  <input
+                    type="checkbox"
+                    className="mt-1"
+                    checked={checked}
+                    onChange={() =>
+                      setRequestedServiceIds((current) =>
+                        checked ? current.filter((id) => id !== item.id) : [...current, item.id]
+                      )
+                    }
+                  />
+                  <span className="font-medium text-[#09391C]">{item.name}</span>
+                </label>
+              );
+            })}
+          </div>
+          <div className="mt-5 flex gap-3">
+            <button type="button" className="text-sm font-semibold text-[#5A5D63]" onClick={() => setStep(2)}>
+              Back
+            </button>
+            <button
+              type="button"
+              onClick={() => setStep(4)}
+              className="rounded-full bg-[#09391C] px-5 py-2.5 text-sm font-semibold text-white"
+            >
+              Continue
+            </button>
+          </div>
+        </article>
+      ) : null}
+
+      {step === 4 ? (
         <article className="space-y-4 rounded-2xl bg-white p-6 shadow-sm">
           <h2 className="text-lg font-bold text-[#09391C]">Submit your service brief</h2>
           <label className="block text-sm">
@@ -200,7 +247,7 @@ function NewBriefForm() {
           </label>
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
           <div className="flex gap-3">
-            <button type="button" className="text-sm font-semibold text-[#5A5D63]" onClick={() => setStep(2)}>
+            <button type="button" className="text-sm font-semibold text-[#5A5D63]" onClick={() => setStep(3)}>
               Back
             </button>
             <button

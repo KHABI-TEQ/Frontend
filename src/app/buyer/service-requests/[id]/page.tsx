@@ -31,10 +31,48 @@ type Brief = {
   professionalId?: string;
   inspectionId?: string;
   serviceFee?: number;
+  quotationRevisionPending?: boolean;
+  acceptedQuotation?: {
+    serviceItems?: Array<{ serviceId: string; name: string; fee: number }>;
+    customerPrice?: number;
+  } | null;
+  deliverableUrl?: string;
+  deliverableNotes?: string;
+  deliveredAt?: string | null;
   offers?: Offer[];
-  answers?: { objective?: string };
+  answers?: {
+    objective?: string;
+    questions?: string;
+    timeline?: string;
+    deliverable?: string;
+    requestedServices?: Array<{ serviceId: string; name: string }>;
+  };
   professional?: ProfessionalContact | null;
 };
+
+function QuotationTable({
+  items,
+  total,
+}: {
+  items?: Array<{ serviceId: string; name: string; fee: number }>;
+  total?: number;
+}) {
+  if (!items?.length) return null;
+  return (
+    <ul className="mt-3 space-y-2 rounded-xl bg-[#F4FBF5] p-3 text-sm">
+      {items.map((item) => (
+        <li key={item.serviceId} className="flex justify-between gap-3">
+          <span>{item.name}</span>
+          <span className="shrink-0 font-medium">{naira(item.fee)}</span>
+        </li>
+      ))}
+      <li className="flex justify-between gap-3 border-t border-black/10 pt-2 font-bold text-[#09391C]">
+        <span>Total</span>
+        <span>{naira(total ?? items.reduce((sum, item) => sum + Number(item.fee || 0), 0))}</span>
+      </li>
+    </ul>
+  );
+}
 
 const PAID_STATUSES = ["in-progress", "delivered", "completed"];
 
@@ -124,6 +162,19 @@ function BriefOffers() {
     window.location.href = url;
   };
 
+  const confirmDelivery = async () => {
+    setBusy(true);
+    const res = await buyerFetch(`/buyer/auth/me/professional-service-requests/${id}/confirm-delivery`, {
+      method: "POST",
+    });
+    setBusy(false);
+    if (!res.success) {
+      setError(res.message || "Could not confirm delivery.");
+      return;
+    }
+    load();
+  };
+
   const selectedOffer = brief?.offers?.find(
     (offer) => String(offer.professionalId) === String(brief.professionalId)
   );
@@ -133,15 +184,32 @@ function BriefOffers() {
   return (
     <BuyerShell
       title={brief?.serviceName || "Offers"}
-      subtitle="Compare what each professional will cover and the fee they set. Documents stay between you and the professional."
+      subtitle="Compare each itemised quotation, then accept and pay. Documents stay between you and the professional."
     >
       {search.get("submitted") === "1" ? (
         <article className="mb-6 rounded-3xl bg-[#09391C] p-6 text-white">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8DDB90]">Brief published</p>
           <h2 className="mt-2 text-2xl font-bold">Verified professionals have been notified</h2>
           <p className="mt-2 max-w-2xl text-sm text-white/80">
-            Every approved {brief?.serviceName || "professional"} who can take this work has received the brief by email and in the app. Their offers will appear here, with the service they cover and the fee they set.
+            They will review this brief and send an itemised quotation. You will see each service and fee before you accept and pay.
           </p>
+        </article>
+      ) : null}
+
+      {brief?.quotationRevisionPending ? (
+        <article className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950">
+          The professional updated the quotation. Review the new breakdown and accept it before payment.
+        </article>
+      ) : null}
+
+      {brief?.answers?.requestedServices?.length ? (
+        <article className="mb-6 rounded-2xl bg-white p-5 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#0F766E]">Requested work</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[#09391C]">
+            {brief.answers.requestedServices.map((item) => (
+              <li key={item.serviceId}>{item.name}</li>
+            ))}
+          </ul>
         </article>
       ) : null}
 
@@ -165,8 +233,12 @@ function BriefOffers() {
           {selectedOffer?.coverageNote ? (
             <p className="mt-3 text-sm text-[#09391C]">{selectedOffer.coverageNote}</p>
           ) : null}
+          <QuotationTable
+            items={brief?.acceptedQuotation?.serviceItems || selectedOffer?.serviceItems}
+            total={brief?.acceptedQuotation?.customerPrice || selectedOffer?.serviceFee || brief?.serviceFee}
+          />
           <p className="mt-3 text-sm font-semibold text-[#09391C]">
-            Service fee {naira(selectedOffer?.serviceFee || brief?.serviceFee)}
+            Paid {naira(selectedOffer?.serviceFee || brief?.serviceFee)}
           </p>
           <div className="mt-4 space-y-1 text-sm text-[#09391C]">
             {brief?.professional?.email ? (
@@ -189,6 +261,38 @@ function BriefOffers() {
           <p className="mt-4 text-sm text-[#5A5D63]">
             Share your documents with this professional directly. They will send the full report on their company letterhead.
           </p>
+          {brief?.status === "in-progress" ? (
+            <p className="mt-4 text-sm text-[#09391C]">Work is in progress. Delivery will appear on this page.</p>
+          ) : null}
+          {brief?.deliverableNotes || brief?.deliverableUrl ? (
+            <div className="mt-5 rounded-xl bg-[#F4FBF5] p-4 text-sm text-[#09391C]">
+              <p className="font-semibold">Delivery</p>
+              {brief.deliverableNotes ? <p className="mt-2 whitespace-pre-wrap">{brief.deliverableNotes}</p> : null}
+              {brief.deliverableUrl ? (
+                <a
+                  href={brief.deliverableUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 inline-flex font-semibold text-[#0F766E] underline"
+                >
+                  Open delivered file
+                </a>
+              ) : null}
+            </div>
+          ) : null}
+          {brief?.status === "delivered" ? (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void confirmDelivery()}
+              className="mt-5 inline-flex rounded-full bg-[#09391C] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+            >
+              Confirm receipt
+            </button>
+          ) : null}
+          {brief?.status === "completed" ? (
+            <p className="mt-4 text-sm font-semibold text-[#0F766E]">You confirmed this delivery.</p>
+          ) : null}
           {brief?.inspectionId ? (
             <Link
               href={`/transaction-registration?inspectionId=${encodeURIComponent(brief.inspectionId)}&tab=register`}
@@ -203,9 +307,10 @@ function BriefOffers() {
           <p className="text-xs font-semibold uppercase tracking-wide text-[#0F766E]">Selected professional</p>
           <h2 className="mt-1 text-xl font-bold text-[#09391C]">{selectedOffer.professionalName}</h2>
           <p className="mt-2 text-sm text-[#5A5D63]">{selectedOffer.coverageNote}</p>
-          <p className="mt-4 text-lg font-bold text-[#09391C]">Service fee {naira(selectedOffer.serviceFee)}</p>
+          <QuotationTable items={selectedOffer.serviceItems} total={selectedOffer.serviceFee} />
+          <p className="mt-4 text-lg font-bold text-[#09391C]">Total {naira(selectedOffer.serviceFee)}</p>
           <p className="mt-3 text-sm text-[#5A5D63]">
-            You pay this fee. Share documents with the professional directly after payment.
+            This is the itemised quotation. Accepting and paying locks this scope. A later change in work or price needs a new quotation.
           </p>
           {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
           <button
@@ -230,16 +335,10 @@ function BriefOffers() {
                 <p className="font-bold text-[#09391C]">{offer.professionalName || "Professional"}</p>
                 {!offer.serviceItems?.length ? <p className="mt-2 text-sm text-[#5A5D63]">{offer.coverageNote}</p> : null}
                 {offer.serviceItems?.length ? (
-                  <ul className="mt-3 space-y-2 rounded-xl bg-[#F4FBF5] p-3 text-sm">
-                    {offer.serviceItems.map((item) => (
-                      <li key={item.serviceId} className="flex justify-between gap-3">
-                        <span>{item.name}</span><span className="shrink-0 font-medium">{naira(item.fee)}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <QuotationTable items={offer.serviceItems} total={offer.serviceFee} />
                 ) : null}
                 <p className="mt-3 text-sm font-semibold text-[#09391C]">
-                  Service fee {naira(offer.serviceFee)}
+                  Total {naira(offer.serviceFee)}
                 </p>
                 {String(brief?.status) === "awaiting-offers" ? (
                   <button
@@ -248,7 +347,7 @@ function BriefOffers() {
                     onClick={() => void choose(String(offer.professionalId))}
                     className="mt-4 rounded-full bg-[#09391C] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
                   >
-                    Choose this offer
+                    Accept this quotation
                   </button>
                 ) : null}
               </article>

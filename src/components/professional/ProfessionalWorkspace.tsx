@@ -38,9 +38,8 @@ function parseFeeInput(raw: string) {
   return digits ? Number(digits) : 0;
 }
 
-function stillNeedsOffer(job: { status?: string; myOffer?: { serviceFee?: number } }) {
-  if (String(job.status) !== "awaiting-offers") return true;
-  return !(Number(job.myOffer?.serviceFee) > 0);
+function isCatalogBrief(job: { source?: string; slug?: string }) {
+  return job.source === "catalog" || String(job.slug || "").startsWith("brief-");
 }
 
 async function uploadAsset(file: File, fileFor: string) {
@@ -64,6 +63,9 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
   const [focusBrief, setFocusBrief] = useState("");
   const [offerDrafts, setOfferDrafts] = useState<
     Record<string, { selectedServices: DueDiligenceService[]; agreed: boolean; letterheadAgreed: boolean }>
+  >({});
+  const [deliverDrafts, setDeliverDrafts] = useState<
+    Record<string, { notes: string; url: string }>
   >({});
   const [me, setMe] = useState<any>(null);
   const [jobs, setJobs] = useState<any[]>([]);
@@ -125,9 +127,10 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [meRes, jobsRes, bankRes, pageRes, activityRes] = await Promise.all([
+      const [meRes, jobsRes, briefsRes, bankRes, pageRes, activityRes] = await Promise.all([
         api.get(paths.me),
-        api.get(paths.jobs),
+        api.get(paths.jobs).catch(() => ({ data: { data: [] } })),
+        api.get("/account/professional-services/jobs").catch(() => ({ data: { data: [] } })),
         api.get(URLS.dealSiteBankList).catch(() => ({ data: { data: [] } })),
         paths.publicPage
           ? api.get(paths.publicPage).catch(() => ({ data: { data: null } }))
@@ -136,7 +139,32 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
       ]);
       const meData = meRes.data?.data;
       setMe(meData);
-      setJobs((jobsRes.data?.data || []).filter(stillNeedsOffer));
+      const briefs = (briefsRes.data?.data || []).map((job: any) => ({
+        ...job,
+        source: "catalog",
+      }));
+      const marketplace = (jobsRes.data?.data || []).filter(
+        (job: any) =>
+          !isCatalogBrief(job) &&
+          !briefs.some((brief: any) => String(brief._id) === String(job._id)),
+      );
+      setJobs([...briefs, ...marketplace]);
+      const catalog = DUE_DILIGENCE_SERVICES[role] || [];
+      setOfferDrafts((previous) => {
+        const next = { ...previous };
+        for (const job of briefs) {
+          if (next[job._id]) continue;
+          const requested = (job.answers?.requestedServices || []) as Array<{ serviceId: string }>;
+          next[job._id] = {
+            selectedServices: catalog.filter((service) =>
+              requested.some((item) => item.serviceId === service.id),
+            ),
+            agreed: false,
+            letterheadAgreed: false,
+          };
+        }
+        return next;
+      });
       setActivity(activityRes.data?.data?.activity || []);
       setActivitySummary(activityRes.data?.data?.summary || {});
       const bankList = bankRes.data?.data;
@@ -165,7 +193,7 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
     } finally {
       setLoading(false);
     }
-  }, [paths.jobs, paths.me, paths.publicPage]);
+  }, [paths.jobs, paths.me, paths.publicPage, role]);
 
   useEffect(() => {
     load();
@@ -302,13 +330,7 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
         commissionAccepted: draft.agreed,
         letterheadReportAccepted: draft.letterheadAgreed,
       });
-      toast.success("Offer sent. The client can compare it with other professionals.");
-      setJobs((prev) => prev.filter((item) => String(item._id) !== String(job._id)));
-      setOfferDrafts((prev) => {
-        const next = { ...prev };
-        delete next[job._id];
-        return next;
-      });
+      toast.success("Quotation sent. The client can accept it on the website.");
       load();
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Could not send the offer");
@@ -322,6 +344,24 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
       load();
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Could not respond");
+    }
+  };
+
+  const deliverBrief = async (job: any) => {
+    const draft = deliverDrafts[job._id] || { notes: "", url: "" };
+    if (!draft.notes.trim()) {
+      toast.error("Add delivery notes for the client.");
+      return;
+    }
+    try {
+      await api.post(`/account/professional-services/${job._id}/deliver`, {
+        notes: draft.notes,
+        url: draft.url,
+      });
+      toast.success("Delivery sent to the client on the website.");
+      load();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Could not send delivery");
     }
   };
 
@@ -347,7 +387,7 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
   const bounds = me?.feeBounds || { min: 0, max: 0 };
   const kyc = profile?.kycStatus || "none";
   const pending = jobs.filter((j) =>
-    ["pending", "payment-approved", "in-progress", "awaiting-acceptance", "awaiting-offers"].includes(
+    ["pending", "payment-approved", "in-progress", "awaiting-acceptance", "awaiting-offers", "awaiting-payment", "delivered"].includes(
       String(j.status || ""),
     ),
   ).length;
@@ -433,7 +473,7 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
               <h1 className="text-2xl font-bold text-[#09391C] md:text-3xl">{sectionTitle}</h1>
               <p className="mt-1 max-w-2xl text-sm text-[#5A5D63]">
                 {tab === "jobs"
-                  ? "Select the services you will provide and set your fee for each item."
+                  ? "Review the client brief, send an itemised quotation, then deliver the report here after they accept and pay."
                   : tab === "activity"
                     ? "Follow each service engagement and the professional fee recorded for it."
                     : "Manage verification, service briefs, payouts and your public page."}
@@ -637,15 +677,20 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
               </p>
             )}
             {jobs.map((job) => {
-              const brief = String(job.status) === "awaiting-offers" || job.source === "catalog";
+              const brief = isCatalogBrief(job);
+              const status = String(job.status || "");
+              const canQuote = brief && ["awaiting-offers", "awaiting-payment"].includes(status);
               const draft = offerDrafts[job._id] || {
                 selectedServices: [],
                 agreed: false,
                 letterheadAgreed: false,
               };
+              const delivery = deliverDrafts[job._id] || { notes: job.deliverableNotes || "", url: job.deliverableUrl || "" };
               const objective = job.answers?.objective || job.answers?.additional || "";
+              const requested = job.answers?.requestedServices || [];
               const serviceOptions = DUE_DILIGENCE_SERVICES[role] || [];
               const selectedTotal = draft.selectedServices.reduce((total, item) => total + item.suggestedFee, 0);
+              const sentItems = job.myOffer?.serviceItems || [];
               return (
                 <div
                   key={job._id}
@@ -661,16 +706,67 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
                     <p className="mt-1 text-sm text-[#5A5D63]">Reference: {job.reference}</p>
                   )}
                   <p className="text-sm text-[#5A5D63] capitalize">
-                    Status: {String(job.status || "").replace(/-/g, " ")}
+                    Status: {status.replace(/-/g, " ")}
                   </p>
                   {job.buyerId?.fullName && (
                     <p className="text-sm mt-1">Client: {job.buyerId.fullName}</p>
                   )}
+                  {job.buyerId?.email ? (
+                    <p className="text-sm">Email: {job.buyerId.email}</p>
+                  ) : null}
+                  {job.buyerId?.phoneNumber ? (
+                    <p className="text-sm">Phone: {job.buyerId.phoneNumber}</p>
+                  ) : null}
                   {objective ? <p className="mt-3 text-sm text-[#09391C]">{objective}</p> : null}
-                  {brief && String(job.status) === "awaiting-offers" && (
+                  {requested.length ? (
+                    <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-[#09391C]">
+                      {requested.map((item: { serviceId: string; name: string }) => (
+                        <li key={item.serviceId}>{item.name}</li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  {sentItems.length ? (
+                    <div className="mt-4 rounded-xl bg-[#F4FBF5] p-3 text-sm">
+                      <p className="font-semibold text-[#09391C]">Your quotation</p>
+                      {sentItems.map((item: { serviceId: string; name: string; fee: number }) => (
+                        <p key={item.serviceId} className="mt-1 flex justify-between gap-3">
+                          <span>{item.name}</span>
+                          <span>{formatNaira(item.fee)}</span>
+                        </p>
+                      ))}
+                      <p className="mt-2 flex justify-between font-bold text-[#09391C]">
+                        <span>Total</span>
+                        <span>{formatNaira(job.myOffer?.serviceFee)}</span>
+                      </p>
+                    </div>
+                  ) : null}
+                  {brief && status === "awaiting-offers" && job.myOffer ? (
+                    <p className="mt-3 text-sm text-[#5A5D63]">
+                      Waiting for the client to accept this quotation on the website.
+                    </p>
+                  ) : null}
+                  {brief && status === "awaiting-payment" ? (
+                    <p className="mt-3 text-sm text-[#5A5D63]">
+                      The client accepted your quotation. Payment happens on their account. You can send a revised quotation if the scope changes before they pay.
+                    </p>
+                  ) : null}
+                  {brief && status === "in-progress" ? (
+                    <p className="mt-3 text-sm text-[#5A5D63]">
+                      Payment received. Deliver the completed work to this client here.
+                    </p>
+                  ) : null}
+                  {brief && status === "delivered" ? (
+                    <p className="mt-3 text-sm text-[#5A5D63]">
+                      Delivery is with the client. They confirm receipt on the website.
+                    </p>
+                  ) : null}
+                  {brief && status === "completed" ? (
+                    <p className="mt-3 text-sm text-[#0F766E]">This brief is complete.</p>
+                  ) : null}
+                  {canQuote && (
                     <div className="mt-4 space-y-3">
                       <div>
-                        <h3 className="text-sm font-semibold text-[#09391C]">Choose the services in your offer</h3>
+                        <h3 className="text-sm font-semibold text-[#09391C]">Itemised quotation</h3>
                         <p className="mt-1 text-xs text-[#5A5D63]">Suggested fees are editable starting points, not statutory tariffs.</p>
                       </div>
                       <div className="space-y-2">
@@ -724,7 +820,7 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
                         })}
                       </div>
                       <div className="flex items-center justify-between rounded-xl bg-[#F1F8F2] px-4 py-3 font-semibold text-[#09391C]">
-                        <span>Offer total</span><span>₦{selectedTotal.toLocaleString("en-NG")}</span>
+                        <span>Quotation total</span><span>₦{selectedTotal.toLocaleString("en-NG")}</span>
                       </div>
                       <label className="flex items-start gap-2 text-sm text-[#09391C]">
                         <input
@@ -763,11 +859,55 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
                         onClick={() => sendOffer(job)}
                         className="rounded-lg bg-[#09391C] px-4 py-2 text-sm font-semibold text-white"
                       >
-                        Send offer
+                        {job.myOffer ? "Send revised quotation" : "Send quotation"}
                       </button>
                     </div>
                   )}
-                  {!brief && ["pending", "awaiting-acceptance"].includes(String(job.status)) && (
+                  {brief && status === "in-progress" ? (
+                    <div className="mt-4 space-y-3">
+                      <textarea
+                        value={delivery.notes}
+                        onChange={(event) =>
+                          setDeliverDrafts((previous) => ({
+                            ...previous,
+                            [job._id]: { ...delivery, notes: event.target.value },
+                          }))
+                        }
+                        placeholder="Delivery notes for the client"
+                        rows={4}
+                        className="w-full rounded-lg border p-3 text-sm"
+                      />
+                      <label className="block text-sm text-[#09391C]">
+                        Report file (optional)
+                        <input
+                          type="file"
+                          className="mt-1 block"
+                          onChange={async (event) => {
+                            const file = event.target.files?.[0];
+                            if (!file) return;
+                            try {
+                              const url = await uploadAsset(file, "identity-doc");
+                              setDeliverDrafts((previous) => ({
+                                ...previous,
+                                [job._id]: { ...delivery, url },
+                              }));
+                              toast.success("File uploaded");
+                            } catch (err: any) {
+                              toast.error(err.message);
+                            }
+                          }}
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => deliverBrief(job)}
+                        className="rounded-lg bg-[#8DDB90] px-4 py-2 text-sm font-semibold text-[#09391C]"
+                      >
+                        Deliver to client
+                      </button>
+                    </div>
+                  ) : null}
+                  {!brief && ["pending", "awaiting-acceptance"].includes(status) && (
                     <div className="mt-3 flex gap-2">
                       <button
                         type="button"
@@ -785,7 +925,7 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
                       </button>
                     </div>
                   )}
-                  {!brief && ["payment-approved", "in-progress"].includes(String(job.status)) && paths.report(job._id) && (
+                  {!brief && ["payment-approved", "in-progress"].includes(status) && paths.report(job._id) && (
                     <button
                       type="button"
                       onClick={() => submitReport(job._id)}

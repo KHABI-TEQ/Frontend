@@ -404,6 +404,12 @@ export function buildPreferencePayload(
       const shortletData = fd;
       const pd = (shortletData.propertyDetails || {}) as Record<string, unknown>;
       const bd = (shortletData.bookingDetails || {}) as Record<string, unknown>;
+      const preferredCheckInTime = toStr(
+        bd.preferredCheckInTime ?? contact.preferredCheckInTime,
+      );
+      const preferredCheckOutTime = toStr(
+        bd.preferredCheckOutTime ?? contact.preferredCheckOutTime,
+      );
       const bookingDetails = {
         propertyType: normalizeShortletPropertyType(toStr(pd.propertyType)) || toStr(pd.propertyType),
         buildingType: canonicalBuildingType(pd.buildingType ?? bd.buildingType),
@@ -413,12 +419,8 @@ export function buildPreferencePayload(
         checkInDate: toStr(bd.checkInDate),
         checkOutDate: toStr(bd.checkOutDate),
         travelType: normalizeTravelType(toStr(pd.travelType ?? bd.travelType)) || toStr(pd.travelType ?? bd.travelType),
-        preferredCheckInTime: toStr(
-          bd.preferredCheckInTime ?? contact.preferredCheckInTime,
-        ),
-        preferredCheckOutTime: toStr(
-          bd.preferredCheckOutTime ?? contact.preferredCheckOutTime,
-        ),
+        ...(preferredCheckInTime ? { preferredCheckInTime } : {}),
+        ...(preferredCheckOutTime ? { preferredCheckOutTime } : {}),
         propertyCondition: canonicalCondition(pd.propertyCondition ?? bd.propertyCondition),
         purpose: toStr(pd.purpose ?? bd.purpose),
         landSize: toStr(pd.landSize ?? bd.landSize),

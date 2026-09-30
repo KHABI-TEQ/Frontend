@@ -82,12 +82,49 @@ const steps = [
 
 const isImage = (url?: string) => !!url && /(\.png|\.jpg|\.jpeg|\.gif|\.webp)$/i.test(url);
 
+function asStringList(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+}
+
+function CheckboxTag({
+  selected,
+  label,
+  onToggle,
+}: {
+  selected: boolean;
+  label: string;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border text-sm cursor-pointer select-none text-left transition-colors ${
+        selected
+          ? "bg-[#0B572B] text-white border-[#0B572B]"
+          : "bg-white text-[#0C1E1B] border-gray-300 hover:border-[#0B572B]"
+      }`}
+    >
+      <span
+        className={`flex items-center justify-center h-4 w-4 shrink-0 rounded-full border ${
+          selected ? "bg-white text-[#0B572B] border-white" : "border-gray-300"
+        }`}
+      >
+        {selected ? <Check className="w-3 h-3" /> : null}
+      </span>
+      <span>{label}</span>
+    </button>
+  );
+}
+
 const AgentKycForm: React.FC = () => {
   const router = useRouter();
   const { user, setUser } = useUserContext();
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [regionQuery, setRegionQuery] = useState("");
+  const [openRegionLga, setOpenRegionLga] = useState("");
 
   const formik = useFormik<AgentKycSubmissionPayload>({
     initialValues: {
@@ -211,13 +248,18 @@ const AgentKycForm: React.FC = () => {
   const selectedState = formik.values.address.state;
   const stateOptions = useMemo(() => getStates(), []);
   const lgaOptions = useMemo(() => (selectedState ? getLGAsByState(selectedState) : []), [selectedState]);
-  const areaOptions = useMemo(() => {
-    if (!selectedState) return [] as string[];
-    const areas: string[] = [];
-    lgaOptions.forEach((lga) => areas.push(...getAreasByStateLGA(selectedState, lga)));
-    const merged = Array.from(new Set([...(areas || []), ...(lgaOptions || [])]));
-    return merged;
+  const areaGroups = useMemo(() => {
+    if (!selectedState) return [] as { lga: string; areas: string[] }[];
+    return lgaOptions.map((lga) => ({
+      lga,
+      areas: Array.from(new Set([lga, ...getAreasByStateLGA(selectedState, lga)])),
+    }));
   }, [selectedState, lgaOptions]);
+
+  React.useEffect(() => {
+    const lga = formik.values.address.localGovtArea;
+    if (lga) setOpenRegionLga(lga);
+  }, [formik.values.address.localGovtArea]);
 
   const handleSubmit = async (values: AgentKycSubmissionPayload) => {
     setIsSubmitting(true);
@@ -380,7 +422,7 @@ const AgentKycForm: React.FC = () => {
         !!formik.values.address.homeNo &&
         !!formik.values.address.state &&
         !!formik.values.address.localGovtArea &&
-        formik.values.regionOfOperation.length > 0
+        asStringList(formik.values.regionOfOperation).length > 0
       );
     }
 
@@ -415,7 +457,7 @@ const AgentKycForm: React.FC = () => {
       !!formik.values.address.homeNo &&
       !!formik.values.address.state &&
       !!formik.values.address.localGovtArea &&
-      formik.values.regionOfOperation.length > 0;
+      asStringList(formik.values.regionOfOperation).length > 0;
 
     // Step 3 is optional, doesn't affect validity
     return step0Valid && step1Valid && step2Valid;
@@ -472,46 +514,15 @@ const AgentKycForm: React.FC = () => {
     field: keyof AgentKycSubmissionPayload,
     value: string,
   ) => {
-    const current = (formik.values[field] as string[]) || [];
+    const current = asStringList(formik.values[field]);
 
     if (current.includes(value)) {
-      const next = current.filter((v) => v !== value);
-      formik.setFieldValue(field, next);
+      formik.setFieldValue(field, current.filter((item) => item !== value), false);
     } else {
-      const next = [...current, value];
-      formik.setFieldValue(field, next);
+      formik.setFieldValue(field, [...current, value], false);
     }
-    formik.setFieldTouched(field as string, true, true);
+    formik.setFieldTouched(field as string, true, false);
   };
-
-  const CheckboxTag: React.FC<{
-    selected: boolean;
-    label: string;
-    onToggle: () => void;
-  }> = ({ selected, label, onToggle }) => (
-    <label
-      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border text-sm cursor-pointer select-none transition-colors ${
-        selected
-          ? "bg-[#0B572B] text-white border-[#0B572B]"
-          : "bg-white text-[#0C1E1B] border-gray-300 hover:border-[#0B572B]"
-      }`}
-    >
-      <input
-        type="checkbox"
-        className="sr-only"
-        checked={selected}
-        onChange={onToggle}
-      />
-      <span
-        className={`flex items-center justify-center h-4 w-4 rounded-full border ${
-          selected ? "bg-white text-[#0B572B] border-white" : "border-gray-300"
-        }`}
-      >
-        {selected && <Check className="w-3 h-3" />}
-      </span>
-      <span>{label}</span>
-    </label>
-  );
 
   const kycStatus = resolveAgentKycStatus(user);
   if (kycStatus === "pending" || kycStatus === "in_review") {
@@ -799,7 +810,7 @@ const AgentKycForm: React.FC = () => {
                   <label className="block text-sm font-medium text-[#0C1E1B] mb-2">Specializations *</label>
                   <div className={`grid grid-cols-2 md:grid-cols-3 gap-2 p-3 border-2 rounded-lg ${shouldShowRedBorder("specializations") ? "border-red-500 bg-red-50" : "border-gray-300 bg-white"}`}>
                     {SPECIALIZATION_OPTIONS.map((option) => {
-                      const selected = formik.values.specializations.includes(option.value);
+                      const selected = asStringList(formik.values.specializations).includes(option.value);
                       return (
                         <CheckboxTag
                           key={option.value}
@@ -819,7 +830,7 @@ const AgentKycForm: React.FC = () => {
                   <label className="block text-sm font-medium text-[#0C1E1B] mb-2">Languages Spoken *</label>
                   <div className={`grid grid-cols-2 md:grid-cols-4 gap-2 p-3 border-2 rounded-lg ${shouldShowRedBorder("languagesSpoken") ? "border-red-500 bg-red-50" : "border-gray-300 bg-white"}`}>
                     {LANGUAGE_OPTIONS.map((language) => {
-                      const selected = formik.values.languagesSpoken.includes(language);
+                      const selected = asStringList(formik.values.languagesSpoken).includes(language);
                       return (
                         <CheckboxTag
                           key={language}
@@ -839,7 +850,7 @@ const AgentKycForm: React.FC = () => {
                   <label className="block text-sm font-medium text-[#0C1E1B] mb-2">Services Offered *</label>
                   <div className={`grid grid-cols-2 md:grid-cols-3 gap-2 p-3 border-2 rounded-lg ${shouldShowRedBorder("servicesOffered") ? "border-red-500 bg-red-50" : "border-gray-300 bg-white"}`}>
                     {SERVICE_OPTIONS.map((option) => {
-                      const selected = formik.values.servicesOffered.includes(option.value);
+                      const selected = asStringList(formik.values.servicesOffered).includes(option.value);
                       return (
                         <CheckboxTag
                           key={option.value}
@@ -926,19 +937,74 @@ const AgentKycForm: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-[#0C1E1B] mb-2">Region of Operation *</label>
-                  <p className="text-xs text-gray-500 mb-2">Select at least 2 areas/LGAs you primarily operate in for the selected state</p>
-                  <div className={`grid grid-cols-2 md:grid-cols-3 gap-2 max-h-64 overflow-auto p-3 border-2 rounded-lg ${shouldShowRedBorder("regionOfOperation") ? "border-red-500 bg-red-50" : "border-gray-300 bg-white"}`}>
-                    {(areaOptions || []).map((area) => {
-                      const selected = formik.values.regionOfOperation.includes(area);
-                      return (
+                  <p className="text-xs text-gray-500 mb-2">Select at least 2 areas or LGAs you primarily operate in. Search or open an LGA, then tap the areas you cover.</p>
+                  <input
+                    type="search"
+                    value={regionQuery}
+                    onChange={(event) => setRegionQuery(event.target.value)}
+                    placeholder="Search an LGA or area"
+                    className={`${inputBase} mb-3 border-gray-300`}
+                  />
+                  {asStringList(formik.values.regionOfOperation).length > 0 ? (
+                    <div className="mb-3 flex flex-wrap gap-2">
+                      {asStringList(formik.values.regionOfOperation).map((area) => (
                         <CheckboxTag
-                          key={area}
-                          selected={selected}
+                          key={`selected-${area}`}
+                          selected
                           label={area}
                           onToggle={() => toggleMultiSelect("regionOfOperation", area)}
                         />
-                      );
-                    })}
+                      ))}
+                    </div>
+                  ) : null}
+                  <div className={`max-h-80 space-y-2 overflow-auto p-3 border-2 rounded-lg ${shouldShowRedBorder("regionOfOperation") ? "border-red-500 bg-red-50" : "border-gray-300 bg-white"}`}>
+                    {areaGroups
+                      .filter((group) => {
+                        const query = regionQuery.trim().toLowerCase();
+                        if (!query) return true;
+                        return (
+                          group.lga.toLowerCase().includes(query) ||
+                          group.areas.some((area) => area.toLowerCase().includes(query))
+                        );
+                      })
+                      .map((group) => {
+                        const query = regionQuery.trim().toLowerCase();
+                        const isOpen = Boolean(query) || openRegionLga === group.lga;
+                        const areas = query
+                          ? group.areas.filter(
+                              (area) =>
+                                area.toLowerCase().includes(query) ||
+                                group.lga.toLowerCase().includes(query),
+                            )
+                          : group.areas;
+                        const selectedRegions = asStringList(formik.values.regionOfOperation);
+                        return (
+                          <div key={group.lga} className="rounded-lg border border-gray-200 bg-white">
+                            <button
+                              type="button"
+                              className="flex w-full items-center justify-between px-3 py-2 text-left text-sm font-semibold text-[#0C1E1B]"
+                              onClick={() =>
+                                setOpenRegionLga((current) => (current === group.lga && !query ? "" : group.lga))
+                              }
+                            >
+                              <span>{group.lga}</span>
+                              <span className="text-xs font-normal text-gray-500">{isOpen ? "Hide" : "Show"}</span>
+                            </button>
+                            {isOpen ? (
+                              <div className="grid grid-cols-2 gap-2 border-t border-gray-100 p-3 md:grid-cols-3">
+                                {areas.map((area) => (
+                                  <CheckboxTag
+                                    key={`${group.lga}-${area}`}
+                                    selected={selectedRegions.includes(area)}
+                                    label={area}
+                                    onToggle={() => toggleMultiSelect("regionOfOperation", area)}
+                                  />
+                                ))}
+                              </div>
+                            ) : null}
+                          </div>
+                        );
+                      })}
                   </div>
                   {hasError("regionOfOperation") && (
                     <p className="text-red-500 text-sm mt-2">{getError("regionOfOperation")}</p>

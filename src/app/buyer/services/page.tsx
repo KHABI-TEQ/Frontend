@@ -56,6 +56,9 @@ export default function BuyerServicesPage() {
             <>
               <p className="font-semibold text-[#09391C]">{row.serviceName || row.slug}</p>
               <p className="text-sm text-[#5A5D63] capitalize">{String(row.status || "").replace(/-/g, " ")}</p>
+              <Link href={`/buyer/service-requests/${row._id}`} className="mt-3 inline-flex text-sm font-semibold text-[#0F766E]">
+                Open brief
+              </Link>
             </>
           )} />
           {serviceOnly ? null : (

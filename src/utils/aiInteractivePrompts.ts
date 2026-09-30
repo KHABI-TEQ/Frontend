@@ -156,6 +156,16 @@ export function getPreferenceFieldPrompt(
     return { displayLine: speak, speakLine: speak };
   }
 
+  if (f.includes("check-in time")) {
+    const speak = "What time would you prefer to check in?";
+    return { displayLine: speak, speakLine: speak };
+  }
+
+  if (f.includes("check-out time")) {
+    const speak = "What time would you prefer to check out?";
+    return { displayLine: speak, speakLine: speak };
+  }
+
   if (f.includes("check-in")) {
     const speak = pickVariant(["Check-in date?", "When do you want to check in?", "Arrival date?"], variant);
     return { displayLine: speak, speakLine: speak };

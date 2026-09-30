@@ -41,6 +41,9 @@ import {
   mergeUserShortletPropertyTypeReply,
   mergeUserShortletGuestsReply,
   mergeUserCheckDatesReply,
+  mergeUserCheckTimesReply,
+  mergeUserShortletTimesFromText,
+  normalizeShortletBookingDates,
   mergeUserLeaseTermReply,
   mergeUserPurposeReply,
 } from "@/utils/preference-ai-conversation";
@@ -91,6 +94,23 @@ const DEV_DONE_MARKER = "__DEV_DONE__::";
 const DONE_SELECTING_LAND_CONDITIONS = "Done selecting land conditions";
 const LAND_CONDITION_OPTIONS = ["Fenced", "Dry", "Gated", "Accessible road"];
 const ROOM_COUNT_CHIPS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "More than 10"];
+const SHORTLET_TIME_OPTIONS = [
+  { value: "08:00", label: "8:00 AM" },
+  { value: "09:00", label: "9:00 AM" },
+  { value: "10:00", label: "10:00 AM" },
+  { value: "11:00", label: "11:00 AM" },
+  { value: "12:00", label: "12:00 PM" },
+  { value: "13:00", label: "1:00 PM" },
+  { value: "14:00", label: "2:00 PM" },
+  { value: "15:00", label: "3:00 PM" },
+  { value: "16:00", label: "4:00 PM" },
+  { value: "17:00", label: "5:00 PM" },
+  { value: "18:00", label: "6:00 PM" },
+  { value: "19:00", label: "7:00 PM" },
+  { value: "20:00", label: "8:00 PM" },
+  { value: "21:00", label: "9:00 PM" },
+  { value: "22:00", label: "10:00 PM" },
+];
 
 /** Lowercase names as in the location form dataset (keys of state-lga.json). */
 const NIGERIAN_STATE_NAMES_LOWER = new Set(
@@ -1081,8 +1101,14 @@ function applyPreferenceTextChoiceFromFocusedAnswer(
   if (f.includes("maximum guests") || (f.includes("guests") && f.includes("shortlet"))) {
     return mergeUserShortletGuestsReply(data, trimmed);
   }
-  if (f.includes("check-in")) return mergeUserCheckDatesReply(data, "check_in", trimmed);
-  if (f.includes("check-out")) return mergeUserCheckDatesReply(data, "check_out", trimmed);
+  if (f.includes("check-in time")) return mergeUserCheckTimesReply(data, "check_in_time", trimmed);
+  if (f.includes("check-out time")) return mergeUserCheckTimesReply(data, "check_out_time", trimmed);
+  if (f.includes("check-in date") || (f.includes("check-in") && !f.includes("time"))) {
+    return mergeUserCheckDatesReply(data, "check_in", trimmed);
+  }
+  if (f.includes("check-out date") || (f.includes("check-out") && !f.includes("time"))) {
+    return mergeUserCheckDatesReply(data, "check_out", trimmed);
+  }
   if (f.includes("lease term")) return mergeUserLeaseTermReply(data, trimmed);
   if (f.includes("purpose") && (f.includes("office") || f.includes("rent") || f.includes("residential"))) {
     return mergeUserPurposeReply(data, trimmed);
@@ -1847,6 +1873,13 @@ function getMissingFieldsFromPreferenceData(data: Record<string, unknown>): stri
         if (!bd || !isMeaningful(bd.checkOutDate)) {
           missing.push("check-out date (required for shortlet — same as form)");
         }
+        const contact = data.contactInfo as Record<string, unknown> | undefined;
+        if (!isMeaningful(bd?.preferredCheckInTime ?? contact?.preferredCheckInTime)) {
+          missing.push("check-in time (same options as the shortlet form)");
+        }
+        if (!isMeaningful(bd?.preferredCheckOutTime ?? contact?.preferredCheckOutTime)) {
+          missing.push("check-out time (same options as the shortlet form)");
+        }
       }
 
       if (
@@ -1946,6 +1979,8 @@ function flattenPreferenceData(data: Record<string, unknown>): { key: string; la
   if (bd) {
     if (bd.checkInDate) out.push({ key: "checkInDate", label: "Check-in", value: String(bd.checkInDate) });
     if (bd.checkOutDate) out.push({ key: "checkOutDate", label: "Check-out", value: String(bd.checkOutDate) });
+    if (bd.preferredCheckInTime) out.push({ key: "preferredCheckInTime", label: "Check-in time", value: String(bd.preferredCheckInTime) });
+    if (bd.preferredCheckOutTime) out.push({ key: "preferredCheckOutTime", label: "Check-out time", value: String(bd.preferredCheckOutTime) });
     if (bd.numberOfGuests != null) out.push({ key: "numberOfGuests", label: "Guests", value: String(bd.numberOfGuests) });
     if (Array.isArray(bd.documentTypes) && bd.documentTypes.length) {
       out.push({
@@ -2774,6 +2809,8 @@ export default function PreferenceAiConversationFlow() {
         data = applyPreferenceOffPlanFieldsFromFocusedAnswer(data, userText, lastFocusBeforeMerge);
         data = applyPreferenceBudgetFromFocusedAnswer(data, userText, lastFocusBeforeMerge).data;
         data = applyPreferenceTextChoiceFromFocusedAnswer(data, userText, lastFocusBeforeMerge);
+        data = normalizeShortletBookingDates(data);
+        data = mergeUserShortletTimesFromText(data, contextual);
 
         const fromUser = extractContactFromText(userText);
         const fromAccumulated = extractContactFromText(accumulated || userText);
@@ -3503,6 +3540,92 @@ export default function PreferenceAiConversationFlow() {
                       </div>
                     ) : null;
                     })()}
+                    {i === preferenceAiMessages.length - 1 &&
+                    /check-in date/i.test(
+                      (msg as { focusedMissingField?: string }).focusedMissingField || "",
+                    ) ? (
+                      <div className="mb-2">
+                        <input
+                          type="date"
+                          onChange={(event) => {
+                            if (event.target.value) void handleSuggest(event.target.value);
+                          }}
+                          disabled={loading}
+                          aria-label="Choose check-in date"
+                          className="rounded-lg border border-[#8DDB90] bg-white px-3 py-2 text-sm text-[#09391C] disabled:opacity-50"
+                        />
+                      </div>
+                    ) : null}
+                    {i === preferenceAiMessages.length - 1 &&
+                    /check-out date/i.test(
+                      (msg as { focusedMissingField?: string }).focusedMissingField || "",
+                    ) ? (
+                      <div className="mb-2">
+                        <input
+                          type="date"
+                          min={String(
+                            ((preferenceAiCollectedData?.bookingDetails as Record<string, unknown> | undefined)
+                              ?.checkInDate) ?? "",
+                          )}
+                          onChange={(event) => {
+                            if (event.target.value) void handleSuggest(event.target.value);
+                          }}
+                          disabled={loading}
+                          aria-label="Choose check-out date"
+                          className="rounded-lg border border-[#8DDB90] bg-white px-3 py-2 text-sm text-[#09391C] disabled:opacity-50"
+                        />
+                      </div>
+                    ) : null}
+                    {i === preferenceAiMessages.length - 1 &&
+                    /check-in time/i.test(
+                      (msg as { focusedMissingField?: string }).focusedMissingField || "",
+                    ) ? (
+                      <div className="mb-2">
+                        <select
+                          defaultValue=""
+                          onChange={(event) => {
+                            if (event.target.value) void handleSuggest(event.target.value);
+                          }}
+                          disabled={loading}
+                          aria-label="Choose check-in time"
+                          className="min-w-48 rounded-lg border border-[#8DDB90] bg-white px-3 py-2 text-sm text-[#09391C] disabled:opacity-50"
+                        >
+                          <option value="" disabled>
+                            Select a time
+                          </option>
+                          {SHORTLET_TIME_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    ) : null}
+                    {i === preferenceAiMessages.length - 1 &&
+                    /check-out time/i.test(
+                      (msg as { focusedMissingField?: string }).focusedMissingField || "",
+                    ) ? (
+                      <div className="mb-2">
+                        <select
+                          defaultValue=""
+                          onChange={(event) => {
+                            if (event.target.value) void handleSuggest(event.target.value);
+                          }}
+                          disabled={loading}
+                          aria-label="Choose check-out time"
+                          className="min-w-48 rounded-lg border border-[#8DDB90] bg-white px-3 py-2 text-sm text-[#09391C] disabled:opacity-50"
+                        >
+                          <option value="" disabled>
+                            Select a time
+                          </option>
+                          {SHORTLET_TIME_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    ) : null}
                     {(msg as { remainingMissingCount?: number }).remainingMissingCount ? (
                       <p className="text-xs text-[#5A5D63] mt-2 pt-2 border-t border-gray-200">
                         {(msg as { remainingMissingCount: number }).remainingMissingCount} more after this.

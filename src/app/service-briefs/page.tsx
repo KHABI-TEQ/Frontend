@@ -12,7 +12,14 @@ type Job = {
   serviceName?: string;
   reference?: string;
   status?: string;
-  answers?: { objective?: string; questions?: string; timeline?: string; deliverable?: string };
+  answers?: {
+    objective?: string;
+    questions?: string;
+    timeline?: string;
+    deliverable?: string;
+    additional?: string;
+    requestedServices?: Array<{ serviceId: string; name: string }>;
+  };
 };
 
 export default function ServiceBriefsPage() {
@@ -20,6 +27,7 @@ export default function ServiceBriefsPage() {
   const [active, setActive] = useState<Job | null>(null);
   const [serviceFees, setServiceFees] = useState<Record<string, string>>({});
   const [agreed, setAgreed] = useState(false);
+  const [letterhead, setLetterhead] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const { user } = useUserContext();
@@ -54,6 +62,7 @@ export default function ServiceBriefsPage() {
         serviceItems: selectedServices.map((service) => ({ serviceId: service.id, name: service.name, fee: parseFee(serviceFees[service.id]) })),
         fee: totalFee,
         commissionAccepted: agreed,
+        letterheadReportAccepted: letterhead,
       },
       token
     );
@@ -61,10 +70,11 @@ export default function ServiceBriefsPage() {
       setError(res.message || "Could not send this offer.");
       return;
     }
-    setMessage("Offer sent. The client can now compare it with other professionals.");
+    setMessage("Quotation sent. The client sees each service and fee before accepting and paying.");
     setActive(null);
     setServiceFees({});
     setAgreed(false);
+    setLetterhead(false);
     void load();
   };
 
@@ -73,7 +83,7 @@ export default function ServiceBriefsPage() {
       <div className="mx-auto max-w-3xl">
         <h1 className="text-3xl font-bold text-[#09391C]">Service briefs</h1>
         <p className="mt-2 text-sm text-[#5A5D63]">
-          Clients publish what they need after an inspection. Select the services you will provide and set a fee for each item. Complete your payout details to submit an offer.
+          Clients publish a structured brief. Review it, select the work required, and set a fee for each item. Khabiteq totals the quotation. The client must accept it before payment.
         </p>
         {message ? <p className="mt-4 text-sm font-semibold text-[#0F766E]">{message}</p> : null}
         <ul className="mt-6 space-y-3">
@@ -82,13 +92,26 @@ export default function ServiceBriefsPage() {
               <p className="font-bold text-[#09391C]">{job.serviceName}</p>
               <p className="mt-1 text-xs text-[#5A5D63]">{job.reference} · {job.status}</p>
               <p className="mt-3 text-sm text-[#24272C]">{job.answers?.objective}</p>
-              {job.status === "awaiting-offers" ? (
+              {job.answers?.requestedServices?.length ? (
+                <p className="mt-2 text-xs text-[#5A5D63]">
+                  Requested: {job.answers.requestedServices.map((item) => item.name).join("; ")}
+                </p>
+              ) : null}
+              {job.status === "awaiting-offers" || job.status === "awaiting-payment" ? (
                 <button
                   type="button"
-                  onClick={() => setActive(job)}
+                  onClick={() => {
+                    const requested = new Set((job.answers?.requestedServices || []).map((item) => item.serviceId));
+                    const starter: Record<string, string> = {};
+                    services.forEach((service) => {
+                      if (requested.has(service.id)) starter[service.id] = formatFee(service.suggestedFee);
+                    });
+                    setServiceFees(starter);
+                    setActive(job);
+                  }}
                   className="mt-4 text-sm font-semibold text-[#0F766E]"
                 >
-                  Send an offer
+                  {job.status === "awaiting-payment" ? "Send a revised quotation" : "Create itemised quotation"}
                 </button>
               ) : null}
             </li>
@@ -106,10 +129,14 @@ export default function ServiceBriefsPage() {
               void send();
             }}
           >
-            <h2 className="text-lg font-bold text-[#09391C]">Offer for {active.serviceName}</h2>
+            <h2 className="text-lg font-bold text-[#09391C]">Quotation for {active.serviceName}</h2>
+            <p className="text-sm text-[#5A5D63]">{active.answers?.objective}</p>
+            {active.answers?.questions ? <p className="text-sm text-[#5A5D63]">Questions: {active.answers.questions}</p> : null}
+            {active.answers?.timeline ? <p className="text-sm text-[#5A5D63]">Timeline: {active.answers.timeline}</p> : null}
+            {active.answers?.deliverable ? <p className="text-sm text-[#5A5D63]">Deliverable: {active.answers.deliverable}</p> : null}
             <section>
-              <h3 className="text-sm font-semibold">Choose services and set each fee</h3>
-              <p className="mt-1 text-xs text-gray-500">Suggested amounts are editable starting points, not statutory tariffs.</p>
+              <h3 className="text-sm font-semibold">Scope of work and fees</h3>
+              <p className="mt-1 text-xs text-gray-500">You control the services and pricing. Suggested amounts are starting points only. The total is calculated automatically.</p>
               <div className="mt-3 space-y-2">
                 {services.map((service) => {
                   const selected = serviceFees[service.id] !== undefined;
@@ -121,26 +148,35 @@ export default function ServiceBriefsPage() {
                         else delete next[service.id];
                         return next;
                       })} />
-                      <span>{service.name}</span>
+                      <span>
+                        {service.name}
+                        {active.answers?.requestedServices?.some((item) => item.serviceId === service.id) ? (
+                          <span className="ml-2 text-xs font-semibold text-[#0F766E]">Requested</span>
+                        ) : null}
+                      </span>
                     </label>
                     {selected ? <label className="sm:w-44"><span className="sr-only">Fee for {service.name}</span><span className="mr-2 text-gray-500">₦</span><input inputMode="numeric" value={serviceFees[service.id]} onChange={(event) => setServiceFees((current) => ({ ...current, [service.id]: formatFee(parseFee(event.target.value)) }))} className="w-[calc(100%-1.5rem)] rounded-lg border border-gray-200 p-2" /></label> : null}
                   </div>;
                 })}
                 {!role ? <p className="text-sm text-amber-700">A Lawyer, Surveyor or Valuer account is required to respond to this brief.</p> : null}
               </div>
-              <div className="mt-4 flex justify-between border-t pt-4 font-semibold text-[#09391C]"><span>Total offer</span><span>₦{formatFee(totalFee) || "0"}</span></div>
+              <div className="mt-4 flex justify-between border-t pt-4 font-semibold text-[#09391C]"><span>Total quotation</span><span>₦{formatFee(totalFee) || "0"}</span></div>
             </section>
             <label className="flex items-start gap-2 text-sm text-[#09391C]">
               <input type="checkbox" className="mt-1" checked={agreed} onChange={(event) => setAgreed(event.target.checked)} />
               I agree Khabiteq deducts 10% of this fee from my settlement. The client pays only the fee I set, and my share is settled to my registered bank account.
             </label>
+            <label className="flex items-start gap-2 text-sm text-[#09391C]">
+              <input type="checkbox" className="mt-1" checked={letterhead} onChange={(event) => setLetterhead(event.target.checked)} />
+              I will deliver the agreed services and send the full report on my company letterhead.
+            </label>
             {error ? <p className="text-sm text-red-600">{error}</p> : null}
             <button
               type="submit"
-              disabled={!agreed || !totalFee || !selectedServices.length}
+              disabled={!agreed || !letterhead || !totalFee || !selectedServices.length}
               className="rounded-full bg-[#09391C] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
             >
-              Submit offer
+              Submit quotation
             </button>
           </form>
         ) : null}

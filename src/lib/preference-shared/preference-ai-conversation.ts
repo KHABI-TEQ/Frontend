@@ -64,6 +64,8 @@ export type ConversationFieldId =
   | "travel_type"
   | "check_in"
   | "check_out"
+  | "check_in_time"
+  | "check_out_time"
   | "jv_development_types"
   | "jv_measurement_unit"
   | "jv_min_land_size"
@@ -104,6 +106,8 @@ const TOAST_LABEL: Record<ConversationFieldId, string> = {
   travel_type: "travel type",
   check_in: "check-in date",
   check_out: "check-out date",
+  check_in_time: "check-in time",
+  check_out_time: "check-out time",
   jv_development_types: "development type(s) for JV",
   jv_measurement_unit: "land measurement unit (JV)",
   jv_min_land_size: "minimum land size (JV)",
@@ -854,11 +858,100 @@ export function mergeUserCheckDatesReply(
   focus: "check_in" | "check_out",
   userText: string,
 ): Record<string, unknown> {
-  const t = userText.trim();
+  const t = normalizeShortletDate(userText.trim());
   if (!t) return data;
   const bd = (data.bookingDetails as Record<string, unknown>) || {};
   if (focus === "check_in") return { ...data, bookingDetails: { ...bd, checkInDate: t } };
   return { ...data, bookingDetails: { ...bd, checkOutDate: t } };
+}
+
+function normalizeShortletDate(value: string): string {
+  const raw = value.trim();
+  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const dmy = raw.match(/^(\d{2})[-/.](\d{2})[-/.](\d{4})$/);
+  const year = iso ? Number(iso[1]) : dmy ? Number(dmy[3]) : NaN;
+  const month = iso ? Number(iso[2]) : dmy ? Number(dmy[2]) : NaN;
+  const day = iso ? Number(iso[3]) : dmy ? Number(dmy[1]) : NaN;
+  if (![year, month, day].every(Number.isFinite)) return "";
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (date.getUTCFullYear() !== year || date.getUTCMonth() + 1 !== month || date.getUTCDate() !== day) return "";
+  return `${year.toString().padStart(4, "0")}-${month.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+}
+
+export function normalizeShortletBookingDates(data: Record<string, unknown>): Record<string, unknown> {
+  const booking = data.bookingDetails;
+  if (!booking || typeof booking !== "object" || Array.isArray(booking)) return data;
+  const details = { ...(booking as Record<string, unknown>) };
+  for (const key of ["checkInDate", "checkOutDate"] as const) {
+    const raw = String(details[key] ?? "").trim();
+    if (raw) {
+      const normalized = normalizeShortletDate(raw);
+      if (normalized) details[key] = normalized;
+      else delete details[key];
+    }
+  }
+  return { ...data, bookingDetails: details };
+}
+
+export function mergeUserCheckTimesReply(
+  data: Record<string, unknown>,
+  focus: "check_in_time" | "check_out_time",
+  userText: string,
+): Record<string, unknown> {
+  const t = userText.trim();
+  if (!t) return data;
+  const bd = (data.bookingDetails as Record<string, unknown>) || {};
+  const contact = (data.contactInfo as Record<string, unknown>) || {};
+  if (focus === "check_in_time") {
+    return {
+      ...data,
+      bookingDetails: { ...bd, preferredCheckInTime: t },
+      contactInfo: { ...contact, preferredCheckInTime: t },
+    };
+  }
+  return {
+    ...data,
+    bookingDetails: { ...bd, preferredCheckOutTime: t },
+    contactInfo: { ...contact, preferredCheckOutTime: t },
+  };
+}
+
+/** Capture optional shortlet times when a user includes them in any chat reply. */
+export function mergeUserShortletTimesFromText(
+  data: Record<string, unknown>,
+  userText: string,
+): Record<string, unknown> {
+  if (String(data.preferenceType ?? "").toLowerCase() !== "shortlet") return data;
+  const time = String.raw`(\d{1,2}(?::\d{2})?\s*(?:a\.?m\.?|p\.?m\.?))`;
+  const find = (kind: "in" | "out") => {
+    const label = kind === "in" ? String.raw`check[\s-]?in|arrival` : String.raw`check[\s-]?out|departure`;
+    const match = userText.match(new RegExp(String.raw`(?:${label})(?:\s+time)?\s*(?:is|at|:)?\s*${time}`, "i"));
+    return match?.[1]?.replace(/\s+/g, "").replace(/\./g, "").toLowerCase();
+  };
+  const checkIn = find("in");
+  const checkOut = find("out");
+  if (!checkIn && !checkOut) return data;
+  const previous =
+    data.bookingDetails && typeof data.bookingDetails === "object" && !Array.isArray(data.bookingDetails)
+      ? (data.bookingDetails as Record<string, unknown>)
+      : {};
+  const contact =
+    data.contactInfo && typeof data.contactInfo === "object" && !Array.isArray(data.contactInfo)
+      ? (data.contactInfo as Record<string, unknown>)
+      : {};
+  return {
+    ...data,
+    bookingDetails: {
+      ...previous,
+      ...(checkIn ? { preferredCheckInTime: checkIn } : {}),
+      ...(checkOut ? { preferredCheckOutTime: checkOut } : {}),
+    },
+    contactInfo: {
+      ...contact,
+      ...(checkIn ? { preferredCheckInTime: checkIn } : {}),
+      ...(checkOut ? { preferredCheckOutTime: checkOut } : {}),
+    },
+  };
 }
 
 export function mergeUserLeaseTermReply(
@@ -1482,6 +1575,12 @@ function isConversationFieldMissing(data: Record<string, unknown>, id: Conversat
       if (pt !== "shortlet") return false;
       if (!bd) return true;
       return !String(bd.checkOutDate ?? "").trim();
+    case "check_in_time":
+      if (pt !== "shortlet") return false;
+      return !String(bd?.preferredCheckInTime ?? (data.contactInfo as Record<string, unknown> | undefined)?.preferredCheckInTime ?? "").trim();
+    case "check_out_time":
+      if (pt !== "shortlet") return false;
+      return !String(bd?.preferredCheckOutTime ?? (data.contactInfo as Record<string, unknown> | undefined)?.preferredCheckOutTime ?? "").trim();
     case "jv_measurement_unit":
       if (pt !== "joint-venture") return false;
       if (!dd) return true;
@@ -1617,6 +1716,8 @@ function baseOrderForType(pt: NormalizedPreferenceType): ConversationFieldId[] {
         "travel_type",
         "check_in",
         "check_out",
+        "check_in_time",
+        "check_out_time",
         "min_budget",
         "max_budget",
         "features",
@@ -1853,6 +1954,16 @@ function getConversationFieldDisplayLines(
       return {
         screen: `Check-out date?${suf}`,
         speech: "What is your check-out date?",
+      };
+    case "check_in_time":
+      return {
+        screen: `Preferred check-in time?${suf}`,
+        speech: "What check-in time do you prefer?",
+      };
+    case "check_out_time":
+      return {
+        screen: `Preferred check-out time?${suf}`,
+        speech: "What check-out time do you prefer?",
       };
     case "jv_measurement_unit":
       return {
