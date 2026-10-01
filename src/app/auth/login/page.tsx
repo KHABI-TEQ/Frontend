@@ -34,6 +34,7 @@ import googleIcon from "@/svgs/googleIcon.svg";
 import facebookIcon from "@/svgs/facebookIcon.svg";
 import Link from "next/link";
 import CustomToast from "@/components/general-components/CustomToast";
+import AuthBrandLogo from "@/components/branding/AuthBrandLogo";
 
 
 declare global {
@@ -374,21 +375,14 @@ const Login: FC = () => {
         <div className="absolute top-20 right-20 w-64 h-64 bg-[#8DDB90]/20 rounded-full blur-3xl"></div>
         <div className="absolute bottom-20 left-10 w-48 h-48 bg-white/10 rounded-full blur-2xl"></div>
 
-        <div className="relative z-10 flex flex-col justify-between p-12 xl:p-16 w-full">
+        <div className="relative z-10 flex h-full min-h-full w-full flex-col p-12 xl:p-16">
           {/* Logo */}
           <div>
-            <Link href="/" className="inline-flex items-center gap-2">
-              <div className="w-10 h-10 bg-[#8DDB90] rounded-xl flex items-center justify-center">
-                <svg className="w-6 h-6 text-[#09391C]" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
-                </svg>
-              </div>
-              <span className="text-white font-display font-bold text-xl">Khabiteq</span>
-            </Link>
+            <AuthBrandLogo variant="onDark" />
           </div>
 
           {/* Main Content */}
-          <div className="space-y-6">
+          <div className="flex flex-1 flex-col justify-center space-y-6">
             <h1 className="text-4xl xl:text-5xl font-display font-bold text-white leading-tight">
               Welcome Back to Your Property Journey
             </h1>
@@ -435,6 +429,9 @@ const Login: FC = () => {
         >
           {/* Header */}
           <div className="text-center lg:text-left mb-2">
+            <div className="mb-5 flex justify-center lg:hidden">
+              <AuthBrandLogo variant="onLight" />
+            </div>
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-[#09391C] mb-2">
               Sign In
             </h2>

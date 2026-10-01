@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ShieldCheck, X } from "lucide-react";
+import { ArrowRight, Check, ShieldCheck, X } from "lucide-react";
 import { motion } from "framer-motion";
 import type { User } from "@/context/user-context";
 import { isPendingKyc, kycPathForUser, kycRoleLabel, resolveKycStatus } from "@/lib/kyc-status";
@@ -16,6 +16,13 @@ const KYC_ROLES = new Set([
   "Surveyor",
   "Valuer",
 ]);
+
+const KYC_BENEFITS = [
+  "Create your verified professional profile",
+  "Showcase your properties and services",
+  "Get matched with relevant property requests",
+  "Build trust with clients and other professionals",
+] as const;
 
 function storageKey(user: User) {
   return `${STORAGE_PREFIX}${user.id || user._id || user.accountId || "anon"}`;
@@ -40,7 +47,8 @@ type Props = {
 };
 
 export function PractitionerKycOverlay({ user, onOpenChange }: Props) {
-  const [open, setOpen] = useState(false);
+  const shouldPrompt = shouldPromptPractitionerKyc(user);
+  const [open, setOpen] = useState(shouldPrompt);
   const [deferred, setDeferred] = useState(false);
   const role = kycRoleLabel(user.userType);
   const kycHref = kycPathForUser(user.userType);
@@ -54,18 +62,10 @@ export function PractitionerKycOverlay({ user, onOpenChange }: Props) {
         cta: "Update your KYC",
       };
     }
-    if (kycStatus === "pending" || kycStatus === "in_review") {
-      return {
-        eyebrow: "Verification in progress",
-        title: `Your ${role} KYC is under review`,
-        body: "You can continue on Khabiteq while we review. Subscribe to unlock dashboard actions. Check your KYC status any time.",
-        cta: "View KYC status",
-      };
-    }
     return {
       eyebrow: "Professional verification",
-      title: `Complete your ${role} KYC`,
-      body: `You opened this account as a ${role}. Complete KYC so Khabiteq can verify your professional identity. You can also do this later — dashboard actions stay locked until you subscribe.`,
+      title: "Complete Your Profile. Start Getting Opportunities.",
+      body: "Your Khabiteq account is ready.",
       cta: "Proceed with KYC",
     };
   }, [kycStatus, role]);
@@ -98,7 +98,7 @@ export function PractitionerKycOverlay({ user, onOpenChange }: Props) {
     };
   }, [open]);
 
-  if (!shouldPromptPractitionerKyc(user)) return null;
+  if (!shouldPrompt) return null;
 
   const defer = () => {
     try {
@@ -125,7 +125,7 @@ export function PractitionerKycOverlay({ user, onOpenChange }: Props) {
             role="dialog"
             aria-modal="true"
             aria-labelledby="practitioner-kyc-title"
-            className="relative w-full max-w-xl overflow-hidden rounded-3xl bg-white shadow-2xl"
+            className="relative w-full max-w-[560px] overflow-hidden rounded-[28px] bg-white shadow-2xl"
             initial={{ opacity: 0, y: 24, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ type: "spring", damping: 24, stiffness: 280 }}
@@ -133,38 +133,60 @@ export function PractitionerKycOverlay({ user, onOpenChange }: Props) {
             <button
               type="button"
               onClick={defer}
-              className="absolute right-4 top-4 z-10 rounded-full bg-white/90 p-2 text-[#09391C] shadow"
+              className="absolute right-4 top-4 z-10 rounded-full bg-white/15 p-1.5 text-white hover:bg-white/25"
               aria-label="Cancel for later"
             >
-              <X size={18} />
+              <X size={16} />
             </button>
 
-            <div className="bg-gradient-to-br from-[#09391C] via-[#0B423D] to-[#0A4A3C] px-6 sm:px-8 pt-8 pb-6 text-white">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm text-[#8DDB90]">
-                <ShieldCheck size={14} />
+            <div className="bg-gradient-to-br from-[#09391C] via-[#0B423D] to-[#0A4A3C] px-6 sm:px-8 pt-7 pb-6 text-white">
+              <div className="mb-5 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-[#8DDB90]">
+                <ShieldCheck size={13} />
                 {copy.eyebrow}
               </div>
               <h2
                 id="practitioner-kyc-title"
-                className="text-2xl font-bold leading-tight sm:text-3xl"
+                className="text-[22px] font-bold leading-snug sm:text-[26px]"
               >
                 {copy.title}
               </h2>
-              <p className="mt-3 max-w-lg text-sm text-white/80 sm:text-base">
-                {copy.body}
-              </p>
+              <p className="mt-2 text-sm text-white/80 sm:text-[15px]">{copy.body}</p>
             </div>
 
-            <div className="px-6 py-6 sm:px-8">
-              <div className="rounded-2xl border border-[#8DDB90]/30 bg-[#F8FAF8] p-4 text-sm text-[#5A5D63]">
-                You remain a <span className="font-semibold text-[#09391C]">{role}</span>{" "}
-                on Khabiteq. Verification does not change the account you opened.
-              </div>
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <div className="px-5 pb-6 pt-5 sm:px-7">
+              {kycStatus === "rejected" ? (
+                <div className="rounded-2xl border border-[#8DDB90]/30 bg-[#F8FAF8] p-4 text-sm text-[#5A5D63]">
+                  You remain a <span className="font-semibold text-[#09391C]">{role}</span>{" "}
+                  on Khabiteq. Verification does not change the account you opened.
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-[#E6EEE8] bg-[#F7FAF8] px-5 py-4">
+                  <p className="mb-3 text-sm font-semibold text-[#09391C]">
+                    Complete your practitioner KYC to:
+                  </p>
+                  <ul className="space-y-2">
+                    {KYC_BENEFITS.map((item) => (
+                      <li key={item} className="flex items-start gap-2 text-sm text-[#3A3D42]">
+                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#3DAA4A]" strokeWidth={3} />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                    <li className="flex items-start gap-2 text-sm text-[#3A3D42]">
+                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#3DAA4A]" strokeWidth={3} />
+                      <span>
+                        Access{" "}
+                        <span className="font-semibold text-[#3DAA4A]">Khabiteq</span>
+                        &apos;s real estate ecosystem
+                      </span>
+                    </li>
+                  </ul>
+                </div>
+              )}
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
                 <Link
                   href={kycHref}
                   onClick={() => onOpenChange?.(false)}
-                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#09391C] px-5 py-3.5 text-sm font-semibold text-white hover:bg-[#0B423D]"
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-[#09391C] px-5 py-3.5 text-sm font-semibold text-white hover:bg-[#0B423D]"
                 >
                   {copy.cta}
                   <ArrowRight size={16} />
@@ -172,7 +194,7 @@ export function PractitionerKycOverlay({ user, onOpenChange }: Props) {
                 <button
                   type="button"
                   onClick={defer}
-                  className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-5 py-3.5 text-sm font-semibold text-[#09391C]"
+                  className="inline-flex items-center justify-center rounded-full border border-gray-200 bg-white px-5 py-3.5 text-sm font-semibold text-[#09391C]"
                 >
                   Cancel for later
                 </button>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useUserContext } from "@/context/user-context";
 import Agent from "./agent";
 import Landlord from "./landlord";
@@ -11,6 +12,7 @@ import Valuer from "./valuer";
 import { DealSiteSetupOverlay } from "@/components/dashboard/DealSiteSetupOverlay";
 import { PractitionerWelcomeOverlay } from "@/components/dashboard/PractitionerWelcomeOverlay";
 import { PractitionerKycOverlay } from "@/components/dashboard/PractitionerKycOverlay";
+import { shouldForcePaidPlanOverlay } from "@/components/dashboard/KycSubmittedCongratsOverlay";
 import KycDashboardStatusCard, {
   shouldRenderKycDashboardStatus,
 } from "@/components/kyc/KycDashboardStatusCard";
@@ -72,6 +74,7 @@ function getEffectiveUserType(user: Record<string, unknown> | null): string | un
 
 export default function Dashboard() {
   const { user } = useUserContext();
+  const pathname = usePathname();
   const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [kycPromptOpen, setKycPromptOpen] = useState(true);
   const effectiveType = getEffectiveUserType(user as unknown as Record<string, unknown>);
@@ -131,15 +134,17 @@ export default function Dashboard() {
   const showKycPrompt =
     showAgentDashboard || showDeveloper || showLawyer || showSurveyor || showValuer;
 
+  const kycCongratsOpen = shouldForcePaidPlanOverlay(user, pathname);
+
   return (
     <>
-      {showKycPrompt && (
+      {showKycPrompt && !kycCongratsOpen && (
         <PractitionerKycOverlay user={user} onOpenChange={setKycPromptOpen} />
       )}
-      {showProfessionalWelcome && !kycPromptOpen && (
+      {showProfessionalWelcome && !kycPromptOpen && !kycCongratsOpen && (
         <PractitionerWelcomeOverlay user={user} onOpenChange={setWelcomeOpen} />
       )}
-      {(showAgentDashboard || showDeveloper) && !welcomeOpen && !kycPromptOpen && (
+      {(showAgentDashboard || showDeveloper) && !welcomeOpen && !kycPromptOpen && !kycCongratsOpen && (
         <DealSiteSetupOverlay user={user} />
       )}
       <DashboardSubscribeBanner user={user} />

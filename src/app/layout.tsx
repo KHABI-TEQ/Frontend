@@ -1,6 +1,7 @@
 import './globals.css';
 import { roboto, archivo } from '@/styles/font';
 import { Suspense } from 'react';
+import { cookies } from 'next/headers';
 import ClientProviders from '@/components/providers/ClientProviders';
 import Body from '@/components/general-components/body';
 import WebVitalsInitializer from '@/components/providers/WebVitalsInitializer';
@@ -25,11 +26,13 @@ export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_API_URL || 'https://www.khabiteqrealty.com'),
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const accountToken = (await cookies()).get('token')?.value;
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -43,7 +46,7 @@ export default function RootLayout({
       <body className={`${roboto.variable} ${archivo.variable} antialiased`}>
         <ClientProviders>
           <div id="promo-top-placeholder"> </div>
-          <HeaderFooterWrapper>
+          <HeaderFooterWrapper hasAccountToken={Boolean(accountToken)}>
             <Body>{children}</Body>
           </HeaderFooterWrapper>
           <Suspense fallback={null}>

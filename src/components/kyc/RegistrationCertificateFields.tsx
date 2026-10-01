@@ -5,7 +5,14 @@ import AttachFile from "@/components/general-components/attach_file";
 export type RegistrationCertificateKind = "cac" | "lasrera";
 
 const inputClass =
-  "w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-[#09391C] outline-none focus:border-[#8DDB90] focus:ring-2 focus:ring-[#8DDB90]/20";
+  "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-[#09391C] outline-none placeholder:text-slate-400 focus:border-[#8DDB90] focus:ring-2 focus:ring-[#8DDB90]/20";
+
+const toggleClass = (active: boolean) =>
+  `rounded-xl px-3 py-3.5 text-sm font-semibold transition-colors ${
+    active
+      ? "bg-[#09391C] text-white"
+      : "border border-slate-200 bg-white text-[#09391C]"
+  }`;
 
 export function RegistrationCertificateFields({
   kind,
@@ -17,6 +24,8 @@ export function RegistrationCertificateFields({
   uploadId,
   showLookup,
   onLookup,
+  onUploadStart,
+  onUploadEnd,
 }: {
   kind: RegistrationCertificateKind;
   onKindChange: (kind: RegistrationCertificateKind) => void;
@@ -27,6 +36,8 @@ export function RegistrationCertificateFields({
   uploadId: string;
   showLookup?: boolean;
   onLookup?: () => void;
+  onUploadStart?: () => void;
+  onUploadEnd?: () => void;
 }) {
   const isCac = kind === "cac";
   const label = isCac ? "CAC certificate" : "LASRERA certificate";
@@ -34,33 +45,22 @@ export function RegistrationCertificateFields({
   const placeholder = isCac ? "RC0000000" : "LASRERA / permit number";
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div>
         <p className="text-sm font-semibold text-[#09391C]">Company registration document</p>
-        <p className="text-xs text-[#5A5D63] mt-1">
+        <p className="mt-1 text-xs text-[#5A5D63]">
           Choose one: upload either a CAC certificate or a LASRERA certificate. The number and file are required so Admin can preview them before approving KYC.
         </p>
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={() => onKindChange("cac")}
-            className={`rounded-xl border px-3 py-2.5 text-sm font-semibold ${
-              isCac ? "border-[#09391C] bg-[#09391C] text-white" : "border-slate-200 bg-white text-[#09391C]"
-            }`}
-          >
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <button type="button" onClick={() => onKindChange("cac")} className={toggleClass(isCac)}>
             CAC certificate
           </button>
-          <button
-            type="button"
-            onClick={() => onKindChange("lasrera")}
-            className={`rounded-xl border px-3 py-2.5 text-sm font-semibold ${
-              !isCac ? "border-[#09391C] bg-[#09391C] text-white" : "border-slate-200 bg-white text-[#09391C]"
-            }`}
-          >
+          <button type="button" onClick={() => onKindChange("lasrera")} className={toggleClass(!isCac)}>
             LASRERA certificate
           </button>
         </div>
       </div>
+
       <label className="block space-y-1.5">
         <span className="text-sm font-semibold text-[#09391C]">{numberLabel}</span>
         <div className="flex gap-2">
@@ -74,33 +74,29 @@ export function RegistrationCertificateFields({
             <button
               type="button"
               onClick={onLookup}
-              className="shrink-0 rounded-lg bg-[#09391C] text-white px-4 text-sm font-semibold"
+              className="shrink-0 rounded-xl bg-[#09391C] px-4 text-sm font-semibold text-white"
             >
               Look up
             </button>
           )}
         </div>
       </label>
-      <div className="space-y-1.5">
-        <span className="text-sm font-semibold text-[#09391C]">Upload {label}</span>
-        <p className="text-xs text-[#5A5D63]">Image or PDF. Admin will preview this before approval.</p>
+
+      <div className="space-y-3">
+        <div>
+          <p className="text-sm font-semibold text-[#09391C]">Upload {label}</p>
+          <p className="mt-1 text-xs text-[#5A5D63]">Image or PDF. Admin will preview this before approval.</p>
+        </div>
         <AttachFile
+          variant="kyc-id"
           id={uploadId}
           heading={`Upload ${label}`}
           fileUrl={fileUrl || null}
           setFileUrl={(url: string | null) => onFileUrlChange(url || "")}
           acceptedFileTypes="image/*,.pdf"
+          onUploadStart={onUploadStart}
+          onUploadEnd={onUploadEnd}
         />
-        {fileUrl && (
-          <a
-            href={fileUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block text-xs font-semibold text-[#09391C] underline"
-          >
-            Preview uploaded {label}
-          </a>
-        )}
       </div>
     </div>
   );

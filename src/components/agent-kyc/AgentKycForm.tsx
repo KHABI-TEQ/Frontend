@@ -62,7 +62,8 @@ const kycValidationSchema = Yup.object({
       .test("pilot-state", PILOT_LOCATION_MESSAGE, (value) => isPilotState(value)),
     localGovtArea: Yup.string().required("Local government area is required"),
   }),
-  regionOfOperation: Yup.array().of(Yup.string()).min(1, "Select at least one region"),
+  regionOfOperation: Yup.array().of(Yup.string()).min(2, "Select at least two regions"),
+  utilityBillUrl: Yup.string().required("Upload a utility bill as proof of address"),
   achievements: Yup.array().of(
     Yup.object({
       title: Yup.string().optional(),
@@ -146,6 +147,7 @@ const AgentKycForm: React.FC = () => {
         localGovtArea: "",
       },
       regionOfOperation: [],
+      utilityBillUrl: "",
       agentType: "Individual",
     },
     validationSchema: kycValidationSchema,
@@ -187,7 +189,7 @@ const AgentKycForm: React.FC = () => {
   const isRequired = (path: string): boolean => {
     const requiredFields = [
       "meansOfId", "specializations", "languagesSpoken", "servicesOffered",
-      "address.street", "address.homeNo", "address.state", "address.localGovtArea", "regionOfOperation"
+      "address.street", "address.homeNo", "address.state", "address.localGovtArea", "regionOfOperation", "utilityBillUrl"
     ];
     return requiredFields.some(field => path === field || path.startsWith(field + "["));
   };
@@ -316,6 +318,7 @@ const AgentKycForm: React.FC = () => {
         companyAgent: user?.companyAgent,
       }));
       toast.success("KYC submitted successfully. Please await admin approval within 24 hours.");
+      router.replace("/dashboard");
 
     } catch (error) {
       // Error handled, validation messages will be shown via formik
@@ -371,6 +374,7 @@ const AgentKycForm: React.FC = () => {
         "address.state",
         "address.localGovtArea",
         "regionOfOperation",
+        "utilityBillUrl",
       ];
 
       const errors: any = {};
@@ -649,9 +653,12 @@ const AgentKycForm: React.FC = () => {
                     const imgPath = `meansOfId[${index}].docImg`;
                     const nameError = getError(namePath);
                     const imgError = getError(imgPath);
+                    const idLabel = idDoc.name
+                      ? `Upload your ${idDoc.name.replace(/^./, (c) => c.toLowerCase())}`
+                      : "Upload your ID";
                     return (
-                      <div key={index} className={`bg-gray-50 p-6 rounded-lg border-2 ${nameError || imgError ? "border-red-500" : "border-gray-200"}`}>
-                        <div className="flex justify-between items-start mb-4">
+                      <div key={index} className={`bg-white p-6 rounded-2xl border ${nameError || imgError ? "border-red-500" : "border-gray-100"}`}>
+                        <div className="flex justify-between items-start mb-5">
                           <h3 className="font-medium text-[#0C1E1B]">Document {index + 1}</h3>
                           {formik.values.meansOfId.length > 1 && (
                             <button type="button" onClick={() => removeMeansOfId(index)} className="text-red-500 hover:text-red-700">
@@ -660,7 +667,7 @@ const AgentKycForm: React.FC = () => {
                           )}
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                           <div>
                             <label className="block text-sm font-medium text-[#0C1E1B] mb-2">ID Type *</label>
                             <Select
@@ -687,30 +694,24 @@ const AgentKycForm: React.FC = () => {
                           </div>
 
                           <div>
-                            <label className="block text-sm font-medium text-[#0C1E1B] mb-2">Document Images *</label>
-                            <div className={`space-y-3 p-3 border-2 rounded-lg ${shouldShowRedBorder(imgPath) ? "border-red-500 bg-red-50" : "border-gray-300 bg-white"}`}>
-                              {[0, 1].map((imgIndex) => (
-                                <div key={imgIndex} className="space-y-2">
-                                  <AttachFile
-                                    heading={`Upload Image ${imgIndex + 1}`}
-                                    setFileUrl={(url: string | null) => handleFileUpload(url!, "meansOfId", index, imgIndex)}
-                                    id={`means-of-id-${index}-${imgIndex}`}
-                                    className="w-full"
-                                    acceptedFileTypes="image/*"
-                                    onUploadStart={() => setIsUploading(true)}
-                                    onUploadEnd={() => setIsUploading(false)}
-                                  />
-                                  {idDoc.docImg?.[imgIndex] && (
-                                    <div className="flex items-center gap-3">
-                                      <div className="w-20 h-14 rounded overflow-hidden bg-white border">
-                                        <img src={idDoc.docImg[imgIndex]} alt={`Document ${index + 1}-${imgIndex + 1}`} className="w-full h-full object-cover" />
-                                      </div>
-                                      <a className="text-sm text-[#0B572B] underline" href={idDoc.docImg[imgIndex]} target="_blank" rel="noreferrer">
-                                        Preview
-                                      </a>
-                                    </div>
-                                  )}
-                                </div>
+                            <p className="mb-3 text-sm font-medium text-[#0C1E1B]">{idLabel}</p>
+                            <div className="space-y-4">
+                              {[
+                                { imgIndex: 0, heading: "Upload front image" },
+                                { imgIndex: 1, heading: "Upload back image" },
+                              ].map(({ imgIndex, heading }) => (
+                                <AttachFile
+                                  key={imgIndex}
+                                  variant="kyc-id"
+                                  heading={heading}
+                                  fileUrl={idDoc.docImg?.[imgIndex] || null}
+                                  setFileUrl={(url: string | null) => handleFileUpload(url!, "meansOfId", index, imgIndex)}
+                                  id={`means-of-id-${index}-${imgIndex}`}
+                                  className="w-full"
+                                  acceptedFileTypes="image/*,.pdf"
+                                  onUploadStart={() => setIsUploading(true)}
+                                  onUploadEnd={() => setIsUploading(false)}
+                                />
                               ))}
                             </div>
                             {imgError && (
@@ -739,6 +740,34 @@ const AgentKycForm: React.FC = () => {
                   <h2 className="text-xl font-semibold text-[#0C1E1B]">Professional Information</h2>
                 </div>
 
+                <RegistrationCertificateFields
+                  kind={formik.values.certificateKind === "lasrera" ? "lasrera" : "cac"}
+                  onKindChange={(kind) => {
+                    formik.setFieldValue("certificateKind", kind);
+                    formik.setFieldValue(
+                      kind === "cac" ? "lasreraCertificateUrls" : "cacCertificateUrls",
+                      [],
+                    );
+                  }}
+                  certificateNumber={formik.values.certificateNumber || ""}
+                  onCertificateNumberChange={(value) => formik.setFieldValue("certificateNumber", value)}
+                  fileUrl={
+                    formik.values.certificateKind === "lasrera"
+                      ? formik.values.lasreraCertificateUrls?.[0] || ""
+                      : formik.values.cacCertificateUrls?.[0] || ""
+                  }
+                  onFileUrlChange={(url) => {
+                    const kind = formik.values.certificateKind === "lasrera" ? "lasrera" : "cac";
+                    formik.setFieldValue(
+                      kind === "lasrera" ? "lasreraCertificateUrls" : "cacCertificateUrls",
+                      url ? [url] : [],
+                    );
+                  }}
+                  uploadId="agent-registration-certificate"
+                  onUploadStart={() => setIsUploading(true)}
+                  onUploadEnd={() => setIsUploading(false)}
+                />
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-[#0C1E1B] mb-2">Practitioner License Number (Optional)</label>
@@ -765,32 +794,6 @@ const AgentKycForm: React.FC = () => {
                     />
                   </div>
                 </div>
-
-                <RegistrationCertificateFields
-                  kind={formik.values.certificateKind === "lasrera" ? "lasrera" : "cac"}
-                  onKindChange={(kind) => {
-                    formik.setFieldValue("certificateKind", kind);
-                    formik.setFieldValue(
-                      kind === "cac" ? "lasreraCertificateUrls" : "cacCertificateUrls",
-                      [],
-                    );
-                  }}
-                  certificateNumber={formik.values.certificateNumber || ""}
-                  onCertificateNumberChange={(value) => formik.setFieldValue("certificateNumber", value)}
-                  fileUrl={
-                    formik.values.certificateKind === "lasrera"
-                      ? formik.values.lasreraCertificateUrls?.[0] || ""
-                      : formik.values.cacCertificateUrls?.[0] || ""
-                  }
-                  onFileUrlChange={(url) => {
-                    const kind = formik.values.certificateKind === "lasrera" ? "lasrera" : "cac";
-                    formik.setFieldValue(
-                      kind === "lasrera" ? "lasreraCertificateUrls" : "cacCertificateUrls",
-                      url ? [url] : [],
-                    );
-                  }}
-                  uploadId="agent-registration-certificate"
-                />
 
                 <div>
                   <label className="block text-sm font-medium text-[#0C1E1B] mb-2">Profile Bio (Optional)</label>
@@ -937,7 +940,9 @@ const AgentKycForm: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-[#0C1E1B] mb-2">Region of Operation *</label>
-                  <p className="text-xs text-gray-500 mb-2">Select at least 2 areas or LGAs you primarily operate in. Search or open an LGA, then tap the areas you cover.</p>
+                  <p className="text-xs text-gray-500 mb-3">
+                    Select at least 2 areas/LGAs you primarily operate in for the selected state
+                  </p>
                   <input
                     type="search"
                     value={regionQuery}
@@ -945,69 +950,74 @@ const AgentKycForm: React.FC = () => {
                     placeholder="Search an LGA or area"
                     className={`${inputBase} mb-3 border-gray-300`}
                   />
-                  {asStringList(formik.values.regionOfOperation).length > 0 ? (
-                    <div className="mb-3 flex flex-wrap gap-2">
-                      {asStringList(formik.values.regionOfOperation).map((area) => (
-                        <CheckboxTag
-                          key={`selected-${area}`}
-                          selected
-                          label={area}
-                          onToggle={() => toggleMultiSelect("regionOfOperation", area)}
-                        />
-                      ))}
-                    </div>
-                  ) : null}
-                  <div className={`max-h-80 space-y-2 overflow-auto p-3 border-2 rounded-lg ${shouldShowRedBorder("regionOfOperation") ? "border-red-500 bg-red-50" : "border-gray-300 bg-white"}`}>
-                    {areaGroups
-                      .filter((group) => {
-                        const query = regionQuery.trim().toLowerCase();
-                        if (!query) return true;
-                        return (
-                          group.lga.toLowerCase().includes(query) ||
-                          group.areas.some((area) => area.toLowerCase().includes(query))
-                        );
-                      })
-                      .map((group) => {
-                        const query = regionQuery.trim().toLowerCase();
-                        const isOpen = Boolean(query) || openRegionLga === group.lga;
-                        const areas = query
-                          ? group.areas.filter(
-                              (area) =>
-                                area.toLowerCase().includes(query) ||
-                                group.lga.toLowerCase().includes(query),
-                            )
-                          : group.areas;
-                        const selectedRegions = asStringList(formik.values.regionOfOperation);
-                        return (
-                          <div key={group.lga} className="rounded-lg border border-gray-200 bg-white">
+                  <div
+                    className={`max-h-56 overflow-auto rounded-xl border p-3 ${
+                      shouldShowRedBorder("regionOfOperation") ? "border-red-500 bg-red-50" : "border-gray-200 bg-white"
+                    }`}
+                  >
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                      {areaGroups
+                        .flatMap((group) => group.areas.map((area) => ({ area, lga: group.lga })))
+                        .filter(({ area, lga }) => {
+                          const query = regionQuery.trim().toLowerCase();
+                          if (!query) {
+                            if (formik.values.address.localGovtArea) {
+                              return lga === formik.values.address.localGovtArea;
+                            }
+                            return true;
+                          }
+                          return (
+                            area.toLowerCase().includes(query) || lga.toLowerCase().includes(query)
+                          );
+                        })
+                        .filter((item, index, list) => list.findIndex((entry) => entry.area === item.area) === index)
+                        .map(({ area }) => {
+                          const selected = asStringList(formik.values.regionOfOperation).includes(area);
+                          return (
                             <button
+                              key={area}
                               type="button"
-                              className="flex w-full items-center justify-between px-3 py-2 text-left text-sm font-semibold text-[#0C1E1B]"
-                              onClick={() =>
-                                setOpenRegionLga((current) => (current === group.lga && !query ? "" : group.lga))
-                              }
+                              onClick={() => toggleMultiSelect("regionOfOperation", area)}
+                              className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm ${
+                                selected
+                                  ? "border-[#0B572B] bg-[#E8F7EE] text-[#0C1E1B]"
+                                  : "border-gray-200 bg-white text-[#0C1E1B]"
+                              }`}
                             >
-                              <span>{group.lga}</span>
-                              <span className="text-xs font-normal text-gray-500">{isOpen ? "Hide" : "Show"}</span>
+                              <span
+                                className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+                                  selected ? "border-[#0B572B]" : "border-gray-300"
+                                }`}
+                              >
+                                {selected ? <span className="h-2 w-2 rounded-full bg-[#0B572B]" /> : null}
+                              </span>
+                              <span className="truncate">{area}</span>
                             </button>
-                            {isOpen ? (
-                              <div className="grid grid-cols-2 gap-2 border-t border-gray-100 p-3 md:grid-cols-3">
-                                {areas.map((area) => (
-                                  <CheckboxTag
-                                    key={`${group.lga}-${area}`}
-                                    selected={selectedRegions.includes(area)}
-                                    label={area}
-                                    onToggle={() => toggleMultiSelect("regionOfOperation", area)}
-                                  />
-                                ))}
-                              </div>
-                            ) : null}
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                    </div>
                   </div>
                   {hasError("regionOfOperation") && (
                     <p className="text-red-500 text-sm mt-2">{getError("regionOfOperation")}</p>
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  <AttachFile
+                    variant="kyc-id"
+                    heading="Upload your utility bill"
+                    fileUrl={formik.values.utilityBillUrl || null}
+                    setFileUrl={(url: string | null) => {
+                      formik.setFieldValue("utilityBillUrl", url || "");
+                      formik.setFieldTouched("utilityBillUrl", true, true);
+                    }}
+                    id="agent-utility-bill"
+                    acceptedFileTypes="image/*,.pdf"
+                    onUploadStart={() => setIsUploading(true)}
+                    onUploadEnd={() => setIsUploading(false)}
+                  />
+                  {getError("utilityBillUrl") && (
+                    <p className="text-red-500 text-sm">{getError("utilityBillUrl")}</p>
                   )}
                 </div>
               </div>

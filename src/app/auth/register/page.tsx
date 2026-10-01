@@ -29,6 +29,7 @@ import OverlayPreloader from "@/components/general-components/OverlayPreloader";
 // The InputField component from common/ should be used, not a local one
 import InputField from "@/components/common/InputField"; // Ensure this import path is correct
 import BrmPicker from "@/components/brm/BrmPicker";
+import AuthBrandLogo from "@/components/branding/AuthBrandLogo";
 
 declare global {
   interface Window {
@@ -445,7 +446,7 @@ const Register = () => {
       } transition-all duration-500`}
     >
       {/* Left Side - Branding Panel (viewport-locked so copy stays on first screen) */}
-      <div className="relative hidden overflow-hidden bg-gradient-to-br from-[#09391C] via-[#0B423D] to-[#0A3E72] lg:sticky lg:top-[100px] lg:flex lg:h-[calc(100dvh-100px)] lg:w-1/2 lg:min-h-0 xl:w-5/12">
+      <div className="relative hidden overflow-hidden bg-gradient-to-br from-[#09391C] via-[#0B423D] to-[#0A3E72] lg:sticky lg:top-0 lg:flex lg:h-[100dvh] lg:w-1/2 lg:min-h-0 xl:w-5/12">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0" style={{backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.2) 1px, transparent 0)', backgroundSize: '32px 32px'}}></div>
@@ -455,21 +456,14 @@ const Register = () => {
         <div className="absolute top-20 right-20 w-64 h-64 bg-[#8DDB90]/20 rounded-full blur-3xl"></div>
         <div className="absolute bottom-20 left-10 w-48 h-48 bg-white/10 rounded-full blur-2xl"></div>
 
-        <div className="relative z-10 flex h-full w-full flex-col justify-center gap-10 p-12 xl:p-16">
+        <div className="relative z-10 flex h-full w-full flex-col p-12 xl:p-16">
           {/* Logo */}
           <div>
-            <Link href="/" className="inline-flex items-center gap-2">
-              <div className="w-10 h-10 bg-[#8DDB90] rounded-xl flex items-center justify-center">
-                <svg className="w-6 h-6 text-[#09391C]" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
-                </svg>
-              </div>
-              <span className="text-white font-display font-bold text-xl">Khabiteq</span>
-            </Link>
+            <AuthBrandLogo variant="onDark" />
           </div>
 
           {/* Main Content */}
-          <div className="space-y-6">
+          <div className="flex flex-1 flex-col justify-center space-y-6">
             <h1 className="text-4xl xl:text-5xl font-display font-bold text-white leading-tight">
               Start Your Real Estate Journey Today
             </h1>
@@ -506,6 +500,9 @@ const Register = () => {
         >
           {/* Header */}
           <div className="text-center lg:text-left mb-2">
+            <div className="mb-5 flex justify-center lg:hidden">
+              <AuthBrandLogo variant="onLight" />
+            </div>
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-[#09391C] mb-2">
               {isScoutIntent
                 ? "Become a Property Scout"

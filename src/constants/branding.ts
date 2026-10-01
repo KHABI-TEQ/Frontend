@@ -6,8 +6,13 @@ export const KHABITEQ_LOGO_VERSION = "20260615-centered";
 /** Header / nav — horizontal wordmark (icon + KHABI-TEQ, vertically centered). */
 export const KHABITEQ_LOGO_PATH = "/khabi-logo-nav.svg";
 
+/** White wordmark for dark auth panels (login / register). */
+export const KHABITEQ_LOGO_NAV_WHITE_PATH = "/khabi-logo-nav-white.svg";
+
 /** Full URL with cache-bust version — use this in <img src>. */
 export const KHABITEQ_LOGO_SRC = `${KHABITEQ_LOGO_PATH}?v=${KHABITEQ_LOGO_VERSION}`;
+
+export const KHABITEQ_LOGO_NAV_WHITE_SRC = `${KHABITEQ_LOGO_NAV_WHITE_PATH}?v=${KHABITEQ_LOGO_VERSION}`;
 
 /** Favicon / compact icon (green K mark only, square). */
 export const KHABITEQ_LOGO_ICON_SRC = "/khabiteq_logo_nobg.png";

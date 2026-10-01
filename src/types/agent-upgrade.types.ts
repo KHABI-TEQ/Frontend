@@ -438,6 +438,7 @@ export interface AgentKycSubmissionPayload {
   featuredListings?: string[];
   address: AgentKycAddress;
   regionOfOperation: string[];
+  utilityBillUrl?: string;
   agentType: 'Individual' | 'Company';
 }
 
