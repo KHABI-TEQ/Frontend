@@ -1,10 +1,10 @@
 "use client";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useFormik, getIn } from "formik";
 import * as Yup from "yup";
 import toast from "react-hot-toast";
-import { PUT_REQUEST } from "@/utils/requests";
+import { GET_REQUEST, PUT_REQUEST } from "@/utils/requests";
 import { URLS } from "@/utils/URLS";
 import { PRACTITIONER_SETUP_PATH } from "@/lib/practitioner-setup-flow";
 import {
@@ -16,13 +16,11 @@ import {
 import AttachFile from "@/components/general-components/attach_file";
 import {
   FileText,
-  Award,
   MapPin,
   Briefcase,
   ChevronLeft,
   ChevronRight,
   CheckCircle2,
-  Image as ImageIcon,
   Plus,
   X,
   Check,
@@ -32,7 +30,7 @@ import Select from "react-select";
 import customStyles from "@/styles/inputStyle";
 import { useUserContext, normalizeUser } from "@/context/user-context";
 import { resolveAgentKycStatus } from "@/hooks/useAgentEligibility";
-import { getStates, getLGAsByState, getAreasByStateLGA, isPilotState, PILOT_LOCATION_MESSAGE } from "@/utils/location-utils";
+import { getStates, getLGAsByState, isPilotState, PILOT_LOCATION_MESSAGE } from "@/utils/location-utils";
 import PendingKycReview from "@/components/agent-kyc/PendingKycReview";
 import KycSubmittedConfirmation from "@/components/kyc/KycSubmittedConfirmation";
 import ProcessingRequest from "../loading-component/ProcessingRequest";
@@ -62,26 +60,33 @@ const kycValidationSchema = Yup.object({
       .test("pilot-state", PILOT_LOCATION_MESSAGE, (value) => isPilotState(value)),
     localGovtArea: Yup.string().required("Local government area is required"),
   }),
-  regionOfOperation: Yup.array().of(Yup.string()).min(2, "Select at least two regions"),
+  regionOfOperation: Yup.array().of(Yup.string()).min(1, "Select the Lagos LGAs you primarily operate in"),
   utilityBillUrl: Yup.string().required("Upload a utility bill as proof of address"),
-  achievements: Yup.array().of(
-    Yup.object({
-      title: Yup.string().optional(),
-      description: Yup.string().optional(),
-      dateAwarded: Yup.string().optional(),
-      fileUrl: Yup.string().optional(),
-    })
-  ).optional(),
 });
 
-const steps = [
-  { key: "identity", title: "Identity Documents" },
-  { key: "professional", title: "Professional Info" },
-  { key: "location", title: "Address & Regions" },
-  { key: "portfolio", title: "Achievements (Optional)" },
-] as const;
+type KycSelectOption = { value: string; label: string };
 
-const isImage = (url?: string) => !!url && /(\.png|\.jpg|\.jpeg|\.gif|\.webp)$/i.test(url);
+type PractitionerKycFormConfig = {
+  title?: string;
+  subtitle?: string;
+  steps?: { key: string; label: string; order: number }[];
+  addressAndRegions?: {
+    state?: { value?: string; helperText?: string; locked?: boolean };
+    localGovtArea?: { placeholder?: string; options?: KycSelectOption[] };
+    regionOfOperation?: {
+      label?: string;
+      helperText?: string;
+      placeholder?: string;
+      options?: KycSelectOption[];
+    };
+  };
+};
+
+const FALLBACK_KYC_STEPS: { key: string; label: string; order: number }[] = [
+  { key: "identityDocuments", label: "Identity Documents", order: 1 },
+  { key: "professionalInfo", label: "Professional Info", order: 2 },
+  { key: "addressAndRegions", label: "Address & Regions", order: 3 },
+];
 
 function asStringList(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
@@ -124,8 +129,7 @@ const AgentKycForm: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [regionQuery, setRegionQuery] = useState("");
-  const [openRegionLga, setOpenRegionLga] = useState("");
+  const [kycForm, setKycForm] = useState<PractitionerKycFormConfig | null>(null);
 
   const formik = useFormik<AgentKycSubmissionPayload>({
     initialValues: {
@@ -139,7 +143,6 @@ const AgentKycForm: React.FC = () => {
       specializations: [],
       languagesSpoken: [],
       servicesOffered: [],
-      achievements: [],
       address: {
         street: "",
         homeNo: "",
@@ -249,19 +252,41 @@ const AgentKycForm: React.FC = () => {
 
   const selectedState = formik.values.address.state;
   const stateOptions = useMemo(() => getStates(), []);
-  const lgaOptions = useMemo(() => (selectedState ? getLGAsByState(selectedState) : []), [selectedState]);
-  const areaGroups = useMemo(() => {
-    if (!selectedState) return [] as { lga: string; areas: string[] }[];
-    return lgaOptions.map((lga) => ({
-      lga,
-      areas: Array.from(new Set([lga, ...getAreasByStateLGA(selectedState, lga)])),
+  const steps = useMemo(() => {
+    const fromApi = kycForm?.steps?.filter((step) => step.key && step.label) ?? [];
+    if (!fromApi.length) return FALLBACK_KYC_STEPS;
+    return [...fromApi].sort((a, b) => a.order - b.order);
+  }, [kycForm]);
+  const addressConfig = kycForm?.addressAndRegions;
+  const lgaSelectOptions = useMemo(() => {
+    const fromApi = addressConfig?.localGovtArea?.options?.filter((option) => option.value) ?? [];
+    if (fromApi.length) return fromApi;
+    return (selectedState ? getLGAsByState(selectedState) : []).map((name) => ({
+      value: name,
+      label: name,
     }));
-  }, [selectedState, lgaOptions]);
+  }, [addressConfig?.localGovtArea?.options, selectedState]);
+  const regionSelectOptions = useMemo(() => {
+    const fromApi = addressConfig?.regionOfOperation?.options?.filter((option) => option.value) ?? [];
+    return fromApi.length ? fromApi : lgaSelectOptions;
+  }, [addressConfig?.regionOfOperation?.options, lgaSelectOptions]);
 
-  React.useEffect(() => {
-    const lga = formik.values.address.localGovtArea;
-    if (lga) setOpenRegionLga(lga);
-  }, [formik.values.address.localGovtArea]);
+  useEffect(() => {
+    let cancelled = false;
+    const loadForm = async () => {
+      const token = getCookie("token") as string | undefined;
+      const response = await GET_REQUEST<PractitionerKycFormConfig>(
+        `${URLS.BASE}${URLS.practitionerKycForm}`,
+        token,
+      );
+      if (cancelled || !response.success || !response.data) return;
+      setKycForm(response.data);
+    };
+    void loadForm();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleSubmit = async (values: AgentKycSubmissionPayload) => {
     setIsSubmitting(true);
@@ -390,11 +415,6 @@ const AgentKycForm: React.FC = () => {
       }
     }
 
-    // Step 3 (portfolio/achievements) is optional, so always return true
-    if (currentStep === 3) {
-      return true;
-    }
-
     return true;
   };
 
@@ -430,11 +450,6 @@ const AgentKycForm: React.FC = () => {
       );
     }
 
-    // Step 3 (portfolio/achievements) is optional, always valid
-    if (currentStep === 3) {
-      return true;
-    }
-
     return true;
   };
 
@@ -463,7 +478,6 @@ const AgentKycForm: React.FC = () => {
       !!formik.values.address.localGovtArea &&
       asStringList(formik.values.regionOfOperation).length > 0;
 
-    // Step 3 is optional, doesn't affect validity
     return step0Valid && step1Valid && step2Valid;
   };
 
@@ -484,34 +498,14 @@ const AgentKycForm: React.FC = () => {
 
   const handleFileUpload = (
     fileUrl: string,
-    field: "meansOfId" | "achievements",
     index: number,
-    imgIndex?: number,
+    imgIndex: number,
   ) => {
-    if (field === "meansOfId" && typeof imgIndex === "number") {
-      const copy = [...formik.values.meansOfId];
-      if (!copy[index].docImg) copy[index].docImg = [];
-      copy[index].docImg[imgIndex] = fileUrl;
-      formik.setFieldValue("meansOfId", copy);
-      formik.setFieldTouched(`meansOfId[${index}].docImg`, true, true);
-    } else if (field === "achievements") {
-      const copy = [...(formik.values.achievements || [])];
-      copy[index].fileUrl = fileUrl;
-      formik.setFieldValue("achievements", copy);
-    }
-  };
-
-  const addAchievement = () => {
-    formik.setFieldValue("achievements", [
-      ...(formik.values.achievements || []),
-      { title: "", description: "", dateAwarded: "", fileUrl: "" },
-    ]);
-  };
-  const removeAchievement = (index: number) => {
-    formik.setFieldValue(
-      "achievements",
-      (formik.values.achievements || []).filter((_, i) => i !== index),
-    );
+    const copy = [...formik.values.meansOfId];
+    if (!copy[index].docImg) copy[index].docImg = [];
+    copy[index].docImg[imgIndex] = fileUrl;
+    formik.setFieldValue("meansOfId", copy);
+    formik.setFieldTouched(`meansOfId[${index}].docImg`, true, true);
   };
 
   const toggleMultiSelect = (
@@ -582,10 +576,10 @@ const AgentKycForm: React.FC = () => {
   };
 
   const handleSubmitButtonClick = async () => {
-    if (currentStep === steps.length - 1) {
-      // Always submit when on the last step, no validation required
-      await formik.submitForm();
-    }
+    if (currentStep !== steps.length - 1) return;
+    const ok = await validateCurrentStep();
+    if (!ok) return;
+    await formik.submitForm();
   };
 
   return (
@@ -603,8 +597,8 @@ const AgentKycForm: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Practitioner KYC Verification</h1>
-          <p className="text-gray-600 mt-1">Complete your verification to enhance your public practitioner profile</p>
+          <h1 className="text-3xl font-bold text-gray-900">{kycForm?.title || "Practitioner KYC Verification"}</h1>
+          <p className="text-gray-600 mt-1">{kycForm?.subtitle || "Complete your verification to enhance your public practitioner profile"}</p>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
@@ -627,7 +621,7 @@ const AgentKycForm: React.FC = () => {
                       {done ? <CheckCircle2 size={18} /> : <span className="text-xs">{idx + 1}</span>}
                     </div>
                     <span className={`text-sm whitespace-nowrap ${active ? "text-[#0B572B] font-medium" : "text-gray-600"}`}>
-                      {s.title}
+                      {s.label}
                     </span>
                     {idx < steps.length - 1 && <span className="w-8 h-px bg-gray-300 mx-1" />}
                   </li>
@@ -705,7 +699,9 @@ const AgentKycForm: React.FC = () => {
                                   variant="kyc-id"
                                   heading={heading}
                                   fileUrl={idDoc.docImg?.[imgIndex] || null}
-                                  setFileUrl={(url: string | null) => handleFileUpload(url!, "meansOfId", index, imgIndex)}
+                                  setFileUrl={(url: string | null) => {
+                                    if (url) handleFileUpload(url, index, imgIndex);
+                                  }}
                                   id={`means-of-id-${index}-${imgIndex}`}
                                   className="w-full"
                                   acceptedFileTypes="image/*,.pdf"
@@ -910,7 +906,7 @@ const AgentKycForm: React.FC = () => {
                       isDisabled={true}
                       isSearchable={false}
                     />
-                    <p className="text-xs text-gray-500 mt-1">Lagos State only (pilot location)</p>
+                    <p className="text-xs text-gray-500 mt-1">{addressConfig?.state?.helperText || "Lagos State only (pilot location)"}</p>
                     {getError("address.state") && <p className="text-red-500 text-sm mt-2">{getError("address.state")}</p>}
                   </div>
                   <div>
@@ -918,7 +914,7 @@ const AgentKycForm: React.FC = () => {
                     <Select
                       styles={makeSelectStyles("address.localGovtArea")}
                       isDisabled={!selectedState}
-                      options={lgaOptions.map((l) => ({ value: l, label: l }))}
+                      options={lgaSelectOptions}
                       value={
                         formik.values.address.localGovtArea
                           ? ({
@@ -931,7 +927,7 @@ const AgentKycForm: React.FC = () => {
                         formik.setFieldValue("address.localGovtArea", opt?.value || "");
                         formik.setFieldTouched("address.localGovtArea", true, true);
                       }}
-                      placeholder="Select LGA"
+                      placeholder={addressConfig?.localGovtArea?.placeholder || "Select LGA"}
                       isClearable
                     />
                     {getError("address.localGovtArea") && <p className="text-red-500 text-sm mt-2">{getError("address.localGovtArea")}</p>}
@@ -939,64 +935,47 @@ const AgentKycForm: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-[#0C1E1B] mb-2">Region of Operation *</label>
+                  <label className="block text-sm font-medium text-[#0C1E1B] mb-2">
+                    {addressConfig?.regionOfOperation?.label || "Region of operation"} *
+                  </label>
                   <p className="text-xs text-gray-500 mb-3">
-                    Select at least 2 areas/LGAs you primarily operate in for the selected state
+                    {addressConfig?.regionOfOperation?.helperText ||
+                      "Select the LGAs you primarily operate in for the selected state"}
                   </p>
-                  <input
-                    type="search"
-                    value={regionQuery}
-                    onChange={(event) => setRegionQuery(event.target.value)}
-                    placeholder="Search an LGA or area"
-                    className={`${inputBase} mb-3 border-gray-300`}
+                  <Select
+                    isMulti
+                    closeMenuOnSelect={false}
+                    styles={{
+                      ...makeSelectStyles("regionOfOperation"),
+                      multiValue: (base: Record<string, unknown>) => ({
+                        ...base,
+                        backgroundColor: "#E7F6EC",
+                        borderRadius: 999,
+                      }),
+                      multiValueLabel: (base: Record<string, unknown>) => ({
+                        ...base,
+                        color: "#0C1E1B",
+                        fontSize: "0.875rem",
+                      }),
+                      multiValueRemove: (base: Record<string, unknown>) => ({
+                        ...base,
+                        color: "#0B572B",
+                        borderRadius: 999,
+                        ":hover": { backgroundColor: "#D7F0E2", color: "#083D1E" },
+                      }),
+                    }}
+                    options={regionSelectOptions}
+                    value={regionSelectOptions.filter((option) =>
+                      asStringList(formik.values.regionOfOperation).includes(option.value),
+                    )}
+                    onChange={(opts) => {
+                      const next = Array.isArray(opts) ? opts.map((opt) => opt.value) : [];
+                      formik.setFieldValue("regionOfOperation", next);
+                      formik.setFieldTouched("regionOfOperation", true, false);
+                    }}
+                    placeholder="Select LGA"
+                    isClearable={false}
                   />
-                  <div
-                    className={`max-h-56 overflow-auto rounded-xl border p-3 ${
-                      shouldShowRedBorder("regionOfOperation") ? "border-red-500 bg-red-50" : "border-gray-200 bg-white"
-                    }`}
-                  >
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                      {areaGroups
-                        .flatMap((group) => group.areas.map((area) => ({ area, lga: group.lga })))
-                        .filter(({ area, lga }) => {
-                          const query = regionQuery.trim().toLowerCase();
-                          if (!query) {
-                            if (formik.values.address.localGovtArea) {
-                              return lga === formik.values.address.localGovtArea;
-                            }
-                            return true;
-                          }
-                          return (
-                            area.toLowerCase().includes(query) || lga.toLowerCase().includes(query)
-                          );
-                        })
-                        .filter((item, index, list) => list.findIndex((entry) => entry.area === item.area) === index)
-                        .map(({ area }) => {
-                          const selected = asStringList(formik.values.regionOfOperation).includes(area);
-                          return (
-                            <button
-                              key={area}
-                              type="button"
-                              onClick={() => toggleMultiSelect("regionOfOperation", area)}
-                              className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm ${
-                                selected
-                                  ? "border-[#0B572B] bg-[#E8F7EE] text-[#0C1E1B]"
-                                  : "border-gray-200 bg-white text-[#0C1E1B]"
-                              }`}
-                            >
-                              <span
-                                className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
-                                  selected ? "border-[#0B572B]" : "border-gray-300"
-                                }`}
-                              >
-                                {selected ? <span className="h-2 w-2 rounded-full bg-[#0B572B]" /> : null}
-                              </span>
-                              <span className="truncate">{area}</span>
-                            </button>
-                          );
-                        })}
-                    </div>
-                  </div>
                   {hasError("regionOfOperation") && (
                     <p className="text-red-500 text-sm mt-2">{getError("regionOfOperation")}</p>
                   )}
@@ -1019,97 +998,6 @@ const AgentKycForm: React.FC = () => {
                   {getError("utilityBillUrl") && (
                     <p className="text-red-500 text-sm">{getError("utilityBillUrl")}</p>
                   )}
-                </div>
-              </div>
-            )}
-
-            {currentStep === 3 && (
-              <div className="space-y-6">
-                <div className="flex items-center gap-3 border-b border-gray-200 pb-4">
-                  <Award className="text-[#0B572B]" size={24} />
-                  <h2 className="text-xl font-semibold text-[#0C1E1B]">Achievements (Optional)</h2>
-                  <span className="ml-auto text-sm text-gray-500 italic">This section is optional</span>
-                </div>
-
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                  <p className="text-sm text-blue-800">
-                    <strong>Note:</strong> Adding achievements is optional. You can skip this section and submit your KYC, or add your achievements to strengthen your profile.
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  {(formik.values.achievements || []).map((ach, index) => (
-                    <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-3">
-                      <div className="flex justify-between">
-                        <span className="font-medium">Achievement {index + 1}</span>
-                        <button type="button" onClick={() => removeAchievement(index)} className="text-red-500 hover:text-red-700">
-                          <X size={18} />
-                        </button>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input
-                          type="text"
-                          value={ach.title}
-                          onChange={(e) => {
-                            const copy = [...(formik.values.achievements || [])];
-                            copy[index].title = e.target.value;
-                            formik.setFieldValue("achievements", copy);
-                          }}
-                          className={inputBase + " border-gray-300"}
-                          placeholder="Title (e.g., Top Seller 2022)"
-                        />
-                        <input
-                          type="date"
-                          value={ach.dateAwarded}
-                          onChange={(e) => {
-                            const copy = [...(formik.values.achievements || [])];
-                            copy[index].dateAwarded = e.target.value;
-                            formik.setFieldValue("achievements", copy);
-                          }}
-                          className={inputBase + " border-gray-300"}
-                        />
-                      </div>
-                      <textarea
-                        value={ach.description}
-                        onChange={(e) => {
-                          const copy = [...(formik.values.achievements || [])];
-                          copy[index].description = e.target.value;
-                          formik.setFieldValue("achievements", copy);
-                        }}
-                        className={inputBase + " border-gray-300"}
-                        rows={3}
-                        placeholder="Description"
-                      />
-                      <div className="space-y-2">
-                        <AttachFile
-                          heading="Upload Certificate (optional)"
-                          setFileUrl={(url: string | null) => handleFileUpload(url!, "achievements", index)}
-                          id={`achievement-${index}`}
-                          className="w-full"
-                          acceptedFileTypes="*"
-                          onUploadStart={() => setIsUploading(true)}
-                          onUploadEnd={() => setIsUploading(false)}
-                        />
-                        {ach.fileUrl && (
-                          <div className="flex items-center gap-3">
-                            {isImage(ach.fileUrl) ? (
-                              <div className="w-20 h-14 rounded overflow-hidden bg-white border">
-                                <img src={ach.fileUrl} alt="Certificate" className="w-full h-full object-cover" />
-                              </div>
-                            ) : (
-                              <ImageIcon className="w-5 h-5 text-gray-500" />
-                            )}
-                            <a href={ach.fileUrl} target="_blank" rel="noreferrer" className="text-sm text-[#0B572B] underline">
-                              Preview file
-                            </a>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                  <button type="button" onClick={addAchievement} className="flex items-center gap-2 px-4 py-2 text-[#0B572B] border border-[#8DDB90] rounded-lg">
-                    <Plus size={16} /> Add Achievement
-                  </button>
                 </div>
               </div>
             )}
@@ -1137,7 +1025,7 @@ const AgentKycForm: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleSubmitButtonClick}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !isCurrentStepValid()}
                   className="px-8 py-2 bg-gradient-to-r from-[#0B572B] to-[#8DDB90] text-white font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? "Submitting..." : "Submit KYC"}

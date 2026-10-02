@@ -166,6 +166,8 @@ export const URLS = {
   /** POST /account/agent/broadcast { subject, body } - email all subscribers */
   agentBroadcast: "/account/agent/broadcast",
   submitKyc: "/account/submitKyc",
+  /** GET /kyc/practitioner-form — steps and Lagos LGA options for Practitioner KYC */
+  practitionerKycForm: "/kyc/practitioner-form",
 
   /** GET /account/marketplace/general-preferences — agent marketplace (main-site preferences, auth) */
   accountMarketplaceGeneralPreferences: "/account/marketplace/general-preferences",
