@@ -41,13 +41,22 @@ export function shouldPromptPractitionerKyc(user: User) {
   return true;
 }
 
+export function isPractitionerKycPromptDeferred(user: User) {
+  if (typeof window === "undefined") return false;
+  try {
+    return localStorage.getItem(storageKey(user)) === "1";
+  } catch {
+    return false;
+  }
+}
+
 type Props = {
   user: User;
   onOpenChange?: (open: boolean) => void;
 };
 
 export function PractitionerKycOverlay({ user, onOpenChange }: Props) {
-  const shouldPrompt = shouldPromptPractitionerKyc(user);
+  const shouldPrompt = shouldPromptPractitionerKyc(user) && !isPractitionerKycPromptDeferred(user);
   const [open, setOpen] = useState(shouldPrompt);
   const [deferred, setDeferred] = useState(false);
   const role = kycRoleLabel(user.userType);

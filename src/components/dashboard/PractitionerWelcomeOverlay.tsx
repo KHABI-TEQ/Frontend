@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowRight, Globe, Sparkles, X } from "lucide-react";
 import { motion } from "framer-motion";
 import type { User } from "@/context/user-context";
-import { isLivePaidSubscription } from "@/utils/subscription-status";
+import { accountHasLivePlan } from "@/utils/subscription-status";
 
 const STORAGE_PREFIX = "khabiteq-practitioner-welcome-";
 
@@ -14,7 +14,16 @@ function storageKey(user: User) {
 }
 
 function hasActiveSubscription(user: User) {
-  return isLivePaidSubscription(user.activeSubscription);
+  return accountHasLivePlan(user.activeSubscription);
+}
+
+export function isPractitionerWelcomeDismissed(user: User) {
+  if (typeof window === "undefined") return false;
+  try {
+    return localStorage.getItem(storageKey(user)) === "1";
+  } catch {
+    return false;
+  }
 }
 
 function roleLabel(user: User) {
@@ -53,7 +62,9 @@ type Props = {
 };
 
 export function PractitionerWelcomeOverlay({ user, onOpenChange }: Props) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(
+    () => !hasActiveSubscription(user) && !isPractitionerWelcomeDismissed(user),
+  );
   const slug = useMemo(() => suggestedSlug(user), [user]);
   const fullName = `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Your practice";
   const previewUrl = `https://${slug}.khabiteq.com`;

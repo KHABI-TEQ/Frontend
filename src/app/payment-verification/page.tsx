@@ -8,6 +8,7 @@ import { URLS } from '@/utils/URLS';
 import toast from 'react-hot-toast';
 import { REDIRECT_AFTER_SUBSCRIPTION_KEY } from '@/logic/combinedAuthGuard';
 import { useUserContext } from '@/context/user-context';
+import { markSubscriptionJustActivated } from '@/utils/subscription-status';
 import { setBuyerSession } from '@/lib/search-insurance';
 
 const PaymentVerificationPage = () => {
@@ -76,6 +77,7 @@ const PaymentVerificationPage = () => {
         }
 
         if (trxType === 'subscription') {
+          markSubscriptionJustActivated();
           try {
             await refreshUser();
           } catch {}

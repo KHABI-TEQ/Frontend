@@ -14,7 +14,11 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import type { User } from "@/context/user-context";
-import { isLivePaidSubscription } from "@/utils/subscription-status";
+import {
+  clearSubscriptionJustActivated,
+  hasSubscriptionJustActivated,
+  isLivePaidSubscription,
+} from "@/utils/subscription-status";
 import { isApprovedKyc, isPendingKyc, resolveKycStatus } from "@/lib/kyc-status";
 
 const SUBSCRIPTION_ROLES = new Set([
@@ -27,7 +31,7 @@ const SUBSCRIPTION_ROLES = new Set([
 
 export function shouldForcePaidPlanOverlay(user: User | null | undefined, pathname?: string | null) {
   if (!user || !SUBSCRIPTION_ROLES.has(String(user.userType || ""))) return false;
-  if (isLivePaidSubscription(user.activeSubscription)) return false;
+  if (isLivePaidSubscription(user.activeSubscription) || hasSubscriptionJustActivated()) return false;
   const path = pathname || "";
   if (path.startsWith("/agent-subscriptions")) return false;
   if (path.startsWith("/auth")) return false;
@@ -79,6 +83,12 @@ export function KycSubmittedCongratsOverlay({ user, onOpenChange }: Props) {
   const open = shouldForcePaidPlanOverlay(user, pathname);
   const [showArt, setShowArt] = useState(true);
   const firstName = user.firstName || "there";
+
+  useEffect(() => {
+    if (isLivePaidSubscription(user.activeSubscription)) {
+      clearSubscriptionJustActivated();
+    }
+  }, [user.activeSubscription]);
 
   useEffect(() => {
     onOpenChange?.(open);

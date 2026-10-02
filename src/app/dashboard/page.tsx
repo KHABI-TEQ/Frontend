@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { useUserContext } from "@/context/user-context";
 import Agent from "./agent";
@@ -10,8 +10,15 @@ import ProfessionalDashboard from "./professional";
 import Scout from "./scout";
 import Valuer from "./valuer";
 import { DealSiteSetupOverlay } from "@/components/dashboard/DealSiteSetupOverlay";
-import { PractitionerWelcomeOverlay } from "@/components/dashboard/PractitionerWelcomeOverlay";
-import { PractitionerKycOverlay } from "@/components/dashboard/PractitionerKycOverlay";
+import {
+  isPractitionerWelcomeDismissed,
+  PractitionerWelcomeOverlay,
+} from "@/components/dashboard/PractitionerWelcomeOverlay";
+import {
+  isPractitionerKycPromptDeferred,
+  PractitionerKycOverlay,
+  shouldPromptPractitionerKyc,
+} from "@/components/dashboard/PractitionerKycOverlay";
 import { shouldForcePaidPlanOverlay } from "@/components/dashboard/KycSubmittedCongratsOverlay";
 import KycDashboardStatusCard, {
   shouldRenderKycDashboardStatus,
@@ -19,10 +26,10 @@ import KycDashboardStatusCard, {
 import CompletePractitionerPageBanner from "@/components/dashboard/CompletePractitionerPageBanner";
 import Link from "next/link";
 import type { User } from "@/context/user-context";
-import { isLivePaidSubscription } from "@/utils/subscription-status";
+import { accountHasLivePlan } from "@/utils/subscription-status";
 
 function hasActiveSubscription(user: User) {
-  return isLivePaidSubscription(user.activeSubscription);
+  return accountHasLivePlan(user.activeSubscription);
 }
 
 function DashboardSubscribeBanner({ user }: { user: User }) {
@@ -75,8 +82,6 @@ function getEffectiveUserType(user: Record<string, unknown> | null): string | un
 export default function Dashboard() {
   const { user } = useUserContext();
   const pathname = usePathname();
-  const [welcomeOpen, setWelcomeOpen] = useState(false);
-  const [kycPromptOpen, setKycPromptOpen] = useState(true);
   const effectiveType = getEffectiveUserType(user as unknown as Record<string, unknown>);
   const typeLower = effectiveType?.toLowerCase() ?? "";
 
@@ -134,19 +139,31 @@ export default function Dashboard() {
   const showKycPrompt =
     showAgentDashboard || showDeveloper || showLawyer || showSurveyor || showValuer;
 
-  const kycCongratsOpen = shouldForcePaidPlanOverlay(user, pathname);
+  const paid = hasActiveSubscription(user);
+  const showCongrats = !paid && shouldForcePaidPlanOverlay(user, pathname);
+  const showKycDialog =
+    !paid &&
+    !showCongrats &&
+    showKycPrompt &&
+    shouldPromptPractitionerKyc(user) &&
+    !isPractitionerKycPromptDeferred(user);
+  const showWelcomeDialog =
+    !paid &&
+    !showCongrats &&
+    !showKycDialog &&
+    showProfessionalWelcome &&
+    !isPractitionerWelcomeDismissed(user);
+  const showSetupDialog =
+    (showAgentDashboard || showDeveloper) &&
+    !showCongrats &&
+    !showKycDialog &&
+    !showWelcomeDialog;
 
   return (
     <>
-      {showKycPrompt && !kycCongratsOpen && (
-        <PractitionerKycOverlay user={user} onOpenChange={setKycPromptOpen} />
-      )}
-      {showProfessionalWelcome && !kycPromptOpen && !kycCongratsOpen && (
-        <PractitionerWelcomeOverlay user={user} onOpenChange={setWelcomeOpen} />
-      )}
-      {(showAgentDashboard || showDeveloper) && !welcomeOpen && !kycPromptOpen && !kycCongratsOpen && (
-        <DealSiteSetupOverlay user={user} />
-      )}
+      {showKycDialog ? <PractitionerKycOverlay user={user} /> : null}
+      {showWelcomeDialog ? <PractitionerWelcomeOverlay user={user} /> : null}
+      {showSetupDialog ? <DealSiteSetupOverlay user={user} /> : null}
       <DashboardSubscribeBanner user={user} />
       <CompletePractitionerPageBanner user={user} />
       {shouldRenderKycDashboardStatus(user) && (
