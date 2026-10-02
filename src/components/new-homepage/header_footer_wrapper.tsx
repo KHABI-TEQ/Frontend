@@ -13,6 +13,7 @@ import { usePathname } from "next/navigation";
 import Cookies from "js-cookie";
 import { useUserContext } from "@/context/user-context";
 import { KycSubmittedCongratsOverlay } from "@/components/dashboard/KycSubmittedCongratsOverlay";
+import { AgentWorkspaceShell, isAgentWorkspacePath } from "@/components/dashboard/AgentWorkspaceShell";
 
 interface Props {
 	children: ReactNode;
@@ -51,11 +52,13 @@ export default function HeaderFooterWrapper({ children, hasAccountToken = false 
 		Boolean(user?._id || user?.id) ||
 		hasAccountToken ||
 		hasAccountSession();
+	const showAgentShell =
+		String(user?.userType || "").toLowerCase() === "agent" && isAgentWorkspacePath(pathname);
 
 	return (
 		<Fragment>
 			{!hideSiteChrome && <HeaderLogic />}
-			{children}
+			{showAgentShell ? <AgentWorkspaceShell>{children}</AgentWorkspaceShell> : children}
 			{!hideSiteChrome && <NewFooter />}
 			{viewImage && <PropertyGalleryOverlay />}
 			{user ? <KycSubmittedCongratsOverlay user={user} /> : null}

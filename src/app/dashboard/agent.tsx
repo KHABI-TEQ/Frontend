@@ -25,7 +25,6 @@ import {
   Copy,
   Link as LinkIcon,
   Mail as MailIcon,
-  LogOut as LogOutIcon,
   Globe2,
   FileText,
 } from "lucide-react";
@@ -63,7 +62,8 @@ interface DashboardStats {
   newPendingBriefs: Brief[];
   averageRating: number;
   completedDeals: number;
-  totalCommission: number; // Added based on usage in statCards
+  totalCommission: number;
+  successRate: number;
 }
 
 /** Same extraction as `/my-listings` (fetchAll). */
@@ -119,7 +119,7 @@ function mapPropertyToBrief(p: unknown): Brief {
 
 export default function AgentDashboard() {
   const router = useRouter();
-  const { user, logout } = useUserContext();
+  const { user } = useUserContext();
   const { eligibility, loading: eligibilityLoading } = useAgentEligibility();
   const {
     eligibility: listingEligibility,
@@ -136,6 +136,7 @@ export default function AgentDashboard() {
     newPendingBriefs: [],
     averageRating: 0,
     totalCommission: 0,
+    successRate: 0,
   });
   /** Same source & default order as My Listings → All (`/account/properties/fetchAll`, no filters). */
   const [recentListings, setRecentListings] = useState<Brief[]>([]);
@@ -223,6 +224,7 @@ export default function AgentDashboard() {
           newPendingBriefs: Array.isArray(raw.newPendingBriefs) ? raw.newPendingBriefs : [],
           averageRating: Number(raw.averageRating ?? 0),
           totalCommission: Number(raw.totalCommission ?? 0),
+          successRate: Number(raw.successRate ?? 0),
         });
       }
     } catch (error) {
@@ -305,105 +307,28 @@ export default function AgentDashboard() {
     },
   ];
 
+  const successRate =
+    stats.successRate ||
+    ((stats.totalBriefs ?? 0) > 0
+      ? Math.round(((stats.completedDeals ?? 0) / (stats.totalBriefs || 1)) * 100)
+      : 0);
   return (
-    <div className="min-h-screen bg-[#EEF1F1] py-4 sm:py-8 overflow-x-hidden">
-      <div className="container mx-auto px-4 sm:px-6 max-w-full">
-        {/* Log out: top-right compact link (same as Developer/Landlord) */}
-        <div className="flex justify-end mb-2">
-          <button
-            type="button"
-            onClick={() => logout(() => router.push("/auth/login"))}
-            className="text-gray-600 hover:text-gray-900 text-sm font-medium flex items-center gap-1.5 transition-colors py-1.5 px-2 -my-1.5 -mx-2 rounded hover:bg-gray-100"
-            title="Sign out"
-          >
-            <LogOutIcon size={18} />
-            Log out
-          </button>
-        </div>
-        {/* Header: welcome on its own row so it always displays fully; buttons on next row(s) */}
-        <div className="flex flex-col gap-4 mb-8">
-          <div className="w-full">
-            <h1 className="text-2xl sm:text-3xl font-bold text-[#09391C] font-display">
-              Welcome back, Agent {user.firstName}!
-            </h1>
-            <p className="text-[#5A5D63] mt-2">
-              Manage your briefs and track your real estate performance
-            </p>
+    <>
+        <div className="flex flex-col px-4 pb-10 sm:px-6">
+          <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-[#14804A] sm:text-3xl">
+                Welcome back, Agent {user.firstName}!
+              </h1>
+              <p className="mt-1 text-sm text-[#5A5D63]">
+                Manage your briefs and track your real estate performance
+              </p>
+            </div>
+            <ListPropertyCta eligibility={eligibility} listingEligibility={listingEligibility} variant="hero" />
           </div>
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 sm:items-center flex-wrap">
-            <ListPropertyCta
-              eligibility={eligibility}
-              listingEligibility={listingEligibility}
-              variant="hero"
-            />
-            <Link
-              href="/my-listings"
-              className="bg-[#8DDB90] hover:bg-[#7BC87F] text-white px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
-            >
-              <BriefcaseIcon size={20} />
-              My Listings
-            </Link>
-            <Link
-              href="/my-inspection-requests"
-              className="bg-white hover:bg-gray-50 text-[#09391C] border border-[#8DDB90] px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
-            >
-              <CalendarIcon size={20} />
-              <span className="hidden sm:inline">Inspection</span>Requests
-            </Link>
-            <Link
-              href="/my-transactions"
-              className="bg-white hover:bg-gray-50 text-[#09391C] border border-[#8DDB90] px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
-            >
-              <FileText size={20} />
-              My Transactions
-            </Link>
-            {eligibility?.isLicensedPublisher ? (
-              <Link
-                href="/licensed-agent-representation-requests"
-                className="bg-white hover:bg-gray-50 text-[#09391C] border border-gray-300 px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
-              >
-                <UsersIcon size={20} />
-                Scout requests
-              </Link>
-            ) : null}
-            <Link
-              href="/agent-marketplace"
-              className="bg-white hover:bg-gray-50 text-[#09391C] border border-gray-300 px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
-            >
-              <PlusIcon size={20} />
-              Agent Marketplace
-            </Link>
-            <Link
-              href="/lasrera-marketplace"
-              className="bg-white hover:bg-gray-50 text-[#09391C] border border-[#8DDB90] px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
-            >
-              <PlusIcon size={20} />
-              <span className="hidden sm:inline">Listing owner</span> properties
-            </Link>
-            <Link
-              href="/agent-broadcast"
-              className="bg-white hover:bg-gray-50 text-[#09391C] border border-[#8DDB90] px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
-            >
-              <MailIcon size={20} />
-              <span className="hidden sm:inline">Broadcast</span>
-            </Link>
-            <button
-              type="button"
-              onClick={() => setSyndicationSoon(true)}
-              className="bg-white hover:bg-gray-50 text-[#09391C] border border-[#8DDB90] px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
-              title="Syndication is coming soon"
-            >
-              <Globe2 size={20} />
-              Syndication
-              <span className="rounded-full bg-gradient-to-r from-fuchsia-500 to-amber-400 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
-                Soon
-              </span>
-            </button>
-          </div>
-        </div>
 
         {/* Account Badges */}
-        <div className="mb-4 space-y-2">
+        <div className="order-last mb-4 mt-8 space-y-2">
           {(() => {
             const sub = (user as any)?.activeSubscription;
             const isVerified = !!(user as any)?.isAccountVerified;
@@ -472,45 +397,36 @@ export default function AgentDashboard() {
         </div>
 
         {/* Agent KYC / subscription policy */}
-        <div className="mb-4">
+        <div className="order-last mb-4">
           <AgentEligibilityBanner eligibility={eligibility} loading={eligibilityLoading} />
         </div>
 
-        <PublisherListingAllowanceCard
-          eligibility={listingEligibility}
-          loading={listingEligibilityLoading}
-        />
+        <div className="order-last">
+          <PublisherListingAllowanceCard
+            eligibility={listingEligibility}
+            loading={listingEligibilityLoading}
+          />
+        </div>
 
-        {/* Performance Overview + Referral */}
-        <div className="bg-white rounded-lg p-4 sm:p-6 mb-8 shadow-sm">
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 sm:gap-6">
-            <div className="text-center">
-              <div className="text-2xl sm:text-3xl font-bold text-[#8DDB90] mb-2">
-                ₦{(stats.totalCommission ?? 0).toLocaleString()}
-              </div>
-              <p className="text-sm sm:text-base text-[#5A5D63]">Total Commission</p>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center mb-2">
-                <StarIcon size={20} className="text-yellow-500 fill-current sm:w-6 sm:h-6" />
-                <span className="text-2xl sm:text-3xl font-bold text-[#09391C] ml-2">{stats.averageRating ?? 0}</span>
-              </div>
-              <p className="text-sm sm:text-base text-[#5A5D63]">Average Rating</p>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl sm:text-3xl font-bold text-[#09391C] mb-2">
-                {(stats.totalBriefs ?? 0) > 0 ? Math.round(((stats.completedDeals ?? 0) / (stats.totalBriefs ?? 1)) * 100) : 0}%
-              </div>
-              <p className="text-sm sm:text-base text-[#5A5D63]">Success Rate</p>
-            </div>
-            <div className="text-center">
-              <div className="text-xs text-gray-500 mb-1">Referral</div>
-              <div className="flex items-center justify-center gap-3">
-                <code className="font-mono text-[#09391C] text-sm">{referral.code || "—"}</code>
-                <button onClick={async () => { try { const url = `${window.location.origin}/auth/register?ref=${referral.code}`; await navigator.clipboard.writeText(url); toast.success("Referral link copied"); } catch { toast.error("Copy failed"); } }} className="p-1.5 rounded bg-gray-50 hover:bg-gray-100" aria-label="Copy referral link"><Copy size={14} /></button>
-              </div>
-              <div className="mt-2 text-xs text-[#5A5D63]">{referral.totalReferred} referred • ₦{(referral.earnings ?? 0).toLocaleString()}</div>
-            </div>
+        <div className="mb-5 grid grid-cols-2 gap-4 rounded-2xl bg-white px-4 py-5 shadow-sm sm:grid-cols-4 sm:px-6">
+          <div>
+            <p className="text-xl font-bold text-[#14804A] sm:text-2xl">₦{(stats.totalCommission ?? 0).toLocaleString()}</p>
+            <p className="mt-1 text-xs text-[#5A5D63] sm:text-sm">Total Commission</p>
+          </div>
+          <div>
+            <p className="flex items-center gap-1 text-xl font-bold text-[#09391C] sm:text-2xl">
+              <StarIcon size={16} className="fill-amber-400 text-amber-400" />
+              {stats.averageRating ?? 0}
+            </p>
+            <p className="mt-1 text-xs text-[#5A5D63] sm:text-sm">Average Rating</p>
+          </div>
+          <div>
+            <p className="text-xl font-bold text-[#09391C] sm:text-2xl">{successRate}%</p>
+            <p className="mt-1 text-xs text-[#5A5D63] sm:text-sm">Success Rate</p>
+          </div>
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-[#8A9390]">Last payout</p>
+            <p className="mt-1 text-xl font-bold text-[#09391C] sm:text-2xl">₦0</p>
           </div>
         </div>
 
@@ -524,7 +440,7 @@ export default function AgentDashboard() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="bg-white rounded-lg p-4 sm:p-6 shadow-sm"
+                className="rounded-2xl bg-white p-4 shadow-sm sm:p-5"
               >
                 <div className="flex items-center justify-between">
                   <div>
@@ -808,13 +724,46 @@ export default function AgentDashboard() {
             </div>
           </div>
         </div>
-      </div>
+
+        <div className="mt-8 rounded-2xl bg-white p-5 shadow-sm">
+          <h2 className="text-base font-semibold text-[#09391C]">Referral</h2>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <code className="font-mono text-sm text-[#09391C]">{referral.code || "—"}</code>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  const url = `${window.location.origin}/auth/register?ref=${referral.code}`;
+                  await navigator.clipboard.writeText(url);
+                  toast.success("Referral link copied");
+                } catch {
+                  toast.error("Copy failed");
+                }
+              }}
+              className="rounded bg-gray-50 p-1.5 hover:bg-gray-100"
+              aria-label="Copy referral link"
+            >
+              <Copy size={14} />
+            </button>
+            <span className="text-xs text-[#5A5D63]">
+              {referral.totalReferred} referred • ₦{(referral.earnings ?? 0).toLocaleString()}
+            </span>
+            <button
+              type="button"
+              onClick={() => setSyndicationSoon(true)}
+              className="rounded-full border border-[#8DDB90] px-3 py-1 text-xs font-semibold text-[#09391C]"
+            >
+              Syndication — soon
+            </button>
+          </div>
+        </div>
+        </div>
       <ComingSoonPrompt
         open={syndicationSoon}
         onClose={() => setSyndicationSoon(false)}
         title="Coming soon"
         description="Syndication will let you push your Khabiteq listings to partner property sites from one place. We will notify you when it is ready."
       />
-    </div>
+    </>
   );
 }

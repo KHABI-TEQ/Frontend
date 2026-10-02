@@ -164,8 +164,8 @@ export default function Dashboard() {
       {showKycDialog ? <PractitionerKycOverlay user={user} /> : null}
       {showWelcomeDialog ? <PractitionerWelcomeOverlay user={user} /> : null}
       {showSetupDialog ? <DealSiteSetupOverlay user={user} /> : null}
-      <DashboardSubscribeBanner user={user} />
-      <CompletePractitionerPageBanner user={user} />
+      {showAgentDashboard ? null : <DashboardSubscribeBanner user={user} />}
+      {showAgentDashboard ? null : <CompletePractitionerPageBanner user={user} />}
       {shouldRenderKycDashboardStatus(user) && (
         <div className="mx-auto max-w-6xl px-4 pt-4">
           <KycDashboardStatusCard user={user} />
