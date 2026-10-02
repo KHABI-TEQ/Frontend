@@ -212,7 +212,7 @@ export default function OverviewPage() {
       <div className="rounded-xl border border-[#09391C]/10 bg-white p-5">
         <h3 className="text-base font-semibold text-[#09391C]">What&apos;s next</h3>
         <p className="mt-1 text-sm text-[#5A5D63]">
-          After public page setup, list a property from your dashboard. If KYC is still pending, you can choose a paid plan now — listing unlocks after approval.
+          After public page setup, list a property from your dashboard once a paid plan is active. Pending KYC does not hide this page. You can respond to inspection bookings after KYC is approved.
         </p>
         <div className="mt-4 flex flex-col sm:flex-row flex-wrap gap-3">
           <Link

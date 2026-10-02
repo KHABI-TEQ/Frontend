@@ -731,7 +731,7 @@ const SharedPostPropertyForm: React.FC<SharedPostPropertyFormProps> = ({
       allowedUserTypes={["Agent", "Landowners", "Developer", "PropertyScout"]}
       requireAgentOnboarding={true}
       requireAgentApproval={true}
-      requireKycApproved={true}
+      requireKycApproved={false}
       requireActiveSubscription={true}
       agentCustomMessage="You must complete onboarding and be approved before you can post properties."
     >

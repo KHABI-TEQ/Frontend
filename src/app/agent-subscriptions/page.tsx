@@ -26,7 +26,7 @@ import { format } from 'date-fns';
 import Cookies from 'js-cookie';
 import Link from 'next/link';
 import AgentEligibilityBanner from '@/components/agent/AgentEligibilityBanner';
-import { useAgentEligibility, resolveAgentKycStatus } from '@/hooks/useAgentEligibility';
+import { useAgentEligibility } from '@/hooks/useAgentEligibility';
 import CatalogPricing, { CatalogHero, dashboardPlanSummaries, type CatalogBillingOption, type CatalogPlan } from '@/components/subscription/CatalogPricing';
 import LicensedAgentPlanPicker, { type LicensedPlanChoice } from '@/components/subscription/LicensedAgentPlanPicker';
 import { usePublisherListingEligibility } from '@/hooks/usePublisherListingEligibility';
@@ -60,7 +60,6 @@ function subscriptionErrorMessage(res: unknown): string {
 export default function AgentSubscriptionsPage() {
   const router = useRouter();
   const { user } = useUserContext();
-  const kycApproved = resolveAgentKycStatus(user) === 'approved';
   const { eligibility, loading: eligibilityLoading } = useAgentEligibility();
   const { eligibility: listingEligibility } = usePublisherListingEligibility();
   const [accountRoleLabel, setAccountRoleLabel] = useState<string | null>(null);
@@ -300,10 +299,6 @@ export default function AgentSubscriptionsPage() {
   };
 
   const handleRenewSubscription = async () => {
-    if (!kycApproved) {
-      toast.error('Wait for admin approval of your KYC before making a subscription payment.');
-      return;
-    }
     if (!selectedSubscription) return;
 
     setIsProcessingRenewal(true);
@@ -375,10 +370,6 @@ export default function AgentSubscriptionsPage() {
   };
 
   const confirmSubscribe = async () => {
-    if (!kycApproved) {
-      toast.error('Wait for admin approval of your KYC before making a subscription payment.');
-      return;
-    }
     if (!selectedPlanForSub) return;
     const authToken = Cookies.get('token')?.trim();
     if (!authToken) {
@@ -561,14 +552,6 @@ export default function AgentSubscriptionsPage() {
 
         {(activeTab === 'subscriptions' || activeTab === 'plans') && (
           <>
-            {!showLicensedPlanPicker && !kycApproved && userTypeLower === 'agent' && !isDeveloper && !isPropertyOwner ? (
-              <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-                <p className="font-semibold">KYC is still pending</p>
-                <p className="mt-1">
-                  You can choose and pay for a plan now. Listing a property unlocks after KYC approval and an active paid plan.
-                </p>
-              </div>
-            ) : null}
               {/* Tab Content */}
               {activeTab === 'subscriptions' && (
                 <div className="space-y-6">
@@ -668,21 +651,12 @@ export default function AgentSubscriptionsPage() {
                     title="Plans for your role"
                     text="Only the subscription that matches your Khabiteq account type is shown here."
                   />
-                  {!kycApproved && (
-                    <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                      Subscription payments unlock after an admin approves your KYC.
-                    </div>
-                  )}
                   <CatalogPricing
                     mode="dashboard"
                     userType={userTypeRaw}
                     isPropertyScout={isScoutAccount}
                     hasPaidSubscription={hasPaidSubscription}
                     onSubscribe={(plan: CatalogPlan, option: CatalogBillingOption) => {
-                      if (!kycApproved) {
-                        toast.error('Wait for admin approval of your KYC before making a subscription payment.');
-                        return;
-                      }
                       toast.success('Opening checkout…');
                       const months = Math.max(1, Math.round((option.durationInDays || 90) / 30));
                       handleSubscribeToPlan(

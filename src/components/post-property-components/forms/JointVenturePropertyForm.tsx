@@ -476,7 +476,7 @@ const JointVenturePropertyForm: React.FC<JointVenturePropertyFormProps> = ({
       allowedUserTypes={["Agent", "Landowners", "Developer", "PropertyScout"]}
       requireAgentOnboarding={false}
       requireAgentApproval={false}
-      requireKycApproved={true}
+      requireKycApproved={false}
       requireActiveSubscription={true}
       agentCustomMessage="You must complete onboarding and be approved before you can post properties."
     >

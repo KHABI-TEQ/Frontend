@@ -31,7 +31,7 @@ const OffPlanPage = () => {
       allowedUserTypes={["Developer"]}
       requireAgentOnboarding={false}
       requireAgentApproval={false}
-      requireKycApproved={true}
+      requireKycApproved={false}
       agentCustomMessage="You must complete onboarding and be approved before you can post properties."
     >
       <FeatureGate featureKeys={[FEATURE_KEYS.LISTINGS]}>
