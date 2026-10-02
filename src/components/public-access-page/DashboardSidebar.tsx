@@ -32,6 +32,8 @@ import {
   Compass,
 } from "lucide-react";
 import { useDealSite } from "@/context/deal-site-context";
+import { useUserContext } from "@/context/user-context";
+import { LogOut } from "lucide-react";
 
 interface NavItem {
   id: string;
@@ -83,6 +85,7 @@ interface DashboardSidebarProps {
 export default function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
   const pathname = usePathname();
   const { isPaused } = useDealSite();
+  const { logout } = useUserContext();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const groupedItems = {
@@ -211,6 +214,19 @@ export default function DashboardSidebar({ onNavigate }: DashboardSidebarProps) 
           <span className={`w-2 h-2 rounded-full ${isPaused ? "bg-yellow-500" : "bg-emerald-500"}`} />
           {isPaused ? "Paused" : "Live"}
         </div>
+      </div>
+      <div className="border-t border-gray-200 px-4 py-4">
+        <button
+          type="button"
+          onClick={() => {
+            handleNavClick();
+            void logout();
+          }}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[#5A5D63] transition-colors hover:bg-gray-100 hover:text-[#09391C]"
+        >
+          <LogOut size={18} />
+          Log out
+        </button>
       </div>
     </>
   );

@@ -221,7 +221,7 @@ const Sidebar = () => {
           logout();
         }}
         className={`w-full bg-transparent h-[70px] py-[26px] px-[22px] rounded-[5px] border-[#FF3D00] text-[#FF3D00] border-[1px]`}>
-        Sign out
+        Log out
       </button>
     </motion.div>
   );

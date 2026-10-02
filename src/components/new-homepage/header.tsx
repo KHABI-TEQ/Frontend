@@ -20,13 +20,56 @@ import dynamic from "next/dynamic";
 import KhabiteqHeaderLogo from "@/components/branding/KhabiteqHeaderLogo";
 import LookingToDoNav from "@/components/new-homepage/LookingToDoNav";
 import { userDisplayInitials } from "@/utils/userInitials";
-import { getBuyerToken } from "@/lib/search-insurance";
+import { getBuyerProfile, getBuyerToken } from "@/lib/search-insurance";
 
 // Lazy load heavy components that are only shown on interaction
 const SideBar = dynamic(() => import("../general-components/sideBar"), { ssr: false });
 // Import profile directly so dropdown always has latest logic (Developer/Landlord menu on /dashboard)
 import UserProfile from "./my-profile";
 import NotificationBell from "./NotificationBell";
+
+function buyerInitials() {
+  const profile = getBuyerProfile();
+  const source = (profile?.fullName || profile?.email || "").trim();
+  const parts = source.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  return (parts[0]?.slice(0, 2) || "U").toUpperCase();
+}
+
+function BuyerAccountMenu({ onClose }: { onClose: () => void }) {
+  const { logout } = useUserContext();
+  const profile = getBuyerProfile();
+  return (
+    <motion.div
+      initial={{ y: 8, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      exit={{ y: 8, opacity: 0 }}
+      className="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl"
+    >
+      <div className="border-b border-gray-100 px-4 py-3">
+        <p className="truncate text-sm font-semibold text-[#09391C]">{profile?.fullName || "Client account"}</p>
+        <p className="truncate text-xs text-[#5A5D63]">{profile?.email || "Signed in"}</p>
+      </div>
+      <Link
+        href="/buyer"
+        onClick={onClose}
+        className="block px-4 py-3 text-sm font-medium text-[#09391C] hover:bg-gray-50"
+      >
+        My dashboard
+      </Link>
+      <button
+        type="button"
+        onClick={() => {
+          onClose();
+          void logout();
+        }}
+        className="flex w-full items-center gap-2 border-t border-gray-100 px-4 py-3 text-left text-sm font-medium text-[#5A5D63] hover:bg-gray-50 hover:text-[#09391C]"
+      >
+        Log out
+      </button>
+    </motion.div>
+  );
+}
 
 const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
   const {
@@ -42,7 +85,7 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
   );
   const pathName = useClientPathname();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const { user, logout } = useUserContext();
+  const { user } = useUserContext();
   const [isScrolled, setIsScrolled] = useState(false);
   const [hasBuyerSession, setHasBuyerSession] = useState(false);
   const isClientJourney =
@@ -268,8 +311,9 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
           {/**Buttons for desktop screens */}
           <div className="hidden lg:flex shrink-0 items-center gap-2 xl:gap-3">
             <LookingToDoNav />
-            {showPractitioner ? (
+            {showPractitioner || hasBuyerSession ? (
               <>
+                {showPractitioner ? (
                 <Link
                   href="/dashboard"
                   className={`whitespace-nowrap px-3.5 xl:px-4 py-2 text-[13px] xl:text-sm font-semibold rounded-full transition-all duration-300 ${
@@ -280,7 +324,19 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
                 >
                   Dashboard
                 </Link>
-                <NotificationBell />
+                ) : (
+                <Link
+                  href="/buyer"
+                  className={`whitespace-nowrap px-3.5 xl:px-4 py-2 text-[13px] xl:text-sm font-semibold rounded-full transition-all duration-300 ${
+                    pathName === "/buyer" || pathName?.startsWith("/buyer/")
+                      ? "text-white bg-[#09391C] shadow-md"
+                      : "text-[#09391C] bg-[#8DDB90]/20 hover:bg-[#8DDB90]/35 ring-1 ring-[#8DDB90]/40"
+                  }`}
+                >
+                  My dashboard
+                </Link>
+                )}
+                <NotificationBell audience={showPractitioner ? undefined : "buyer"} />
                 <div className="relative profile-dropdown">
                   <button
                     type="button"
@@ -288,18 +344,17 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
                     onClick={(e) => {
                       e.stopPropagation();
                       setIsUserProfileModal(!isUserProfileModalOpened);
-                      // Close other dropdowns
                       setOpenDropdown(null);
                       setIsNotificationModalOpened(false);
                     }}
                     className="w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-br from-[#8DDB90] to-[#6BC76F] shadow-sm hover:shadow-md transition-all duration-300 hover:scale-110 ring-2 ring-white/50 hover:ring-[#8DDB90]/30"
                   >
                     <span className="text-white font-semibold text-xs tracking-wide">
-                      {userDisplayInitials(user)}
+                      {showPractitioner ? userDisplayInitials(user) : buyerInitials()}
                     </span>
                   </button>
                   <AnimatePresence>
-                    {isUserProfileModalOpened && (
+                    {isUserProfileModalOpened && showPractitioner && (
                       <Suspense fallback={null}>
                         <UserProfile
                           userDetails={user}
@@ -307,45 +362,58 @@ const Header = ({ isComingSoon }: { isComingSoon?: boolean }) => {
                         />
                       </Suspense>
                     )}
+                    {isUserProfileModalOpened && !showPractitioner && (
+                      <BuyerAccountMenu onClose={() => setIsUserProfileModal(false)} />
+                    )}
                   </AnimatePresence>
                 </div>
               </>
             ) : (
               <div className="flex items-center gap-2">
-                {hasBuyerSession ? <NotificationBell audience="buyer" /> : null}
-                {hasBuyerSession ? (
-                  <Link
-                    href="/buyer"
-                    className={`whitespace-nowrap px-3.5 xl:px-4 py-2 text-[13px] xl:text-sm font-semibold rounded-full transition-all duration-300 ${
-                      pathName === "/buyer" || pathName?.startsWith("/buyer/")
-                        ? "text-white bg-[#09391C] shadow-md"
-                        : "text-[#09391C] bg-[#8DDB90]/20 hover:bg-[#8DDB90]/35 ring-1 ring-[#8DDB90]/40"
-                    }`}
-                  >
-                    My dashboard
-                  </Link>
-                ) : null}
-                {!hasBuyerSession ? (
-                  <>
-                    <Link
-                      href="/auth/login"
-                      className="whitespace-nowrap px-3 xl:px-4 py-2 text-[13px] xl:text-sm font-medium text-gray-700 hover:text-[#09391C] rounded-full hover:bg-gray-100/80 transition-all duration-300"
-                    >
-                      Log in
-                    </Link>
-                    <Link
-                      href="/auth/register"
-                      className="whitespace-nowrap px-4 xl:px-5 py-2 xl:py-2.5 text-[13px] xl:text-sm font-semibold text-white bg-[#09391C] hover:bg-[#0B423D] rounded-full shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
-                    >
-                      GET STARTED
-                    </Link>
-                  </>
-                ) : null}
+                <Link
+                  href="/auth/login"
+                  className="whitespace-nowrap px-3 xl:px-4 py-2 text-[13px] xl:text-sm font-medium text-gray-700 hover:text-[#09391C] rounded-full hover:bg-gray-100/80 transition-all duration-300"
+                >
+                  Log in
+                </Link>
+                <Link
+                  href="/auth/register"
+                  className="whitespace-nowrap px-4 xl:px-5 py-2 xl:py-2.5 text-[13px] xl:text-sm font-semibold text-white bg-[#09391C] hover:bg-[#0B423D] rounded-full shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
+                >
+                  GET STARTED
+                </Link>
               </div>
             )}
           </div>
 
           <div className="flex items-center gap-2 lg:hidden">
+            {showPractitioner || hasBuyerSession ? (
+              <div className="relative profile-dropdown">
+                <button
+                  type="button"
+                  title="Profile"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsUserProfileModal(!isUserProfileModalOpened);
+                    setIsModalOpened(false);
+                  }}
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#8DDB90] to-[#6BC76F] text-xs font-semibold text-white shadow-sm"
+                >
+                  {showPractitioner ? userDisplayInitials(user) : buyerInitials()}
+                </button>
+                <AnimatePresence>
+                  {isUserProfileModalOpened && showPractitioner && (
+                    <UserProfile
+                      userDetails={user}
+                      closeUserProfileModal={setIsUserProfileModal}
+                    />
+                  )}
+                  {isUserProfileModalOpened && !showPractitioner && (
+                    <BuyerAccountMenu onClose={() => setIsUserProfileModal(false)} />
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : null}
             {showPractitioner ? (
               <NotificationBell />
             ) : hasBuyerSession ? (

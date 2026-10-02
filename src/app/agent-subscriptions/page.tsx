@@ -28,6 +28,7 @@ import Link from 'next/link';
 import AgentEligibilityBanner from '@/components/agent/AgentEligibilityBanner';
 import { useAgentEligibility, resolveAgentKycStatus } from '@/hooks/useAgentEligibility';
 import CatalogPricing, { CatalogHero, dashboardPlanSummaries, type CatalogBillingOption, type CatalogPlan } from '@/components/subscription/CatalogPricing';
+import LicensedAgentPlanPicker, { type LicensedPlanChoice } from '@/components/subscription/LicensedAgentPlanPicker';
 import { usePublisherListingEligibility } from '@/hooks/usePublisherListingEligibility';
 import { isLivePaidSubscription, resolveSubscriptionDisplayStatus } from '@/utils/subscription-status';
 
@@ -439,6 +440,22 @@ export default function AgentSubscriptionsPage() {
     listingEligibility?.hasPaidSubscription === true ||
     eligibility?.hasPaidSubscription === true ||
     isLivePaidSubscription(user?.activeSubscription);
+  const showLicensedPlanPicker = userTypeLower === "agent" && activeTab === "plans";
+
+  const openLicensedPlan = (choice: LicensedPlanChoice) => {
+    const parent = (plans as any[]).find((plan) => {
+      const code = plan?.raw?.code || plan?.code;
+      return code === "LICENSED_AGENT_QTR" || plan?.audience === "licensed" || plan?.raw?.audience === "licensed";
+    });
+    const source = parent?.raw || parent || {
+      code: "LICENSED_AGENT_QTR",
+      name: "Licensed Agent Plan",
+      discountedPlans: [
+        { code: "LICENSED_AGENT_YEARLY", price: 140000, durationInDays: 365 },
+      ],
+    };
+    handleSubscribeToPlan({ ...source, name: choice.title }, choice.durationMonths, choice.price);
+  };
 
   if (loading) {
     return (
@@ -459,23 +476,25 @@ export default function AgentSubscriptionsPage() {
   }
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-gray-50 px-4 py-6 sm:py-8">
+    <div className={`min-h-screen overflow-x-hidden px-4 py-6 sm:px-8 sm:py-8 ${showLicensedPlanPicker ? "bg-white" : "bg-gray-50"}`}>
       <div className="mx-auto min-w-0 max-w-7xl">
+        {!showLicensedPlanPicker ? (
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
           <Link href="/dashboard" className="inline-flex items-center gap-2 text-[#8DDB90] hover:text-[#09391C] font-medium transition-colors">
             <ArrowLeftIcon size={20} />
             Back to Dashboard
           </Link>
         </div>
+        ) : null}
         {/* Header */}
         <div className="mb-8 space-y-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Choose a plan</h1>
+            <h1 className={`font-bold ${showLicensedPlanPicker ? "text-3xl text-[#1B7A3A]" : "text-2xl text-gray-900 sm:text-3xl"}`}>Choose a plan</h1>
           </div>
-          {userTypeLower === "agent" && (
+          {!showLicensedPlanPicker && userTypeLower === "agent" && (
             <AgentEligibilityBanner eligibility={eligibility} loading={eligibilityLoading} compact />
           )}
-          {rolePlanSummaries.length > 0 ? (
+          {!showLicensedPlanPicker && rolePlanSummaries.length > 0 ? (
           <div className="rounded-lg border border-emerald-100 bg-emerald-50/60 p-4 text-sm text-emerald-950">
             <p className="font-semibold mb-1">Plans for your account</p>
             <ul className="list-disc ml-5 space-y-0.5 text-emerald-900/90">
@@ -485,7 +504,7 @@ export default function AgentSubscriptionsPage() {
             </ul>
           </div>
           ) : null}
-          {activeSubscriptionFromProfile && (
+          {!showLicensedPlanPicker && activeSubscriptionFromProfile && (
             <div className="rounded-lg border border-green-200 bg-green-50 p-4">
               <div className="text-sm text-green-800">
                 Active subscription: <span className="font-semibold">{activeSubscriptionFromProfile.plan.name}</span>
@@ -503,9 +522,9 @@ export default function AgentSubscriptionsPage() {
           <div className="border-b border-gray-200">
             <nav className="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:gap-x-6 sm:gap-y-2">
               {[
-                { key: 'subscriptions', label: 'My Subscriptions', icon: Package },
+                { key: 'subscriptions', label: userTypeLower === 'agent' ? 'All My Subscriptions' : 'My Subscriptions', icon: Package },
                 { key: 'plans', label: 'Subscription Plans', icon: CreditCard },
-                { key: 'transactions', label: 'Transaction History', icon: Calendar }
+                { key: 'transactions', label: userTypeLower === 'agent' ? 'Transactions' : 'Transaction History', icon: Calendar }
               ].map(({ key, label, icon: Icon }) => (
                 <div key={key} className="flex min-w-0 items-center justify-between gap-2 sm:justify-start">
                   <button
@@ -516,9 +535,10 @@ export default function AgentSubscriptionsPage() {
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     } flex min-w-0 items-center gap-2 border-b-2 px-1 py-2 text-sm font-medium`}
                   >
-                    <Icon size={16} className="shrink-0" />
+                    {showLicensedPlanPicker ? null : <Icon size={16} className="shrink-0" />}
                     <span className="truncate">{label}</span>
                   </button>
+                  {!showLicensedPlanPicker ? (
                   <button
                     onClick={() => {
                       if (key === 'subscriptions') fetchSubscriptions(1);
@@ -532,6 +552,7 @@ export default function AgentSubscriptionsPage() {
                     <RefreshCw size={12} />
                     <span className="hidden sm:inline">Refresh</span>
                   </button>
+                  ) : null}
                 </div>
               ))}
             </nav>
@@ -540,7 +561,7 @@ export default function AgentSubscriptionsPage() {
 
         {(activeTab === 'subscriptions' || activeTab === 'plans') && (
           <>
-            {!kycApproved && userTypeLower === 'agent' && !isDeveloper && !isPropertyOwner ? (
+            {!showLicensedPlanPicker && !kycApproved && userTypeLower === 'agent' && !isDeveloper && !isPropertyOwner ? (
               <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
                 <p className="font-semibold">KYC is still pending</p>
                 <p className="mt-1">
@@ -633,7 +654,14 @@ export default function AgentSubscriptionsPage() {
                 </div>
               )}
 
-              {activeTab === 'plans' && (
+              {activeTab === 'plans' && showLicensedPlanPicker && (
+                <LicensedAgentPlanPicker
+                  plans={plans as unknown as Array<Record<string, unknown>>}
+                  onSelect={openLicensedPlan}
+                />
+              )}
+
+              {activeTab === 'plans' && !showLicensedPlanPicker && (
                 <div className="min-w-0 space-y-6">
                   <CatalogHero
                     kicker="Your dashboard"

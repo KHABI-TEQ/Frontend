@@ -390,7 +390,7 @@ const UserProfile: React.FC<UserProfileModalProps> = ({
           className="w-full flex items-center justify-center gap-2 p-3 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg text-red-600 font-medium transition-all duration-200 hover:shadow-sm"
         >
           <LogOut size={18} />
-          <span>Sign Out</span>
+          <span>Log out</span>
         </motion.button>
       </div>
     </motion.div>

@@ -8,6 +8,7 @@ import {
   CreditCard,
   Globe2,
   LayoutDashboard,
+  LogOut,
   Menu,
   ShieldCheck,
   X,
@@ -55,7 +56,7 @@ async function uploadAsset(file: File, fileFor: string) {
 }
 
 export default function ProfessionalWorkspace({ role }: { role: Role }) {
-  const { user, setUser } = useUserContext();
+  const { user, setUser, logout } = useUserContext();
   const isLawyer = role === "Lawyer";
   const isValuer = role === "Valuer";
   const [tab, setTab] = useState<Tab>("overview");
@@ -436,6 +437,17 @@ export default function ProfessionalWorkspace({ role }: { role: Role }) {
         <CreditCard className="h-4 w-4 shrink-0" />
         Subscription plans
       </Link>
+      <button
+        type="button"
+        onClick={() => {
+          setMenuOpen(false);
+          void logout();
+        }}
+        className="mt-auto flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-[#5A5D63] hover:bg-[#F4FBF5] hover:text-[#09391C]"
+      >
+        <LogOut className="h-4 w-4 shrink-0" />
+        Log out
+      </button>
     </nav>
   );
 

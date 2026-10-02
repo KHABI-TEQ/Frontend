@@ -14,6 +14,7 @@ import React, {
   useRef,
 } from "react";
 import Cookies from "js-cookie";
+import { clearBuyerSession } from "@/lib/search-insurance";
 import toast from "react-hot-toast";
 import type { AgentKycSubmissionPayload } from "@/types/agent-upgrade.types";
 import { resolvePostLoginPath } from "@/utils/authRedirect";
@@ -248,6 +249,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     async (callback?: () => void) => {
       try {
         Cookies.remove("token");
+        clearBuyerSession();
         sessionStorage.removeItem("user");
         localStorage.removeItem("email");
         localStorage.removeItem("fullname");

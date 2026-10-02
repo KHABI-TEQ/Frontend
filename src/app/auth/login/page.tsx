@@ -377,8 +377,12 @@ const Login: FC = () => {
 
         <div className="relative z-10 flex h-full min-h-full w-full flex-col p-12 xl:p-16">
           {/* Logo */}
-          <div>
+          <div className="space-y-4">
             <AuthBrandLogo variant="onDark" />
+            <Link href="/" className="inline-flex items-center gap-1.5 text-sm font-medium text-white/80 transition-colors hover:text-white">
+              <span aria-hidden>←</span>
+              Back to website
+            </Link>
           </div>
 
           {/* Main Content */}
@@ -429,6 +433,10 @@ const Login: FC = () => {
         >
           {/* Header */}
           <div className="text-center lg:text-left mb-2">
+            <Link href="/" className="mb-5 inline-flex items-center gap-1.5 text-sm font-semibold text-[#09391C] transition-colors hover:text-[#0B572B]">
+              <span aria-hidden>←</span>
+              Back to website
+            </Link>
             <div className="mb-5 flex justify-center lg:hidden">
               <AuthBrandLogo variant="onLight" />
             </div>

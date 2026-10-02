@@ -363,27 +363,20 @@ const SideBar = ({
               })}
             </div>
           </div>
-          {showPractitioner && (
+          {(showPractitioner || hasBuyerSession) && (
             <button
               type="button"
               onClick={() => {
                 setIsModalOpened(false);
                 void logout();
               }}
-              className="flex items-center gap-2 w-fit pb-1 text-left"
+              className="mt-2 flex w-full items-center gap-2 border-t border-[#D5D8DE] pt-5 text-left text-[#5A5D63] transition-colors hover:text-[#09391C]"
             >
-              <svg
-                width="10"
-                height="10"
-                viewBox="0 0 10 10"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <circle cx="5" cy="5" r="5" fill="#09391C" />
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path d="M10 7V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7a2 2 0 0 1-2-2v-2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                <path d="M4 12h11M12 8l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <span className="text-[#09391C] text-[18px] leading-[21.09px] font-medium">
-                Logout
-              </span>
+              <span className="text-[16px] font-medium leading-[21px]">Log out</span>
             </button>
           )}
         </nav>
